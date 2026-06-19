@@ -1,26 +1,113 @@
+/* Imports the entire Tailwind CSS system — utilities, resets, and everything else */
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+  @theme inline — GKWorld360 "Academic Clarity" Design Tokens
+  ─────────────────────────────────────────────────────────────
+  This block is the Single Source of Truth for every visual value on the site.
+  All values come directly from the Stitch "Academic Clarity" theme.
 
+  HOW IT WORKS:
+  Every token defined here automatically becomes a Tailwind utility class.
+  Example: --color-navy   → use as  bg-navy   text-navy   border-navy
+  Example: --color-sapphire → use as  bg-sapphire   text-sapphire
+  Example: --font-heading  → use as  font-heading  (applies Source Serif 4)
+  Example: --radius-card   → use as  rounded-card  (8px border radius)
+
+  TO CHANGE THE SITE'S LOOK:
+  Edit the values here — not in individual component files.
+  Changing --color-sapphire once updates every button, link, and highlight on the site.
+*/
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  /* ── FONTS ──────────────────────────────────────────────────────────────────
+     These reference the CSS variables that layout.tsx sets on <html> via next/font.
+     font-heading → Source Serif 4  (all headings: h1 h2 h3...)
+     font-body    → Inter           (all body text, buttons, labels, UI)           */
+  --font-heading: var(--font-source-serif);
+  --font-body:    var(--font-inter);
+
+  /* ── BRAND COLOURS ───────────────────────────────────────────────────────────
+     The four brand colours from the "Academic Clarity" Stitch theme.
+     These establish the platform's personality: authoritative, educational, modern. */
+  --color-navy:           #0f172a;  /* Deep Navy    — headings, navigation, primary brand  */
+  --color-navy-dark:      #131b2e;  /* Navy Dark    — hero backgrounds, deep containers    */
+  --color-sapphire:       #2563eb;  /* Sapphire     — links, interactive elements, buttons */
+  --color-sapphire-dark:  #0051d5;  /* Sapphire Dark — hover states on interactive items  */
+  --color-emerald:        #059669;  /* Emerald      — success states, positive cues        */
+  --color-slate:          #64748b;  /* Slate        — neutral, secondary UI elements       */
+
+  /* ── PAGE & SURFACE COLOURS ──────────────────────────────────────────────────
+     "Surfaces" are the different background layers of the page.
+     Using tonal shifts (lighter/darker blue-white) instead of hard borders
+     to separate sections — the "digital library" aesthetic from the design system. */
+  --color-background:   #f8f9ff;   /* Page background  — soft off-white with a cool tint  */
+  --color-surface:      #ffffff;   /* Cards, modals    — pure white, elevated above page   */
+  --color-surface-low:  #eff4ff;   /* Subtle sections  — very light blue-white tint        */
+  --color-surface-mid:  #e5eeff;   /* Medium sections  — used for alternating row colours  */
+  --color-surface-high: #dce9ff;   /* Strong sections  — more prominent background blocks  */
+
+  /* ── TEXT COLOURS ────────────────────────────────────────────────────────────
+     High contrast is a priority — long study sessions demand readable text.
+     foreground = primary reading text (deep navy-black, not pure black)
+     muted      = secondary text for captions, metadata, timestamps             */
+  --color-foreground: #0b1c30;   /* Primary text   — high contrast on the page background */
+  --color-muted:      #45464d;   /* Secondary text — captions, dates, read-time metadata  */
+  --color-on-dark:    #ffffff;   /* Text on dark   — used on navy/sapphire backgrounds     */
+
+  /* ── BORDER COLOURS ──────────────────────────────────────────────────────────
+     border-border        → dividers, section separators
+     border-border-subtle → quieter, less visible dividers
+     border-hairline      → the 1px card border (gives "tactile, printed quality") */
+  --color-border:        #76777d;  /* Standard borders and dividers                       */
+  --color-border-subtle: #c6c6cd;  /* Subtle borders — for less prominent separators      */
+  --color-hairline:      #E2E8F0;  /* Card hairline border — 1px, barely-there definition */
+
+  /* ── STATUS COLOURS ──────────────────────────────────────────────────────────
+     Used for form errors, validation messages. Not used in MVP content pages.    */
+  --color-error:    #ba1a1a;   /* Error text and icon colour                             */
+  --color-error-bg: #ffdad6;   /* Error background — light red tint behind error message */
+
+  /* ── BORDER RADIUS ───────────────────────────────────────────────────────────
+     The shape language is "soft and precise" — never bubbly, never sharp.
+     rounded-sm   → tags, badges, checkboxes, small pills
+     rounded-card → cards, buttons, inputs — the standard component radius        */
+  --radius-sm:   4px;   /* Small elements  — 0.25rem */
+  --radius-card: 8px;   /* Cards & buttons — 0.5rem  */
+
+  /* ── SHADOWS ─────────────────────────────────────────────────────────────────
+     A single, soft, diffused shadow gives cards a "tactile, printed" quality.
+     shadow-card      → resting state  — very subtle, barely lifts the card
+     shadow-card-hover → hover state   — card lifts noticeably when user hovers   */
+  --shadow-card:       0px 4px 20px rgba(15, 23, 42, 0.05);
+  --shadow-card-hover: 0px 8px 30px rgba(15, 23, 42, 0.12);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* ── BASE BODY STYLES ─────────────────────────────────────────────────────────
+   These apply to the whole site automatically.
+   Individual components can override them with specific Tailwind classes.        */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #f8f9ff;    /* matches --color-background */
+  color: #0b1c30;               /* matches --color-foreground */
+
+  /* Inter with safe fallbacks — if Inter hasn't loaded yet, system fonts show */
+  font-family: var(--font-body), system-ui, sans-serif;
+
+  /* 1.6 line-height is the "body-lg" spec from the design system.
+     This reduces eye strain during long study sessions — a core UX priority.   */
+  line-height: 1.6;
+
+  /* Smooth font rendering on Mac and retina screens */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── HEADING BASE STYLES ──────────────────────────────────────────────────────
+   Every h1–h6 on the site uses Source Serif 4 automatically.
+   Components can override weight and size with Tailwind classes (text-4xl, etc.)
+   but the font and colour stay consistent site-wide.                             */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading), Georgia, serif; /* Georgia = safe fallback if Source Serif 4 is loading */
+  line-height: 1.3;   /* tighter than body — large type needs less space between lines */
+  color: #0f172a;     /* Deep Navy — headings are always navy for authority and trust  */
 }
