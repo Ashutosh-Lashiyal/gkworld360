@@ -2,6 +2,10 @@
 import type { Metadata } from "next";
 import { Source_Serif_4, Inter } from "next/font/google";
 
+// The permanent shell components — appear on every single page
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+
 // Our global design tokens and base styles
 import "./globals.css";
 
@@ -60,8 +64,17 @@ export default function RootLayout({
           "min-h-screen",    // page is always at least the full height of the viewport
         ].join(" ")}
       >
-        {/* children is replaced by the actual page content at render time */}
-        {children}
+        {/* Header sits at the top of every page — sticky, always visible */}
+        <Header />
+
+        {/* flex-1 makes the main content area grow to fill all available space.
+            This ensures the footer always stays at the bottom, even on short pages. */}
+        <main className="flex-1">
+          {children}
+        </main>
+
+        {/* Footer sits at the bottom of every page */}
+        <Footer />
       </body>
     </html>
   );
