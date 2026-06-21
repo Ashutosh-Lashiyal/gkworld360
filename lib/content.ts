@@ -183,6 +183,84 @@ export function getAllSubjects(): { slug: string; meta: ContentMeta & { homepage
   });
 }
 
+// ── PAGE TYPE DETECTION ───────────────────────────────────────────────────────
+// Determines what kind of page a slug array represents so [...slug]/page.tsx
+// knows which layout to render.
+//
+// Returns:
+//   'topic'    → a direct .mdx file — render the article
+//   'subject'  → a folder with sub-folders (categories) inside — show category cards
+//   'category' → a folder with only .mdx files inside — show topic cards directly
+export type ContentPageType = "topic" | "subject" | "category";
+
+export function getPageType(slugArray: string[]): ContentPageType {
+  // If a direct .mdx file exists, it's a topic page
+  const directPath = path.join(CONTENT_DIR, ...slugArray) + ".mdx";
+  if (fs.existsSync(directPath)) return "topic";
+
+  // Otherwise it's a folder — check if it has sub-folders (categories)
+  const dir = path.join(CONTENT_DIR, ...slugArray);
+  if (!fs.existsSync(dir)) return "topic"; // fallback — will 404
+
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  const hasSubFolders = entries.some((e) => e.isDirectory());
+
+  // Has sub-folders = has categories → subject page
+  // No sub-folders = topics live directly → category page (or subject with no categories)
+  return hasSubFolders ? "subject" : "category";
+}
+
+// ── GET CATEGORIES IN A SUBJECT ───────────────────────────────────────────────
+// Returns all category folders inside a subject folder.
+// Each category must have an overview.mdx with a title and description.
+export function getCategoriesInSubject(subject: string): { slug: string; meta: ContentMeta }[] {
+  const subjectDir = path.join(CONTENT_DIR, subject);
+  if (!fs.existsSync(subjectDir)) return [];
+
+  const entries = fs.readdirSync(subjectDir, { withFileTypes: true });
+  const categories: { slug: string; meta: ContentMeta }[] = [];
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const overviewPath = path.join(subjectDir, entry.name, "overview.mdx");
+    if (!fs.existsSync(overviewPath)) continue;
+
+    const meta = getContentMeta(overviewPath);
+    categories.push({ slug: entry.name, meta });
+  }
+
+  return categories;
+}
+
+// ── GET TOPICS IN A CATEGORY ──────────────────────────────────────────────────
+// Returns all topic .mdx files inside a specific category folder.
+// Excludes overview.mdx (that's the category intro, not a topic).
+export function getTopicsInCategory(
+  subject: string,
+  category: string
+): { slug: string[]; meta: ContentMeta }[] {
+  const categoryDir = path.join(CONTENT_DIR, subject, category);
+  if (!fs.existsSync(categoryDir)) return [];
+
+  const entries = fs.readdirSync(categoryDir, { withFileTypes: true });
+  const topics: { slug: string[]; meta: ContentMeta }[] = [];
+
+  for (const entry of entries) {
+    if (
+      entry.isFile() &&
+      entry.name.endsWith(".mdx") &&
+      entry.name !== "overview.mdx"
+    ) {
+      const filePath = path.join(categoryDir, entry.name);
+      const slug = [subject, category, entry.name.replace(/\.mdx$/, "")];
+      const meta = getContentMeta(filePath);
+      topics.push({ slug, meta });
+    }
+  }
+
+  return topics;
+}
+
 // ── GET ALL CONTENT IN A SUBJECT ──────────────────────────────────────────────
 // Returns all topic files directly under a subject folder (not in sub-categories).
 // Used to build the subject page listing.
