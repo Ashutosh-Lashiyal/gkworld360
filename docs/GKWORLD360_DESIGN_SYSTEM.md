@@ -212,8 +212,10 @@ The following components are documented from the **actual desktop homepage** in 
 ### Hero section
 - **Headline:** "Master the World's Core Knowledge" (`display-lg`, Source Serif 4, 48px).
 - **Subtitle:** "Access a curated repository of global academics, from the depths of history to the frontiers of science."
-- **Contents:** a prominent **search bar** plus an **"Explore"** button, over a hero image.
-- **Layout:** centred vertical stack.
+- **Contents:** a prominent **search bar** plus an **"Explore"** button, with a **hero image** alongside or below the text.
+- **Layout:** centred vertical stack on desktop and mobile.
+- **Background:** **White** (`#ffffff` / `surface`) — **NOT dark navy**. The hero sits on a light background with the hero image providing visual weight.
+- **Updated (Jun 2026):** Previous implementation used dark navy background — this was incorrect. Stitch confirms white/light background.
 
 ### Search bar
 - **Placement:** centred in the hero, directly below the headline (also reachable via the header search icon).
@@ -221,10 +223,13 @@ The following components are documented from the **actual desktop homepage** in 
 - **Exact border/radius styling:** follows the input-field spec (1px border, 8px radius, sapphire focus border) — see Card System / component spec. Fine visual details **To be decided later** where not specified.
 
 ### Subject cards
-- **Contents:** an icon/image + subject title. Six subjects on the homepage: **History, Geography, Science, Polity, Economics, Current Affairs**, with a **"View all subjects →"** link.
-- **Grid:** 3 columns on desktop (6 cards in two rows).
-- **Style (from component spec):** white background, **1px `#E2E8F0` border**, **8px** radius, soft diffused shadow.
+- **Contents:** a **thumbnail image** on top, then **subject title**, a short **description**, and a **"View Curriculum →"** CTA link at the bottom.
+- **Six subjects on the homepage (confirmed Jun 2026):** **History, Geography, Physics, Chemistry, Biology, Famous Personalities** — controlled via `homepageOrder` field in each subject's `overview.mdx`. Can be changed without code edits.
+- **Grid:** 3 columns × 2 rows on desktop (6 cards total); 2 columns on tablet; 1 column (stacked) on mobile.
+- **Section heading:** "Explore Subjects" with a "View all subjects →" link to `/subjects`.
+- **Style (from component spec):** white background, **1px `#E2E8F0` border**, **8px** radius, soft diffused shadow, sapphire border + lifted shadow on hover.
 - **Purpose:** entry points into each subject (the top of the content hierarchy).
+- **Updated (Jun 2026):** Old doc listed different subjects (History, Geography, Science, Polity, Economics, Current Affairs). Confirmed new set from user decision. Cards now include thumbnail image and "View Curriculum" CTA — not just icon + title.
 
 ### Buttons
 - **Primary button:** **Deep Navy background, white text**, padding **12px 24px**, **8px** radius. (e.g. "Explore".) Substantial, confident.
@@ -243,13 +248,24 @@ The following components are documented from the **actual desktop homepage** in 
 
 ### Footer
 - **Columns:** four — **Company** (About Us, Careers, Press), **Support** (Help Center, Contact Support, Community), **Connect** (social/share links), **Legal** (Privacy Policy, Terms of Service).
-- **Copyright line:** "© GKWorld360. All rights reserved. Empowering academic excellence." *(The Stitch text reads "© 2024"; use the correct current year in implementation.)*
-- **Background colour:** **To be decided later** (not explicit in the HTML; likely a navy or tonal surface — confirm from the screen before finalising).
+- **Copyright line:** "© GKWorld360. All rights reserved. Empowering academic excellence." *(Use the correct current year dynamically — not hardcoded "2024".)*
+- **Background colour:** **Resolved (Jun 2026):** Dark charcoal / `navy-dark` (`#131b2e`). Confirmed from mobile Stitch screen.
+- **Mobile:** Stacks into single column. Shows logo + tagline + nav links + legal links + social icons + copyright.
 
-### Other homepage sections (present in Stitch)
-- **Thought of the Day / Quote:** a featured quotation block (Stitch uses a Kofi Annan quote about knowledge and education).
-- **About GKWorld360:** a short mission paragraph describing the platform and its audiences.
-- **Testimonial line:** a short credibility quote.
+### Homepage sections — complete confirmed order (Jun 2026)
+The desktop homepage has these sections in this order:
+
+1. **Header** (sticky navigation)
+2. **Hero** — white background, headline, subtitle, search bar + Explore button, hero image
+3. **Explore Subjects** — white background, 3×2 grid of 6 subject cards, "View all subjects →" link
+4. **Quote Block** — light gray/subtle accent background, Kofi Annan quote: *"Knowledge is power. Information is liberating. Education is the premise of progress, in every society, in every family."*
+5. **Popular Topics** — white background, 4-column card grid, each card: category label (Polity/History/Geography/Science), topic title, description
+6. **Recently Added Topics** — white background, horizontal carousel with left/right chevron controls, each item: icon + category + title + metadata ("Added [time] • [x] min read")
+7. **Recently Added Articles** — white background, 3-column card grid, each card: thumbnail image + category badge + title + description + posted date + read time
+8. **About GKWorld360** — white background, two-column layout (text left, image right), heading: "Empowering Academic Excellence Through Structured Knowledge", body paragraphs, testimonial quote: *"The standard for general knowledge resources." — Education Review 2024*
+9. **Footer** — dark charcoal background
+
+**Mobile section order:** Same sections, all stacked single-column. Subject cards stack vertically (full width). Carousel becomes scrollable. Article grid becomes single column.
 
 ---
 
@@ -327,8 +343,15 @@ New components should feel like natural members of the same family. When somethi
 
 ### Open items flagged for a decision ("To be decided later")
 - Header **sticky** behaviour.
-- **Footer background** colour.
 - Reconciling the **card border** value (`#E2E8F0`) with the `outline-variant` token (`#c6c6cd`).
-- **Resolved:** the time-based content section is named **"Articles"** site-wide (see the naming note under Components → Navigation).
-- Detailed layouts for non-homepage MVP pages.
+- Detailed layouts for non-homepage MVP pages (Subject, Category, Topic, About, Contact, Search).
 - Fine input/search-field visual details not specified in the screens.
+- Hero image — exact image to use (AI-generated, stock, or illustration). Placeholder until decided.
+- Popular Topics and Recently Added sections — placeholder content until real articles exist.
+
+### Resolved items (Jun 2026)
+- ✅ **Footer background:** Dark charcoal / `navy-dark` (`#131b2e`). Confirmed from Stitch mobile screen.
+- ✅ **Hero background:** White (`#ffffff`) — NOT dark navy. Updated from incorrect earlier implementation.
+- ✅ **Homepage sections order:** All 9 sections confirmed and documented above.
+- ✅ **Subject cards:** Confirmed 6 subjects (History, Geography, Physics, Chemistry, Biology, Famous Personalities). Cards include thumbnail image + "View Curriculum" CTA.
+- ✅ **Time-based content section name:** "Articles" site-wide.

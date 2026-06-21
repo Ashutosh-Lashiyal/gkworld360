@@ -123,6 +123,66 @@ function scanDirectory(dir: string, baseDir: string): string[][] {
   return slugArrays;
 }
 
+// ── GET HOMEPAGE SUBJECTS ─────────────────────────────────────────────────────
+// Reads all subject overview.mdx files and returns those with homepageOrder 1–6,
+// sorted by that number. This powers the subject cards on the homepage.
+export function getHomepageSubjects(): { slug: string; meta: ContentMeta & { homepageOrder: number; icon?: string } }[] {
+  if (!fs.existsSync(CONTENT_DIR)) return [];
+
+  const entries = fs.readdirSync(CONTENT_DIR, { withFileTypes: true });
+  const subjects: { slug: string; meta: ContentMeta & { homepageOrder: number; icon?: string } }[] = [];
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+
+    // Each subject must have an overview.mdx with a homepageOrder field
+    const overviewPath = path.join(CONTENT_DIR, entry.name, "overview.mdx");
+    if (!fs.existsSync(overviewPath)) continue;
+
+    const fileContent = fs.readFileSync(overviewPath, "utf-8");
+    const { data } = matter(fileContent);
+
+    // Only include subjects with a valid homepageOrder between 1 and 6
+    if (typeof data.homepageOrder === "number" && data.homepageOrder >= 1 && data.homepageOrder <= 6) {
+      subjects.push({
+        slug: entry.name,
+        meta: data as ContentMeta & { homepageOrder: number; icon?: string },
+      });
+    }
+  }
+
+  // Sort by homepageOrder so cards appear in the correct order
+  return subjects.sort((a, b) => a.meta.homepageOrder - b.meta.homepageOrder);
+}
+
+// ── GET ALL SUBJECTS ──────────────────────────────────────────────────────────
+// Returns every subject (all folders with an overview.mdx) for the /subjects page.
+export function getAllSubjects(): { slug: string; meta: ContentMeta & { homepageOrder?: number; icon?: string } }[] {
+  if (!fs.existsSync(CONTENT_DIR)) return [];
+
+  const entries = fs.readdirSync(CONTENT_DIR, { withFileTypes: true });
+  const subjects: { slug: string; meta: ContentMeta & { homepageOrder?: number; icon?: string } }[] = [];
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+
+    const overviewPath = path.join(CONTENT_DIR, entry.name, "overview.mdx");
+    if (!fs.existsSync(overviewPath)) continue;
+
+    const fileContent = fs.readFileSync(overviewPath, "utf-8");
+    const { data } = matter(fileContent);
+    subjects.push({ slug: entry.name, meta: data as ContentMeta & { homepageOrder?: number; icon?: string } });
+  }
+
+  // Sort: homepage subjects first (by order), then remaining alphabetically
+  return subjects.sort((a, b) => {
+    const aOrder = a.meta.homepageOrder ?? 999;
+    const bOrder = b.meta.homepageOrder ?? 999;
+    if (aOrder !== bOrder) return aOrder - bOrder;
+    return a.meta.title.localeCompare(b.meta.title);
+  });
+}
+
 // ── GET ALL CONTENT IN A SUBJECT ──────────────────────────────────────────────
 // Returns all topic files directly under a subject folder (not in sub-categories).
 // Used to build the subject page listing.
