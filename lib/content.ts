@@ -206,27 +206,22 @@ export function getAllSubjects(): { slug: string; meta: ContentMeta & { homepage
 // Determines what kind of page a slug array represents so [...slug]/page.tsx
 // knows which layout to render.
 //
-// Returns:
-//   'topic'    → a direct .mdx file — render the article
-//   'subject'  → a folder with sub-folders (categories) inside — show category cards
-//   'category' → a folder with only .mdx files inside — show topic cards directly
+// The type is decided by POSITION in the hierarchy, not by whether categories
+// happen to exist yet:
+//   'topic'    → a direct .mdx file (at any depth) — render the article
+//   'subject'  → a top-level folder, e.g. /history — always a Subject
+//   'category' → a nested folder, e.g. /history/modern-india — a Category
 export type ContentPageType = "topic" | "subject" | "category";
 
 export function getPageType(slugArray: string[]): ContentPageType {
-  // If a direct .mdx file exists, it's a topic page
+  // If a direct .mdx file exists, it's a topic page (e.g. /history/modern-india/revolt-of-1857)
   const directPath = path.join(CONTENT_DIR, ...slugArray) + ".mdx";
   if (fs.existsSync(directPath)) return "topic";
 
-  // Otherwise it's a folder — check if it has sub-folders (categories)
-  const dir = path.join(CONTENT_DIR, ...slugArray);
-  if (!fs.existsSync(dir)) return "topic"; // fallback — will 404
-
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
-  const hasSubFolders = entries.some((e) => e.isDirectory());
-
-  // Has sub-folders = has categories → subject page
-  // No sub-folders = topics live directly → category page (or subject with no categories)
-  return hasSubFolders ? "subject" : "category";
+  // Otherwise it's a folder. A top-level folder is always a Subject;
+  // a nested folder is a Category — regardless of whether it has categories
+  // or topics inside it yet.
+  return slugArray.length === 1 ? "subject" : "category";
 }
 
 // ── GET CATEGORIES IN A SUBJECT ───────────────────────────────────────────────

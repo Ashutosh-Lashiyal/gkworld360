@@ -96,9 +96,12 @@ export default async function ContentPage({
   const breadcrumbTitles: Record<string, string> = { [slug[slug.length - 1]]: meta.title };
   const breadcrumbs = buildBreadcrumbs(slug, breadcrumbTitles);
 
-  // ── SUBJECT PAGE (folder with category sub-folders) ───────────────────────
+  // ── SUBJECT PAGE (top-level folder, e.g. /history) ────────────────────────
+  // A subject shows its CATEGORIES if it has any (e.g. History → Modern India).
+  // If it has no categories, it shows its TOPICS directly (e.g. Human Body → Blood).
   if (pageType === "subject") {
     const categories = getCategoriesInSubject(slug[0]);
+    const looseTopics = categories.length === 0 ? getTopicsInSubject(slug[0]) : [];
 
     return (
       <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12">
@@ -116,8 +119,8 @@ export default async function ContentPage({
           )}
         </div>
 
-        {/* Category cards grid */}
         {categories.length > 0 ? (
+          // This subject has categories → show category cards
           <>
             <h2 className="font-heading text-xl font-semibold text-navy mb-5">
               Categories
@@ -133,8 +136,25 @@ export default async function ContentPage({
               ))}
             </div>
           </>
+        ) : looseTopics.length > 0 ? (
+          // No categories, but topics exist directly under the subject → show topics
+          <>
+            <h2 className="font-heading text-xl font-semibold text-navy mb-5">
+              Topics
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {looseTopics.map((topic) => (
+                <ContentCard
+                  key={topic.slug.join("/")}
+                  title={topic.meta.title}
+                  description={topic.meta.description}
+                  href={`/${topic.slug.join("/")}`}
+                />
+              ))}
+            </div>
+          </>
         ) : (
-          // No categories yet — show empty state
+          // Nothing yet — empty state
           <div className="py-16 text-center">
             <p className="font-body text-lg text-muted">
               Topics coming soon. Check back later.
