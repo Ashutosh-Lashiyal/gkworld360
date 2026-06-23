@@ -3,6 +3,7 @@
 // Server Component — runs on the server, no client-side JS needed.
 
 import Link from "next/link";
+import SearchBox from "@/components/SearchBox";
 import SubjectCard from "@/components/SubjectCard";
 import TopicCard from "@/components/TopicCard";
 import ArticleCard from "@/components/ArticleCard";
@@ -115,23 +116,9 @@ export default function HomePage() {
             Access a curated repository of global academics, from the depths of history to the frontiers of science.
           </p>
 
-          {/* Search bar + Explore button */}
-          <div className="mt-10 flex flex-col sm:flex-row items-center gap-3 max-w-xl mx-auto">
-            <input
-              type="text"
-              placeholder="Search topics, subjects, articles..."
-              className={[
-                "w-full",
-                "font-body text-base text-foreground placeholder:text-muted",
-                "bg-background border border-hairline rounded-card",
-                "px-4 py-3",
-                "outline-none focus:border-sapphire focus:ring-2 focus:ring-sapphire/20",
-                "transition-colors",
-              ].join(" ")}
-            />
-            <button className="w-full sm:w-auto font-body text-sm font-semibold text-on-dark bg-navy hover:bg-navy-dark rounded-card px-6 py-3 transition-colors whitespace-nowrap">
-              Explore
-            </button>
+          {/* Search bar + Explore button — navigates to /search on submit */}
+          <div className="mt-10">
+            <SearchBox buttonLabel="Explore" />
           </div>
         </div>
       </section>

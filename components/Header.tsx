@@ -127,14 +127,15 @@ export default function Header() {
         </nav>
 
         {/* ── DESKTOP SEARCH ICON ──────────────────────────────────────────────
-            hidden md:flex → hidden on mobile (search will be in mobile menu)
-            Full search functionality will be wired up in Step 6.               */}
-        <button
+            hidden md:flex → hidden on mobile (search is in the mobile menu).
+            Links to the /search page.                                          */}
+        <Link
+          href="/search"
           className="hidden md:flex items-center text-foreground hover:text-sapphire transition-colors"
           aria-label="Search"
         >
           <SearchIcon />
-        </button>
+        </Link>
 
         {/* ── MOBILE HAMBURGER BUTTON ───────────────────────────────────────────
             md:hidden → only visible on mobile; disappears on tablet and desktop
@@ -171,11 +172,15 @@ export default function Header() {
               </Link>
             ))}
 
-            {/* Search button in mobile menu — same action as the desktop search icon */}
-            <button className="flex items-center gap-2 py-3 font-body text-sm font-medium text-foreground hover:text-sapphire transition-colors w-full">
+            {/* Search link in mobile menu — goes to the /search page and closes the menu */}
+            <Link
+              href="/search"
+              className="flex items-center gap-2 py-3 font-body text-sm font-medium text-foreground hover:text-sapphire transition-colors w-full"
+              onClick={() => setMobileMenuOpen(false)}
+            >
               <SearchIcon />
               <span>Search</span>
-            </button>
+            </Link>
           </nav>
         </div>
       )}
