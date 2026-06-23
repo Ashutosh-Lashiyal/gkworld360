@@ -11,20 +11,39 @@
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter"; // reads the ---frontmatter--- block from MDX files
+import GithubSlugger from "github-slugger"; // generates heading IDs matching rehype-slug
 
 // The absolute path to the content/ folder on disk
 // process.cwd() = the root of your project (where package.json lives)
 const CONTENT_DIR = path.join(process.cwd(), "content");
 
-// ── TYPE DEFINITION ───────────────────────────────────────────────────────────
+// ── TYPE DEFINITIONS ──────────────────────────────────────────────────────────
+
+// A single key/value fact shown in the topic page "Quick Facts" sidebar card
+export type QuickFact = {
+  label: string;  // e.g. "Began"
+  value: string;  // e.g. "10 May 1857, Meerut"
+};
+
 // This describes the shape of the frontmatter in your articles.
 // Every MDX file should have these fields in its --- block.
 export type ContentMeta = {
   title: string;
   description: string;
-  subject?: string;      // e.g. "history", "science"
-  category?: string;     // e.g. "modern-india" (optional — only for categorised topics)
-  date?: string;         // e.g. "2026-06-20" (optional — useful for articles)
+  subject?: string;          // e.g. "history", "science"
+  category?: string;         // e.g. "modern-india" (optional — only for categorised topics)
+  date?: string;             // e.g. "2026-06-20" (optional — useful for articles)
+  order?: number;            // controls Previous/Next sequence within a category
+  image?: string;            // featured image path (optional)
+  imageCaption?: string;     // caption shown below the featured image (optional)
+  quickFacts?: QuickFact[];  // key facts for the topic page sidebar (optional)
+};
+
+// One entry in a topic's Table of Contents
+export type TocHeading = {
+  depth: number;  // 2 for h2, 3 for h3
+  text: string;   // the heading text e.g. "Causes of the Revolt"
+  id: string;     // the slug id e.g. "causes-of-the-revolt" (matches rehype-slug)
 };
 
 // ── SLUG TO FILE PATH ─────────────────────────────────────────────────────────
@@ -282,4 +301,107 @@ export function getTopicsInSubject(subject: string): { slug: string[]; meta: Con
   }
 
   return topics;
+}
+
+// ── EXTRACT TABLE OF CONTENTS ─────────────────────────────────────────────────
+// Reads an MDX file and pulls out all h2 (##) and h3 (###) headings to build
+// the Table of Contents. The generated `id` matches what rehype-slug produces
+// for the rendered headings, so clicking a TOC link jumps to the right section.
+export function extractHeadings(filePath: string): TocHeading[] {
+  const fileContent = fs.readFileSync(filePath, "utf-8");
+  const { content } = matter(fileContent); // strip frontmatter, keep body
+
+  // Remove fenced code blocks so ```# comments``` inside code aren't treated as headings
+  const withoutCode = content.replace(/```[\s\S]*?```/g, "");
+
+  const slugger = new GithubSlugger(); // fresh per file — matches rehype-slug behaviour
+  const headings: TocHeading[] = [];
+
+  for (const line of withoutCode.split("\n")) {
+    // Match lines starting with ## or ### (h2 or h3) — we skip h1 (the title)
+    const match = /^(#{2,3})\s+(.+?)\s*$/.exec(line);
+    if (match) {
+      const depth = match[1].length;       // 2 or 3
+      const text = match[2].trim();
+      const id = slugger.slug(text);       // same algorithm rehype-slug uses
+      headings.push({ depth, text, id });
+    }
+  }
+
+  return headings;
+}
+
+// ── CALCULATE READING TIME ────────────────────────────────────────────────────
+// Estimates how long an article takes to read, based on ~200 words per minute.
+// Returns a string like "8 min read".
+export function calculateReadingTime(filePath: string): string {
+  const fileContent = fs.readFileSync(filePath, "utf-8");
+  const { content } = matter(fileContent);
+
+  // Count words (split on whitespace, ignore empty strings)
+  const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
+  const minutes = Math.max(1, Math.round(wordCount / 200)); // at least 1 min
+
+  return `${minutes} min read`;
+}
+
+// ── GET ADJACENT TOPICS (Previous / Next) ─────────────────────────────────────
+// For a given topic slug, finds the previous and next topics in the same
+// category (or subject), ordered by the `order` field in their frontmatter.
+// Used for the Previous/Next navigation at the bottom of a topic page.
+export function getAdjacentTopics(slug: string[]): {
+  previous: { slug: string[]; meta: ContentMeta } | null;
+  next: { slug: string[]; meta: ContentMeta } | null;
+} {
+  // Get all sibling topics in the same folder
+  let siblings: { slug: string[]; meta: ContentMeta }[];
+
+  if (slug.length === 3) {
+    // Topic inside a category: ['history', 'modern-india', 'revolt-of-1857']
+    siblings = getTopicsInCategory(slug[0], slug[1]);
+  } else if (slug.length === 2) {
+    // Topic directly under a subject: ['human-body', 'blood']
+    siblings = getTopicsInSubject(slug[0]);
+  } else {
+    return { previous: null, next: null };
+  }
+
+  // Sort siblings by their `order` field (fallback: alphabetical by title)
+  siblings.sort((a, b) => {
+    const aOrder = a.meta.order ?? 999;
+    const bOrder = b.meta.order ?? 999;
+    if (aOrder !== bOrder) return aOrder - bOrder;
+    return a.meta.title.localeCompare(b.meta.title);
+  });
+
+  // Find where the current topic sits in the ordered list
+  const currentPath = slug.join("/");
+  const currentIndex = siblings.findIndex((s) => s.slug.join("/") === currentPath);
+
+  if (currentIndex === -1) return { previous: null, next: null };
+
+  return {
+    previous: currentIndex > 0 ? siblings[currentIndex - 1] : null,
+    next: currentIndex < siblings.length - 1 ? siblings[currentIndex + 1] : null,
+  };
+}
+
+// ── GET RELATED TOPICS ────────────────────────────────────────────────────────
+// Returns up to `limit` other topics from the same category (excluding the
+// current one), for the "Related Topics" section at the bottom of a topic page.
+export function getRelatedTopics(slug: string[], limit = 3): { slug: string[]; meta: ContentMeta }[] {
+  let siblings: { slug: string[]; meta: ContentMeta }[];
+
+  if (slug.length === 3) {
+    siblings = getTopicsInCategory(slug[0], slug[1]);
+  } else if (slug.length === 2) {
+    siblings = getTopicsInSubject(slug[0]);
+  } else {
+    return [];
+  }
+
+  const currentPath = slug.join("/");
+  return siblings
+    .filter((s) => s.slug.join("/") !== currentPath) // exclude current topic
+    .slice(0, limit);
 }

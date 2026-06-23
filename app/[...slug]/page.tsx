@@ -8,6 +8,7 @@
 
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import Image from "next/image";
 import {
   getAllSlugs,
   slugToFilePath,
@@ -17,9 +18,16 @@ import {
   getCategoriesInSubject,
   getTopicsInSubject,
   getTopicsInCategory,
+  extractHeadings,
+  calculateReadingTime,
+  getAdjacentTopics,
+  getRelatedTopics,
 } from "@/lib/content";
 import Breadcrumb from "@/components/Breadcrumb";
 import ContentCard from "@/components/ContentCard";
+import TableOfContents from "@/components/TableOfContents";
+import QuickFacts from "@/components/QuickFacts";
+import TopicNav from "@/components/TopicNav";
 
 // ── GENERATE STATIC PARAMS ────────────────────────────────────────────────────
 // Tells Next.js every URL that exists so pages are pre-built at deploy time.
@@ -207,14 +215,141 @@ export default async function ContentPage({
   // Cast to React.ComponentType — TypeScript now knows it's defined
   const ContentComponent = mdxMod!.default as React.ComponentType;
 
-  return (
-    <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12">
-      <Breadcrumb items={breadcrumbs} />
+  // Gather all the data the topic page needs
+  const headings = extractHeadings(filePath!);          // Table of Contents
+  const readingTime = calculateReadingTime(filePath!);  // "8 min read"
+  const { previous, next } = getAdjacentTopics(slug);   // Prev/Next navigation
+  const relatedTopics = getRelatedTopics(slug);         // Related Topics cards
 
-      {/* Reading column — max 720px for comfortable long-form reading */}
-      <article className="max-w-[720px]">
-        <ContentComponent />
-      </article>
+  // Pretty subject label for the meta bar (e.g. "history" → "History")
+  const subjectLabel = slug[0]
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+
+  // Meta bar items reused in both the banner and the plain header
+  const metaBar = (light: boolean) => (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <span
+        className={`font-body text-xs font-semibold uppercase tracking-wider ${
+          light ? "text-on-dark" : "text-sapphire"
+        }`}
+      >
+        {subjectLabel}
+      </span>
+      <span className={light ? "text-on-dark/50" : "text-muted opacity-40"}>·</span>
+      <span className={`font-body text-sm ${light ? "text-on-dark/80" : "text-muted"}`}>
+        {readingTime}
+      </span>
+      {meta.date && (
+        <>
+          <span className={light ? "text-on-dark/50" : "text-muted opacity-40"}>·</span>
+          <span className={`font-body text-sm ${light ? "text-on-dark/80" : "text-muted"}`}>
+            Updated {meta.date}
+          </span>
+        </>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-8 md:py-12">
+
+      {/* ── HEADER ─────────────────────────────────────────────────────────────
+          If the topic has a banner image, show a big hero banner with the title,
+          breadcrumb, and meta bar overlaid on top of it (with a dark gradient
+          overlay for readability). If there is no image, fall back to a clean
+          text header inside the reading column further below.                    */}
+      {meta.image ? (
+        <section className="relative w-full h-[320px] md:h-[420px] rounded-card overflow-hidden mb-10">
+          {/* The banner image fills the whole section */}
+          <Image
+            src={meta.image}
+            alt={meta.imageCaption ?? meta.title}
+            fill
+            priority   // this is the largest image on the page — load it first (good for LCP)
+            className="object-cover"
+            sizes="(max-width: 1200px) 100vw, 1200px"
+          />
+
+          {/* Dark gradient overlay — darker at the bottom so the white text on
+              top of the image stays readable regardless of the photo.
+              A flat dark tint is layered under the gradient for extra contrast. */}
+          <div className="absolute inset-0 bg-navy-dark/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-navy-dark/95 via-navy-dark/70 to-navy-dark/30" />
+
+          {/* Overlaid content, anchored to the bottom-left of the banner */}
+          <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-10">
+            <Breadcrumb items={breadcrumbs} tone="light" />
+            <h1 className="font-heading text-3xl md:text-5xl font-bold text-on-dark leading-tight max-w-3xl">
+              {meta.title}
+            </h1>
+            <div className="mt-4">{metaBar(true)}</div>
+          </div>
+        </section>
+      ) : (
+        // No banner image — plain breadcrumb on the light page background
+        <Breadcrumb items={breadcrumbs} />
+      )}
+
+      {/* TWO-COLUMN LAYOUT:
+          - Main reading column (left, max 720px)
+          - Sticky sidebar (right, ~280px) — only on large screens (lg+)
+          On tablet/mobile the sidebar drops below the article.                   */}
+      <div className="flex flex-col lg:flex-row gap-10">
+
+        {/* ── MAIN READING COLUMN ──────────────────────────────────────────────*/}
+        <div className="min-w-0 flex-1 max-w-[720px]">
+
+          {/* Plain text header — only shown when there is NO banner image
+              (when there is a banner, the title + meta are already on it). */}
+          {!meta.image && (
+            <>
+              <h1 className="font-heading text-4xl font-bold text-navy leading-tight">
+                {meta.title}
+              </h1>
+              <div className="mt-4 mb-8">{metaBar(false)}</div>
+            </>
+          )}
+
+          {/* The article content (rendered from MDX, styled via mdx-components.tsx) */}
+          <article>
+            <ContentComponent />
+          </article>
+
+          {/* Previous / Next navigation */}
+          <TopicNav previous={previous} next={next} />
+
+          {/* Related Topics */}
+          {relatedTopics.length > 0 && (
+            <section className="mt-12">
+              <h2 className="font-heading text-2xl font-semibold text-navy mb-5">
+                Related Topics
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {relatedTopics.map((topic) => (
+                  <ContentCard
+                    key={topic.slug.join("/")}
+                    title={topic.meta.title}
+                    href={`/${topic.slug.join("/")}`}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+
+        {/* ── STICKY SIDEBAR ───────────────────────────────────────────────────
+            Hidden on mobile/tablet, visible on large screens.
+            `sticky top-24` keeps it visible as the user scrolls (24 = clears the
+            sticky header). `self-start` is required for sticky to work in flex.  */}
+        <aside className="hidden lg:block w-[280px] flex-shrink-0">
+          <div className="sticky top-24 flex flex-col gap-5">
+            <TableOfContents headings={headings} />
+            {meta.quickFacts && <QuickFacts facts={meta.quickFacts} />}
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

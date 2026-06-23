@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450" role="img" aria-label="Image placeholder">
+  <rect width="800" height="450" fill="#e5eeff"/>
+  <rect x="1" y="1" width="798" height="448" fill="none" stroke="#dce9ff" stroke-width="2"/>
+  <circle cx="400" cy="190" r="46" fill="none" stroke="#2563eb" stroke-width="4" opacity="0.5"/>
+  <path d="M376 196 l16 16 l32 -36" fill="none" stroke="#2563eb" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+  <text x="400" y="290" font-family="Georgia, serif" font-size="26" fill="#0f172a" text-anchor="middle">GKWorld360</text>
+  <text x="400" y="322" font-family="Arial, sans-serif" font-size="16" fill="#45464d" text-anchor="middle">Image placeholder — replace with a real diagram or photo</text>
+</svg>

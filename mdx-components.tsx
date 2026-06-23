@@ -13,9 +13,33 @@
 
 import type { MDXComponents } from "mdx/types";
 import Link from "next/link";
+import KeyTakeaways from "@/components/KeyTakeaways";
+import TopicImage from "@/components/TopicImage";
 
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
+    // ── CUSTOM CONTENT COMPONENTS ────────────────────────────────────────────
+    // These can be used directly inside any .mdx file without importing them.
+    // Example:  <KeyTakeaways points={["...", "..."]} />
+    // Example:  <TopicImage src="..." alt="..." width={1200} height={675} caption="..." />
+    KeyTakeaways,
+    TopicImage,
+
+    // ── MARKDOWN IMAGES ──────────────────────────────────────────────────────
+    // Handles simple markdown image syntax:  ![alt text](/images/example.jpg)
+    // Renders a responsive, rounded image that scales to the column width while
+    // preserving its natural aspect ratio. Use this for quick inline images;
+    // use <TopicImage> when you want optimisation and a caption.
+    // eslint-disable-next-line @next/next/no-img-element
+    img: ({ src, alt }) => (
+      <img
+        src={typeof src === "string" ? src : ""}
+        alt={alt ?? ""}
+        loading="lazy"
+        className="rounded-card w-full h-auto border border-hairline my-6"
+      />
+    ),
+
     // ── HEADINGS ────────────────────────────────────────────────────────────
     // All headings use Source Serif 4 (font-heading) in Deep Navy.
     // Sizes match the type scale from the Academic Clarity design system.
@@ -27,16 +51,17 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
       </h1>
     ),
 
-    h2: ({ children }) => (
+    h2: ({ children, id }) => (
       // headline-lg: 30px/600 — major section heading
-      <h2 className="font-heading text-3xl font-semibold text-navy mt-10 mb-4 leading-snug">
+      // scroll-mt-24 ensures TOC anchor jumps land below the sticky header
+      <h2 id={id} className="font-heading text-3xl font-semibold text-navy mt-10 mb-4 leading-snug scroll-mt-24 clear-both">
         {children}
       </h2>
     ),
 
-    h3: ({ children }) => (
+    h3: ({ children, id }) => (
       // headline-md: 24px/600 — sub-section heading
-      <h3 className="font-heading text-2xl font-semibold text-navy mt-8 mb-3 leading-snug">
+      <h3 id={id} className="font-heading text-2xl font-semibold text-navy mt-8 mb-3 leading-snug scroll-mt-24">
         {children}
       </h3>
     ),
