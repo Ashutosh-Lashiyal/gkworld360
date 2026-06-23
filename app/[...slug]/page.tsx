@@ -28,6 +28,8 @@ import ContentCard from "@/components/ContentCard";
 import TableOfContents from "@/components/TableOfContents";
 import QuickFacts from "@/components/QuickFacts";
 import TopicNav from "@/components/TopicNav";
+import JsonLd from "@/components/JsonLd";
+import { SITE_URL, SITE_NAME, absoluteUrl } from "@/lib/site";
 
 // ── GENERATE STATIC PARAMS ────────────────────────────────────────────────────
 // Tells Next.js every URL that exists so pages are pre-built at deploy time.
@@ -47,9 +49,30 @@ export async function generateMetadata({
   if (!filePath) return {};
 
   const meta = getContentMeta(filePath);
+  const url = absoluteUrl("/" + slug.join("/"));
+  // Use the topic's banner image for the social-media preview, if it has one
+  const ogImages = meta.image ? [{ url: meta.image }] : undefined;
+
   return {
-    title: meta.title ? `${meta.title} | GKWorld360` : "GKWorld360",
+    title: meta.title || SITE_NAME,
     description: meta.description ?? undefined,
+    // Canonical URL — tells search engines the one true address for this page,
+    // even if it's ever reached via a different URL.
+    alternates: { canonical: url },
+    openGraph: {
+      type: "article",
+      title: meta.title,
+      description: meta.description ?? undefined,
+      url,
+      siteName: SITE_NAME,
+      images: ogImages,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: meta.title,
+      description: meta.description ?? undefined,
+      images: ogImages,
+    },
   };
 }
 
@@ -272,8 +295,40 @@ export default async function ContentPage({
     </div>
   );
 
+  // Structured data for this topic — an Article plus its breadcrumb trail.
+  // This helps Google show rich results and helps AI engines cite the page.
+  const topicUrl = absoluteUrl("/" + slug.join("/"));
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: meta.title,
+    description: meta.description,
+    ...(meta.image ? { image: absoluteUrl(meta.image) } : {}),
+    ...(meta.date ? { dateModified: meta.date, datePublished: meta.date } : {}),
+    mainEntityOfPage: topicUrl,
+    author: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
+    publisher: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
+  };
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+      ...breadcrumbs.map((b, i) => ({
+        "@type": "ListItem",
+        position: i + 2,
+        name: b.label,
+        item: absoluteUrl(b.href),
+      })),
+    ],
+  };
+
   return (
     <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-8 md:py-12">
+
+      {/* Structured data (invisible) — Article + breadcrumb trail for SEO/GEO */}
+      <JsonLd data={articleJsonLd} />
+      <JsonLd data={breadcrumbJsonLd} />
 
       {/* ── HEADER ─────────────────────────────────────────────────────────────
           If the topic has a banner image, show a big hero banner with the title,

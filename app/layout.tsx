@@ -6,6 +6,10 @@ import { Source_Serif_4, Inter } from "next/font/google";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
+// Site config — URL, name, and the master indexing switch
+import { SITE_URL, SITE_NAME, SITE_TAGLINE, SITE_DESCRIPTION, INDEXING_ENABLED } from "@/lib/site";
+import JsonLd from "@/components/JsonLd";
+
 // Our global design tokens and base styles
 import "./globals.css";
 
@@ -33,11 +37,41 @@ const inter = Inter({
 
 // ── SITE METADATA ─────────────────────────────────────────────────────────────
 // This appears in: browser tab titles, Google search results, social media previews.
-// We will expand this per-page later (each article will have its own title + description).
+// Individual pages (topics, subjects) override the title/description with their own.
 export const metadata: Metadata = {
-  title: "GKWorld360 | Trusted Educational Content, General Knowledge & Current Affairs for Every Learner",
-  description:
-    "High-quality general knowledge articles, current affairs, study resources and exam preparation content covering History, Geography, Science, Polity, Economics and more.",
+  // metadataBase lets Next.js turn relative image paths into absolute URLs for
+  // social-media previews (Open Graph / Twitter cards).
+  metadataBase: new URL(SITE_URL),
+
+  // Default title. Pages can set their own; this is the fallback (e.g. homepage).
+  title: {
+    default: `${SITE_NAME} | ${SITE_TAGLINE}`,
+    // Pages that set a title get "Their Title | GKWorld360" automatically.
+    template: `%s | ${SITE_NAME}`,
+  },
+  description: SITE_DESCRIPTION,
+
+  // The master indexing switch. When INDEXING_ENABLED is false (pre-launch),
+  // every page carries a "noindex, nofollow" instruction — a second safety layer
+  // on top of robots.txt, so nothing can be indexed until launch.
+  robots: {
+    index: INDEXING_ENABLED,
+    follow: INDEXING_ENABLED,
+  },
+
+  // Default social-media preview (Open Graph). Pages override per-page where useful.
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    title: `${SITE_NAME} | ${SITE_TAGLINE}`,
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${SITE_NAME} | ${SITE_TAGLINE}`,
+    description: SITE_DESCRIPTION,
+  },
 };
 
 // ── ROOT LAYOUT ───────────────────────────────────────────────────────────────
@@ -64,6 +98,31 @@ export default function RootLayout({
           "min-h-screen",    // page is always at least the full height of the viewport
         ].join(" ")}
       >
+        {/* Site-wide structured data: tells search/AI engines what GKWorld360 is,
+            and enables the search box to appear in Google results (SearchAction). */}
+        <JsonLd
+          data={{
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: SITE_NAME,
+            url: SITE_URL,
+            description: SITE_DESCRIPTION,
+            publisher: {
+              "@type": "Organization",
+              name: SITE_NAME,
+              url: SITE_URL,
+            },
+            potentialAction: {
+              "@type": "SearchAction",
+              target: {
+                "@type": "EntryPoint",
+                urlTemplate: `${SITE_URL}/search?q={search_term_string}`,
+              },
+              "query-input": "required name=search_term_string",
+            },
+          }}
+        />
+
         {/* Header sits at the top of every page — sticky, always visible */}
         <Header />
 
