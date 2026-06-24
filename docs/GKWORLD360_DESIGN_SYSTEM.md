@@ -1,11 +1,12 @@
 # GKWorld360 — Design System
 
 **Source of truth (text):** `docs/GKWORLD360_MASTER_BLUEPRINT.md`, `docs/GKWORLD360_TECH_FOUNDATION.md`, `docs/GKWORLD360_PROJECT_STRUCTURE.md`
-**Source of truth (visual):** Stitch project **"GKWorld360 MVP Final Designs"** (ID `10446470816480953843`), design theme **"Academic Clarity"**
-**Extracted from Stitch on:** 18 June 2026
-**Purpose:** This document is the permanent bridge between **Stitch designs → Claude Code implementation → future AI sessions.** It records the design system that *already exists* in Stitch. It does **not** invent a new one.
+**Source of truth (visual / design):** **This document + the implemented code (the design tokens in `app/globals.css` and the components) + the live site.** As of 25 June 2026, the design system has been extracted from Stitch into the codebase; **Stitch is no longer the source of truth.**
+**Design theme:** **"Academic Clarity"** — originally generated in the Stitch project "GKWorld360 MVP Final Designs" (ID `10446470816480953843`, extracted 18 June 2026), now owned by the code.
+**Stitch's role now:** an *optional* tool for exploring brand-new, visually distinct pages or a future redesign — not a thing to keep in sync for everyday work.
+**Purpose:** This document records the implemented design system (colours, fonts, spacing, components) so any future session can apply it consistently.
 
-> **How to read this document:** Every colour, font, size, and spacing value below was pulled directly from the Stitch project's design theme or its actual homepage screens. Where Stitch does not provide a definite value, the document says **"To be decided later."** Nothing here is guessed.
+> **How to read this document:** The values below are the project's design tokens, now living in `app/globals.css`. When the design evolves, change the tokens/components in code and update this document to match — the **code + this doc + the live site** are the source of truth, not Stitch.
 
 ---
 
@@ -336,10 +337,11 @@ New components should feel like natural members of the same family. When somethi
 
 # Important Rules
 
-1. **Do not invent anything.** Every value used in implementation must come from this document (which is drawn from Stitch) or from a fresh inspection of the Stitch project.
-2. **If a value cannot be determined from Stitch, it is marked "To be decided later"** in this document. Do not fill such gaps with guesses — raise them for a decision.
-3. **Stitch is the visual source of truth.** If Stitch and this document ever disagree, re-inspect Stitch and update this document.
-4. **Keep this document current.** When the design evolves in Stitch, update the affected sections here so the bridge between Stitch and implementation never goes stale.
+1. **Reuse the existing tokens and components.** Every colour, font, size, and spacing value should come from the design tokens in `app/globals.css` (recorded in this document). Don't hard-code raw values in components.
+2. **If a value isn't defined yet, decide it deliberately** — pick a value consistent with the system, add it to the tokens, and record it here. Don't scatter one-off values.
+3. **The source of truth is the code + this document + the live site.** If they ever disagree, the implemented code wins; update this document to match.
+4. **Keep this document current.** When the design evolves (new tokens, new components, restyles), update the affected sections here so future sessions stay accurate.
+5. **Stitch is optional now.** Use it only to explore brand-new visually distinct pages or a future redesign; it is not kept in sync for everyday changes.
 
 ### Open items flagged for a decision ("To be decided later")
 - Header **sticky** behaviour.
