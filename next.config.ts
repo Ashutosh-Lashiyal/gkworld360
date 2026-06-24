@@ -22,7 +22,10 @@ const withMDX = createMDX({
     // Without this, the frontmatter (title, description etc.) would appear as
     // visible text on the page instead of staying hidden as metadata.
     // String form is required for Turbopack compatibility (functions can't pass to Rust).
-    remarkPlugins: ["remark-frontmatter"],
+    // remark-gfm: adds GitHub Flavored Markdown — most importantly TABLES, plus
+    // strikethrough, task lists, and autolinks. Without it, | pipe | tables |
+    // render as plain text instead of an actual table.
+    remarkPlugins: ["remark-frontmatter", "remark-gfm"],
 
     // rehype-slug: automatically adds an `id` to every heading (h2, h3, etc.)
     // based on its text. This lets the Table of Contents links jump to sections
