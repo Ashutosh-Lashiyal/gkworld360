@@ -9,6 +9,8 @@ import Footer from "@/components/Footer";
 // Site config — URL, name, and the master indexing switch
 import { SITE_URL, SITE_NAME, SITE_TAGLINE, SITE_DESCRIPTION, INDEXING_ENABLED } from "@/lib/site";
 import JsonLd from "@/components/JsonLd";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 // Our global design tokens and base styles
 import "./globals.css";
@@ -144,6 +146,14 @@ export default function RootLayout({
 
         {/* Footer sits at the bottom of every page */}
         <Footer />
+
+        {/* Vercel Web Analytics — counts visitors, page views, top pages, referrers.
+            Privacy-friendly (no cookies). Must also be enabled once in the Vercel
+            dashboard (Project → Analytics → Enable). */}
+        <Analytics />
+
+        {/* Vercel Speed Insights — real-user performance (Core Web Vitals). */}
+        <SpeedInsights />
       </body>
     </html>
   );
