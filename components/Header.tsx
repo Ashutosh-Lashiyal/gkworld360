@@ -12,7 +12,7 @@ import Link from "next/link"; // Next.js Link = instant page navigation without 
 const navLinks = [
   { label: "Home",     href: "/" },
   { label: "Subjects", href: "/subjects" },
-  { label: "Articles", href: "/articles" },
+  { label: "News",     href: "/news" },
   { label: "About",    href: "/about" },
   { label: "Contact",  href: "/contact" },
 ];

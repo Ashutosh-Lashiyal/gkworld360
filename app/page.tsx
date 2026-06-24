@@ -6,8 +6,9 @@ import Link from "next/link";
 import SearchBox from "@/components/SearchBox";
 import SubjectCard from "@/components/SubjectCard";
 import TopicCard from "@/components/TopicCard";
-import ArticleCard from "@/components/ArticleCard";
+import NewsCard from "@/components/NewsCard";
 import { getHomepageSubjects } from "@/lib/content";
+import { getRecentNews } from "@/lib/news";
 
 // ── DUMMY DATA ────────────────────────────────────────────────────────────────
 // Placeholder content for Popular Topics, Recently Added Topics, and Articles.
@@ -67,36 +68,10 @@ const RECENTLY_ADDED_TOPICS = [
   },
 ];
 
-const RECENT_ARTICLES = [
-  {
-    title: "Top 50 GK Questions for Competitive Exams 2026",
-    category: "General Knowledge",
-    description: "A curated list of the most frequently asked general knowledge questions across UPSC, SSC, Railways, and State PSC examinations.",
-    href: "/",
-    postedDate: "Posted today",
-    readTime: "12 min read",
-  },
-  {
-    title: "Important Days and Dates — June 2026",
-    category: "Current Affairs",
-    description: "A complete list of important national and international days observed in June 2026 — essential for competitive exam preparation.",
-    href: "/",
-    postedDate: "Posted today",
-    readTime: "5 min read",
-  },
-  {
-    title: "Nobel Prize Winners — Complete List and Key Facts",
-    category: "Awards & Honours",
-    description: "From Physics to Peace, learn about all Nobel Prize categories, recent winners, and the key facts examiners love to ask about.",
-    href: "/",
-    postedDate: "Posted yesterday",
-    readTime: "9 min read",
-  },
-];
-
 // ── HOMEPAGE ──────────────────────────────────────────────────────────────────
 export default function HomePage() {
   const homepageSubjects = getHomepageSubjects();
+  const recentNews = getRecentNews(3); // newest 3 news items for the homepage
 
   return (
     <>
@@ -253,42 +228,36 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ══ SECTION 6: RECENTLY ADDED ARTICLES ════════════════════════════════
-          White background. 3-column card grid.
-          Replace dummy data once real articles are published.                    */}
-      <section className="bg-background">
-        <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-16">
+      {/* ══ SECTION 6: RECENTLY ADDED NEWS ════════════════════════════════════
+          White background. 3-column card grid, populated from real news items
+          (newest first). Hidden entirely when no news has been published yet.    */}
+      {recentNews.length > 0 && (
+        <section className="bg-background">
+          <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-16">
 
-          <div className="flex items-end justify-between mb-8">
-            <div>
-              <h2 className="font-heading text-3xl font-semibold text-navy">
-                Recently Added Articles
-              </h2>
-              <p className="font-body text-base text-muted mt-1">
-                Latest articles and study resources
-              </p>
+            <div className="flex items-end justify-between mb-8">
+              <div>
+                <h2 className="font-heading text-3xl font-semibold text-navy">
+                  Recently Added News
+                </h2>
+                <p className="font-body text-base text-muted mt-1">
+                  Latest current affairs for competitive exams
+                </p>
+              </div>
+              <Link href="/news" className="font-body text-sm font-medium text-sapphire hover:text-sapphire-dark transition-colors whitespace-nowrap">
+                View all news →
+              </Link>
             </div>
-            <Link href="/articles" className="font-body text-sm font-medium text-sapphire hover:text-sapphire-dark transition-colors whitespace-nowrap">
-              View all articles →
-            </Link>
-          </div>
 
-          {/* 3 columns desktop, 2 tablet, 1 mobile */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {RECENT_ARTICLES.map((article) => (
-              <ArticleCard
-                key={article.title}
-                title={article.title}
-                category={article.category}
-                description={article.description}
-                href={article.href}
-                postedDate={article.postedDate}
-                readTime={article.readTime}
-              />
-            ))}
+            {/* 3 columns desktop, 2 tablet, 1 mobile */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {recentNews.map((item) => (
+                <NewsCard key={item.url} url={item.url} meta={item.meta} />
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ══ SECTION 7: ABOUT GKWORLD360 ════════════════════════════════════════
           Light surface background. Two-column on desktop: text left, image right.

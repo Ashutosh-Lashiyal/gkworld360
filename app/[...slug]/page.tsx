@@ -32,6 +32,8 @@ import TableOfContents from "@/components/TableOfContents";
 import QuickFacts from "@/components/QuickFacts";
 import TopicNav from "@/components/TopicNav";
 import JsonLd from "@/components/JsonLd";
+import NewsArticleView from "@/components/NewsArticleView";
+import { getRecentNews } from "@/lib/news";
 import { SITE_URL, SITE_NAME, absoluteUrl } from "@/lib/site";
 
 // ── GENERATE STATIC PARAMS ────────────────────────────────────────────────────
@@ -138,6 +140,11 @@ export default async function ContentPage({
   // crumbs read "Home › History › Modern India › …" in both languages.
   const breadcrumbTitles: Record<string, string> = { [contentSlug[contentSlug.length - 1]]: meta.title };
   const breadcrumbs = buildBreadcrumbs(contentSlug, breadcrumbTitles);
+
+  // News year/month "folder" paths (e.g. /news/2026 or /news/2026/06) are not
+  // real pages — only the listing (/news, handled by app/news/page.tsx) and the
+  // individual items (/news/YYYY/MM/slug, handled in the topic branch) exist.
+  if (contentSlug[0] === "news" && pageType !== "topic") notFound();
 
   // ── SUBJECT PAGE (top-level folder, e.g. /history) ────────────────────────
   // A subject shows its CATEGORIES if it has any (e.g. History → Modern India).
@@ -318,6 +325,31 @@ export default async function ContentPage({
     .split("-")
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
+
+  // ── NEWS ITEM ──────────────────────────────────────────────────────────────
+  // News items live under content/news/... and use the lighter NewsArticleView
+  // layout instead of the heavy Topic layout. Everything else (bilingual,
+  // sitemap, search, static generation) is shared with topics.
+  if (contentSlug[0] === "news") {
+    const currentUrl = "/" + slug.join("/");
+    const recent = getRecentNews(4)
+      .filter((n) => n.url !== "/" + contentSlug.join("/"))
+      .slice(0, 3);
+
+    return (
+      <NewsArticleView
+        meta={meta}
+        lang={lang}
+        url={currentUrl}
+        enHref={enHref}
+        hiHref={hiHref}
+        readingTime={readingTime}
+        recent={recent}
+      >
+        <ContentComponent />
+      </NewsArticleView>
+    );
+  }
 
   // Meta bar items reused in both the banner and the plain header
   const metaBar = (light: boolean) => (
