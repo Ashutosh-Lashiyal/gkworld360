@@ -55,26 +55,62 @@ export type TocHeading = {
 //   ['history', 'modern-india']     → content/history/modern-india/overview.mdx (category)
 //
 // Returns null if neither file exists — the page will show a 404.
-export function slugToFilePath(slugArray: string[]): string | null {
-  // Option 1: a direct .mdx file matching the full slug path
-  // e.g. ['history', 'revolt-of-1857'] → content/history/revolt-of-1857.mdx
-  const directPath = path.join(CONTENT_DIR, ...slugArray) + ".mdx";
-  if (fs.existsSync(directPath)) return directPath;
 
-  // Option 2: an overview.mdx inside a folder matching the slug
-  // e.g. ['history'] → content/history/overview.mdx
-  // e.g. ['history', 'modern-india'] → content/history/modern-india/overview.mdx
-  const overviewPath = path.join(CONTENT_DIR, ...slugArray, "overview.mdx");
-  if (fs.existsSync(overviewPath)) return overviewPath;
+// ── LANGUAGE SUPPORT ──────────────────────────────────────────────────────────
+// GKWorld360 content can exist in two languages. English is the default; Hindi
+// versions live in sibling files named "<name>.hi.mdx" and are served under a
+// "/hi/..." URL prefix.
+//
+//   content/history/modern-india/revolt-of-1857.mdx       → /history/modern-india/revolt-of-1857   (English)
+//   content/history/modern-india/revolt-of-1857.hi.mdx    → /hi/history/modern-india/revolt-of-1857 (Hindi)
+export type Lang = "en" | "hi";
 
-  return null; // no file found — will result in a 404
+// Splits a URL slug into its language and its content path.
+//   ['hi','history','revolt']  → { lang: 'hi', contentSlug: ['history','revolt'] }
+//   ['history','revolt']       → { lang: 'en', contentSlug: ['history','revolt'] }
+export function parseLangSlug(slugArray: string[]): { lang: Lang; contentSlug: string[] } {
+  if (slugArray[0] === "hi") {
+    return { lang: "hi", contentSlug: slugArray.slice(1) };
+  }
+  return { lang: "en", contentSlug: slugArray };
 }
 
-// ── IS OVERVIEW ───────────────────────────────────────────────────────────────
-// Tells us whether a file path is an overview.mdx (used in the page component
-// to know which dynamic import path to use).
-export function isOverviewFile(filePath: string): boolean {
-  return filePath.endsWith("/overview.mdx") || filePath.endsWith("\\overview.mdx");
+// The file suffixes for each language
+function fileSuffix(lang: Lang): string {
+  return lang === "hi" ? ".hi.mdx" : ".mdx";
+}
+function overviewName(lang: Lang): string {
+  return lang === "hi" ? "overview.hi.mdx" : "overview.mdx";
+}
+
+// Resolves a content path + language to the actual file on disk.
+// Returns the file path and whether it's an overview (folder intro) file.
+export function resolveContentFile(
+  contentSlug: string[],
+  lang: Lang
+): { filePath: string; isOverview: boolean } | null {
+  // Option 1: a direct file, e.g. content/history/revolt.mdx (or .hi.mdx)
+  const directPath = path.join(CONTENT_DIR, ...contentSlug) + fileSuffix(lang);
+  if (fs.existsSync(directPath)) return { filePath: directPath, isOverview: false };
+
+  // Option 2: an overview file inside the folder, e.g. content/history/overview.mdx
+  const overviewPath = path.join(CONTENT_DIR, ...contentSlug, overviewName(lang));
+  if (fs.existsSync(overviewPath)) return { filePath: overviewPath, isOverview: true };
+
+  return null;
+}
+
+// Whether a translation exists for a given content path in a given language.
+// Used to decide whether to show the language-toggle button.
+export function hasTranslation(contentSlug: string[], lang: Lang): boolean {
+  return resolveContentFile(contentSlug, lang) !== null;
+}
+
+// Takes a full URL slug (which may start with "hi"), works out the language,
+// and returns the matching file path — or null for a 404.
+export function slugToFilePath(slugArray: string[]): string | null {
+  const { lang, contentSlug } = parseLangSlug(slugArray);
+  return resolveContentFile(contentSlug, lang)?.filePath ?? null;
 }
 
 // ── GET CONTENT METADATA ──────────────────────────────────────────────────────
@@ -103,7 +139,9 @@ export function getAllSlugs(): string[][] {
 }
 
 // ── SCAN DIRECTORY (internal helper) ─────────────────────────────────────────
-// Recursively walks a directory tree and collects slug arrays for every MDX file.
+// Recursively walks a directory tree and collects URL slug arrays for every MDX
+// file — in BOTH languages. English files map to plain slugs; Hindi files
+// (".hi.mdx") map to slugs prefixed with "hi".
 function scanDirectory(dir: string, baseDir: string): string[][] {
   const slugArrays: string[][] = [];
   const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -114,29 +152,35 @@ function scanDirectory(dir: string, baseDir: string): string[][] {
     if (entry.isDirectory()) {
       // Go deeper into sub-folders (categories, etc.)
       slugArrays.push(...scanDirectory(fullPath, baseDir));
-    } else if (entry.name.endsWith(".mdx")) {
-      // Convert the file path back to a slug array
-      const relativePath = path.relative(baseDir, fullPath);
-      // Normalise Windows backslashes to forward slashes
-      const normalised = relativePath.replace(/\\/g, "/");
-      // Remove the .mdx extension
-      const withoutExtension = normalised.replace(/\.mdx$/, "");
-      const parts = withoutExtension.split("/");
-
-      if (parts[parts.length - 1] === "overview") {
-        // overview.mdx → the slug is just the parent folder path
-        // content/history/overview.mdx → slug: ['history']
-        parts.pop();
-        if (parts.length > 0) {
-          slugArrays.push(parts);
-        }
-        // If parts is empty, it means content/overview.mdx — skip it (no URL for root overview)
-      } else {
-        // Regular file → full path becomes the slug
-        // content/history/revolt-of-1857.mdx → slug: ['history', 'revolt-of-1857']
-        slugArrays.push(parts);
-      }
+      continue;
     }
+
+    if (!entry.name.endsWith(".mdx")) continue;
+
+    // Is this the Hindi variant of a piece of content?
+    const isHindi = entry.name.endsWith(".hi.mdx");
+
+    // The folder path of this file, relative to content/ (e.g. "history/modern-india")
+    const relativeDir = path.relative(baseDir, dir).replace(/\\/g, "/");
+    const parentParts = relativeDir ? relativeDir.split("/") : [];
+
+    // The file's base name with its extension stripped
+    const base = entry.name.replace(isHindi ? /\.hi\.mdx$/ : /\.mdx$/, "");
+
+    // Build the CONTENT path (language-independent)
+    let contentParts: string[];
+    if (base === "overview") {
+      // overview file → the content path is just the folder
+      contentParts = parentParts;
+    } else {
+      contentParts = [...parentParts, base];
+    }
+
+    // A root-level overview (content/overview.mdx) has no URL — skip it
+    if (contentParts.length === 0) continue;
+
+    // Hindi files get the "hi" URL prefix; English files don't
+    slugArrays.push(isHindi ? ["hi", ...contentParts] : contentParts);
   }
 
   return slugArrays;
@@ -214,14 +258,18 @@ export function getAllSubjects(): { slug: string; meta: ContentMeta & { homepage
 export type ContentPageType = "topic" | "subject" | "category";
 
 export function getPageType(slugArray: string[]): ContentPageType {
-  // If a direct .mdx file exists, it's a topic page (e.g. /history/modern-india/revolt-of-1857)
-  const directPath = path.join(CONTENT_DIR, ...slugArray) + ".mdx";
-  if (fs.existsSync(directPath)) return "topic";
+  // Ignore any "hi" language prefix — page type depends on the content path only
+  const { contentSlug } = parseLangSlug(slugArray);
+
+  // If a direct content file exists (in either language), it's a topic page
+  const directEn = path.join(CONTENT_DIR, ...contentSlug) + ".mdx";
+  const directHi = path.join(CONTENT_DIR, ...contentSlug) + ".hi.mdx";
+  if (fs.existsSync(directEn) || fs.existsSync(directHi)) return "topic";
 
   // Otherwise it's a folder. A top-level folder is always a Subject;
   // a nested folder is a Category — regardless of whether it has categories
   // or topics inside it yet.
-  return slugArray.length === 1 ? "subject" : "category";
+  return contentSlug.length === 1 ? "subject" : "category";
 }
 
 // ── GET CATEGORIES IN A SUBJECT ───────────────────────────────────────────────
@@ -263,6 +311,7 @@ export function getTopicsInCategory(
     if (
       entry.isFile() &&
       entry.name.endsWith(".mdx") &&
+      !entry.name.endsWith(".hi.mdx") &&   // skip Hindi variants — they aren't separate topics
       entry.name !== "overview.mdx"
     ) {
       const filePath = path.join(categoryDir, entry.name);
@@ -286,8 +335,13 @@ export function getTopicsInSubject(subject: string): { slug: string[]; meta: Con
   const topics: { slug: string[]; meta: ContentMeta }[] = [];
 
   for (const entry of entries) {
-    // Only direct .mdx files — not overview.mdx, not sub-folders
-    if (entry.isFile() && entry.name.endsWith(".mdx") && entry.name !== "overview.mdx") {
+    // Only direct English .mdx files — not Hindi variants, not overview, not sub-folders
+    if (
+      entry.isFile() &&
+      entry.name.endsWith(".mdx") &&
+      !entry.name.endsWith(".hi.mdx") &&
+      entry.name !== "overview.mdx"
+    ) {
       const filePath = path.join(subjectDir, entry.name);
       const slug = [subject, entry.name.replace(/\.mdx$/, "")];
       const meta = getContentMeta(filePath);

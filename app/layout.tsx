@@ -1,6 +1,6 @@
 // Next.js built-in tools for SEO metadata and optimised font loading
 import type { Metadata } from "next";
-import { Source_Serif_4, Inter } from "next/font/google";
+import { Source_Serif_4, Inter, Noto_Sans_Devanagari } from "next/font/google";
 
 // The permanent shell components — appear on every single page
 import Header from "@/components/Header";
@@ -32,6 +32,16 @@ const inter = Inter({
   variable: "--font-inter",        // sets --font-inter on <html>
   subsets: ["latin"],
   weight: ["400", "500", "600"],   // 400 = body, 500 = small labels, 600 = buttons
+  display: "swap",
+});
+
+// Noto Sans Devanagari — the font for HINDI content (Source Serif 4 and Inter
+// don't support the Devanagari script). Applied automatically to Hindi articles
+// via the .font-hindi class (see globals.css).
+const notoDevanagari = Noto_Sans_Devanagari({
+  variable: "--font-devanagari",   // sets --font-devanagari on <html>
+  subsets: ["devanagari"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -87,7 +97,7 @@ export default function RootLayout({
       lang="en"
       // Applying both font variables to <html> makes them available everywhere on the site.
       // globals.css reads these variables to power the font-heading and font-body Tailwind classes.
-      className={`${sourceSerif4.variable} ${inter.variable}`}
+      className={`${sourceSerif4.variable} ${inter.variable} ${notoDevanagari.variable}`}
     >
       <body
         className={[

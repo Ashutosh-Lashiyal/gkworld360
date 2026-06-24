@@ -117,3 +117,20 @@
     color: #0f172a;     /* Deep Navy — the default heading colour */
   }
 }
+
+/* ── HINDI CONTENT ──────────────────────────────────────────────────────────────
+   Applied (via the .font-hindi class) to wrappers around Hindi article content.
+   It forces both body text AND headings inside to use Noto Sans Devanagari, so
+   Devanagari script renders cleanly and consistently. English fonts (Source Serif 4
+   / Inter) don't include Devanagari glyphs, so this is required for Hindi.        */
+.font-hindi,
+.font-hindi h1,
+.font-hindi h2,
+.font-hindi h3,
+.font-hindi h4,
+.font-hindi h5,
+.font-hindi h6,
+.font-hindi p,
+.font-hindi li {
+  font-family: var(--font-devanagari), system-ui, sans-serif;
+}

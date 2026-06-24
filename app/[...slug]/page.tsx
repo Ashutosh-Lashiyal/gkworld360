@@ -13,7 +13,6 @@ import {
   getAllSlugs,
   slugToFilePath,
   getContentMeta,
-  isOverviewFile,
   getPageType,
   getCategoriesInSubject,
   getTopicsInSubject,
@@ -22,7 +21,11 @@ import {
   calculateReadingTime,
   getAdjacentTopics,
   getRelatedTopics,
+  parseLangSlug,
+  resolveContentFile,
+  hasTranslation,
 } from "@/lib/content";
+import LanguageToggle from "@/components/LanguageToggle";
 import Breadcrumb from "@/components/Breadcrumb";
 import ContentCard from "@/components/ContentCard";
 import TableOfContents from "@/components/TableOfContents";
@@ -53,12 +56,26 @@ export async function generateMetadata({
   // Use the topic's banner image for the social-media preview, if it has one
   const ogImages = meta.image ? [{ url: meta.image }] : undefined;
 
+  // Work out the language and build hreflang links to the other-language version
+  // (if it exists), so Google understands they're the same article in two languages.
+  const { contentSlug } = parseLangSlug(slug);
+  const languages: Record<string, string> = {};
+  if (hasTranslation(contentSlug, "en")) {
+    languages["en"] = absoluteUrl("/" + contentSlug.join("/"));
+  }
+  if (hasTranslation(contentSlug, "hi")) {
+    languages["hi"] = absoluteUrl("/hi/" + contentSlug.join("/"));
+  }
+
   return {
     title: meta.title || SITE_NAME,
     description: meta.description ?? undefined,
-    // Canonical URL — tells search engines the one true address for this page,
-    // even if it's ever reached via a different URL.
-    alternates: { canonical: url },
+    // Canonical URL — the one true address for THIS language version.
+    // `languages` adds the hreflang alternate links for the other language(s).
+    alternates: {
+      canonical: url,
+      languages: Object.keys(languages).length > 1 ? languages : undefined,
+    },
     openGraph: {
       type: "article",
       title: meta.title,
@@ -107,17 +124,20 @@ export default async function ContentPage({
 }) {
   const { slug } = await params;
 
-  // Find the file that matches this slug
-  const filePath = slugToFilePath(slug);
-  if (!filePath) notFound();
+  // Work out the language (Hindi if the URL starts with /hi) and the content path
+  const { lang, contentSlug } = parseLangSlug(slug);
 
-  const meta = getContentMeta(filePath!);
+  // Find the file that matches this slug + language
+  const resolved = resolveContentFile(contentSlug, lang);
+  if (!resolved) notFound();
+
+  const meta = getContentMeta(resolved!.filePath);
   const pageType = getPageType(slug);
 
-  // Build breadcrumbs — we need the title of each slug segment
-  // For now, prettify slug segments (will be replaced by real titles later)
-  const breadcrumbTitles: Record<string, string> = { [slug[slug.length - 1]]: meta.title };
-  const breadcrumbs = buildBreadcrumbs(slug, breadcrumbTitles);
+  // Build breadcrumbs from the CONTENT path (never the "hi" prefix), so the
+  // crumbs read "Home › History › Modern India › …" in both languages.
+  const breadcrumbTitles: Record<string, string> = { [contentSlug[contentSlug.length - 1]]: meta.title };
+  const breadcrumbs = buildBreadcrumbs(contentSlug, breadcrumbTitles);
 
   // ── SUBJECT PAGE (top-level folder, e.g. /history) ────────────────────────
   // A subject shows its CATEGORIES if it has any (e.g. History → Modern India).
@@ -241,16 +261,19 @@ export default async function ContentPage({
   }
 
   // ── TOPIC PAGE (actual article) ────────────────────────────────────────────
-  // Use .catch(() => null) instead of try-catch to avoid TypeScript flow issues.
-  // If the import fails, mdxMod is null → notFound() is called.
-  const slugPath = slug.join("/");
-  const useOverview = isOverviewFile(filePath!);
+  // Build ONE import path (always ending in ".mdx") covering all four shapes:
+  //   history/x            (English topic)
+  //   history/x.hi         (Hindi topic)
+  //   history/overview     (English overview)
+  //   history/overview.hi  (Hindi overview)
+  // A single dynamic import with a static ".mdx" suffix lets Turbopack build one
+  // module context over all .mdx files (a four-pattern version fails when one
+  // pattern, e.g. overview.hi.mdx, matches no files yet).
+  const contentPath = contentSlug.join("/");
+  let innerPath = resolved!.isOverview ? `${contentPath}/overview` : contentPath;
+  if (lang === "hi") innerPath += ".hi";
 
-  const mdxMod = await (
-    useOverview
-      ? import(`@/content/${slugPath}/overview.mdx`).catch(() => null)
-      : import(`@/content/${slugPath}.mdx`).catch(() => null)
-  );
+  const mdxMod = await import(`@/content/${innerPath}.mdx`).catch(() => null);
 
   // If the MDX file couldn't be loaded, show 404
   if (!mdxMod?.default) notFound();
@@ -258,14 +281,40 @@ export default async function ContentPage({
   // Cast to React.ComponentType — TypeScript now knows it's defined
   const ContentComponent = mdxMod!.default as React.ComponentType;
 
-  // Gather all the data the topic page needs
-  const headings = extractHeadings(filePath!);          // Table of Contents
-  const readingTime = calculateReadingTime(filePath!);  // "8 min read"
-  const { previous, next } = getAdjacentTopics(slug);   // Prev/Next navigation
-  const relatedTopics = getRelatedTopics(slug);         // Related Topics cards
+  // Gather all the data the topic page needs (from the resolved language file)
+  const headings = extractHeadings(resolved!.filePath);          // Table of Contents
+  const readingTime = calculateReadingTime(resolved!.filePath);  // "8 min read"
+
+  // Prev/Next and Related are computed on the content (English) topic list, then
+  // "localized": on a Hindi page, link to the Hindi version of each when it
+  // exists (with its Hindi title), otherwise fall back to the English version.
+  function localize(
+    items: { slug: string[]; meta: typeof meta }[]
+  ): { slug: string[]; meta: typeof meta }[] {
+    if (lang === "en") return items;
+    return items.map((it) => {
+      if (hasTranslation(it.slug, "hi")) {
+        const hi = resolveContentFile(it.slug, "hi");
+        return {
+          slug: ["hi", ...it.slug],
+          meta: hi ? getContentMeta(hi.filePath) : it.meta,
+        };
+      }
+      return it;
+    });
+  }
+
+  const adjacent = getAdjacentTopics(contentSlug);
+  const previous = adjacent.previous ? localize([adjacent.previous])[0] : null;
+  const next = adjacent.next ? localize([adjacent.next])[0] : null;
+  const relatedTopics = localize(getRelatedTopics(contentSlug));
+
+  // Language-toggle links — present only when the other version exists
+  const enHref = hasTranslation(contentSlug, "en") ? "/" + contentSlug.join("/") : undefined;
+  const hiHref = hasTranslation(contentSlug, "hi") ? "/hi/" + contentSlug.join("/") : undefined;
 
   // Pretty subject label for the meta bar (e.g. "history" → "History")
-  const subjectLabel = slug[0]
+  const subjectLabel = contentSlug[0]
     .split("-")
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
@@ -356,7 +405,12 @@ export default async function ContentPage({
           {/* Overlaid content, anchored to the bottom-left of the banner */}
           <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-10">
             <Breadcrumb items={breadcrumbs} tone="light" />
-            <h1 className="font-heading text-3xl md:text-5xl font-bold text-on-dark leading-tight max-w-3xl">
+            <h1
+              className={`text-3xl md:text-5xl font-bold text-on-dark leading-tight max-w-3xl ${
+                lang === "hi" ? "font-hindi" : "font-heading"
+              }`}
+              lang={lang}
+            >
               {meta.title}
             </h1>
             <div className="mt-4">{metaBar(true)}</div>
@@ -380,15 +434,24 @@ export default async function ContentPage({
               (when there is a banner, the title + meta are already on it). */}
           {!meta.image && (
             <>
-              <h1 className="font-heading text-4xl font-bold text-navy leading-tight">
+              <h1
+                className="font-heading text-4xl font-bold text-navy leading-tight"
+                lang={lang}
+              >
                 {meta.title}
               </h1>
               <div className="mt-4 mb-8">{metaBar(false)}</div>
             </>
           )}
 
-          {/* The article content (rendered from MDX, styled via mdx-components.tsx) */}
-          <article>
+          {/* Language toggle (English | हिन्दी) — only appears when both versions exist */}
+          <div className="mb-6">
+            <LanguageToggle current={lang} enHref={enHref} hiHref={hiHref} />
+          </div>
+
+          {/* The article content (rendered from MDX, styled via mdx-components.tsx).
+              For Hindi, `lang="hi"` + the font-hindi class apply the Devanagari font. */}
+          <article lang={lang} className={lang === "hi" ? "font-hindi" : undefined}>
             <ContentComponent />
           </article>
 
