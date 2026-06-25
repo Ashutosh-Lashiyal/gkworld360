@@ -10,6 +10,7 @@ import TopicCard from "@/components/TopicCard";
 import NewsCard from "@/components/NewsCard";
 import { getHomepageSubjects } from "@/lib/content";
 import { getRecentNews } from "@/lib/news";
+import { getDailyQuote } from "@/lib/quote";
 
 // ── DUMMY DATA ────────────────────────────────────────────────────────────────
 // Placeholder content for Popular Topics, Recently Added Topics, and Articles.
@@ -73,6 +74,7 @@ const RECENTLY_ADDED_TOPICS = [
 export default function HomePage() {
   const homepageSubjects = getHomepageSubjects();
   const recentNews = getRecentNews(3); // newest 3 news items for the homepage
+  const dailyQuote = getDailyQuote();
 
   return (
     <>
@@ -168,21 +170,46 @@ export default function HomePage() {
       </section>
 
       {/* ══ SECTION 3: QUOTE BLOCK ═════════════════════════════════════════════
-          Light tinted background. Kofi Annan quote. Centred, italic.             */}
+          Daily quote — edit content/daily-quote.mdx to change the quote,
+          add a person photo, and update the author description.                   */}
       <section className="bg-surface-low border-y border-hairline">
         <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-14 text-center">
           <div className="max-w-3xl mx-auto">
+
             {/* Large decorative quote mark */}
             <span className="font-heading text-6xl text-sapphire opacity-30 leading-none select-none" aria-hidden="true">
               &ldquo;
             </span>
+
             <blockquote className="font-heading text-xl md:text-2xl font-semibold text-navy italic leading-relaxed -mt-4">
-              Knowledge is power. Information is liberating. Education is the premise of progress,
-              in every society, in every family.
+              {dailyQuote.quote}
             </blockquote>
-            <p className="font-body text-sm text-muted mt-4">
-              — Kofi Annan
-            </p>
+
+            {/* Author row — photo (if set) + name + description */}
+            <div className="flex items-center justify-center gap-4 mt-6">
+              {dailyQuote.authorImage && (
+                <div className="relative w-14 h-14 rounded-full overflow-hidden border-2 border-hairline flex-shrink-0">
+                  <Image
+                    src={dailyQuote.authorImage}
+                    alt={dailyQuote.author}
+                    fill
+                    className="object-cover"
+                    sizes="56px"
+                  />
+                </div>
+              )}
+              <div className={dailyQuote.authorImage ? "text-left" : ""}>
+                <p className="font-body text-sm font-semibold text-navy">
+                  — {dailyQuote.author}
+                </p>
+                {dailyQuote.authorTitle && (
+                  <p className="font-body text-xs text-muted mt-0.5 leading-snug">
+                    {dailyQuote.authorTitle}
+                  </p>
+                )}
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
