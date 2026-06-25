@@ -39,6 +39,7 @@ export default function SubjectsPage() {
             description={subject.meta.description}
             slug={subject.slug}
             icon={subject.meta.icon}
+            image={subject.meta.image}
           />
         ))}
       </div>

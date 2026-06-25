@@ -158,6 +158,7 @@ export default function HomePage() {
                 description={subject.meta.description}
                 slug={subject.slug}
                 icon={subject.meta.icon}
+                image={subject.meta.image}
               />
             ))}
           </div>

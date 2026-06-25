@@ -1,17 +1,41 @@
-// SubjectCard — used in the homepage "Explore Subjects" grid and the /subjects page.
-// Design: thumbnail area on top, title + description below, "View Curriculum →" CTA.
-// Matches the Academic Clarity card spec: white bg, 1px hairline border, 8px radius, soft shadow.
-
 import Link from "next/link";
+import Image from "next/image";
 
-type SubjectCardProps = {
-  title: string;        // e.g. "History"
-  description: string;  // short description from frontmatter
-  slug: string;         // e.g. "history" — used to build the href
-  icon?: string;        // emoji icon e.g. "🏛️" — shown in the thumbnail area until real images exist
+// Each subject gets a distinct dark gradient so cards feel unique even without photos.
+// When a real cover photo is added to the subject's overview.mdx, it replaces the gradient.
+const SUBJECT_GRADIENTS: Record<string, string> = {
+  "history":              "from-[#7c2d12] to-[#c2410c]",
+  "geography":            "from-[#0c4a6e] to-[#0284c7]",
+  "physics":              "from-[#2e1065] to-[#6d28d9]",
+  "chemistry":            "from-[#064e3b] to-[#059669]",
+  "biology":              "from-[#14532d] to-[#15803d]",
+  "famous-personalities": "from-[#713f12] to-[#b45309]",
+  "economy":              "from-[#1e3a5f] to-[#1d4ed8]",
+  "polity":               "from-[#1e3a8a] to-[#2563eb]",
+  "environment":          "from-[#064e3b] to-[#0d9488]",
+  "arts-and-culture":     "from-[#4a1d96] to-[#7c3aed]",
+  "sports":               "from-[#7f1d1d] to-[#dc2626]",
+  "technology":           "from-[#0c4a6e] to-[#0369a1]",
+  "mathematics":          "from-[#1e1b4b] to-[#4338ca]",
+  "science":              "from-[#134e4a] to-[#0f766e]",
+  "current-affairs":      "from-[#1e3a5f] to-[#1e40af]",
+  "world-history":        "from-[#581c87] to-[#9333ea]",
+  "indian-history":       "from-[#7c2d12] to-[#ea580c]",
 };
 
-export default function SubjectCard({ title, description, slug, icon }: SubjectCardProps) {
+const DEFAULT_GRADIENT = "from-[#0f172a] to-[#1e3a5f]";
+
+type SubjectCardProps = {
+  title: string;
+  description: string;
+  slug: string;
+  icon?: string;
+  image?: string;  // real cover photo — replaces the gradient when provided
+};
+
+export default function SubjectCard({ title, description, slug, icon, image }: SubjectCardProps) {
+  const gradient = SUBJECT_GRADIENTS[slug] ?? DEFAULT_GRADIENT;
+
   return (
     <Link
       href={`/${slug}`}
@@ -21,7 +45,7 @@ export default function SubjectCard({ title, description, slug, icon }: SubjectC
         "bg-surface",
         "border border-hairline",
         "rounded-card",
-        "overflow-hidden",          // clips the thumbnail to the card's rounded corners
+        "overflow-hidden",
         "shadow-card",
         "hover:shadow-card-hover",
         "hover:border-sapphire",
@@ -29,34 +53,39 @@ export default function SubjectCard({ title, description, slug, icon }: SubjectC
         "transition-all duration-200",
       ].join(" ")}
     >
-      {/* ── THUMBNAIL AREA ─────────────────────────────────────────────────────
-          Placeholder: a tinted gradient background with the emoji icon centred.
-          Replace with next/image once real subject thumbnail images are ready.  */}
-      <div className="bg-surface-mid h-36 flex items-center justify-center">
-        {icon ? (
-          <span className="text-5xl" aria-hidden="true">{icon}</span>
+      {/* ── THUMBNAIL ────────────────────────────────────────────────────────────
+          Real photo when available; rich gradient + emoji while awaiting photos. */}
+      <div className="relative h-44 overflow-hidden">
+        {image ? (
+          <Image
+            src={image}
+            alt={title}
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
+          />
         ) : (
-          // Fallback if no icon — first letter of the subject name
-          <span className="font-heading text-4xl font-bold text-sapphire opacity-40">
-            {title.charAt(0)}
-          </span>
+          <div className={`w-full h-full bg-gradient-to-br ${gradient} flex flex-col items-center justify-center gap-2`}>
+            {icon && (
+              <span className="text-6xl drop-shadow-lg" aria-hidden="true">{icon}</span>
+            )}
+          </div>
+        )}
+
+        {/* Subtle dark vignette at bottom so the card body blends in */}
+        {!image && (
+          <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/20 to-transparent" />
         )}
       </div>
 
       {/* ── CARD BODY ──────────────────────────────────────────────────────────*/}
       <div className="flex flex-col gap-2 p-5 flex-1">
-
-        {/* Subject title */}
         <h3 className="font-heading text-lg font-semibold text-navy group-hover:text-sapphire transition-colors leading-snug">
           {title}
         </h3>
-
-        {/* Description — clamped to 2 lines so all cards stay the same height */}
         <p className="font-body text-sm text-muted leading-relaxed line-clamp-2 flex-1">
           {description}
         </p>
-
-        {/* "View Curriculum →" CTA — matches Stitch design */}
         <span className="font-body text-sm font-semibold text-sapphire group-hover:text-sapphire-dark transition-colors mt-2">
           View Curriculum →
         </span>

@@ -6,6 +6,26 @@
 
 import Link from "next/link";
 
+const CATEGORY_COLORS: Record<string, string> = {
+  History:              "linear-gradient(135deg,#7c2d12,#c2410c)",
+  Geography:            "linear-gradient(135deg,#0c4a6e,#0284c7)",
+  Physics:              "linear-gradient(135deg,#2e1065,#6d28d9)",
+  Chemistry:            "linear-gradient(135deg,#064e3b,#059669)",
+  Biology:              "linear-gradient(135deg,#14532d,#15803d)",
+  Polity:               "linear-gradient(135deg,#1e3a8a,#2563eb)",
+  Economy:              "linear-gradient(135deg,#1e3a5f,#1d4ed8)",
+  Mathematics:          "linear-gradient(135deg,#1e1b4b,#4338ca)",
+  Technology:           "linear-gradient(135deg,#0c4a6e,#0369a1)",
+  Environment:          "linear-gradient(135deg,#064e3b,#0d9488)",
+  Sports:               "linear-gradient(135deg,#7f1d1d,#dc2626)",
+  "Famous Personalities": "linear-gradient(135deg,#713f12,#b45309)",
+};
+const DEFAULT_COLOR = "linear-gradient(135deg,#0f172a,#1e3a5f)";
+
+function categoryGradient(category: string) {
+  return CATEGORY_COLORS[category] ?? DEFAULT_COLOR;
+}
+
 type TopicCardProps = {
   title: string;
   category: string;      // e.g. "History", "Science"
@@ -41,9 +61,12 @@ export default function TopicCard({
           "transition-all duration-200",
         ].join(" ")}
       >
-        {/* Placeholder image area — replace with next/image when real images exist */}
-        <div className="bg-surface-high h-44 flex items-center justify-center">
-          <span className="font-heading text-4xl font-bold text-navy opacity-20">
+        {/* Gradient thumbnail — colour-coded by category until real photos are added */}
+        <div
+          className="h-44 flex items-center justify-center"
+          style={{ background: categoryGradient(category) }}
+        >
+          <span className="font-heading text-5xl font-bold text-white/20 select-none">
             {category.charAt(0)}
           </span>
         </div>
