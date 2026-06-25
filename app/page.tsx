@@ -3,6 +3,7 @@
 // Server Component — runs on the server, no client-side JS needed.
 
 import Link from "next/link";
+import Image from "next/image";
 import SearchBox from "@/components/SearchBox";
 import SubjectCard from "@/components/SubjectCard";
 import TopicCard from "@/components/TopicCard";
@@ -76,23 +77,24 @@ export default function HomePage() {
   return (
     <>
       {/* ══ SECTION 1: HERO ════════════════════════════════════════════════════
-          Deep navy gradient background with a radial highlight.
-          Centred headline, subtitle, and search bar.                             */}
-      <section
-        className="relative overflow-hidden border-b border-hairline"
-        style={{
-          background: "linear-gradient(160deg, #0f172a 0%, #162444 55%, #1e3a6e 100%)",
-        }}
-      >
-        {/* Decorative radial glow — gives the hero depth and warmth */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(ellipse 70% 60% at 50% 110%, rgba(37,99,235,0.25) 0%, transparent 70%)",
-          }}
+          Full-bleed background image with a dark overlay so white text stays
+          readable regardless of the photo's brightness.                          */}
+      <section className="relative overflow-hidden border-b border-hairline">
+
+        {/* Background photo */}
+        <Image
+          src="/images/hero-banner.png"
+          alt=""
+          fill
+          priority
+          className="object-cover object-center"
+          sizes="100vw"
         />
+
+        {/* Dark overlay — navy tint + gradient darkens bottom more than top.
+            Adjust the opacity numbers here to make the image lighter or darker. */}
+        <div className="absolute inset-0 bg-navy-dark/60" />
+        <div className="absolute inset-0 bg-gradient-to-t from-navy-dark/80 via-navy-dark/40 to-navy-dark/20" />
 
         <div className="relative max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-20 md:py-28 text-center">
 
