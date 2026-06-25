@@ -134,3 +134,202 @@
 .font-hindi li {
   font-family: var(--font-devanagari), system-ui, sans-serif;
 }
+
+/* ── ARTICLE PROSE ───────────────────────────────────────────────────────────────
+   Applied to <article> tags containing MDX content (topics and news items).
+   Without these, MDX renders as plain unstyled text — no spacing, no bullets,
+   no heading hierarchy. These rules give articles a clean "editorial" look.        */
+.prose {
+  font-size: 1.0625rem;
+  line-height: 1.8;
+  color: #0b1c30;
+}
+
+.prose p {
+  margin-bottom: 1.5em;
+}
+
+.prose h2 {
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-top: 2.5rem;
+  margin-bottom: 0.875rem;
+  line-height: 1.3;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #E2E8F0;
+}
+
+.prose h3 {
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin-top: 2rem;
+  margin-bottom: 0.625rem;
+  line-height: 1.4;
+}
+
+.prose h4 {
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.prose ul {
+  list-style: disc;
+  padding-left: 1.625em;
+  margin-bottom: 1.5em;
+}
+
+.prose ol {
+  list-style: decimal;
+  padding-left: 1.625em;
+  margin-bottom: 1.5em;
+}
+
+.prose li {
+  margin-bottom: 0.5em;
+}
+
+.prose li ul,
+.prose li ol {
+  margin-top: 0.5em;
+  margin-bottom: 0.25em;
+}
+
+.prose strong {
+  font-weight: 700;
+  color: #0b1c30;
+}
+
+.prose em {
+  font-style: italic;
+}
+
+.prose a {
+  color: #2563eb;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+
+.prose a:hover {
+  color: #0051d5;
+}
+
+.prose blockquote {
+  border-left: 4px solid #2563eb;
+  padding: 0.25em 0 0.25em 1.25em;
+  margin: 1.75em 0;
+  font-style: italic;
+  color: #45464d;
+}
+
+/* Inline code (e.g. `variable`) */
+.prose :not(pre) > code {
+  background-color: #eff4ff;
+  color: #0f172a;
+  font-size: 0.875em;
+  padding: 0.2em 0.45em;
+  border-radius: 4px;
+  font-family: ui-monospace, 'Cascadia Code', 'Courier New', monospace;
+}
+
+/* Code blocks */
+.prose pre {
+  background-color: #0f172a;
+  color: #e2e8f0;
+  padding: 1.25rem 1.5rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin-bottom: 1.5em;
+  font-size: 0.875rem;
+  line-height: 1.7;
+}
+
+.prose pre code {
+  background: none;
+  padding: 0;
+  font-size: 1em;
+  color: inherit;
+  border-radius: 0;
+}
+
+/* Tables (remark-gfm renders Markdown tables to HTML) */
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.75em;
+  font-size: 0.9375rem;
+  display: block;
+  overflow-x: auto;
+}
+
+.prose thead th {
+  background-color: #eff4ff;
+  color: #0f172a;
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-align: left;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid #E2E8F0;
+  white-space: nowrap;
+}
+
+.prose tbody td {
+  padding: 0.625rem 0.875rem;
+  border: 1px solid #E2E8F0;
+  vertical-align: top;
+}
+
+.prose tbody tr:nth-child(even) {
+  background-color: #f8f9ff;
+}
+
+.prose hr {
+  border: none;
+  border-top: 1px solid #E2E8F0;
+  margin: 2.5rem 0;
+}
+
+/* Images inside MDX (bare Markdown images, not TopicImage component) */
+.prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 1.5em auto;
+  display: block;
+}
+
+/* Reset prose list + paragraph styles inside custom MDX components (KeyTakeaways, etc.)
+   so our custom dot-bullets and spacing don't get overridden by the prose list rules. */
+.prose aside ul,
+.prose aside ol {
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 0;
+}
+
+.prose aside li {
+  margin-bottom: 0;
+}
+
+.prose aside p {
+  margin-bottom: 0;
+}
+
+/* Hindi prose headings must use Devanagari (overrides the English heading font above) */
+.font-hindi.prose h2,
+.font-hindi.prose h3,
+.font-hindi.prose h4,
+.font-hindi .prose h2,
+.font-hindi .prose h3,
+.font-hindi .prose h4 {
+  font-family: var(--font-devanagari), system-ui, sans-serif;
+}

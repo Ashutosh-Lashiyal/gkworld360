@@ -76,24 +76,54 @@ export default function HomePage() {
   return (
     <>
       {/* ══ SECTION 1: HERO ════════════════════════════════════════════════════
-          White background. Centred headline, subtitle, search bar, Explore button.
-          Hero image placeholder — replace with real image asset when ready.      */}
-      <section className="bg-surface border-b border-hairline">
-        <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-20 md:py-28 text-center">
+          Deep navy gradient background with a radial highlight.
+          Centred headline, subtitle, and search bar.                             */}
+      <section
+        className="relative overflow-hidden border-b border-hairline"
+        style={{
+          background: "linear-gradient(160deg, #0f172a 0%, #162444 55%, #1e3a6e 100%)",
+        }}
+      >
+        {/* Decorative radial glow — gives the hero depth and warmth */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse 70% 60% at 50% 110%, rgba(37,99,235,0.25) 0%, transparent 70%)",
+          }}
+        />
 
-          {/* Headline — display-lg: Source Serif 4, 48px, 700 */}
-          <h1 className="font-heading text-4xl md:text-5xl font-bold text-navy leading-tight max-w-3xl mx-auto">
+        <div className="relative max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-20 md:py-28 text-center">
+
+          {/* Small eyebrow label */}
+          <p className="font-body text-xs font-semibold text-on-dark/60 uppercase tracking-[0.15em] mb-5">
+            Trusted Educational Content · General Knowledge · Current Affairs
+          </p>
+
+          {/* Headline */}
+          <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-on-dark leading-tight max-w-3xl mx-auto">
             Master the World&apos;s Core Knowledge
           </h1>
 
-          {/* Subtitle — body-lg: Inter, 18px, 400 */}
-          <p className="font-body text-lg text-muted mt-5 max-w-2xl mx-auto leading-relaxed">
-            Access a curated repository of global academics, from the depths of history to the frontiers of science.
+          {/* Subtitle */}
+          <p className="font-body text-lg text-on-dark/70 mt-6 max-w-2xl mx-auto leading-relaxed">
+            A curated repository of academics — from the depths of history to the frontiers of science.
+            In English and Hindi.
           </p>
 
-          {/* Search bar + Explore button — navigates to /search on submit */}
-          <div className="mt-10">
+          {/* Search bar */}
+          <div className="mt-10 max-w-xl mx-auto">
             <SearchBox buttonLabel="Explore" />
+          </div>
+
+          {/* Trust badges */}
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+            {["18 Subjects", "English & हिन्दी", "Free to read", "Updated daily"].map((badge) => (
+              <span key={badge} className="font-body text-sm text-on-dark/55">
+                ✓ {badge}
+              </span>
+            ))}
           </div>
         </div>
       </section>

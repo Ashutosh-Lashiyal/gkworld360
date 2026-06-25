@@ -25,6 +25,7 @@ export default function SubjectCard({ title, description, slug, icon }: SubjectC
         "shadow-card",
         "hover:shadow-card-hover",
         "hover:border-sapphire",
+        "hover:-translate-y-1",
         "transition-all duration-200",
       ].join(" ")}
     >

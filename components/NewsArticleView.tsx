@@ -132,7 +132,7 @@ export default function NewsArticleView({
         )}
 
         {/* Article body (compiled MDX). Hindi gets the Devanagari font. */}
-        <article lang={lang} className={`mt-8 ${lang === "hi" ? "font-hindi" : ""}`}>
+        <article lang={lang} className={`prose mt-8 ${lang === "hi" ? "font-hindi" : ""}`}>
           {children}
         </article>
       </div>

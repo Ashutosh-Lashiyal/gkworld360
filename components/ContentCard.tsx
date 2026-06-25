@@ -32,7 +32,7 @@ export default function ContentCard({
         "group flex items-start gap-4",
         "bg-surface border border-hairline rounded-card",
         "p-5",
-        "shadow-card hover:shadow-card-hover hover:border-sapphire",
+        "shadow-card hover:shadow-card-hover hover:border-sapphire hover:-translate-y-0.5",
         "transition-all duration-200",
       ].join(" ")}
     >

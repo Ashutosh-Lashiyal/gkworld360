@@ -37,7 +37,7 @@ export default function TopicCard({
         className={[
           "group flex flex-col",
           "bg-surface border border-hairline rounded-card overflow-hidden",
-          "shadow-card hover:shadow-card-hover hover:border-sapphire",
+          "shadow-card hover:shadow-card-hover hover:border-sapphire hover:-translate-y-1",
           "transition-all duration-200",
         ].join(" ")}
       >

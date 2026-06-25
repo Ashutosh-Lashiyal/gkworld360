@@ -92,7 +92,7 @@ export default function Header() {
     // sticky top-0 z-50 → header stays fixed at the top as the user scrolls
     // border-b border-hairline → a 1px bottom border separates header from content
     // bg-surface → pure white background (#ffffff) from our design tokens
-    <header className="sticky top-0 z-50 bg-surface border-b border-hairline">
+    <header className="sticky top-0 z-50 bg-surface/95 backdrop-blur-sm border-b border-hairline">
 
       {/* ── MAIN HEADER BAR ──────────────────────────────────────────────────
           max-w-[1200px] mx-auto → centres content within the 1200px container

@@ -483,7 +483,7 @@ export default async function ContentPage({
 
           {/* The article content (rendered from MDX, styled via mdx-components.tsx).
               For Hindi, `lang="hi"` + the font-hindi class apply the Devanagari font. */}
-          <article lang={lang} className={lang === "hi" ? "font-hindi" : undefined}>
+          <article lang={lang} className={`prose ${lang === "hi" ? "font-hindi" : ""}`}>
             <ContentComponent />
           </article>
 

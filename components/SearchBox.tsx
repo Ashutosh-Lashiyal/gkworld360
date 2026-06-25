@@ -126,7 +126,7 @@ export default function SearchBox({
         />
         <button
           type="submit"
-          className="w-full sm:w-auto font-body text-sm font-semibold text-on-dark bg-navy hover:bg-navy-dark rounded-card px-6 py-3 transition-colors whitespace-nowrap"
+          className="w-full sm:w-auto font-body text-sm font-semibold text-on-dark bg-sapphire hover:bg-sapphire-dark rounded-card px-6 py-3 transition-colors whitespace-nowrap"
         >
           {buttonLabel}
         </button>
