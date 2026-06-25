@@ -95,19 +95,34 @@ export default function NewsArticleView({
           <LanguageToggle current={lang} enHref={enHref} hiHref={hiHref} />
         </div>
 
-        {/* Banner image */}
+        {/* Banner image.
+            If the real dimensions are known, render at the image's NATURAL shape
+            (w-full h-auto) so nothing is cropped — important for wide infographics.
+            Otherwise fall back to a 16:9 cover crop. */}
         {meta.image && (
           <figure className="mt-6">
-            <div className="relative w-full aspect-video rounded-card overflow-hidden bg-surface-mid">
+            {meta.imageWidth && meta.imageHeight ? (
               <Image
                 src={meta.image}
                 alt={meta.imageCaption ?? meta.title}
-                fill
+                width={meta.imageWidth}
+                height={meta.imageHeight}
                 priority
-                className="object-cover"
+                className="w-full h-auto rounded-card border border-hairline"
                 sizes="(max-width: 760px) 100vw, 760px"
               />
-            </div>
+            ) : (
+              <div className="relative w-full aspect-video rounded-card overflow-hidden bg-surface-mid">
+                <Image
+                  src={meta.image}
+                  alt={meta.imageCaption ?? meta.title}
+                  fill
+                  priority
+                  className="object-cover"
+                  sizes="(max-width: 760px) 100vw, 760px"
+                />
+              </div>
+            )}
             {meta.imageCaption && (
               <figcaption className="font-body text-sm text-muted italic mt-2 text-center">
                 {meta.imageCaption}

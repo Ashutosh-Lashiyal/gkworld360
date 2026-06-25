@@ -35,6 +35,8 @@ export type ContentMeta = {
   date?: string;             // e.g. "2026-06-20" (optional — useful for articles)
   order?: number;            // controls Previous/Next sequence within a category
   image?: string;            // featured image path (optional)
+  imageWidth?: number;       // real pixel width of the featured image (optional)
+  imageHeight?: number;      // real pixel height of the featured image (optional)
   imageCaption?: string;     // caption shown below the featured image (optional)
   quickFacts?: QuickFact[];  // key facts for the topic page sidebar (optional)
 };
