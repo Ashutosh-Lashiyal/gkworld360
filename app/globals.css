@@ -39,13 +39,13 @@
 
   /* ── PAGE & SURFACE COLOURS ──────────────────────────────────────────────────
      "Surfaces" are the different background layers of the page.
-     Using tonal shifts (lighter/darker blue-white) instead of hard borders
-     to separate sections — the "digital library" aesthetic from the design system. */
-  --color-background:   #f8f9ff;   /* Page background  — soft off-white with a cool tint  */
+     Values sourced directly from the Stitch HTML theme export — all have a warm
+     lavender-white tint (not cool blue) which matches the Stitch "pinkish" warmth. */
+  --color-background:   #fcf8fd;   /* Page background  — warm white with faint lavender    */
   --color-surface:      #ffffff;   /* Cards, modals    — pure white, elevated above page   */
-  --color-surface-low:  #eff4ff;   /* Subtle sections  — very light blue-white tint        */
-  --color-surface-mid:  #e5eeff;   /* Medium sections  — used for alternating row colours  */
-  --color-surface-high: #dce9ff;   /* Strong sections  — more prominent background blocks  */
+  --color-surface-low:  #f6f2f7;   /* Subtle sections  — very light warm-grey tint         */
+  --color-surface-mid:  #f1ecf2;   /* Medium sections  — used for alternating row colours  */
+  --color-surface-high: #ebe7ec;   /* Strong sections  — more prominent background blocks  */
 
   /* ── TEXT COLOURS ────────────────────────────────────────────────────────────
      High contrast is a priority — long study sessions demand readable text.
@@ -61,7 +61,7 @@
      border-hairline      → the 1px card border (gives "tactile, printed quality") */
   --color-border:        #76777d;  /* Standard borders and dividers                       */
   --color-border-subtle: #c6c6cd;  /* Subtle borders — for less prominent separators      */
-  --color-hairline:      #E2E8F0;  /* Card hairline border — 1px, barely-there definition */
+  --color-hairline:      #e0dce5;  /* Card hairline border — warm grey-lavender, from Stitch */
 
   /* ── STATUS COLOURS ──────────────────────────────────────────────────────────
      Used for form errors, validation messages. Not used in MVP content pages.    */
@@ -93,7 +93,7 @@
      These apply to the whole site automatically.
      Individual components can override them with specific Tailwind classes.      */
   body {
-    background-color: #f8f9ff;    /* matches --color-background */
+    background-color: #fcf8fd;    /* matches --color-background */
     color: #0b1c30;               /* matches --color-foreground */
 
     /* Inter with safe fallbacks — if Inter hasn't loaded yet, system fonts show */
