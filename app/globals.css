@@ -28,40 +28,38 @@
   --font-body:    var(--font-inter);
 
   /* ── BRAND COLOURS ───────────────────────────────────────────────────────────
-     The four brand colours from the "Academic Clarity" Stitch theme.
-     These establish the platform's personality: authoritative, educational, modern. */
-  --color-navy:           #0f172a;  /* Deep Navy    — headings, navigation, primary brand  */
-  --color-navy-dark:      #131b2e;  /* Navy Dark    — hero backgrounds, deep containers    */
-  --color-sapphire:       #2563eb;  /* Sapphire     — links, interactive elements, buttons */
-  --color-sapphire-dark:  #0051d5;  /* Sapphire Dark — hover states on interactive items  */
+     "Sage & Teal" — a calm, eye-friendly palette for long study sessions.
+     Dark teal for structure/headings, forest green for interactive accents.      */
+  --color-navy:           #1e3d38;  /* Dark Teal    — headings, navigation, primary brand  */
+  --color-navy-dark:      #122a26;  /* Deep Teal    — hero backgrounds, footer             */
+  --color-sapphire:       #2d7a4f;  /* Forest Green — links, interactive elements, buttons */
+  --color-sapphire-dark:  #1f5c39;  /* Forest Dark  — hover states on interactive items   */
   --color-emerald:        #059669;  /* Emerald      — success states, positive cues        */
-  --color-slate:          #64748b;  /* Slate        — neutral, secondary UI elements       */
+  --color-slate:          #5a7a75;  /* Teal Slate   — neutral, secondary UI elements       */
 
   /* ── PAGE & SURFACE COLOURS ──────────────────────────────────────────────────
-     "Surfaces" are the different background layers of the page.
-     Values sourced directly from the Stitch HTML theme export — all have a warm
-     lavender-white tint (not cool blue) which matches the Stitch "pinkish" warmth. */
-  --color-background:   #fcf8fd;   /* Page background  — warm white with faint lavender    */
-  --color-surface:      #ffffff;   /* Cards, modals    — pure white, elevated above page   */
-  --color-surface-low:  #f6f2f7;   /* Subtle sections  — very light warm-grey tint         */
-  --color-surface-mid:  #f1ecf2;   /* Medium sections  — used for alternating row colours  */
-  --color-surface-high: #ebe7ec;   /* Strong sections  — more prominent background blocks  */
+     Clean white base with very subtle teal-grey tints on alternating sections.
+     White + light grey is the easiest combination for long reading sessions.     */
+  --color-background:   #ffffff;   /* Page background  — pure white, maximum readability  */
+  --color-surface:      #ffffff;   /* Cards, modals    — pure white, elevated above page  */
+  --color-surface-low:  #f5f5f5;   /* Subtle sections  — very light grey                  */
+  --color-surface-mid:  #edf2f0;   /* Medium sections  — light teal-grey tint             */
+  --color-surface-high: #e2ece8;   /* Strong sections  — more prominent teal-grey block   */
 
   /* ── TEXT COLOURS ────────────────────────────────────────────────────────────
-     High contrast is a priority — long study sessions demand readable text.
-     foreground = primary reading text (deep navy-black, not pure black)
-     muted      = secondary text for captions, metadata, timestamps             */
-  --color-foreground: #0b1c30;   /* Primary text   — high contrast on the page background */
-  --color-muted:      #45464d;   /* Secondary text — captions, dates, read-time metadata  */
-  --color-on-dark:    #ffffff;   /* Text on dark   — used on navy/sapphire backgrounds     */
+     Body text stays near-black for maximum readability — the teal palette only
+     affects headings, nav, and accents. Long reading sessions demand dark text.  */
+  --color-foreground: #1a1a1a;   /* Primary text   — near-black, maximum contrast         */
+  --color-muted:      #4a6460;   /* Secondary text — teal-grey for captions, metadata     */
+  --color-on-dark:    #ffffff;   /* Text on dark   — used on teal backgrounds              */
 
   /* ── BORDER COLOURS ──────────────────────────────────────────────────────────
      border-border        → dividers, section separators
      border-border-subtle → quieter, less visible dividers
-     border-hairline      → the 1px card border (gives "tactile, printed quality") */
-  --color-border:        #76777d;  /* Standard borders and dividers                       */
-  --color-border-subtle: #c6c6cd;  /* Subtle borders — for less prominent separators      */
-  --color-hairline:      #e0dce5;  /* Card hairline border — warm grey-lavender, from Stitch */
+     border-hairline      → the 1px card border                                  */
+  --color-border:        #7a9e99;  /* Standard borders and dividers                       */
+  --color-border-subtle: #b8d0cc;  /* Subtle borders — for less prominent separators      */
+  --color-hairline:      #c0cfd0;  /* Card hairline border — from the palette             */
 
   /* ── STATUS COLOURS ──────────────────────────────────────────────────────────
      Used for form errors, validation messages. Not used in MVP content pages.    */
@@ -93,8 +91,8 @@
      These apply to the whole site automatically.
      Individual components can override them with specific Tailwind classes.      */
   body {
-    background-color: #fcf8fd;    /* matches --color-background */
-    color: #0b1c30;               /* matches --color-foreground */
+    background-color: #ffffff;    /* matches --color-background */
+    color: #1a1a1a;               /* matches --color-foreground — near-black for readability */
 
     /* Inter with safe fallbacks — if Inter hasn't loaded yet, system fonts show */
     font-family: var(--font-body), system-ui, sans-serif;
@@ -114,7 +112,7 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading), Georgia, serif; /* Georgia = fallback while Source Serif 4 loads */
     line-height: 1.3;   /* tighter than body — large type needs less space between lines */
-    color: #0f172a;     /* Deep Navy — the default heading colour */
+    color: #1e3d38;     /* Dark Teal — the default heading colour */
   }
 }
 
@@ -140,9 +138,9 @@
    Without these, MDX renders as plain unstyled text — no spacing, no bullets,
    no heading hierarchy. These rules give articles a clean "editorial" look.        */
 .prose {
-  font-size: 1.0625rem;
+  font-size: 1.125rem;
   line-height: 1.8;
-  color: #0b1c30;
+  color: #1a1a1a;
 }
 
 .prose p {
@@ -153,19 +151,19 @@
   font-family: var(--font-heading), Georgia, serif;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #0f172a;
+  color: #1e3d38;
   margin-top: 2.5rem;
   margin-bottom: 0.875rem;
   line-height: 1.3;
   padding-bottom: 0.5rem;
-  border-bottom: 2px solid #E2E8F0;
+  border-bottom: 2px solid #c0cfd0;
 }
 
 .prose h3 {
   font-family: var(--font-heading), Georgia, serif;
   font-size: 1.25rem;
   font-weight: 600;
-  color: #0f172a;
+  color: #1e3d38;
   margin-top: 2rem;
   margin-bottom: 0.625rem;
   line-height: 1.4;
@@ -175,7 +173,7 @@
   font-family: var(--font-heading), Georgia, serif;
   font-size: 1.0625rem;
   font-weight: 600;
-  color: #0f172a;
+  color: #1e3d38;
   margin-top: 1.5rem;
   margin-bottom: 0.5rem;
 }
@@ -204,7 +202,7 @@
 
 .prose strong {
   font-weight: 700;
-  color: #0b1c30;
+  color: #1a1a1a;
 }
 
 .prose em {
@@ -212,28 +210,28 @@
 }
 
 .prose a {
-  color: #2563eb;
+  color: #2d7a4f;
   text-decoration: underline;
   text-underline-offset: 2px;
   text-decoration-thickness: 1px;
 }
 
 .prose a:hover {
-  color: #0051d5;
+  color: #1f5c39;
 }
 
 .prose blockquote {
-  border-left: 4px solid #2563eb;
+  border-left: 4px solid #2d7a4f;
   padding: 0.25em 0 0.25em 1.25em;
   margin: 1.75em 0;
   font-style: italic;
-  color: #45464d;
+  color: #4a6460;
 }
 
 /* Inline code (e.g. `variable`) */
 .prose :not(pre) > code {
-  background-color: #eff4ff;
-  color: #0f172a;
+  background-color: #edf2f0;
+  color: #1e3d38;
   font-size: 0.875em;
   padding: 0.2em 0.45em;
   border-radius: 4px;
@@ -271,8 +269,8 @@
 }
 
 .prose thead th {
-  background-color: #eff4ff;
-  color: #0f172a;
+  background-color: #edf2f0;
+  color: #1e3d38;
   font-family: var(--font-body), system-ui, sans-serif;
   font-weight: 600;
   font-size: 0.875rem;
@@ -289,7 +287,7 @@
 }
 
 .prose tbody tr:nth-child(even) {
-  background-color: #f8f9ff;
+  background-color: #f5f5f5;
 }
 
 .prose hr {
