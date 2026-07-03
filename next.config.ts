@@ -1,10 +1,28 @@
 import type { NextConfig } from "next";
 import createMDX from "@next/mdx";
+// withPayload connects Payload CMS to Next.js — sets up the @payload-config
+// alias and ensures Payload's admin panel builds correctly.
+import { withPayload } from "@payloadcms/next/withPayload";
 
 const nextConfig: NextConfig = {
   // Tell Next.js to treat .md and .mdx files as pages and importable modules.
   // Without this, Next.js would ignore MDX files entirely.
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
+
+  // Turbopack is the default bundler in Next.js 16.
+  // withPayload() only sets up webpack aliases — not Turbopack aliases.
+  // So we manually add @payload-config here so Turbopack can resolve it.
+  // @payload-config is a virtual alias that points to our payload.config.ts file.
+  turbopack: {
+    // Fix: Next.js was detecting /Users/asherashutosh/ as the workspace root
+    // (because there is a package-lock.json in the home folder) and loading
+    // .env.local from there instead of this project folder. Explicitly setting
+    // root tells Turbopack the correct project directory.
+    root: __dirname,
+    resolveAlias: {
+      "@payload-config": "./payload.config.ts",
+    },
+  },
 
   images: {
     // Allow the optimised <Image> component to render SVG files (e.g. diagrams,
@@ -34,5 +52,7 @@ const withMDX = createMDX({
   },
 });
 
-// Wrap the Next.js config with MDX support and export
-export default withMDX(nextConfig);
+// withPayload must be the OUTERMOST wrapper — it needs to see the final config.
+// withMDX handles MDX files, withPayload handles Payload CMS integration.
+// We will remove withMDX in Phase 5 once all content is moved to Payload.
+export default withPayload(withMDX(nextConfig));

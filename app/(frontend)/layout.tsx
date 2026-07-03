@@ -5,6 +5,7 @@ import { Source_Serif_4, Inter, Noto_Sans_Devanagari } from "next/font/google";
 // The permanent shell components — appear on every single page
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import Gyaani from "@/components/Gyaani";
 
 // Site config — URL, name, and the master indexing switch
 import { SITE_URL, SITE_NAME, SITE_TAGLINE, SITE_DESCRIPTION, INDEXING_ENABLED } from "@/lib/site";
@@ -100,6 +101,12 @@ export default function RootLayout({
       // Applying both font variables to <html> makes them available everywhere on the site.
       // globals.css reads these variables to power the font-heading and font-body Tailwind classes.
       className={`${sourceSerif4.variable} ${inter.variable} ${notoDevanagari.variable}`}
+      // suppressHydrationWarning tells React: "don't block the page if the <html>
+      // element looks slightly different between server and browser."
+      // This handles cases where Next.js or macOS system tools add extra styles/attributes
+      // to the root element that React doesn't expect. Safe to add here — it only
+      // suppresses warnings for THIS element, not for the rest of the page.
+      suppressHydrationWarning
     >
       <body
         className={[
@@ -109,6 +116,9 @@ export default function RootLayout({
           "antialiased",     // smooths font edges on Mac/retina screens
           "min-h-screen",    // page is always at least the full height of the viewport
         ].join(" ")}
+        // Same reason as above — macOS tools sometimes add CSS classes to <body>
+        // (e.g. "aqua-ext-enabl") that cause a server/client mismatch.
+        suppressHydrationWarning
       >
         {/* Site-wide structured data: tells search/AI engines what GKWorld360 is,
             and enables the search box to appear in Google results (SearchAction). */}
@@ -146,6 +156,9 @@ export default function RootLayout({
 
         {/* Footer sits at the bottom of every page */}
         <Footer />
+
+        {/* Gyaani — floating AI chatbot, visible on every page */}
+        <Gyaani />
 
         {/* Vercel Web Analytics — counts visitors, page views, top pages, referrers.
             Privacy-friendly (no cookies). Must also be enabled once in the Vercel

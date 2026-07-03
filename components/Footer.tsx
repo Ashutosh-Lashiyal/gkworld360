@@ -2,6 +2,7 @@
 // No "use client" required. Server components are faster and better for SEO.
 
 import Link from "next/link";
+import Image from "next/image";
 
 // ── FOOTER COLUMNS ────────────────────────────────────────────────────────────
 // Defined as data so the layout below stays clean and readable.
@@ -43,23 +44,40 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    // bg-navy-dark → deep navy background (#131b2e) from our design tokens
-    // text-on-dark → white text on dark background
-    // mt-auto → pushes the footer to the bottom of the page on short pages
-    <footer className="bg-navy-dark text-on-dark">
+    // Background is the muted teal #b0c4c0 — light enough for dark text.
+    // text-navy (#1e3d38) is our darkest teal, giving strong contrast on this bg.
+    <footer style={{ backgroundColor: "#b0c4c0" }} className="text-navy">
 
-      {/* ── COLUMNS SECTION ────────────────────────────────────────────────────
-          max-w-[1200px] mx-auto → stays within the 1200px container
-          px-4 md:px-8 lg:px-16 → responsive side padding (16 / 32 / 64px)
-          py-12                  → generous top and bottom padding
-          grid → four equal columns on desktop, two on tablet, one on mobile   */}
       <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
 
+        {/* Logo + tagline
+            The logo PNG now has a transparent background, and its colours are
+            dark teal/green — which sit perfectly on the light #b0c4c0 background.
+            No CSS filter needed here (unlike when the footer was dark). */}
+        <div className="mb-10 pb-10 border-b border-navy/20">
+          <Link href="/" className="inline-block">
+            <Image
+              src="/images/logo.png"
+              alt="GKWorld360 — Know More, Grow More"
+              height={64}
+              width={96}
+              className="h-20 md:h-24 w-auto"
+              // mix-blend-mode: multiply makes white pixels invisible by blending
+              // them with the background colour — the logo's dark teal/green stays
+              // visible while any leftover white fringe around the edges disappears.
+              style={{ mixBlendMode: "multiply" }}
+            />
+          </Link>
+          <p className="font-body text-sm text-navy/60 mt-3 max-w-xs leading-relaxed">
+            A curated repository of academics — history, science, polity, and more. In English and Hindi.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {footerColumns.map((column) => (
             <div key={column.heading}>
-              {/* Column heading — Inter semibold, slightly muted white */}
-              <h3 className="font-body text-sm font-semibold text-on-dark mb-4 uppercase tracking-wider opacity-60">
+              {/* Column heading — slightly muted dark navy */}
+              <h3 className="font-body text-sm font-semibold text-navy/60 mb-4 uppercase tracking-wider">
                 {column.heading}
               </h3>
 
@@ -69,7 +87,7 @@ export default function Footer() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="font-body text-sm text-on-dark opacity-80 hover:opacity-100 hover:text-sapphire transition-all"
+                      className="font-body text-sm text-navy/80 hover:text-navy hover:text-sapphire transition-all"
                     >
                       {link.label}
                     </Link>
@@ -82,11 +100,10 @@ export default function Footer() {
       </div>
 
       {/* ── COPYRIGHT BAR ──────────────────────────────────────────────────────
-          A subtle dividing line separates the columns from the copyright.
-          border-t border-white/10 → a barely-visible white line at 10% opacity */}
-      <div className="border-t border-white/10">
+          border-navy/20 gives a subtle dark divider that works on the light bg */}
+      <div className="border-t border-navy/20">
         <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-6">
-          <p className="font-body text-sm text-on-dark opacity-60 text-center">
+          <p className="font-body text-sm text-navy/60 text-center">
             © {currentYear} GKWorld360. All rights reserved. Empowering academic excellence.
           </p>
         </div>

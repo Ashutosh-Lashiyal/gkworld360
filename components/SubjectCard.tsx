@@ -1,3 +1,13 @@
+"use client";
+// ── WHY "use client"? ─────────────────────────────────────────────────────────
+// Next.js renders components on the SERVER by default (faster initial load).
+// But the hover colour effect needs JavaScript to run IN THE BROWSER —
+// specifically, we need React's useState to track whether the mouse is over
+// the card right now. "use client" tells Next.js: run this component in the
+// browser so it can use useState and mouse events.
+// Rule of thumb: add "use client" only when you need interactivity or browser APIs.
+
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -30,11 +40,18 @@ type SubjectCardProps = {
   description: string;
   slug: string;
   icon?: string;
-  image?: string;  // real cover photo — replaces the gradient when provided
+  image?: string;   // real cover photo — replaces the gradient when provided
+  hoverBg?: string; // subject-specific background colour shown on hover
+                    // (same colour used inside the subject's own pages)
 };
 
-export default function SubjectCard({ title, description, slug, icon, image }: SubjectCardProps) {
+export default function SubjectCard({ title, description, slug, icon, image, hoverBg }: SubjectCardProps) {
   const gradient = SUBJECT_GRADIENTS[slug] ?? DEFAULT_GRADIENT;
+
+  // ── HOVER STATE ───────────────────────────────────────────────────────────────
+  // `hovered` is true while the mouse is over the card, false otherwise.
+  // We use this to switch the card body background to the subject colour on hover.
+  const [hovered, setHovered] = useState(false);
 
   return (
     <Link
@@ -52,6 +69,10 @@ export default function SubjectCard({ title, description, slug, icon, image }: S
         "hover:-translate-y-1",
         "transition-all duration-200",
       ].join(" ")}
+      // These two events fire when the mouse enters and leaves the card.
+      // They flip `hovered` on/off so the card body colour updates instantly.
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
       {/* ── THUMBNAIL ────────────────────────────────────────────────────────────
           Real photo when available; rich gradient + emoji while awaiting photos. */}
@@ -78,12 +99,20 @@ export default function SubjectCard({ title, description, slug, icon, image }: S
         )}
       </div>
 
-      {/* ── CARD BODY ──────────────────────────────────────────────────────────*/}
-      <div className="flex flex-col gap-2 p-5 flex-1">
+      {/* ── CARD BODY ────────────────────────────────────────────────────────────
+          The background switches to the subject colour on hover.
+          `transition-colors duration-200` makes the change animate smoothly.
+          We use an inline `style` here (not a Tailwind class) because the colour
+          value is dynamic — it comes from a prop, and Tailwind classes must be
+          known at build time. Inline styles can take any value at runtime.       */}
+      <div
+        className="flex flex-col gap-2 p-5 flex-1 transition-colors duration-200"
+        style={{ backgroundColor: hovered && hoverBg ? hoverBg : undefined }}
+      >
         <h3 className="font-heading text-lg font-semibold text-navy group-hover:text-sapphire transition-colors leading-snug">
           {title}
         </h3>
-        <p className="font-body text-sm text-muted leading-relaxed line-clamp-2 flex-1">
+        <p className="font-body text-base text-muted leading-relaxed line-clamp-2 flex-1">
           {description}
         </p>
         <span className="font-body text-sm font-semibold text-sapphire group-hover:text-sapphire-dark transition-colors mt-2">

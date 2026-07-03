@@ -35,6 +35,8 @@ import JsonLd from "@/components/JsonLd";
 import NewsArticleView from "@/components/NewsArticleView";
 import { getRecentNews } from "@/lib/news";
 import { SITE_URL, SITE_NAME, absoluteUrl } from "@/lib/site";
+import { getSubjectColors } from "@/lib/subject-colors";
+import { formatNewsDate } from "@/lib/date-utils";
 
 // ── GENERATE STATIC PARAMS ────────────────────────────────────────────────────
 // Tells Next.js every URL that exists so pages are pre-built at deploy time.
@@ -129,6 +131,9 @@ export default async function ContentPage({
   // Work out the language (Hindi if the URL starts with /hi) and the content path
   const { lang, contentSlug } = parseLangSlug(slug);
 
+  // Subject color — null for unknown subjects (falls back to plain white)
+  const colors = getSubjectColors(contentSlug[0]);
+
   // Find the file that matches this slug + language
   const resolved = resolveContentFile(contentSlug, lang);
   if (!resolved) notFound();
@@ -146,6 +151,20 @@ export default async function ContentPage({
   // individual items (/news/YYYY/MM/slug, handled in the topic branch) exist.
   if (contentSlug[0] === "news" && pageType !== "topic") notFound();
 
+  // ── HINDI INFO HELPER ─────────────────────────────────────────────────────
+  // For a given content slug, returns the Hindi URL and title if a Hindi
+  // version of that page exists. Returns null if no Hindi version is found.
+  // Used to pass hindiHref and hindiTitle to ContentCards so they can flip.
+  function getHindiInfo(itemSlug: string[]): { href: string; title: string } | null {
+    if (!hasTranslation(itemSlug, "hi")) return null;
+    const resolved = resolveContentFile(itemSlug, "hi");
+    if (!resolved) return null;
+    return {
+      href: "/hi/" + itemSlug.join("/"),
+      title: getContentMeta(resolved.filePath).title,
+    };
+  }
+
   // ── SUBJECT PAGE (top-level folder, e.g. /history) ────────────────────────
   // A subject shows its CATEGORIES if it has any (e.g. History → Modern India).
   // If it has no categories, it shows its TOPICS directly (e.g. Human Body → Blood).
@@ -154,63 +173,79 @@ export default async function ContentPage({
     const looseTopics = categories.length === 0 ? getTopicsInSubject(slug[0]) : [];
 
     return (
-      <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12">
-        <Breadcrumb items={breadcrumbs} />
+      <div className="w-full min-h-screen transition-colors duration-300" style={colors ? { backgroundColor: colors.bg } : undefined}>
+        <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12">
+          <Breadcrumb items={breadcrumbs} />
 
-        {/* Subject header */}
-        <div className="mb-10">
-          <h1 className="font-heading text-4xl font-bold text-navy">
-            {meta.title}
-          </h1>
-          {meta.description && (
-            <p className="font-body text-lg text-muted mt-3 max-w-2xl">
-              {meta.description}
-            </p>
+          {/* Subject header */}
+          <div className="mb-10">
+            <h1 className="font-heading text-4xl font-bold leading-tight" style={colors ? { color: colors.accent } : undefined}>
+              {meta.title}
+            </h1>
+            {meta.description && (
+              <p className="font-body text-lg text-muted mt-3 max-w-2xl">
+                {meta.description}
+              </p>
+            )}
+            {colors && <div className="mt-5 h-[3px] w-14 rounded-full" style={{ backgroundColor: colors.border }} />}
+          </div>
+
+          {categories.length > 0 ? (
+            // This subject has categories → show category cards
+            <>
+              <h2 className="font-heading text-xl font-semibold text-navy mb-5">
+                Categories
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {categories.map((cat) => {
+                  const catSlug = [slug[0], cat.slug];
+                  const hindi = getHindiInfo(catSlug);
+                  return (
+                    <ContentCard
+                      key={cat.slug}
+                      title={cat.meta.title}
+                      description={cat.meta.description}
+                      href={`/${slug[0]}/${cat.slug}`}
+                      hoverBg={colors?.bg}
+                      hindiHref={hindi?.href}
+                      hindiTitle={hindi?.title}
+                    />
+                  );
+                })}
+              </div>
+            </>
+          ) : looseTopics.length > 0 ? (
+            // No categories, but topics exist directly under the subject → show topics
+            <>
+              <h2 className="font-heading text-xl font-semibold text-navy mb-5">
+                Topics
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {looseTopics.map((topic) => {
+                  const hindi = getHindiInfo(topic.slug);
+                  return (
+                    <ContentCard
+                      key={topic.slug.join("/")}
+                      title={topic.meta.title}
+                      description={topic.meta.description}
+                      href={`/${topic.slug.join("/")}`}
+                      hoverBg={colors?.bg}
+                      hindiHref={hindi?.href}
+                      hindiTitle={hindi?.title}
+                    />
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            // Nothing yet — empty state
+            <div className="py-16 text-center">
+              <p className="font-body text-lg text-muted">
+                Topics coming soon. Check back later.
+              </p>
+            </div>
           )}
         </div>
-
-        {categories.length > 0 ? (
-          // This subject has categories → show category cards
-          <>
-            <h2 className="font-heading text-xl font-semibold text-navy mb-5">
-              Categories
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {categories.map((cat) => (
-                <ContentCard
-                  key={cat.slug}
-                  title={cat.meta.title}
-                  description={cat.meta.description}
-                  href={`/${slug[0]}/${cat.slug}`}
-                />
-              ))}
-            </div>
-          </>
-        ) : looseTopics.length > 0 ? (
-          // No categories, but topics exist directly under the subject → show topics
-          <>
-            <h2 className="font-heading text-xl font-semibold text-navy mb-5">
-              Topics
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {looseTopics.map((topic) => (
-                <ContentCard
-                  key={topic.slug.join("/")}
-                  title={topic.meta.title}
-                  description={topic.meta.description}
-                  href={`/${topic.slug.join("/")}`}
-                />
-              ))}
-            </div>
-          </>
-        ) : (
-          // Nothing yet — empty state
-          <div className="py-16 text-center">
-            <p className="font-body text-lg text-muted">
-              Topics coming soon. Check back later.
-            </p>
-          </div>
-        )}
       </div>
     );
   }
@@ -224,45 +259,54 @@ export default async function ContentPage({
         : getTopicsInCategory(slug[0], slug[1]); // category inside a subject
 
     return (
-      <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12">
-        <Breadcrumb items={breadcrumbs} />
+      <div className="w-full min-h-screen transition-colors duration-300" style={colors ? { backgroundColor: colors.bg } : undefined}>
+        <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12">
+          <Breadcrumb items={breadcrumbs} />
 
-        {/* Category/subject header */}
-        <div className="mb-10">
-          <h1 className="font-heading text-4xl font-bold text-navy">
-            {meta.title}
-          </h1>
-          {meta.description && (
-            <p className="font-body text-lg text-muted mt-3 max-w-2xl">
-              {meta.description}
-            </p>
+          {/* Category/subject header */}
+          <div className="mb-10">
+            <h1 className="font-heading text-4xl font-bold leading-tight" style={colors ? { color: colors.accent } : undefined}>
+              {meta.title}
+            </h1>
+            {meta.description && (
+              <p className="font-body text-lg text-muted mt-3 max-w-2xl">
+                {meta.description}
+              </p>
+            )}
+            {colors && <div className="mt-5 h-[3px] w-14 rounded-full" style={{ backgroundColor: colors.border }} />}
+          </div>
+
+          {/* Topic list */}
+          {topics.length > 0 ? (
+            <>
+              <h2 className="font-heading text-xl font-semibold text-navy mb-5">
+                Topics
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {topics.map((topic) => {
+                  const hindi = getHindiInfo(topic.slug);
+                  return (
+                    <ContentCard
+                      key={topic.slug.join("/")}
+                      title={topic.meta.title}
+                      description={topic.meta.description}
+                      href={`/${topic.slug.join("/")}`}
+                      hoverBg={colors?.bg}
+                      hindiHref={hindi?.href}
+                      hindiTitle={hindi?.title}
+                    />
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <div className="py-16 text-center">
+              <p className="font-body text-lg text-muted">
+                Topics coming soon. Check back later.
+              </p>
+            </div>
           )}
         </div>
-
-        {/* Topic list */}
-        {topics.length > 0 ? (
-          <>
-            <h2 className="font-heading text-xl font-semibold text-navy mb-5">
-              Topics
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {topics.map((topic) => (
-                <ContentCard
-                  key={topic.slug.join("/")}
-                  title={topic.meta.title}
-                  description={topic.meta.description}
-                  href={`/${topic.slug.join("/")}`}
-                />
-              ))}
-            </div>
-          </>
-        ) : (
-          <div className="py-16 text-center">
-            <p className="font-body text-lg text-muted">
-              Topics coming soon. Check back later.
-            </p>
-          </div>
-        )}
       </div>
     );
   }
@@ -336,6 +380,10 @@ export default async function ContentPage({
       .filter((n) => n.url !== "/" + contentSlug.join("/"))
       .slice(0, 3);
 
+    // Extract headings for the Table of Contents sidebar.
+    // Uses the same extractHeadings() function as topic pages.
+    const newsHeadings = extractHeadings(resolved!.filePath);
+
     return (
       <NewsArticleView
         meta={meta}
@@ -345,6 +393,7 @@ export default async function ContentPage({
         hiHref={hiHref}
         readingTime={readingTime}
         recent={recent}
+        headings={newsHeadings}
       >
         <ContentComponent />
       </NewsArticleView>
@@ -369,7 +418,7 @@ export default async function ContentPage({
         <>
           <span className={light ? "text-on-dark/50" : "text-muted opacity-40"}>·</span>
           <span className={`font-body text-sm ${light ? "text-on-dark/80" : "text-muted"}`}>
-            Updated {meta.date}
+            Updated {formatNewsDate(meta.date)}
           </span>
         </>
       )}
@@ -405,6 +454,7 @@ export default async function ContentPage({
   };
 
   return (
+    <div className="w-full min-h-screen transition-colors duration-300" style={colors ? { backgroundColor: colors.bg } : undefined}>
     <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-8 md:py-12">
 
       {/* Structured data (invisible) — Article + breadcrumb trail for SEO/GEO */}
@@ -467,11 +517,13 @@ export default async function ContentPage({
           {!meta.image && (
             <>
               <h1
-                className="font-heading text-4xl font-bold text-navy leading-tight"
+                className="font-heading text-4xl font-bold leading-tight"
                 lang={lang}
+                style={colors ? { color: colors.accent } : undefined}
               >
                 {meta.title}
               </h1>
+              {colors && <div className="mt-4 h-[3px] w-14 rounded-full" style={{ backgroundColor: colors.border }} />}
               <div className="mt-4 mb-8">{metaBar(false)}</div>
             </>
           )}
@@ -497,13 +549,19 @@ export default async function ContentPage({
                 Related Topics
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {relatedTopics.map((topic) => (
-                  <ContentCard
-                    key={topic.slug.join("/")}
-                    title={topic.meta.title}
-                    href={`/${topic.slug.join("/")}`}
-                  />
-                ))}
+                {relatedTopics.map((topic) => {
+                  const hindi = getHindiInfo(topic.slug);
+                  return (
+                    <ContentCard
+                      key={topic.slug.join("/")}
+                      title={topic.meta.title}
+                      href={`/${topic.slug.join("/")}`}
+                      hoverBg={colors?.bg}
+                      hindiHref={hindi?.href}
+                      hindiTitle={hindi?.title}
+                    />
+                  );
+                })}
               </div>
             </section>
           )}
@@ -511,15 +569,17 @@ export default async function ContentPage({
 
         {/* ── STICKY SIDEBAR ───────────────────────────────────────────────────
             Hidden on mobile/tablet, visible on large screens.
-            `sticky top-24` keeps it visible as the user scrolls (24 = clears the
-            sticky header). `self-start` is required for sticky to work in flex.  */}
+            `sticky top-32` keeps it visible as the user scrolls (128px clears the
+            taller header after the logo was enlarged). `self-start` is required
+            for sticky to work in flex.                                            */}
         <aside className="hidden lg:block w-[280px] flex-shrink-0">
-          <div className="sticky top-24 flex flex-col gap-5">
+          <div className="sticky top-32 flex flex-col gap-5">
             <TableOfContents headings={headings} />
             {meta.quickFacts && <QuickFacts facts={meta.quickFacts} />}
           </div>
         </aside>
       </div>
+    </div>
     </div>
   );
 }

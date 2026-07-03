@@ -1,12 +1,16 @@
 # GKWorld360 — Design System
 
 **Source of truth (text):** `docs/GKWORLD360_MASTER_BLUEPRINT.md`, `docs/GKWORLD360_TECH_FOUNDATION.md`, `docs/GKWORLD360_PROJECT_STRUCTURE.md`
-**Source of truth (visual / design):** **This document + the implemented code (the design tokens in `app/globals.css` and the components) + the live site.** As of 25 June 2026, the design system has been extracted from Stitch into the codebase; **Stitch is no longer the source of truth.**
+**Source of truth (visual / design):** **This document + the implemented code (the design tokens in `app/(frontend)/globals.css` and the components) + the live site.** As of 25 June 2026, the design system has been extracted from Stitch into the codebase; **Stitch is no longer the source of truth.**
 **Design theme:** **"Academic Clarity"** — originally generated in the Stitch project "GKWorld360 MVP Final Designs" (ID `10446470816480953843`, extracted 18 June 2026), now owned by the code.
 **Stitch's role now:** an *optional* tool for exploring brand-new, visually distinct pages or a future redesign — not a thing to keep in sync for everyday work.
 **Purpose:** This document records the implemented design system (colours, fonts, spacing, components) so any future session can apply it consistently.
 
-> **How to read this document:** The values below are the project's design tokens, now living in `app/globals.css`. When the design evolves, change the tokens/components in code and update this document to match — the **code + this doc + the live site** are the source of truth, not Stitch.
+> **📌 Doc status (updated 2 Jul 2026):** Reference doc, largely current — the design did not
+> change during the Payload migration. One path note: the design tokens file moved from
+> `app/globals.css` to **`app/(frontend)/globals.css`** when the app was split into route groups.
+
+> **How to read this document:** The values below are the project's design tokens, now living in `app/(frontend)/globals.css`. When the design evolves, change the tokens/components in code and update this document to match — the **code + this doc + the live site** are the source of truth, not Stitch.
 
 ---
 
@@ -337,7 +341,7 @@ New components should feel like natural members of the same family. When somethi
 
 # Important Rules
 
-1. **Reuse the existing tokens and components.** Every colour, font, size, and spacing value should come from the design tokens in `app/globals.css` (recorded in this document). Don't hard-code raw values in components.
+1. **Reuse the existing tokens and components.** Every colour, font, size, and spacing value should come from the design tokens in `app/(frontend)/globals.css` (recorded in this document). Don't hard-code raw values in components.
 2. **If a value isn't defined yet, decide it deliberately** — pick a value consistent with the system, add it to the tokens, and record it here. Don't scatter one-off values.
 3. **The source of truth is the code + this document + the live site.** If they ever disagree, the implemented code wins; update this document to match.
 4. **Keep this document current.** When the design evolves (new tokens, new components, restyles), update the affected sections here so future sessions stay accurate.

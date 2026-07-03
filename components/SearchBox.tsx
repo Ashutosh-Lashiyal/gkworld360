@@ -25,7 +25,7 @@ type SearchBoxProps = {
 
 export default function SearchBox({
   buttonLabel = "Search",
-  placeholder = "Search topics, subjects, articles...",
+  placeholder = "Search subjects, categories, topics, news...",
 }: SearchBoxProps) {
   const router = useRouter();
 

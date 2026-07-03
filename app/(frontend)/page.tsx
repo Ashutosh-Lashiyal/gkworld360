@@ -8,72 +8,84 @@ import SearchBox from "@/components/SearchBox";
 import SubjectCard from "@/components/SubjectCard";
 import TopicCard from "@/components/TopicCard";
 import NewsCard from "@/components/NewsCard";
-import { getHomepageSubjects } from "@/lib/content";
+import { getHomepageSubjects, getRecentTopics, hasTranslation, resolveContentFile, getContentMeta } from "@/lib/content";
 import { getRecentNews } from "@/lib/news";
 import { getDailyQuote } from "@/lib/quote";
+import { SUBJECT_COLORS } from "@/lib/subject-colors";
+// getSubjectInfo maps a subject slug like "history" to its display label
+// ("History") and emoji icon ("🏛️") so TopicCards show the right category.
+import { getSubjectInfo } from "@/lib/subjects";
 
-// ── DUMMY DATA ────────────────────────────────────────────────────────────────
-// Placeholder content for Popular Topics, Recently Added Topics, and Articles.
-// Replace with real data once articles are published.
 
-const POPULAR_TOPICS = [
-  {
-    title: "The Revolt of 1857 — India's First War of Independence",
-    category: "History",
-    description: "The uprising of 1857 marked a turning point in Indian history and led to the transfer of power from the East India Company to the British Crown.",
-    href: "/history",
-  },
-  {
-    title: "The Indian Constitution — Salient Features",
-    category: "Polity",
-    description: "India's Constitution is one of the longest written constitutions in the world. Learn its key features, structure, and significance.",
-    href: "/",
-  },
-  {
-    title: "Photosynthesis — How Plants Make Food",
-    category: "Biology",
-    description: "Photosynthesis is the process by which plants convert sunlight, water, and carbon dioxide into glucose and oxygen.",
-    href: "/biology",
-  },
-  {
-    title: "Newton's Laws of Motion — Explained Simply",
-    category: "Physics",
-    description: "Newton's three laws of motion form the foundation of classical mechanics and explain how objects move and interact.",
-    href: "/physics",
-  },
-];
-
-const RECENTLY_ADDED_TOPICS = [
-  {
-    title: "The Indus Valley Civilisation",
-    category: "History",
-    href: "/history",
-    addedTime: "Added today",
-    readTime: "8 min read",
-    icon: "🏛️",
-  },
-  {
-    title: "Structure of the Atom",
-    category: "Chemistry",
-    href: "/chemistry",
-    addedTime: "Added yesterday",
-    readTime: "6 min read",
-    icon: "🧪",
-  },
-  {
-    title: "The Solar System",
-    category: "Geography",
-    href: "/geography",
-    addedTime: "Added 2 days ago",
-    readTime: "10 min read",
-    icon: "🌍",
-  },
-];
+// ── ADDED TIME FORMATTER ──────────────────────────────────────────────────────
+// Converts an article date like "2026-06-22" into a friendly string like
+// "Added today", "Added yesterday", or "Added 3 days ago".
+function formatAddedTime(date?: string): string {
+  if (!date) return "Recently added";
+  const d = new Date(date);
+  const diffDays = Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return "Added today";
+  if (diffDays === 1) return "Added yesterday";
+  if (diffDays < 7) return `Added ${diffDays} days ago`;
+  return `Added ${d.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
+}
 
 // ── HOMEPAGE ──────────────────────────────────────────────────────────────────
 export default function HomePage() {
   const homepageSubjects = getHomepageSubjects();
   const recentNews = getRecentNews(3); // newest 3 news items for the homepage
+
+  // ── REAL TOPIC DATA ───────────────────────────────────────────────────────
+  // getRecentTopics fetches real articles sorted by most recent date.
+  // We get 7 and split them: first 4 → Popular Topics, next 3 → Recently Added.
+  // Until a real popularity mechanism is built, both sections use recency.
+  // When popularity tracking is ready, replace the popularTopics slice with
+  // a ranked list — the TopicCard rendering code below stays exactly the same.
+  const allRecentTopics = getRecentTopics(7);
+
+  // Enrich each topic with subject label, icon, subject colour, and Hindi info.
+  // We do this once here so the JSX maps below stay clean and readable.
+  const enrichedTopics = allRecentTopics.map((item) => {
+    const subject = getSubjectInfo(item.slug[0]);
+    const hindiResolved = hasTranslation(item.slug, "hi")
+      ? resolveContentFile(item.slug, "hi")
+      : null;
+    return {
+      title:       item.meta.title,
+      description: item.meta.description ?? "",
+      href:        "/" + item.slug.join("/"),
+      category:    subject?.label ?? item.slug[0],
+      icon:        subject?.icon,
+      addedTime:   formatAddedTime(item.meta.date),
+      hoverBg:     SUBJECT_COLORS[item.slug[0]]?.bg,
+      image:       item.meta.image,  // real photo — shows in Popular Topics thumbnail
+      hindiHref:   hindiResolved ? "/hi/" + item.slug.join("/") : undefined,
+      hindiTitle:  hindiResolved ? getContentMeta(hindiResolved.filePath).title : undefined,
+    };
+  });
+
+  // First 4 → Popular Topics section (vertical cards with gradient thumbnail)
+  const popularTopics = enrichedTopics.slice(0, 4);
+  // First 3 → Recently Added Topics section (compact horizontal cards).
+  // Both sections draw from the same pool for now — as more topics are added,
+  // they'll appear here automatically. A proper popularity mechanism can be
+  // added later; only the data source needs to change, not the card code.
+  const recentlyAddedTopics = enrichedTopics.slice(0, 3);
+
+  // Pre-compute Hindi info for each recent news item so the JSX stays clean.
+  // hasTranslation checks if a .hi.mdx file exists for that slug.
+  const recentNewsWithHindi = recentNews.map((item) => {
+    const hindiResolved = hasTranslation(item.slug, "hi")
+      ? resolveContentFile(item.slug, "hi")
+      : null;
+    return {
+      ...item,
+      hindiHref: hindiResolved ? "/hi/" + item.slug.join("/") : undefined,
+      hindiTitle: hindiResolved
+        ? getContentMeta(hindiResolved.filePath).title
+        : undefined,
+    };
+  });
   const dailyQuote = getDailyQuote();
 
   return (
@@ -106,7 +118,7 @@ export default function HomePage() {
           </p>
 
           {/* Headline */}
-          <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-on-dark leading-tight max-w-3xl mx-auto">
+          <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl font-extrabold text-on-dark leading-tight max-w-3xl mx-auto">
             Master the World&apos;s Core Knowledge
           </h1>
 
@@ -124,7 +136,7 @@ export default function HomePage() {
           {/* Trust badges */}
           <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
             {["18 Subjects", "English & हिन्दी", "Free to read", "Updated daily"].map((badge) => (
-              <span key={badge} className="font-body text-sm text-on-dark/55">
+              <span key={badge} className="font-body text-xs font-medium text-on-dark/80 border border-on-dark/25 rounded-full px-3 py-1">
                 ✓ {badge}
               </span>
             ))}
@@ -141,7 +153,7 @@ export default function HomePage() {
 
           <div className="flex items-end justify-between mb-8">
             <div>
-              <h2 className="font-heading text-3xl font-semibold text-navy">
+              <h2 className="font-heading text-3xl font-bold text-navy tracking-tight">
                 Explore Subjects
               </h2>
               <p className="font-body text-base text-muted mt-1">
@@ -163,6 +175,11 @@ export default function HomePage() {
                 slug={subject.slug}
                 icon={subject.meta.icon}
                 image={subject.meta.image}
+                // Pass the subject's background colour so the card body
+                // highlights in the matching colour on hover.
+                // The ?. (optional chaining) safely returns undefined if
+                // this subject slug isn't in the colour map yet.
+                hoverBg={SUBJECT_COLORS[subject.slug]?.bg}
               />
             ))}
           </div>
@@ -222,28 +239,33 @@ export default function HomePage() {
 
           <div className="flex items-end justify-between mb-8">
             <div>
-              <h2 className="font-heading text-3xl font-semibold text-navy">
+              <h2 className="font-heading text-3xl font-bold text-navy tracking-tight">
                 Popular Topics
               </h2>
               <p className="font-body text-base text-muted mt-1">
                 Most read topics across all subjects
               </p>
             </div>
-            <Link href="/subjects" className="font-body text-sm font-medium text-sapphire hover:text-sapphire-dark transition-colors whitespace-nowrap">
+            {/* /topics?sort=popular — opens the topics page with Popular sort active */}
+            <Link href="/topics?sort=popular" className="font-body text-sm font-medium text-sapphire hover:text-sapphire-dark transition-colors whitespace-nowrap">
               View all topics →
             </Link>
           </div>
 
           {/* 4 columns desktop, 2 tablet, 1 mobile */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {POPULAR_TOPICS.map((topic) => (
+            {popularTopics.map((topic) => (
               <TopicCard
-                key={topic.title}
+                key={topic.href}
                 variant="popular"
                 title={topic.title}
                 category={topic.category}
                 description={topic.description}
                 href={topic.href}
+                hoverBg={topic.hoverBg}
+                hindiHref={topic.hindiHref}
+                hindiTitle={topic.hindiTitle}
+                image={topic.image}
               />
             ))}
           </div>
@@ -258,30 +280,33 @@ export default function HomePage() {
 
           <div className="flex items-end justify-between mb-8">
             <div>
-              <h2 className="font-heading text-3xl font-semibold text-navy">
+              <h2 className="font-heading text-3xl font-bold text-navy tracking-tight">
                 Recently Added Topics
               </h2>
               <p className="font-body text-base text-muted mt-1">
                 The latest topics added to GKWorld360
               </p>
             </div>
-            <Link href="/subjects" className="font-body text-sm font-medium text-sapphire hover:text-sapphire-dark transition-colors whitespace-nowrap">
+            {/* /topics?sort=recent — opens the topics page with Recently Added sort active */}
+            <Link href="/topics?sort=recent" className="font-body text-sm font-medium text-sapphire hover:text-sapphire-dark transition-colors whitespace-nowrap">
               View all →
             </Link>
           </div>
 
-          {/* Horizontally scrollable row — shows 3 items on desktop, scrolls on mobile */}
-          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-            {RECENTLY_ADDED_TOPICS.map((topic) => (
+          {/* 3 columns desktop, 2 tablet, 1 mobile — no horizontal scroll */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {recentlyAddedTopics.map((topic) => (
               <TopicCard
-                key={topic.title}
+                key={topic.href}
                 variant="recent"
                 title={topic.title}
                 category={topic.category}
                 href={topic.href}
                 addedTime={topic.addedTime}
-                readTime={topic.readTime}
                 icon={topic.icon}
+                hoverBg={topic.hoverBg}
+                hindiHref={topic.hindiHref}
+                hindiTitle={topic.hindiTitle}
               />
             ))}
           </div>
@@ -297,7 +322,7 @@ export default function HomePage() {
 
             <div className="flex items-end justify-between mb-8">
               <div>
-                <h2 className="font-heading text-3xl font-semibold text-navy">
+                <h2 className="font-heading text-3xl font-bold text-navy tracking-tight">
                   Recently Added News
                 </h2>
                 <p className="font-body text-base text-muted mt-1">
@@ -311,8 +336,14 @@ export default function HomePage() {
 
             {/* 3 columns desktop, 2 tablet, 1 mobile */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {recentNews.map((item) => (
-                <NewsCard key={item.url} url={item.url} meta={item.meta} />
+              {recentNewsWithHindi.map((item) => (
+                <NewsCard
+                  key={item.url}
+                  url={item.url}
+                  meta={item.meta}
+                  hindiHref={item.hindiHref}
+                  hindiTitle={item.hindiTitle}
+                />
               ))}
             </div>
           </div>
@@ -320,9 +351,9 @@ export default function HomePage() {
       )}
 
       {/* ══ SECTION 7: ABOUT GKWORLD360 ════════════════════════════════════════
-          Light surface background. Two-column on desktop: text left, image right.
-          Includes mission statement and testimonial quote.                        */}
-      <section className="bg-surface-low border-t border-hairline">
+          Dark navy background — now distinct from the light #b0c4c0 footer below.
+          Text switches back to white (text-on-dark) since the background is dark. */}
+      <section className="bg-navy-dark border-t border-hairline">
         <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-16">
 
           {/* Two columns on desktop, single column on mobile */}
@@ -330,32 +361,42 @@ export default function HomePage() {
 
             {/* Text column */}
             <div>
-              <h2 className="font-heading text-3xl font-semibold text-navy mb-6 leading-snug">
+              {/* text-on-dark = white — readable on the dark navy background */}
+              <h2 className="font-heading text-3xl font-bold text-on-dark tracking-tight mb-6 leading-snug">
                 Empowering Academic Excellence Through Structured Knowledge
               </h2>
-              <p className="font-body text-lg text-foreground leading-relaxed mb-4">
+              <p className="font-body text-lg text-on-dark/75 leading-relaxed mb-4">
                 GKWorld360 is a curated educational platform for students, competitive exam aspirants, and lifelong learners. Every topic is carefully written and organised so you always know where you are and where to go next.
               </p>
-              <p className="font-body text-lg text-foreground leading-relaxed mb-6">
+              <p className="font-body text-lg text-on-dark/75 leading-relaxed mb-6">
                 Whether you are preparing for UPSC, SSC, Railways, or simply curious about the world — GKWorld360 is built for you. New topics are added every day.
               </p>
 
               {/* Testimonial quote */}
               <blockquote className="border-l-4 border-sapphire pl-5 py-1">
-                <p className="font-body text-base text-muted italic leading-relaxed">
+                {/* text-on-dark/60 — white at 60% opacity, softer for quoted text */}
+                <p className="font-body text-base text-on-dark/60 italic leading-relaxed">
                   &ldquo;The standard for general knowledge resources.&rdquo;
                 </p>
-                <cite className="font-body text-sm text-muted not-italic mt-1 block">
+                <cite className="font-body text-sm text-on-dark/50 not-italic mt-1 block">
                   — Education Review 2024
                 </cite>
               </blockquote>
             </div>
 
-            {/* Image column — placeholder until real image is ready */}
-            <div className="bg-surface-mid rounded-card h-72 lg:h-80 flex items-center justify-center">
-              <p className="font-body text-sm text-muted text-center px-8">
-                Illustration coming soon
-              </p>
+            {/* Image column
+                Once you place about.jpg in public/images/, it will appear here.
+                `relative` + `fill` is the standard Next.js pattern for an image
+                that fills a fixed-height container — the image stretches to cover
+                the full width and height of the div, cropped neatly with object-cover. */}
+            <div className="relative rounded-card h-72 lg:h-80 overflow-hidden bg-navy">
+              <Image
+                src="/images/about.png"
+                alt="About GKWorld360"
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 560px"
+              />
             </div>
           </div>
         </div>

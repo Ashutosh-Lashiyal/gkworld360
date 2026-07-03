@@ -4,6 +4,14 @@
 **Audience:** a non-technical solo founder building with AI assistance
 **Purpose:** a step-by-step, plain-language guide to set up the entire GKWorld360 project from an empty computer to a live website — so anyone (including a future you, or a future AI session) can recreate the foundation correctly.
 
+> **📌 Doc status (updated 2 Jul 2026):** Reference doc. The steps here — installing Node,
+> creating the Next.js project, Git, GitHub, Vercel — are **still accurate** for the base setup.
+> What this guide does **not yet cover** is the later addition of **Payload CMS + Neon
+> (PostgreSQL) + Cloudflare R2** (done during the CMS migration). Until those steps are folded
+> in here, the authoritative record of that setup is **`PROJECT_CONTEXT.md`** (see its "Payload
+> CMS Setup" section) and the `project_payload_cms` memory note. _Adding a "Part 2: CMS &
+> Database setup" section to this guide is a pending to-do._
+
 > **Read this first:** This guide does **not** build the website's features. It builds the *workshop* — installing the tools, creating the empty project, and connecting everything so that building can begin. Think of it like setting up a kitchen before you cook: you install the oven, lay out the counters, and check the lights work. Once this guide is finished, the actual cooking — building pages and writing articles — starts. Follow it top to bottom, in order, and don't skip steps.
 
 ---

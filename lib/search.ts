@@ -40,7 +40,10 @@ export function getSearchIndex(): SearchItem[] {
       title: meta.title,
       description: meta.description ?? "",
       url: "/" + slug.join("/"),
-      type: TYPE_LABEL[type] ?? "Page",
+      // News articles live under content/news/... and getPageType() classifies
+      // them as "topic" since they're individual content files. We override that
+      // here so they show as "News" in search results instead of "Topic".
+      type: slug[0] === "news" ? "News" : (TYPE_LABEL[type] ?? "Page"),
       subject: slug[0],
     });
   }

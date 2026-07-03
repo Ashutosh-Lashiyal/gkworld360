@@ -133,6 +133,16 @@
   font-family: var(--font-devanagari), system-ui, sans-serif;
 }
 
+/* ── SCROLL MARGIN FOR STICKY HEADER ─────────────────────────────────────────────
+   When a user clicks a heading in the Table of Contents sidebar, the browser
+   scrolls that heading to the top of the viewport. Without this rule, the sticky
+   header covers the heading — you see only the content below it, not the heading
+   itself. scroll-margin-top adds a gap so the heading lands BELOW the header.
+   8rem = 128px matches the sticky top-32 (128px) we use on the sidebar.           */
+h1, h2, h3, h4, h5, h6 {
+  scroll-margin-top: 10rem; /* 160px — header is ~120px tall, this gives a 40px gap above */
+}
+
 /* ── ARTICLE PROSE ───────────────────────────────────────────────────────────────
    Applied to <article> tags containing MDX content (topics and news items).
    Without these, MDX renders as plain unstyled text — no spacing, no bullets,
@@ -320,6 +330,26 @@
 
 .prose aside p {
   margin-bottom: 0;
+}
+
+/* ── BELL RING ANIMATION ─────────────────────────────────────────────────────
+   Simulates a ringing bell — swings left and right a few times, then pauses.
+   transform-origin: top center makes it swing from the top, like a hanging bell.
+   The animation plays for the first 30% of each 3-second cycle, then pauses.   */
+@keyframes bell-ring {
+  0%   { transform: rotate(0deg); }
+  8%   { transform: rotate(18deg); }
+  16%  { transform: rotate(-14deg); }
+  24%  { transform: rotate(12deg); }
+  30%  { transform: rotate(-8deg); }
+  36%  { transform: rotate(0deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.bell-ring {
+  display: inline-block;
+  transform-origin: top center;
+  animation: bell-ring 3s ease-in-out infinite;
 }
 
 /* Hindi prose headings must use Devanagari (overrides the English heading font above) */

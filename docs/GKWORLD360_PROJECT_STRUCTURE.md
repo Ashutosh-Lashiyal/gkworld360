@@ -4,6 +4,67 @@
 **Audience:** a non-technical solo founder building with AI assistance
 **Purpose:** define the project's folder structure, explain why each folder exists, and set rules that keep the project simple and clutter-free as it grows.
 
+> **📌 Doc status (updated 2 Jul 2026):** Reference doc. The **"Current Structure"** section
+> immediately below reflects the project as it is *today*. The diagrams further down (originally
+> written for the MVP plan) predate the Payload migration — their **philosophy and folder rules
+> are still valid**, but for the live layout trust the section below and `PROJECT_CONTEXT.md`.
+
+---
+
+# Current Structure (as of 2 Jul 2026)
+
+Since the original plan, two big things changed: we adopted **Payload CMS** (so there's now a
+database + admin panel) and split `app/` into two **route groups** — `(frontend)` for the public
+site and `(payload)` for the admin. Route-group folders are wrapped in `( )`, which means **they
+do NOT appear in the URL** — they only tell Next.js "these areas each get their own page shell."
+
+```
+gkworld360/
+│
+├── app/
+│   ├── (frontend)/        ← THE PUBLIC WEBSITE (its own <html>: Header, Footer, Gyaani, globals.css)
+│   │   ├── layout.tsx         (site frame)
+│   │   ├── page.tsx           (Homepage)
+│   │   ├── [...slug]/         (every subject / category / topic page)
+│   │   ├── about/ contact/ news/ search/ subjects/ topics/
+│   │   ├── not-found.tsx
+│   │   └── globals.css        (design tokens — note: moved here from app/)
+│   │
+│   ├── (payload)/         ← THE CMS ADMIN (Payload's own <html>)
+│   │   ├── layout.tsx
+│   │   ├── config.ts         (re-exports the built Payload config)
+│   │   ├── importMap.js       (admin client components)
+│   │   ├── admin/[[...segments]]/   (the /admin panel UI)
+│   │   └── api/[...slug]/          (Payload's REST API)
+│   │
+│   ├── api/               ← site APIs (e.g. the Gyaani chatbot)
+│   └── robots.ts, sitemap.ts, llms.txt, favicon.ico, icon.png
+│
+├── payload.config.ts     ← Payload master config (connects Neon + Cloudflare R2 + collections)
+├── collections/          ← CMS content types: Users, Media, Subjects, Categories, Articles, News
+├── blocks/               ← rich-text editor blocks: KeyTakeaways, TopicImage
+├── fields/               ← reusable field configs (e.g. slug.ts)
+│
+├── content/              ← LEGACY MDX articles — being migrated into Payload, then removed
+├── components/           ← reusable UI (Header, Footer, cards, Gyaani…)
+├── lib/                  ← helper code (content.ts, search.ts, date-utils.ts…)
+├── public/               ← images, icons
+├── docs/                 ← these documentation files
+├── .env.local            ← private keys: Gemini + Neon (DATABASE_URL) + Cloudflare R2 + PAYLOAD_SECRET
+└── root config: package.json, next.config.ts, tsconfig.json, tailwind
+```
+
+**What changed vs. the original plan below:**
+- `app/` is now split into `(frontend)` and `(payload)` route groups (there is intentionally **no** single `app/layout.tsx` — each group is its own root layout).
+- A **database arrived early**: Neon (PostgreSQL) via Payload — the original plan expected it "much later, with Login."
+- New top-level folders: `collections/`, `blocks/`, `fields/`, plus `payload.config.ts`.
+- The database tooling is **Payload's built-in layer (Drizzle under the hood)**, not `prisma/` as the old diagrams guessed.
+- `globals.css` moved from `app/` to `app/(frontend)/`.
+- The `content/` MDX folder still exists but is **legacy** — being migrated into the CMS, then it will be deleted.
+
+Everything below this line is the **original MVP structure plan**. Its rules and philosophy
+still guide us; just read its file trees as historical, not current.
+
 > **Read this first:** A "folder structure" is just how your project's files are organised into folders — like rooms in a house. A good structure means you (and the AI) can always find things quickly, and the project stays tidy even after it grows to thousands of pages. This document is the rulebook for that tidiness.
 
 ---

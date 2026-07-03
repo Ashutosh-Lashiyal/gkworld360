@@ -5,6 +5,35 @@
 **Lens:** one non-technical founder + AI, limited budget, content-is-the-product, minimal future rewrites
 **Status:** Recommendation for founder approval — no application code generated.
 
+> **📌 Doc status (updated 2 Jul 2026):** Reference doc. The **"Current Stack"** section just
+> below states what we *actually* use today. The detailed 21 recommendations that follow are the
+> **original architectural reasoning** — most still hold, but a few decisions have since changed
+> (database, ORM, content storage). Where they differ, the "Current Stack" section and
+> `PROJECT_CONTEXT.md` win.
+
+---
+
+## Current Stack (what we actually use today — 2 Jul 2026)
+
+| Layer | Original recommendation | **What we use now** |
+|---|---|---|
+| Frontend framework | Next.js (App Router) | ✅ Next.js 16 (unchanged) |
+| Separate backend | None (use Next.js) | ✅ None (unchanged) |
+| Hosting | Vercel | ✅ Vercel (unchanged) |
+| **Content storage** | MDX files (no DB in MVP) | 🔄 **Payload CMS** (migrating off MDX) |
+| **Database** | None in MVP; PostgreSQL "in Phase 2" | 🔄 **Neon (PostgreSQL)** — added now, not later |
+| **Database tooling / ORM** | Prisma (in Phase 2) | 🔄 **Payload's built-in layer (Drizzle under the hood)** — not Prisma |
+| **Images** | Local `public/` folder | 🔄 **Cloudflare R2** (object storage, via Payload) |
+| **Admin/CMS** | None in MVP | 🔄 **Payload CMS admin at `/admin`** |
+| Styling | Tailwind CSS | ✅ Tailwind CSS v4 (unchanged) |
+| AI chatbot (Gyaani) | — | Google Gemini 2.5 Flash |
+
+**Why the database/CMS arrived earlier than the original plan:** the founder chose to move to a
+proper CMS (Payload) while content was still small, rather than migrate hundreds of files later.
+The architecture principle below — *content as data, separate from the website code* — is
+**unchanged**; Payload + Neon is simply a more capable home for that data than flat files.
+See `PROJECT_CONTEXT.md` for the full rationale and setup.
+
 > **The single most important architectural idea for you:** treat **content as data, kept separate from the website code**. If your articles live in their own simple files (or later, a database), then the website that displays them, the search, the SEO, even a future login system — all become things you *add around* the content without ever disturbing the content itself. This one principle is what lets GKWorld360 grow from 10 pages to 10,000, and from "just reading" to "accounts and quizzes," **without rewrites**. Every recommendation below serves it.
 
 ---

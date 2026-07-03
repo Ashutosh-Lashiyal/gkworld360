@@ -16,16 +16,45 @@ export default function SearchResults({ index, initialQuery }: SearchResultsProp
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
 
-  // Filter the index against the query. useMemo avoids re-filtering on every
-  // render — it only recalculates when the query or index changes.
+  // ── TYPE PRIORITY for sorting ─────────────────────────────────────────────
+  // Lower number = appears higher in results.
+  // Subject → Category → Topic → News → anything else
+  const TYPE_ORDER: Record<string, number> = {
+    Subject: 1,
+    Category: 2,
+    Topic: 3,
+    News: 4,
+  };
+
+  // Filter + sort the index against the query.
+  // useMemo avoids re-running this on every render — only recalculates when
+  // the query or index changes.
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return []; // no query → no results (we show a prompt instead)
+    if (!q) return [];
 
-    return index.filter((item) => {
-      // Match against title, description, and subject — case-insensitive
+    // Step 1: keep only items where the query appears anywhere
+    // (title, description, or subject name)
+    const matched = index.filter((item) => {
       const haystack = `${item.title} ${item.description} ${item.subject}`.toLowerCase();
       return haystack.includes(q);
+    });
+
+    // Step 2: sort by relevance
+    // Rule A: title matches always beat description-only matches
+    // Rule B: within the same group, sort by type: Subject → Category → Topic → News
+    return matched.sort((a, b) => {
+      const aInTitle = a.title.toLowerCase().includes(q);
+      const bInTitle = b.title.toLowerCase().includes(q);
+
+      // One has a title match, the other doesn't → title match wins
+      if (aInTitle && !bInTitle) return -1;
+      if (!aInTitle && bInTitle) return 1;
+
+      // Both title matches, or both description-only → sort by type order
+      const aOrder = TYPE_ORDER[a.type] ?? 5;
+      const bOrder = TYPE_ORDER[b.type] ?? 5;
+      return aOrder - bOrder;
     });
   }, [query, index]);
 
@@ -41,13 +70,34 @@ export default function SearchResults({ index, initialQuery }: SearchResultsProp
 
   return (
     <div>
+      {/* ── CLOSE / BACK BUTTON ────────────────────────────────────────────────
+          router.back() returns the user to whatever page they were on before
+          they came to /search — same as pressing the browser's back button.
+          This gives users a clear, obvious way to exit search.                */}
+      <div className="flex items-center justify-between mb-6">
+        <p className="font-body text-sm text-muted">
+          Type to search across all subjects and topics
+        </p>
+        {/* cursor-pointer gives the hand icon on hover.
+            The rounded-full + hover:bg-surface-mid creates a pill-shaped
+            highlight that makes it feel like a proper clickable button.     */}
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-1.5 font-body text-sm text-muted hover:text-navy bg-transparent hover:bg-surface-mid rounded-full px-3 py-1.5 transition-all duration-200 cursor-pointer"
+          aria-label="Close search"
+        >
+          <span className="text-xl leading-none font-light">×</span>
+          <span>Close</span>
+        </button>
+      </div>
+
       {/* ── SEARCH INPUT ───────────────────────────────────────────────────────*/}
       <div className="relative max-w-2xl">
         <input
           type="text"
           value={query}
           onChange={(e) => handleChange(e.target.value)}
-          placeholder="Search topics, subjects, articles..."
+          placeholder="Search subjects, categories, topics, news..."
           autoFocus
           className={[
             "w-full font-body text-base text-foreground placeholder:text-muted",
@@ -72,12 +122,7 @@ export default function SearchResults({ index, initialQuery }: SearchResultsProp
       {/* ── RESULTS AREA ───────────────────────────────────────────────────────*/}
       <div className="mt-8">
 
-        {/* State 1: no query typed yet — show a gentle prompt */}
-        {!trimmedQuery && (
-          <p className="font-body text-muted">
-            Start typing to search across all subjects and topics.
-          </p>
-        )}
+        {/* State 1: no query typed yet — nothing shown, the top bar already explains */}
 
         {/* State 2: query typed, but nothing matched */}
         {trimmedQuery && results.length === 0 && (

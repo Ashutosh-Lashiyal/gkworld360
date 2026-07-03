@@ -437,6 +437,41 @@ export function getAdjacentTopics(slug: string[]): {
   };
 }
 
+// ── GET RECENT TOPICS ─────────────────────────────────────────────────────────
+// Returns the `limit` most recently dated topic articles across ALL subjects.
+// Excludes news items (slug[0] === "news") since those have their own section.
+// Used by the homepage "Popular Topics" and "Recently Added Topics" sections
+// so both are powered by real content instead of hardcoded dummy data.
+// When a popularity mechanism is built later, replace this with a ranked list —
+// the TopicCard component and page rendering code stay the same.
+export function getRecentTopics(limit = 6): { slug: string[]; meta: ContentMeta }[] {
+  const slugs = getAllSlugs();
+
+  const topics = slugs
+    // Keep only English topic-level pages (not news, not Hindi variants).
+    // Hindi files are returned by getAllSlugs() with slug[0] === "hi" — we
+    // exclude them here so they don't appear as separate cards. Their existence
+    // is checked separately via hasTranslation() to power the flip animation.
+    .filter((slug) => getPageType(slug) === "topic" && slug[0] !== "news" && slug[0] !== "hi")
+    .map((slug) => {
+      const filePath = slugToFilePath(slug);
+      if (!filePath) return null;
+      return { slug, meta: getContentMeta(filePath) };
+    })
+    .filter((item): item is { slug: string[]; meta: ContentMeta } => item !== null);
+
+  // Sort by date descending — most recently updated articles appear first.
+  // Topics without a date fall to the end.
+  topics.sort((a, b) => {
+    if (!a.meta.date && !b.meta.date) return 0;
+    if (!a.meta.date) return 1;
+    if (!b.meta.date) return -1;
+    return b.meta.date.localeCompare(a.meta.date);
+  });
+
+  return topics.slice(0, limit);
+}
+
 // ── GET RELATED TOPICS ────────────────────────────────────────────────────────
 // Returns up to `limit` other topics from the same category (excluding the
 // current one), for the "Related Topics" section at the bottom of a topic page.

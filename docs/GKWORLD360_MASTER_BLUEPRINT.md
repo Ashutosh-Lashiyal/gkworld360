@@ -1,5 +1,14 @@
 # GKWorld360 Master Blueprint
 
+> **📌 This is the MAIN source of truth** — GKWorld360's vision, core decisions, and future
+> roadmap ("where we're going"). For the *current build status* ("where we are right now"),
+> see **`PROJECT_CONTEXT.md`** in the project root.
+>
+> **Documentation hierarchy:** Blueprint = the plan · `PROJECT_CONTEXT.md` = today's status ·
+> `TECH_FOUNDATION` / `PROJECT_STRUCTURE` / `SETUP_GUIDE` / `DESIGN_SYSTEM` = reference detail.
+>
+> _Last reviewed: 2 Jul 2026._
+
 ## Project Overview
 
 GKWorld360 is a content-driven educational platform designed to provide high-quality information across multiple subjects in a modern, easy-to-use, and highly scalable environment.
@@ -55,13 +64,15 @@ GKWorld360 aims to provide:
 
 # Current Development Stage
 
-The project is currently in:
+The project is well past planning and is in **active development**.
 
-**Requirements and Planning Phase**
+- The website is built and running (Next.js 16, App Router, Tailwind CSS v4, TypeScript).
+- The tech stack is now selected (see `TECH_FOUNDATION` and `PROJECT_CONTEXT.md`):
+  Next.js on Vercel, **Payload CMS** for content, **Neon (PostgreSQL)** as the database,
+  and **Cloudflare R2** for images.
+- A CMS admin panel is live at `/admin`, and content is mid-migration from MDX files into Payload.
 
-No production code has been finalized.
-
-No technology stack has been permanently selected.
+_For the precise, up-to-the-task current state, always check `PROJECT_CONTEXT.md`._
 
 ---
 
@@ -197,6 +208,11 @@ Additional items may include:
 - Bookmarks
 - Admin Panel
 - Subscription System
+
+> **Update (2 Jul 2026):** The **Admin Panel** and a **database** were brought forward earlier
+> than originally planned — we adopted **Payload CMS + Neon (PostgreSQL)** to manage content.
+> This is an additive change (it does not alter the content hierarchy or public MVP scope);
+> the other excluded items (Login, Notes, Quizzes, Subscriptions) remain post-MVP.
 
 ---
 

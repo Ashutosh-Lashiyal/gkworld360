@@ -5,6 +5,7 @@
 import type { Metadata } from "next";
 import NewsCard from "@/components/NewsCard";
 import { getAllNews } from "@/lib/news";
+import { hasTranslation, resolveContentFile, getContentMeta } from "@/lib/content";
 
 export const metadata: Metadata = {
   title: "News & Current Affairs",
@@ -14,6 +15,20 @@ export const metadata: Metadata = {
 
 export default function NewsListingPage() {
   const news = getAllNews();
+
+  // Pre-compute Hindi info outside the JSX to keep the map clean
+  const newsWithHindi = news.map((item) => {
+    const hindiResolved = hasTranslation(item.slug, "hi")
+      ? resolveContentFile(item.slug, "hi")
+      : null;
+    return {
+      ...item,
+      hindiHref: hindiResolved ? "/hi/" + item.slug.join("/") : undefined,
+      hindiTitle: hindiResolved
+        ? getContentMeta(hindiResolved.filePath).title
+        : undefined,
+    };
+  });
 
   return (
     <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12">
@@ -26,8 +41,14 @@ export default function NewsListingPage() {
 
       {news.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {news.map((item) => (
-            <NewsCard key={item.url} url={item.url} meta={item.meta} />
+          {newsWithHindi.map((item) => (
+            <NewsCard
+              key={item.url}
+              url={item.url}
+              meta={item.meta}
+              hindiHref={item.hindiHref}
+              hindiTitle={item.hindiTitle}
+            />
           ))}
         </div>
       ) : (
