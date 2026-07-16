@@ -160,3 +160,13 @@ Organise the manually-written CMS news into **month sections** by `eventDate` (a
 **No schema change needed** — News already has an `eventDate`. Likely also add month archive pages
 (e.g. `/news/2026/05`). This is really part of building the `/news` listing page (a Phase 4 follow-up),
 so build that listing grouped-by-month from the start.
+
+---
+
+## 🐛 /contact page — duplicate React key warning
+**Added:** 16 Jul 2026 · **Status:** 🐛 minor bug — fix when convenient
+
+The browser console logs *"Encountered two children with the same key"* on **/contact**. Something on
+that page renders a list (a `.map()`) with **non-unique `key` props** (likely using a repeated value
+or a hard-coded key). Harmless visually, but React keys must be unique. Fix: find the `.map()` on the
+contact page and give each item a unique `key`. Spotted 16 Jul 2026 while debugging the headlines feed.

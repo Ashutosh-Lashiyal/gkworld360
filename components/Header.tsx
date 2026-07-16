@@ -15,6 +15,7 @@ import BellNotification from "@/components/BellNotification";
 
 const OTHER_LINKS = [
   { label: "Current Affairs", href: "/news" },
+  { label: "Headlines", href: "/pulse" },
   { label: "Read Later", href: "/saved" },
   { label: "About",  href: "/about" },
   { label: "Contact",href: "/contact" },

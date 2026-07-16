@@ -1,9 +1,9 @@
 // /pulse — the dedicated "Latest Headlines" feed page.
-// Shows a longer list (40) of the freshest aggregated headlines. Same cached +
-// auto-refreshed data as the homepage teaser (via lib/pulse).
+// Shows ALL stored headlines (the rolling 7-day window) in strict newest-first
+// order, 50 per page with Previous/Next paging (URL: /pulse?page=2).
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getLatestHeadlines } from "@/lib/pulse";
+import { getHeadlinesPage } from "@/lib/pulse";
 import LatestHeadlines from "@/components/LatestHeadlines";
 
 // Render this page fresh on EVERY visit (never freeze/cache it). This is what
@@ -18,8 +18,19 @@ export const metadata: Metadata = {
     "Fresh current-affairs headlines from trusted Indian news sources, curated for competitive-exam aspirants and general-knowledge learners.",
 };
 
-export default async function PulsePage() {
-  const items = await getLatestHeadlines(100);
+// In Next 16, `searchParams` is a Promise — we await it to read ?page=N.
+export default async function PulsePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const sp = await searchParams;
+  // Parse ?page= safely: default to 1, never below 1.
+  const requestedPage = Math.max(1, Number(sp.page) || 1);
+  const { items, page, totalPages, totalDocs } = await getHeadlinesPage(
+    requestedPage,
+    50
+  );
 
   return (
     <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12">
@@ -52,7 +63,52 @@ export default async function PulsePage() {
         your <strong className="font-semibold text-navy">Read Later</strong> list.
       </div>
 
+      {/* How many + ordering, so users know what they're looking at */}
+      <p className="mb-4 font-body text-sm text-muted">
+        <strong className="font-semibold text-navy">{totalDocs}</strong> headlines
+        from the last 7 days · newest first
+      </p>
+
       <LatestHeadlines items={items} />
+
+      {/* Pagination — the feed is newest-first, so "Newer" moves toward page 1 */}
+      {totalPages > 1 && (
+        <nav
+          className="mt-10 flex items-center justify-between gap-4"
+          aria-label="Headlines pagination"
+        >
+          {page > 1 ? (
+            <Link
+              href={`/pulse?page=${page - 1}`}
+              className="font-body text-sm font-medium text-sapphire hover:text-sapphire-dark border border-hairline hover:border-sapphire rounded-full px-4 py-2 transition-colors"
+            >
+              ← Newer
+            </Link>
+          ) : (
+            <span className="font-body text-sm font-medium text-muted/40 border border-hairline rounded-full px-4 py-2 cursor-not-allowed">
+              ← Newer
+            </span>
+          )}
+
+          <span className="font-body text-sm text-muted">
+            Page <strong className="font-semibold text-navy">{page}</strong> of{" "}
+            {totalPages}
+          </span>
+
+          {page < totalPages ? (
+            <Link
+              href={`/pulse?page=${page + 1}`}
+              className="font-body text-sm font-medium text-sapphire hover:text-sapphire-dark border border-hairline hover:border-sapphire rounded-full px-4 py-2 transition-colors"
+            >
+              Older →
+            </Link>
+          ) : (
+            <span className="font-body text-sm font-medium text-muted/40 border border-hairline rounded-full px-4 py-2 cursor-not-allowed">
+              Older →
+            </span>
+          )}
+        </nav>
+      )}
 
       {/* Transparency + attribution note (honest + copyright-clean) */}
       <p className="font-body text-xs text-muted mt-10 pt-6 border-t border-hairline">

@@ -59,11 +59,14 @@ export default async function LatestHeadlinesSection() {
           </div>
         </div>
 
-        {/* Discoverability hint — tells users what the bookmark icon does */}
-        <p className="flex items-center gap-1.5 font-body text-sm text-muted mb-6">
+        {/* Discoverability hint — tells users what the bookmark icon does.
+            The bookmark icon now sits inline, in ( ) right after the word. */}
+        <p className="font-body text-sm text-muted mb-6">
+          Tip: Tap the{' '}
+          <strong className="font-semibold text-navy">bookmark</strong>{' '}(
           <svg
-            width="15"
-            height="15"
+            width="14"
+            height="14"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -71,17 +74,12 @@ export default async function LatestHeadlinesSection() {
             strokeLinecap="round"
             strokeLinejoin="round"
             aria-hidden="true"
-            className="text-sapphire flex-shrink-0"
+            className="text-sapphire inline-block align-text-bottom"
           >
             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
           </svg>
-          <span>
-            Tip: Tap the{' '}
-            <strong className="font-semibold text-navy">bookmark</strong> on any
-            headline to save it to your{' '}
-            <strong className="font-semibold text-navy">Read Later</strong>{' '}
-            list.
-          </span>
+          ) on any headline to save it to your{' '}
+          <strong className="font-semibold text-navy">Read Later</strong> list.
         </p>
 
         {/* Card grid (matches the Explore Subjects / Popular Topics sections) */}

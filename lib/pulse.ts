@@ -39,7 +39,7 @@ const FEEDS: { source: string; category: string; url: string }[] = [
 ];
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
-const SYNC_INTERVAL_MS = 30 * 60 * 1000; // re-sync at most every 30 min
+const SYNC_INTERVAL_MS = 15 * 60 * 1000; // re-sync at most every 15 min
 
 const parser: Parser = new Parser({
   customFields: {
@@ -293,31 +293,8 @@ async function getStoredHeadlines(): Promise<Headline[]> {
   }));
 }
 
-// Balance across categories (round-robin) so one category can't flood the feed.
-function diversify(items: Headline[], limit: number): Headline[] {
-  const groups = new Map<string, Headline[]>();
-  for (const h of items) {
-    if (!groups.has(h.category)) groups.set(h.category, []);
-    groups.get(h.category)!.push(h);
-  }
-  const result: Headline[] = [];
-  let progressed = true;
-  while (result.length < limit && progressed) {
-    progressed = false;
-    for (const arr of groups.values()) {
-      const next = arr.shift();
-      if (next) {
-        result.push(next);
-        progressed = true;
-        if (result.length >= limit) break;
-      }
-    }
-  }
-  return result;
-}
-
-// THE MAIN FUNCTION: read from the store (fast), refresh it in the background,
-// balance across categories, and return the top `limit`.
+// THE HOMEPAGE TEASER: read the freshest headlines from the store, refresh it in
+// the background, and return the top `limit` in STRICT newest-first order.
 export async function getLatestHeadlines(limit = 30): Promise<Headline[]> {
   let items = await getStoredHeadlines();
 
@@ -333,6 +310,53 @@ export async function getLatestHeadlines(limit = 30): Promise<Headline[]> {
     items = await fetchAllLive();
   }
 
+  // Strict newest-first (latest at the top), then take the top `limit`.
   items.sort((a, b) => new Date(b.isoDate).getTime() - new Date(a.isoDate).getTime());
-  return diversify(items, limit);
+  return items.slice(0, limit);
+}
+
+// One page of headlines, plus the numbers the UI needs to draw page controls.
+export type HeadlinePage = {
+  items: Headline[];
+  page: number; // the current page (1-based)
+  totalPages: number; // how many pages exist in total
+  totalDocs: number; // how many headlines are stored (within the 7-day window)
+};
+
+// THE /pulse FEED: one page of headlines in STRICT newest-first order, read
+// straight from the store (which the 7-day prune keeps trimmed). `page` is
+// 1-based, so page 1 is always the freshest 50.
+export async function getHeadlinesPage(page = 1, perPage = 50): Promise<HeadlinePage> {
+  const payload = await getClient();
+  // Payload's find() does the paging + sorting for us in the database — far more
+  // efficient than loading everything and slicing in JavaScript.
+  const res = await payload.find({
+    collection: "headlines",
+    limit: perPage,
+    page,
+    sort: "-publishedAt", // newest first — no category shuffling
+    depth: 0,
+  });
+
+  // Refresh the store in the background after the response, same as the teaser.
+  after(() => ensureFresh().catch(() => {}));
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const items: Headline[] = res.docs.map((d: any) => ({
+    title: d.title,
+    link: d.link,
+    snippet: d.snippet || "",
+    source: d.source || "",
+    category: d.category || "",
+    isoDate: d.publishedAt || "",
+    timeAgo: timeAgo(d.publishedAt),
+    image: d.image || undefined,
+  }));
+
+  return {
+    items,
+    page: res.page ?? page,
+    totalPages: res.totalPages ?? 1,
+    totalDocs: res.totalDocs ?? 0,
+  };
 }
