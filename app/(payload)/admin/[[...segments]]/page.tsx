@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { RootPage, generatePageMetadata } from "@payloadcms/next/views";
-import { importMap } from "@/app/(payload)/importMap";
+import { importMap } from "@/app/(payload)/admin/importMap";
 // configPromise is the sanitized version of payload.config.ts — required by Payload's admin UI
 import { configPromise as config } from "@/app/(payload)/config";
 

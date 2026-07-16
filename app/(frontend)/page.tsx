@@ -8,8 +8,10 @@ import SearchBox from "@/components/SearchBox";
 import SubjectCard from "@/components/SubjectCard";
 import TopicCard from "@/components/TopicCard";
 import NewsCard from "@/components/NewsCard";
-import { getHomepageSubjects, getRecentTopics, hasTranslation, resolveContentFile, getContentMeta } from "@/lib/content";
+import LatestHeadlinesSection from "@/components/LatestHeadlinesSection";
+import { getHomepageSubjects, getRecentTopics, hasTranslation, resolveContentFile, getContentMeta, type ContentMeta } from "@/lib/content";
 import { getRecentNews } from "@/lib/news";
+import { getCMSNewsList } from "@/lib/cms";
 import { getDailyQuote } from "@/lib/quote";
 import { SUBJECT_COLORS } from "@/lib/subject-colors";
 // getSubjectInfo maps a subject slug like "history" to its display label
@@ -31,9 +33,45 @@ function formatAddedTime(date?: string): string {
 }
 
 // ── HOMEPAGE ──────────────────────────────────────────────────────────────────
-export default function HomePage() {
+export default async function HomePage() {
   const homepageSubjects = getHomepageSubjects();
-  const recentNews = getRecentNews(3); // newest 3 news items for the homepage
+
+  // ── CURRENT AFFAIRS (homepage) ────────────────────────────────────────────
+  // Merge CMS (Payload) news with the legacy MDX news, newest 3. Each item is
+  // shaped for NewsCard (url + meta), with Hindi info where available.
+  const mdxRecent = getRecentNews(10).map((item) => {
+    const hi = hasTranslation(item.slug, "hi") ? resolveContentFile(item.slug, "hi") : null;
+    return {
+      key: item.slug[item.slug.length - 1],
+      url: item.url,
+      meta: item.meta,
+      hindiHref: hi ? "/hi/" + item.slug.join("/") : (undefined as string | undefined),
+      hindiTitle: hi ? getContentMeta(hi.filePath).title : (undefined as string | undefined),
+    };
+  });
+  const cmsRecent = (await getCMSNewsList()).map((n) => ({
+    key: n.slug,
+    url: `/news/${n.slug}`,
+    meta: {
+      title: n.title,
+      description: n.description ?? "",
+      category: n.category ?? undefined,
+      date: n.eventDate ?? undefined,
+      image: n.coverImage?.url ?? undefined,
+      imageWidth: n.coverImage?.width ?? undefined,
+      imageHeight: n.coverImage?.height ?? undefined,
+      imageCaption: n.coverImageCaption ?? undefined,
+    } as ContentMeta,
+    hindiHref: undefined as string | undefined,
+    hindiTitle: undefined as string | undefined,
+  }));
+  // Merge (CMS wins on same slug), newest first, take 3.
+  const mergedNews = new Map<string, (typeof mdxRecent)[number]>();
+  for (const it of mdxRecent) mergedNews.set(it.key, it);
+  for (const it of cmsRecent) mergedNews.set(it.key, it);
+  const recentNews = Array.from(mergedNews.values())
+    .sort((a, b) => new Date(b.meta.date ?? 0).getTime() - new Date(a.meta.date ?? 0).getTime())
+    .slice(0, 3);
 
   // ── REAL TOPIC DATA ───────────────────────────────────────────────────────
   // getRecentTopics fetches real articles sorted by most recent date.
@@ -72,20 +110,9 @@ export default function HomePage() {
   // added later; only the data source needs to change, not the card code.
   const recentlyAddedTopics = enrichedTopics.slice(0, 3);
 
-  // Pre-compute Hindi info for each recent news item so the JSX stays clean.
-  // hasTranslation checks if a .hi.mdx file exists for that slug.
-  const recentNewsWithHindi = recentNews.map((item) => {
-    const hindiResolved = hasTranslation(item.slug, "hi")
-      ? resolveContentFile(item.slug, "hi")
-      : null;
-    return {
-      ...item,
-      hindiHref: hindiResolved ? "/hi/" + item.slug.join("/") : undefined,
-      hindiTitle: hindiResolved
-        ? getContentMeta(hindiResolved.filePath).title
-        : undefined,
-    };
-  });
+  // recentNews already carries hindiHref/hindiTitle (built above), so the news
+  // section can use it directly.
+  const recentNewsWithHindi = recentNews;
   const dailyQuote = getDailyQuote();
 
   return (
@@ -185,6 +212,13 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ══ SECTION 2.5: LATEST HEADLINES (aggregated RSS) ════════════════════
+          Auto-updating current-affairs headlines from trusted sources (The Hindu,
+          Indian Express, LiveMint…). Fetched + cached in LatestHeadlinesSection
+          (lib/pulse), refreshed every ~30 min. Each headline links out to its
+          source — we aggregate, we don't host.                                    */}
+      <LatestHeadlinesSection />
 
       {/* ══ SECTION 3: QUOTE BLOCK ═════════════════════════════════════════════
           Daily quote — edit content/daily-quote.mdx to change the quote,
@@ -323,14 +357,14 @@ export default function HomePage() {
             <div className="flex items-end justify-between mb-8">
               <div>
                 <h2 className="font-heading text-3xl font-bold text-navy tracking-tight">
-                  Recently Added News
+                  Current Affairs
                 </h2>
                 <p className="font-body text-base text-muted mt-1">
-                  Latest current affairs for competitive exams
+                  In-depth, exam-focused write-ups
                 </p>
               </div>
               <Link href="/news" className="font-body text-sm font-medium text-sapphire hover:text-sapphire-dark transition-colors whitespace-nowrap">
-                View all news →
+                View all →
               </Link>
             </div>
 

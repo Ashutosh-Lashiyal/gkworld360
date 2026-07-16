@@ -36,5 +36,25 @@ export const TopicImage: Block = {
         description: "How wide the image appears within the article column.",
       },
     },
+    {
+      // Alignment controls WHERE the image sits. The two "Wrap" options make the
+      // text flow AROUND the image (image on one side, text on the other) — this
+      // is the "image on the side" look. Wrapping works best with Small/Medium
+      // size (a full-width image has no room for text beside it).
+      name: "align",
+      type: "select",
+      defaultValue: "center",
+      options: [
+        { label: "Center", value: "center" },
+        { label: "Left", value: "left" },
+        { label: "Right", value: "right" },
+        { label: "Wrap — image left, text on the right", value: "wrap-left" },
+        { label: "Wrap — image right, text on the left", value: "wrap-right" },
+      ],
+      admin: {
+        description:
+          "Where the image sits. Choose a 'Wrap' option (with Small/Medium size) to put the image on the side with text flowing beside it.",
+      },
+    },
   ],
 };

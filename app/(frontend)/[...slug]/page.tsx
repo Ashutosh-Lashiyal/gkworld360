@@ -37,6 +37,10 @@ import { getRecentNews } from "@/lib/news";
 import { SITE_URL, SITE_NAME, absoluteUrl } from "@/lib/site";
 import { getSubjectColors } from "@/lib/subject-colors";
 import { formatNewsDate } from "@/lib/date-utils";
+// CMS (Payload) — used to render topics & news from the database when they exist there.
+import { getCMSArticle, getCMSNews } from "@/lib/cms";
+import CMSTopicView from "@/components/cms/CMSTopicView";
+import CMSNewsView from "@/components/cms/CMSNewsView";
 
 // ── GENERATE STATIC PARAMS ────────────────────────────────────────────────────
 // Tells Next.js every URL that exists so pages are pre-built at deploy time.
@@ -133,6 +137,17 @@ export default async function ContentPage({
 
   // Subject color — null for unknown subjects (falls back to plain white)
   const colors = getSubjectColors(contentSlug[0]);
+
+  // ── PAYLOAD-FIRST NEWS (CMS) ──────────────────────────────────────────────
+  // A CMS news item lives at the flat URL /news/<slug> (e.g. /news/smart-border).
+  // We check this BEFORE the MDX lookup below, because a CMS-only news item has
+  // no MDX file — so the MDX lookup would 404 it. Falls through if not in the CMS.
+  if (contentSlug[0] === "news" && contentSlug.length === 2 && lang === "en") {
+    const cmsNews = await getCMSNews(contentSlug[1]);
+    if (cmsNews) {
+      return <CMSNewsView news={cmsNews} />;
+    }
+  }
 
   // Find the file that matches this slug + language
   const resolved = resolveContentFile(contentSlug, lang);
@@ -309,6 +324,24 @@ export default async function ContentPage({
         </div>
       </div>
     );
+  }
+
+  // ── PAYLOAD-FIRST (CMS migration) ──────────────────────────────────────────
+  // If this topic exists in the Payload CMS, render it from the database instead
+  // of the MDX file. Topics not yet migrated simply fall through to the MDX
+  // rendering below — so migrating happens one article at a time, safely.
+  // (News and Hindi stay on MDX for now; this first slice covers English topics.)
+  if (contentSlug[0] !== "news" && lang === "en") {
+    const cmsArticle = await getCMSArticle(contentSlug);
+    if (cmsArticle) {
+      return (
+        <CMSTopicView
+          article={cmsArticle}
+          breadcrumbs={breadcrumbs}
+          colors={colors}
+        />
+      );
+    }
   }
 
   // ── TOPIC PAGE (actual article) ────────────────────────────────────────────

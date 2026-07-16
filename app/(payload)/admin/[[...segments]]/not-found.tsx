@@ -1,5 +1,5 @@
 import { NotFoundPage } from "@payloadcms/next/views";
-import { importMap } from "@/app/(payload)/importMap";
+import { importMap } from "@/app/(payload)/admin/importMap";
 import { configPromise as config } from "@/app/(payload)/config";
 
 export default async function NotFound() {

@@ -31,6 +31,17 @@ const nextConfig: NextConfig = {
     dangerouslyAllowSVG: true,
     contentDispositionType: "attachment",
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    // IMPORTANT: once `localPatterns` is defined, Next.js ONLY allows local
+    // images that match one of these patterns and blocks all others. So we must
+    // list EVERY local image source the site uses:
+    //   1. /images/**        → all our own images in the /public/images folder
+    //   2. /api/media/**     → CMS images served by Payload from Cloudflare R2
+    //      (these carry a ?prefix=media query, which Next.js 16 requires us to
+    //       allow explicitly as a security measure).
+    localPatterns: [
+      { pathname: "/images/**" },
+      { pathname: "/api/media/**", search: "?prefix=media" },
+    ],
   },
 };
 

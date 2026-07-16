@@ -19,7 +19,7 @@ const footerColumns = [
     heading: "Explore",
     links: [
       { label: "Subjects",  href: "/subjects" },
-      { label: "News",      href: "/news" },
+      { label: "Current Affairs", href: "/news" },
     ],
   },
   {

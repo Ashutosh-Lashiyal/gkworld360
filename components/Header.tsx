@@ -14,7 +14,8 @@ import BellNotification from "@/components/BellNotification";
 
 
 const OTHER_LINKS = [
-  { label: "News",    href: "/news" },
+  { label: "Current Affairs", href: "/news" },
+  { label: "Read Later", href: "/saved" },
   { label: "About",  href: "/about" },
   { label: "Contact",href: "/contact" },
 ];
@@ -123,15 +124,15 @@ export default function Header() {
           </Link>
         </div>
 
-        {/* Desktop nav — absolutely centred on the full container width.
-            `pointer-events-none` on the wrapper (which spans the full width)
-            prevents it blocking clicks on the logo. The inner div re-enables
-            pointer events so the nav links remain clickable.                  */}
+        {/* Desktop nav — takes the middle space and centres its links there.
+            Using flex-1 (instead of absolute positioning) means the nav, logo,
+            and right-side controls each get their own space and never overlap,
+            no matter how many nav items there are.                             */}
         <nav
-          className="hidden md:flex absolute inset-0 justify-center items-center pointer-events-none"
+          className="hidden md:flex flex-1 justify-center items-center px-2"
           aria-label="Main navigation"
         >
-        <div className="flex items-center gap-1 pointer-events-auto">
+        <div className="flex items-center gap-1">
 
           <Link href="/" className={linkClass("/")}>Home</Link>
 
@@ -222,7 +223,7 @@ export default function Header() {
               is just a shortcut — the actual typing happens on the /search page. */}
           <Link
             href="/search"
-            className="hidden md:flex items-center gap-2 w-56 lg:w-64 bg-surface border border-hairline rounded-full px-4 py-2 text-muted hover:border-sapphire hover:text-sapphire transition-all duration-200 group"
+            className="hidden md:flex items-center gap-2 w-40 lg:w-52 bg-surface border border-hairline rounded-full px-4 py-2 text-muted hover:border-sapphire hover:text-sapphire transition-all duration-200 group"
             aria-label="Search"
           >
             {/* Search icon inside the bar */}

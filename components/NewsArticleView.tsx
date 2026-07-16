@@ -40,7 +40,7 @@ export default function NewsArticleView({
   children,
 }: NewsArticleViewProps) {
   const breadcrumbs = [
-    { label: "News", href: "/news" },
+    { label: "Current Affairs", href: "/news" },
     { label: meta.title, href: url },
   ];
 
@@ -161,9 +161,9 @@ export default function NewsArticleView({
       {recent.length > 0 && (
         <section className="mt-16">
           <div className="flex items-end justify-between mb-6">
-            <h2 className="font-heading text-2xl font-semibold text-navy">More News</h2>
+            <h2 className="font-heading text-2xl font-semibold text-navy">More Current Affairs</h2>
             <Link href="/news" className="font-body text-sm font-medium text-sapphire hover:text-sapphire-dark transition-colors">
-              View all news →
+              View all →
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

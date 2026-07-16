@@ -67,6 +67,11 @@ export const Articles: CollectionConfig = {
       type: "date",
       admin: {
         position: "sidebar",
+        // Show dates as "21-Apr-2026" (day-month-year with month name) in the
+        // admin, matching the site's public date format.
+        date: {
+          displayFormat: "dd-MMM-yyyy",
+        },
         description: "When this article was published.",
       },
     },

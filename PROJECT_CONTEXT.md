@@ -8,6 +8,7 @@
 > - **`PROJECT_CONTEXT.md`** (this file) = the current-state handoff — what's built/in-progress right now. Updated after every task.
 > - **`docs/GKWORLD360_TECH_FOUNDATION.md`** = tech-stack detail · **`GKWORLD360_PROJECT_STRUCTURE.md`** = folder/file guide · **`SETUP_GUIDE.md`** = how to set up & run · **`GKWORLD360_DESIGN_SYSTEM.md`** = design tokens.
 > - **`SERVICES.md`** = third-party services & billing · **`GIT_NOTES.md`** = git learning notes.
+> - **`IDEAS.md`** = parking lot for raw, undecided ideas (they graduate to the Blueprint or here when decided).
 > Each doc has one lane; keep them in it so they don't drift.
 
 ---
@@ -42,8 +43,14 @@ An Indian educational platform for students preparing for competitive exams (UPS
 - ✅ Phase 1 (DONE): Create Neon + Cloudflare accounts, save credentials
 - ✅ Phase 2 (DONE, 2 Jul 2026): Install Payload CMS v3, admin panel live at `/admin`, connected to Neon + R2, first admin user created
 - ✅ Phase 3 (DONE, 2 Jul 2026): Content schema built — 4 collections + Hindi localization + editor blocks (see below). Tables auto-created in Neon.
-- ⬜ Phase 4 (NEXT): Connect Payload to existing Next.js pages (replace MDX file reads)
-- ⬜ Phase 5: Migrate 6 existing articles into Payload, delete MDX files
+- 🔄 Phase 4 (IN PROGRESS): Connect Payload to the pages. **Vertical slice DONE (7 Jul 2026):** English topic pages now render from the CMS when the article exists there, via a **"Payload-first, MDX-fallback"** check in `app/(frontend)/[...slug]/page.tsx`. The Revolt of 1857 article was created in `/admin` and renders live at `/history/modern-india/revolt-of-1857` with banner, meta bar (subject · reading time · updated date), rich-text body (headings/paragraphs + KeyTakeaways/TopicImage blocks), and an auto Table-of-Contents sidebar. Editing in `/admin` + refresh updates the page. **News wired too (13 Jul 2026):** CMS news items render at the flat URL `/news/<slug>` via `getCMSNews` + `CMSNewsView` (reuses `NewsArticleView`); the "Smart Border Project" item is live at `/news/smart-border-project-india`. Editor now also has **tables** (`EXPERIMENTAL_TableFeature`) and the Image block has an **align/wrap** option. Next in Phase 4: the `/news` listing + homepage "recent news" (still MDX), subject/category pages, search, and Hindi.
+- ⬜ Phase 5: Migrate remaining articles into Payload, delete MDX files + `content/` folder
+
+**Phase 4 files added:**
+- `lib/cms.ts` — Payload Local API data layer: `getCMSArticle(slug[])`, plus helpers `estimateReadingTime`, `extractHeadingsFromLexical`, `slugifyHeading`, `lexicalToPlainText`.
+- `components/cms/CMSRichText.tsx` — renders the Lexical body via Payload's `<RichText>`, with converters mapping `keyTakeaways`/`topicImage` blocks to the existing `KeyTakeaways`/`TopicImage` components, and a `heading` override that stamps `id`s (so the TOC can jump to them).
+- `components/cms/CMSTopicView.tsx` — the topic page layout for CMS articles (banner, meta bar, body, TOC sidebar).
+- `next.config.ts` — added `images.localPatterns` (allow `/images/**` AND `/api/media/**?prefix=media`; the R2 media URL carries a query string Next 16 blocks by default). **Gotcha:** defining `localPatterns` switches Next to whitelist-only mode, so ALL local image paths must be listed or they break.
 
 URLs, SEO, design — all unchanged by migration. Only content storage layer changes.
 
@@ -62,7 +69,7 @@ app/
     admin/[[...segments]]/page.tsx + not-found.tsx
     api/[...slug]/route.ts
   api/                 ← existing site APIs (gyaani) — route handlers, no layout needed
-  robots.ts, sitemap.ts, llms.txt, favicon.ico, icon.png  ← stay at app root
+  robots.ts, sitemap.ts, llms.txt, icon.png  ← stay at app root (icon.png is the favicon; the default favicon.ico was removed 16 Jul so it wouldn't override our icon)
 payload.config.ts      ← master config: Neon (db) + R2 (s3Storage plugin) + collections
 collections/           ← Users.ts (admin login), Media.ts (image uploads to R2)
 ```
@@ -71,7 +78,7 @@ There is intentionally **no** `app/layout.tsx` — each route group is its own r
 **Gotchas discovered (don't repeat these):**
 1. **Turbopack needs the config alias set manually.** `next.config.ts` has `turbopack.resolveAlias["@payload-config"]` and `turbopack.root: __dirname` (the root fixes a stray `package.json`/`package-lock.json` in the home folder that confused workspace detection). `withPayload()` only sets up webpack aliases, not Turbopack.
 2. **Do NOT call `sanitizeConfig()` yourself.** `buildConfig()` in `payload.config.ts` already returns a `Promise<SanitizedConfig>`. Re-sanitizing it caused a fake "missing secret key" error. `(payload)/config.ts` just re-exports the promise.
-3. **`payload generate:importmap` crashes on Node.js 26** (require/top-level-await interop). `app/(payload)/importMap.js` is maintained by hand — currently one entry: the R2 `S3ClientUploadHandler`. Add more entries if new plugins/custom admin components are introduced.
+3. **The importMap must live at `app/(payload)/admin/importMap.js`** (Payload's convention) and list ALL admin client components (Lexical editor, blocks, S3 handler — ~50 entries). If it's missing the editor entries, richText/Body fields silently DON'T render → "field is required" on save with no visible editor. The `payload generate:importmap` CLI crashes on Node 26, and a standalone script fails on `@next/env` interop — so regenerate it by temporarily adding a Next route that calls `generateImportMap(await configPromise, {force:true,log:true})`, curling it, then deleting the route.
 4. **The `(payload)/layout.tsx` is required** — without it the admin crashes with "Cannot destructure property 'config' of 'se(...)'".
 
 **package.json scripts added:** `payload`, `generate:types`, `generate:importmap`.
@@ -187,6 +194,8 @@ All content collections have `access: { read: () => true }` so the public site c
 
 | Issue | Status | Fix |
 |---|---|---|
+| Latest Headlines stuck ~12h old / only LiveMint refreshing | ✅ Fixed 16 Jul | `lib/pulse.ts`: switched the on-visit refresh from a bare `void` (Next 16 kills it after the response) to `after()` from `next/server`; added per-feed 8s timeout + logging, a shared in-flight sync guard, bounded-concurrency capped inserts, and a `/api/pulse/sync` route + `vercel.json` cron (*/30 needs Vercel Pro) |
+| Custom favicon not showing (default Next icon showed) | ✅ Fixed 16 Jul | Deleted the leftover default `app/favicon.ico` (it overrode `app/icon.png`) and shrank `icon.png` 974KB→21KB. Hard-refresh/incognito to bust the browser favicon cache |
 | Gemini 20 RPM free tier limit | Active blocker | Enable billing at console.cloud.google.com (free, just adds payment method) |
 | All changes uncommitted | Local only | Do a proper commit next session |
 | Only 1 Hindi article exists | Content gap | Write more `.hi.mdx` files for other topics |
@@ -276,6 +285,31 @@ content/
 | **Cloudflare R2** | Required to activate R2 even on free tier | ₹0 unless you exceed 10GB storage or 1M requests/month |
 
 See `SERVICES.md` in the project root for the full details.
+
+---
+
+## Deployment — Pre-flight Checklist (before pushing the Payload work live)
+
+⚠️ **GitHub is connected to Vercel → pushing to `main` auto-deploys.** Do NOT push `main` until
+every box below is green. (To back up work to GitHub *without* deploying, push to a **branch**,
+not `main` — Vercel only auto-deploys `main`.)
+
+1. ☐ Payload migration functionally ready — Phase 4 done (site reads from the CMS) and ideally
+   Phase 5 (content migrated). At minimum, the public site must still work.
+2. ☐ **Production build passes locally:** `npm run build` (we've only tested dev mode so far —
+   the production build with Payload/Turbopack has not been verified yet).
+3. ☐ **Vercel environment variables set** (Vercel → Project → Settings → Environment Variables),
+   because they currently live only in local `.env.local`:
+   - `DATABASE_URL` (Neon pooled) and `DATABASE_URL_DIRECT` (Neon direct)
+   - `PAYLOAD_SECRET`
+   - `CLOUDFLARE_ACCOUNT_ID`, `R2_BUCKET_NAME`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`
+   - `GEMINI_API_KEY` (Gyaani)
+   - Plus the go-live vars from the launch checklist (`NEXT_PUBLIC_SITE_URL`, `SITE_INDEXING_ENABLED`)
+4. ☐ Site tested and working (QA pass).
+5. ☐ Deliberate decision that these changes should be public.
+
+**Do the deploy as a guided session:** build → set env vars → push → watch the Vercel deploy →
+verify the live site. Milestone-based deploys (at phase completions), not on every change.
 
 ---
 

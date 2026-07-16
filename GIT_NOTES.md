@@ -2,7 +2,7 @@
 
 > A living cheat-sheet of everything I'm learning about Git, in plain English.
 > Claude keeps this updated as we learn more. Newest concepts get added over time.
-> _Last updated: 2 Jul 2026_
+> _Last updated: 3 Jul 2026_
 
 ---
 
@@ -121,6 +121,49 @@ git switch -c <name>       # create + switch to a new branch
 git switch <name>          # switch to an existing branch
 git branch                 # list branches
 ```
+
+---
+
+---
+
+## Writing good commit messages
+
+A commit message describes **what the commit does**. Good ones have an anatomy:
+
+- **Summary line** — short (~50 characters ideal), in the **imperative mood**:
+  "Add…", "Fix…", "Update…" — NOT "Added" / "Fixing".
+- Trick: finish this sentence → _"If applied, this commit will ___."_
+  e.g. _"…**Add** Payload CMS and split the app into route groups."_
+- (Optional) a blank line, then a **body** with more detail / bullet points for big changes.
+
+```bash
+git commit -m "Add search to the homepage"                 # simple, one line
+git commit -m "Add Payload CMS" -m "- collections\n- R2"   # summary + body (two -m flags)
+```
+
+Smaller, focused commits → shorter, sharper messages. Big batches → longer is OK.
+
+---
+
+## Reading `git log` — local vs GitHub
+
+`git log --oneline` shows history, newest first. Two labels to know:
+
+- **`HEAD -> main`** = where I am right now, on my local `main` branch (newest local commit).
+- **`origin/main`** = GitHub's copy of `main`. ("origin" = the nickname for my GitHub remote.)
+
+If `origin/main` appears **below** `HEAD -> main`, it means GitHub is **behind** — I have
+local commits I haven't pushed yet. This proves **commit = local only**; GitHub updates
+only when I run `git push`.
+
+```bash
+git log --oneline     # compact history (press q to quit)
+git push              # send my local commits up to GitHub (origin)
+```
+
+⚠️ Note for this project: GitHub is connected to Vercel, so **pushing to `main` triggers a
+live deploy**. Don't push until the live site is ready for the new changes (e.g. Vercel has
+the right environment variables set).
 
 ---
 

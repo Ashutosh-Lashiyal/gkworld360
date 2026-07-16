@@ -4,7 +4,13 @@ import type { CollectionConfig } from "payload";
 import { slugField } from "@/fields/slug";
 
 export const News: CollectionConfig = {
-  slug: "news",
+  slug: "news", // slug stays "news" so URLs (/news) and the API don't change
+  // The admin/site display name — the founder's own in-depth current-affairs
+  // write-ups (distinct from the aggregated "Latest Headlines" RSS feed).
+  labels: {
+    singular: "Current Affairs",
+    plural: "Current Affairs",
+  },
   admin: {
     useAsTitle: "title",
     defaultColumns: ["title", "category", "eventDate"],
@@ -58,6 +64,12 @@ export const News: CollectionConfig = {
       required: true,
       admin: {
         position: "sidebar",
+        // displayFormat controls how the date reads in the admin. "dd-MMM-yyyy"
+        // → "21-Apr-2026" (day-month-year with the month NAME, so it's never
+        // confused like 04/05 could be). Matches the site's public date format.
+        date: {
+          displayFormat: "dd-MMM-yyyy",
+        },
         description:
           "The date the event actually HAPPENED (verify on Google), not when the article was written. This is what students rely on.",
       },

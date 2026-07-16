@@ -3,8 +3,13 @@
 // where to store images, what content types exist, and how the admin panel works.
 import { buildConfig } from "payload";
 import { postgresAdapter } from "@payloadcms/db-postgres";
-import { lexicalEditor, BlocksFeature } from "@payloadcms/richtext-lexical";
+import {
+  lexicalEditor,
+  BlocksFeature,
+  EXPERIMENTAL_TableFeature,
+} from "@payloadcms/richtext-lexical";
 import { s3Storage } from "@payloadcms/storage-s3";
+import sharp from "sharp"; // image processor — resizes & converts uploads
 import path from "path";
 import { fileURLToPath } from "url";
 import { Users } from "./collections/Users";
@@ -13,6 +18,7 @@ import { Subjects } from "./collections/Subjects";
 import { Categories } from "./collections/Categories";
 import { Articles } from "./collections/Articles";
 import { News } from "./collections/News";
+import { Headlines } from "./collections/Headlines";
 import { KeyTakeaways } from "./blocks/KeyTakeaways";
 import { TopicImage } from "./blocks/TopicImage";
 
@@ -36,7 +42,7 @@ export default buildConfig({
   // ── COLLECTIONS ───────────────────────────────────────────────────────────────
   // Collections are like database tables. Each one is a content type.
   // Users (admin login) + Media (images) + the four content collections.
-  collections: [Users, Media, Subjects, Categories, Articles, News],
+  collections: [Users, Media, Subjects, Categories, Articles, News, Headlines],
 
   // ── LOCALIZATION (Hindi support) ────────────────────────────────────────────────
   // Turns on per-field English/Hindi versions. Any field marked `localized: true`
@@ -62,8 +68,16 @@ export default buildConfig({
     features: ({ defaultFeatures }) => [
       ...defaultFeatures,
       BlocksFeature({ blocks: [KeyTakeaways, TopicImage] }),
+      // Enables inserting tables in the editor (still marked experimental by
+      // Payload, but works). Tables render on the site via the default converter.
+      EXPERIMENTAL_TableFeature(),
     ],
   }),
+
+  // ── IMAGE PROCESSING ────────────────────────────────────────────────────────
+  // Giving Payload `sharp` lets it resize and convert uploaded images (see the
+  // Media collection's upload options, which cap width and convert to WebP).
+  sharp,
 
   // ── SECRET KEY ────────────────────────────────────────────────────────────────
   // Used to encrypt admin login sessions. Comes from .env.local.

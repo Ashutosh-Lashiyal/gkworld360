@@ -13,9 +13,24 @@ export const Media: CollectionConfig = {
   access: {
     read: () => true,
   },
-  // upload: true activates Payload's file handling system for this collection.
-  // Each document here represents one image/file stored in Cloudflare R2.
-  upload: true,
+  // The upload config activates Payload's file handling AND optimises every
+  // uploaded image (via `sharp`, wired up in payload.config.ts):
+  upload: {
+    // Cap the stored image at 1600px wide — plenty for any web page, and it
+    // stops us storing giant 4000px originals. `withoutEnlargement` means small
+    // images are left as-is (never blown up, which would look blurry).
+    resizeOptions: {
+      width: 1600,
+      withoutEnlargement: true,
+    },
+    // Convert every upload to WebP at 80% quality. WebP is far smaller than
+    // PNG/JPG at the same visual quality — this is the big space saver (a 2-3MB
+    // PNG typically drops to ~150-300KB).
+    formatOptions: {
+      format: "webp",
+      options: { quality: 80 },
+    },
+  },
   fields: [
     {
       // Alt text is required for accessibility and SEO.

@@ -13,7 +13,7 @@ import { RootLayout, handleServerFunctions } from "@payloadcms/next/layouts";
 import "@payloadcms/next/css";
 
 import { configPromise as config } from "@/app/(payload)/config";
-import { importMap } from "@/app/(payload)/importMap";
+import { importMap } from "@/app/(payload)/admin/importMap";
 
 // serverFunction is the bridge that admin client components use to run
 // server-side Payload operations. The 'use server' directive makes it a
