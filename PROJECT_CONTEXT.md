@@ -194,7 +194,8 @@ All content collections have `access: { read: () => true }` so the public site c
 
 | Issue | Status | Fix |
 |---|---|---|
-| Latest Headlines stuck ~12h old / only LiveMint refreshing | ✅ Fixed 16 Jul | `lib/pulse.ts`: switched the on-visit refresh from a bare `void` (Next 16 kills it after the response) to `after()` from `next/server`; added per-feed 8s timeout + logging, a shared in-flight sync guard, bounded-concurrency capped inserts, and a `/api/pulse/sync` route + `vercel.json` cron (*/30 needs Vercel Pro) |
+| Latest Headlines stuck ~12h old / only LiveMint refreshing | ✅ Fixed 16 Jul | `lib/pulse.ts`: switched the on-visit refresh from a bare `void` (Next 16 kills it after the response) to `after()` from `next/server`; added per-feed 8s timeout + logging, a shared in-flight sync guard, bounded-concurrency capped inserts, and a `/api/pulse/sync` route + `vercel.json` cron (daily on Hobby; */30 needs Vercel Pro) |
+| News frozen at deploy time on PROD (headlines showed the deploy-time snapshot, aging; CMS content wouldn't appear without redeploy) | ✅ Fixed 16 Jul | Pages were statically rendered by default (frozen at build). Added `export const dynamic="force-dynamic"` to `/pulse` (always live) and `export const revalidate=60` to the homepage, `/news`, and the `[...slug]` catch-all so headlines + CMS content refresh within a minute. NOTE: `after()` in a static page only runs at build — so dynamic rendering is REQUIRED for the on-visit refresh to run in prod |
 | Custom favicon not showing (default Next icon showed) | ✅ Fixed 16 Jul | Deleted the leftover default `app/favicon.ico` (it overrode `app/icon.png`) and shrank `icon.png` 974KB→21KB. Hard-refresh/incognito to bust the browser favicon cache |
 | Gemini 20 RPM free tier limit | Active blocker | Enable billing at console.cloud.google.com (free, just adds payment method) |
 | All changes uncommitted | Local only | Do a proper commit next session |

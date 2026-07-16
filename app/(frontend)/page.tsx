@@ -13,6 +13,11 @@ import { getHomepageSubjects, getRecentTopics, hasTranslation, resolveContentFil
 import { getRecentNews } from "@/lib/news";
 import { getCMSNewsList } from "@/lib/cms";
 import { getDailyQuote } from "@/lib/quote";
+
+// Re-generate the homepage at most once every 60 seconds so the headline teaser
+// and the latest CMS news stay current (instead of freezing at deploy time),
+// while still serving a fast, cached page between refreshes.
+export const revalidate = 60;
 import { SUBJECT_COLORS } from "@/lib/subject-colors";
 // getSubjectInfo maps a subject slug like "history" to its display label
 // ("History") and emoji icon ("🏛️") so TopicCards show the right category.

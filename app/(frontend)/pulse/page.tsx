@@ -6,6 +6,12 @@ import Link from "next/link";
 import { getLatestHeadlines } from "@/lib/pulse";
 import LatestHeadlines from "@/components/LatestHeadlines";
 
+// Render this page fresh on EVERY visit (never freeze/cache it). This is what
+// makes the headlines live: each request re-reads the store and re-computes the
+// "X ago" times, and it lets the background refresh (via after()) actually run
+// in production. Without this, Next.js would bake the page once at deploy time.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Latest Headlines — Current Affairs | GKWorld360",
   description:

@@ -13,6 +13,10 @@ import {
 } from "@/lib/content";
 import { getCMSNewsList } from "@/lib/cms";
 
+// Re-generate every 60 seconds so newly-published Current Affairs (from the
+// Payload admin) appear on the live site within a minute, without a redeploy.
+export const revalidate = 60;
+
 export const metadata: Metadata = {
   title: "Current Affairs",
   description:

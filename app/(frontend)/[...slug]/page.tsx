@@ -42,6 +42,12 @@ import { getCMSArticle, getCMSNews } from "@/lib/cms";
 import CMSTopicView from "@/components/cms/CMSTopicView";
 import CMSNewsView from "@/components/cms/CMSNewsView";
 
+// Re-generate each content page at most every 60 seconds, so edits and newly
+// published articles/news from the Payload admin appear on the live site within
+// a minute instead of only after a redeploy. (New slugs not in the pre-built
+// list are rendered on first request, then cached — Next's default behaviour.)
+export const revalidate = 60;
+
 // ── GENERATE STATIC PARAMS ────────────────────────────────────────────────────
 // Tells Next.js every URL that exists so pages are pre-built at deploy time.
 export async function generateStaticParams() {
