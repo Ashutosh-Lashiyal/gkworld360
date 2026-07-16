@@ -17,8 +17,7 @@ const OTHER_LINKS = [
   { label: "Current Affairs", href: "/news" },
   { label: "Headlines", href: "/pulse" },
   { label: "Read Later", href: "/saved" },
-  { label: "About",  href: "/about" },
-  { label: "Contact",href: "/contact" },
+  { label: "Contact", href: "/contact" },
 ];
 
 function SearchIcon() {
@@ -88,7 +87,9 @@ export default function Header() {
   const linkClass = (href: string) => {
     const active = pathname === href;
     return [
-      "font-body text-base font-medium rounded-full px-3 py-1.5 transition-all duration-200",
+      // whitespace-nowrap keeps each label on ONE line (no more "Current
+      // Affairs" breaking in two); px-2.5 tightens spacing so all 7 items fit.
+      "font-body text-base font-medium whitespace-nowrap rounded-full px-2.5 py-1.5 transition-all duration-200",
       active
         ? "bg-surface-mid text-sapphire"
         : "text-navy hover:bg-surface-mid hover:text-sapphire",
@@ -130,7 +131,7 @@ export default function Header() {
             and right-side controls each get their own space and never overlap,
             no matter how many nav items there are.                             */}
         <nav
-          className="hidden md:flex flex-1 justify-center items-center px-2"
+          className="hidden lg:flex flex-1 justify-center items-center px-2"
           aria-label="Main navigation"
         >
         <div className="flex items-center gap-1">
@@ -145,7 +146,7 @@ export default function Header() {
           >
             <button
               className={[
-                "font-body text-base font-medium rounded-full px-3 py-1.5 transition-all duration-200 flex items-center gap-1",
+                "font-body text-base font-medium whitespace-nowrap rounded-full px-2.5 py-1.5 transition-all duration-200 flex items-center gap-1",
                 subjectsOpen
                   ? "bg-surface-mid text-sapphire"
                   : "text-navy hover:bg-surface-mid hover:text-sapphire",
@@ -224,20 +225,21 @@ export default function Header() {
               is just a shortcut — the actual typing happens on the /search page. */}
           <Link
             href="/search"
-            className="hidden md:flex items-center gap-2 w-40 lg:w-52 bg-surface border border-hairline rounded-full px-4 py-2 text-muted hover:border-sapphire hover:text-sapphire transition-all duration-200 group"
+            className="hidden lg:flex items-center gap-2 xl:w-52 bg-surface border border-hairline rounded-full px-2.5 xl:px-4 py-2 text-muted hover:border-sapphire hover:text-sapphire transition-all duration-200 group"
             aria-label="Search"
           >
             {/* Search icon inside the bar */}
             <SearchIcon />
-            {/* Placeholder-style text — truncated so it always fits the bar */}
-            <span className="font-body text-sm truncate">
+            {/* Placeholder-style text — hidden on medium screens (where it's just
+                an icon to save room) and shown as a full bar from lg up. */}
+            <span className="hidden xl:inline font-body text-sm truncate">
               Search subjects, topics, news...
             </span>
           </Link>
 
           {/* Hamburger — mobile only */}
           <button
-            className="md:hidden text-navy hover:text-sapphire transition-colors"
+            className="lg:hidden text-navy hover:text-sapphire transition-colors"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileMenuOpen}
@@ -249,7 +251,7 @@ export default function Header() {
 
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-surface border-t border-hairline">
+        <div className="lg:hidden bg-surface border-t border-hairline">
           <nav className="max-w-[1200px] mx-auto px-4 py-2" aria-label="Mobile navigation">
 
             <Link
