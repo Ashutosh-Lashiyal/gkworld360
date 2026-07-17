@@ -1,0 +1,33 @@
+# Keeps the "Latest Headlines" (Pulse) feed fresh 24/7.
+#
+# WHY THIS EXISTS: the live site only refreshes its news when someone visits, and
+# on Vercel's free plan those visit-triggered refreshes get cut off. This runs on
+# GitHub's servers on a timer and calls the site's /api/pulse/sync endpoint (which
+# is allowed a full 60s to finish) — so the news stays fresh even with no visitors.
+name: Refresh Pulse headlines
+
+on:
+  # Run on a schedule. Times are UTC. GitHub can delay a run by a few minutes
+  # under load — fine for headlines.
+  schedule:
+    - cron: "*/15 * * * *" # every 15 minutes
+  # Also let us trigger it by hand from the Actions tab (handy for testing).
+  workflow_dispatch: {}
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping the site's sync endpoint
+        run: |
+          echo "Refreshing headlines via ${{ vars.PULSE_SYNC_URL }}"
+          # -f  = fail (red X) if the server returns an error, so we notice problems
+          # -sS = quiet, but still show errors
+          # -m 90 = give it up to 90s (the sync itself is allowed 60s)
+          # The Authorization header carries our shared secret IF one is set; if the
+          # endpoint is left open, an empty value is simply ignored.
+          curl -fsS -m 90 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ vars.PULSE_SYNC_URL }}"
+          echo ""
+          echo "Refresh request completed."
