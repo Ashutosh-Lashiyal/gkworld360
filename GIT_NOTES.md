@@ -2,7 +2,7 @@
 
 > A living cheat-sheet of everything I'm learning about Git, in plain English.
 > Claude keeps this updated as we learn more. Newest concepts get added over time.
-> _Last updated: 3 Jul 2026_
+> _Last updated: 20 Jul 2026_
 
 ---
 
@@ -169,3 +169,34 @@ the right environment variables set).
 
 <!-- Claude: append new git concepts below as we learn them, keeping the beginner-friendly
      tone and updating the "Last updated" date at the top. -->
+
+## The `workflow` permission error (20 Jul 2026)
+
+When we tried to `git push` a file inside **`.github/workflows/`** (the GitHub Actions
+scheduler), GitHub **rejected it**:
+> *refusing to allow an OAuth App to create or update workflow ... without `workflow` scope*
+
+**Why:** GitHub has an extra security rule — to add or change automation files (anything in
+`.github/workflows/`), your login needs a special **"workflow" permission**. A normal login
+doesn't have it by default, so a stolen token can't secretly inject automated jobs.
+
+**The fix** (because we use the GitHub CLI, `gh`):
+```bash
+gh auth refresh -h github.com -s workflow
+```
+This re-authorises your login and **adds** the missing `workflow` permission (it shows a
+one-time code, you approve it in the browser). After that, `git push` worked.
+
+> Plain-English: think of scopes as **permissions** attached to your login. Pushing normal
+> code needs one permission; pushing automation files needs an extra one. We just added it.
+
+## Fixing a moved repository URL (`git remote set-url`)
+
+The push also warned *"This repository moved"* because our saved remote used a lowercase
+username but GitHub's real one was capitalised. GitHub still redirected, but we tidied it:
+```bash
+git remote set-url origin https://github.com/Ashutosh-Lashiyal/gkworld360.git
+```
+- **`git remote`** = the nickname (`origin`) + address where your code is pushed/pulled.
+- **`set-url`** = change that saved address. Here we just corrected the capitalisation.
+- Check it anytime with **`git remote -v`** (`-v` = verbose, shows the full addresses).
