@@ -7,10 +7,12 @@
 // click, and the ReadLaterButton floats above it (z-10) as a sibling — so each
 // gets its own click.
 //
-// Plain <img> (not next/image) is used because thumbnails come from many external
-// news CDNs we can't whitelist. When a feed gives no image, we show a branded 📰.
+// Thumbnails come from many external news CDNs (so we use HeadlineThumb's plain
+// <img>, not next/image). If a feed gives no image — OR the image fails to load
+// (e.g. LiveMint blocks hotlinking) — HeadlineThumb shows a branded 📰 instead.
 import type { Headline } from "@/lib/pulse";
 import ReadLaterButton from "@/components/ReadLaterButton";
+import HeadlineThumb from "@/components/HeadlineThumb";
 
 export default function LatestHeadlines({ items }: { items: Headline[] }) {
   if (!items.length) {
@@ -39,21 +41,8 @@ export default function LatestHeadlines({ items }: { items: Headline[] }) {
 
           {/* ── THUMBNAIL ────────────────────────────────────────────────────── */}
           <div className="relative h-44 overflow-hidden">
-            {h.image ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={h.image}
-                alt=""
-                loading="lazy"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-[#0f172a] to-[#1e3a5f] flex items-center justify-center">
-                <span className="text-5xl opacity-80" aria-hidden="true">
-                  📰
-                </span>
-              </div>
-            )}
+            {/* Shows the image, or a 📰 fallback if it's missing OR fails to load */}
+            <HeadlineThumb src={h.image} />
 
             {/* Source badge (top-left) */}
             <span className="absolute top-3 left-3 z-10 bg-navy-dark/80 text-on-dark font-body text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm">

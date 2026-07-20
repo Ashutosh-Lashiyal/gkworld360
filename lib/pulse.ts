@@ -166,8 +166,15 @@ async function syncHeadlines(): Promise<SyncResult> {
   if (!live.length) return result;
   const payload = await getClient();
 
-  // Which links do we already have? (one query, not one-per-item)
-  const existing = await payload.find({ collection: "headlines", limit: 5000, depth: 0 });
+  // Which links do we already have? Only RECENT stored links can collide (the
+  // feeds only return recent items), so fetch the newest 2000 instead of the
+  // whole table — a big saving on the cross-region round-trip to the database.
+  const existing = await payload.find({
+    collection: "headlines",
+    limit: 2000,
+    sort: "-publishedAt",
+    depth: 0,
+  });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const known = new Set(existing.docs.map((d: any) => d.link));
 
@@ -189,7 +196,9 @@ async function syncHeadlines(): Promise<SyncResult> {
   // exceed the route's time budget (Vercel kills a function at 60s). Steady-state
   // syncs add only a handful; this only bites a rare big catch-up, which the next
   // run finishes. Insert the FRESHEST first so the newest news lands first.
-  const MAX_INSERTS_PER_SYNC = 50;
+  // Keep each run well under Vercel's 60s limit. The 15-min cadence means we
+  // never need many per run; the freshest are inserted first (sorted below).
+  const MAX_INSERTS_PER_SYNC = 20;
   if (newItems.length > MAX_INSERTS_PER_SYNC) {
     newItems.sort((a, b) => new Date(b.isoDate).getTime() - new Date(a.isoDate).getTime());
     newItems = newItems.slice(0, MAX_INSERTS_PER_SYNC);
