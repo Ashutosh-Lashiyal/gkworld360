@@ -13,6 +13,67 @@
 
 ---
 
+# 🔴 START HERE — status as of 28 Aug 2026
+
+**The site is mid-incident. There is a dated action plan for 1 September 2026.**
+Read this block before doing anything else. Full detail is in the
+"⚠️ Incident — Neon data-transfer quota exhausted" section further down this file.
+
+### One-line summary
+Neon's free plan allows **5 GB/month network transfer**. We used 5.53 GB and the database
+locked us out on **14 Aug 2026**. The quota resets **1 Sep 2026**. Code fixes are deployed;
+the site is live and serving readers, but `/admin` is down and the fixes are unverified.
+
+### Current state (all code committed and deployed to `main`)
+
+| Thing | State |
+|---|---|
+| Public site (`/`, `/pulse`, `/news`, articles) | ✅ Working — headlines served from live RSS via fallback |
+| `/admin` | ❌ 500 — needs the database, expect recovery 1 Sep |
+| `/api/health` | ✅ Working, returns **503** + the real Neon error |
+| `/api/pulse/sync` | ✅ Locked with `CRON_SECRET` (401 without it) |
+| UptimeRobot | ✅ Watching `/api/health` every 5 min, emails on state change |
+
+### ▶️ DO THIS ON 1 SEPTEMBER 2026
+1. **Easiest signal:** wait for the UptimeRobot email *"GKWorld360 database is UP"*.
+2. Check `/api/health` → should be **200** `"database":"reachable"`.
+3. Open `/admin` → should show the login screen, not a 500.
+4. **⭐ THE IMPORTANT ONE — watch Neon usage for 2–3 days.**
+   Target ≈ **25 MB/day**. August ran at ~390 MB/day.
+   Check at [console.neon.tech](https://console.neon.tech) → project → Usage/Billing.
+   **This is the ONLY fix from 28 Aug that is still UNVERIFIED** — no successful query has
+   ever run through the new `select` code, because the database has been locked the whole
+   time. The ~15× saving is arithmetic, not measurement. If usage climbs much faster than
+   ~25 MB/day, the query fixes are not working and need re-investigation.
+5. Check cron-job.org → **History** tab: runs should turn from `500` to `200`.
+6. `/pulse` will look near-empty at first — expected. The 7-day prune deletes everything
+   stored before the outage, and it refills over the following days.
+
+### Then resume normal work
+**Payload CMS migration, Phase 4** — the `/news` listing, subject/category pages, search and
+Hindi still read from MDX and need wiring to the CMS. That work needs `/admin`, so it has
+been blocked since 14 Aug.
+
+### Three things that caused the outage (they were INDEPENDENT — this took hours to unpick)
+1. **Neon transfer quota** — over-fetching queries (2,000 full rows to read one column;
+   300 rows to show 6) plus **two crons running at once**.
+2. **No error handling in `lib/cms.ts`** — a database error crashed `next build`, so the
+   site could not be deployed at all while the DB was down.
+3. **`sharp`/libvips missing from the Vercel bundle** — crashed Payload on boot,
+   completely unrelated to the database. Fixing the DB alone would NOT have fixed `/admin`.
+
+### Hard-won lessons (do not re-learn these)
+- **A green `200` proves nothing.** The site looked healthy for two weeks while its database
+  was dead — Vercel was serving 12-day-old cached HTML (`x-vercel-cache: STALE`). Check
+  `/api/health`, not the homepage.
+- **Every route touching one library failing with an HTML 500 in under a second** = a
+  module-load/import crash, not a query or timeout. **Go to the Vercel runtime logs
+  immediately** rather than probing from outside. That one log line named `sharp` and saved
+  hours of wrong guesses.
+- **Crons run 24/7 whether or not you are working.** If you replace one, DELETE the old one.
+
+---
+
 ## What is GKWorld360?
 
 An Indian educational platform for students preparing for competitive exams (UPSC, SSC, Railways) and lifelong learners. Covers 18 subjects: History, Geography, Physics, Chemistry, Biology, Famous Personalities, Economy, Polity, Environment, Arts & Culture, Sports, Technology, Mathematics, Science, Current Affairs, World History, Indian History.
@@ -489,6 +550,34 @@ archive, not a stub.
 
 **Cost:** during an outage `/pulse` makes 10 RSS fetches per visit (it is `force-dynamic`,
 so no caching). Acceptable for a rare fallback; it is not the normal path.
+
+**⚠️ The fallback CANNOT guarantee the 7-day window — and this is why the database store
+exists.** It filters to items *published* within 7 days, but nothing is stored, so you only
+ever see what publishers currently list. Measured 28 Aug 2026:
+
+| Feed | Items | Reaches back |
+|---|---|---|
+| **The Hindu / National** | 60 | **0.1 days (~2 hours)** |
+| The Hindu / International | 60 | 1.5 days |
+| The Hindu / Sci-Tech | 60 | 2.4 days |
+| The Hindu / Sports | 60 | 2.9 days |
+| The Hindu / Business | 60 | 3.0 days |
+| Indian Express / Sports | 200 | 8.2 days |
+| Indian Express / National | 200 | 8.3 days |
+| LiveMint / Business | 35 | 10.3 days |
+| Indian Express / International | 200 | 20.1 days |
+| Indian Express / Sci-Tech | 200 | 29.5 days |
+
+So in fallback mode headlines can vanish **before** 7 days (a Hindu National story rolls off
+within hours), and the mix skews heavily towards Indian Express. **Do not conclude from the
+healthy-looking ~760 count that the live feeds could replace the database** — they cannot.
+Storing headlines is what converts "whatever the publisher still lists" into a guaranteed
+7-day archive.
+
+**Read Later is unaffected by all of this.** `ReadLaterButton` saves the WHOLE headline
+object into browser `localStorage` (`{ ...headline, savedAt }`), not a database ID — so
+bookmarking works identically on stored and live-fallback headlines, survives the outage,
+and survives the 7-day prune. That is exactly what the page promises readers.
 
 ⚠️ **After any long outage, `/pulse` starts near-empty once the DB returns.** Each sync
 prunes anything older than 7 days, so everything stored before the outage is deleted and the
