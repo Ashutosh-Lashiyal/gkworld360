@@ -382,6 +382,44 @@ tested with Payload installed.
 `content/`, there is nothing left to fall back to — a DB outage would then mean no articles.
 `/api/health` + a real uptime monitor become the safeguard at that point.
 
+### SECOND, UNRELATED BUG: `sharp` / libvips missing on Vercel (28 Aug 2026)
+
+**This is a separate problem from the Neon quota** — they merely surfaced at the same time,
+which made diagnosis confusing. Fixing the database would NOT have fixed this.
+
+**Symptom:** every Payload route returned HTTP 500 as **HTML** (not JSON) — `/admin`,
+`/api/articles`, `/api/users/me`, and even the new `/api/health`. Static prerendered pages
+(`/about`, `/news`, `/physics`) were fine. Failures happened in <1s, so not a timeout.
+Clearing Vercel's build cache changed nothing.
+
+**Real error (from Vercel runtime logs — worth fetching early next time):**
+```
+Failed to load external module sharp-…: Could not load the "sharp" module using
+the linux-x64 runtime. ERR_DLOPEN_FAILED: libvips-cpp.so.8.18.3: cannot open
+shared object file: No such file or directory
+```
+
+**Cause:** `payload.config.ts` imports `sharp` for image resizing. Next.js auto-externalises
+`sharp` (it's on Next's built-in external list), so it is `require`d from `node_modules`
+inside the deployed function rather than bundled. Vercel's file tracer decides what to copy
+by **reading import/require statements** — but sharp's platform package loads libvips via
+**`dlopen`**, a runtime call static analysis cannot see. So libvips was never copied into the
+function, and Payload crashed at *import* time — which is why no `try`/`catch` in any handler
+could catch it, and why the response was Next's HTML error page instead of JSON.
+
+Note this is a **bundling** problem, not an install problem: the lockfile correctly pins
+`@img/sharp-linux-x64@0.35.3` and `@img/sharp-libvips-linux-x64@1.3.2`.
+
+**Fix:** `outputFileTracingIncludes` in `next.config.ts` forces `./node_modules/@img/**`
+into every function bundle. Verified locally by inspecting the build's trace file
+(`.next/server/app/(frontend)/api/health/route.js.nft.json`): it now includes
+`@img/sharp-libvips-darwin-arm64/lib/libvips-cpp.8.18.3.dylib` — the macOS twin of the
+missing Linux `.so`, same version. On Vercel the glob resolves to the Linux binaries.
+
+**Lesson:** when every route that touches one library fails with an HTML 500 in under a
+second, suspect a **module-load/import crash**, not a query or timeout — and go to the
+runtime logs immediately rather than probing from outside.
+
 **Still to do (dashboard work, not code):**
 - Set `CRON_SECRET` in Vercel **and** in the cron-job.org request header.
   The endpoint currently returns 500 (not 401) to an empty secret, which proves

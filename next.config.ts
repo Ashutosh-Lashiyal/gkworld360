@@ -9,6 +9,30 @@ const nextConfig: NextConfig = {
   // Without this, Next.js would ignore MDX files entirely.
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
 
+  // ── SHARP / LIBVIPS ON VERCEL ───────────────────────────────────────────────
+  // Payload uses `sharp` (payload.config.ts) to resize uploaded images. Next.js
+  // automatically treats `sharp` as an "external" package — meaning it is NOT
+  // bundled, but `require`d from node_modules inside the deployed function.
+  //
+  // For that to work, Vercel's file tracer must copy sharp's files into the
+  // function. The tracer works by READING import/require statements — but
+  // sharp's platform package loads its native libvips library through `dlopen`,
+  // a runtime call that no static analysis can see. So libvips was silently
+  // left out of the deployment, and every Payload route (/admin, /api/*, and
+  // anything importing payload.config) crashed on boot with:
+  //   "Could not load the sharp module using the linux-x64 runtime …
+  //    libvips-cpp.so.8.18.3: cannot open shared object file"
+  //
+  // Listing the folder here forces those native libraries into the bundle.
+  // The glob is platform-agnostic on purpose: locally it matches the macOS
+  // binaries, on Vercel it matches the Linux ones.
+  //
+  // (Diagnosed 28 Aug 2026 — this was NOT caused by the Neon quota outage,
+  //  though the two happened at the same time. See PROJECT_CONTEXT.md.)
+  outputFileTracingIncludes: {
+    "/**": ["./node_modules/@img/**"],
+  },
+
   // Turbopack is the default bundler in Next.js 16.
   // withPayload() only sets up webpack aliases — not Turbopack aliases.
   // So we manually add @payload-config here so Turbopack can resolve it.
