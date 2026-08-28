@@ -420,13 +420,33 @@ missing Linux `.so`, same version. On Vercel the glob resolves to the Linux bina
 second, suspect a **module-load/import crash**, not a query or timeout — and go to the
 runtime logs immediately rather than probing from outside.
 
-**Still to do (dashboard work, not code):**
-- Set `CRON_SECRET` in Vercel **and** in the cron-job.org request header.
-  The endpoint currently returns 500 (not 401) to an empty secret, which proves
-  `CRON_SECRET` is unset in production — **`/api/pulse/sync` is publicly callable by
-  anyone**, and each call triggers ~10 outbound fetches plus a DB read.
-- Slow cron-job.org from 15 min to 30–60 min.
-- After 1 Sep: verify `/admin` loads and watch the Neon usage graph for a few days.
+**VERIFIED LIVE after deploy (28 Aug 2026):**
+| Route | Result |
+|---|---|
+| `/api/health` | **503 + JSON** with the real Neon quota message ✅ (was HTML 500) |
+| `/` | **200**, fresh (`age: 0`), live RSS headlines via fallback ✅ |
+| `/pulse` | **200** ✅ |
+| `/api/pulse/sync` without secret | **401 `{"error":"unauthorized"}`** ✅ — `CRON_SECRET` lock confirmed working |
+| `/api/articles` | 500 `"error initializing Payload"` — Neon only, expected until 1 Sep |
+| `/admin` | 500 — needs the DB; expected until 1 Sep |
+
+Payload now boots correctly. Everything still failing is the Neon quota alone.
+
+**Dashboard work — DONE 28 Aug 2026:**
+- ✅ `CRON_SECRET` set in Vercel (Production) and as the `Authorization: Bearer …` header
+  in cron-job.org. Verified live: no secret → `401`, wrong secret → `401`.
+  (Before this, `/api/pulse/sync` was publicly callable by anyone, and each call cost
+  ~10 outbound fetches plus a DB read.)
+- ✅ cron-job.org slowed from every 15 min to every 30 min.
+
+**Still open — ON 1 SEPTEMBER 2026 (quota reset):**
+1. Check `/api/health` → should flip from **503** to **200** `"database":"reachable"`.
+2. Open `/admin` → should show the login screen instead of a 500.
+3. **Watch the Neon usage graph for 2–3 days.** Target ≈ **25 MB/day**
+   (August ran at ~390 MB/day). This is the ONLY part of the fix still unverified —
+   no successful query has yet run through the new `select` code paths, so the
+   15× saving is arithmetic, not measurement.
+4. Check cron-job.org → **History** tab: runs should turn from `500` to `200`.
 
 **Note:** `/pulse` cannot be ISR-cached — it reads `searchParams` (`?page=N`), which is a
 runtime API that forces dynamic rendering. Confirmed in `node_modules/next/dist/docs/`.
