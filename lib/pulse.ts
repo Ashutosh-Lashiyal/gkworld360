@@ -2,8 +2,18 @@
 //
 // Flow: fetch trusted RSS feeds → normalise → SAVE into a store (the Headlines
 // collection in Neon) that keeps a rolling 7-day window → the site reads from
-// that store. This lets the "View all" page show a full week of headlines even
-// though the raw RSS feeds only keep the last day or two.
+// that store. Storing them means the feed survives even when a publisher drops
+// an item from its RSS, and it keeps page loads fast (one database read instead
+// of 10 network calls).
+//
+// If the database is unreachable, BOTH reader paths fall back to the live feeds
+// so the site keeps working: the homepage teaser (getLatestHeadlines) and the
+// /pulse archive (getHeadlinesPage). The fallback obeys the same 7-day rule the
+// page promises its readers.
+//
+// (Measured 28 Aug 2026: the feeds actually carry ~1,120 items, ~760 within
+//  7 days — Indian Express serves 200 per feed. An earlier comment here claimed
+//  the feeds "only keep the last day or two", which is no longer true.)
 //
 // Only headline + snippet + source + link are kept — clicking sends the reader to
 // the ORIGINAL source (copyright-safe aggregation, the "Zerodha Pulse" model).
@@ -403,12 +413,66 @@ export async function getHeadlinesPage(page = 1, perPage = 50): Promise<Headline
       },
     });
   } catch (error) {
-    // Database unreachable — hand back an EMPTY page. /pulse then renders its
-    // normal layout with "0 headlines" and no pagination, instead of throwing a
-    // 500 at the visitor. /api/health is what reports the real problem.
     const message = error instanceof Error ? error.message : String(error);
-    console.error(`[pulse] could not read headlines page ${page}: ${message}`);
-    return { items: [], page: 1, totalPages: 1, totalDocs: 0 };
+    console.error(`[pulse] could not read headlines page ${page} from the store: ${message}`);
+
+    // ── FALLBACK: serve /pulse straight from the LIVE RSS feeds ───────────────
+    // The database is unreachable, so we skip it entirely: fetch the feeds and
+    // paginate them in memory. Without this, /pulse showed "0 headlines" during
+    // the 14 Aug 2026 outage while the homepage carried on fine (it already had
+    // a live path). This closes that gap.
+    //
+    // We apply the SAME 7-day window the stored version uses, because the page
+    // tells readers "Headlines stay here for about 1 week". Showing older items
+    // would contradict the page's own promise — the fallback must obey the same
+    // rule as the normal path, just with a different source of data.
+    //
+    // Measured 28 Aug 2026: the feeds carry ~1,120 items, ~760 of them within
+    // 7 days — roughly 16 pages. So this is a genuinely useful archive, not a stub.
+    try {
+      const live = await fetchAllLive();
+
+      // De-duplicate by link: the same story often appears in two feeds
+      // (e.g. National AND International).
+      const seen = new Set<string>();
+      const cutoff = Date.now() - SEVEN_DAYS_MS;
+
+      const items = live
+        .filter((h) => {
+          if (!h.link || seen.has(h.link)) return false;
+          const published = new Date(h.isoDate).getTime();
+          if (Number.isNaN(published) || published < cutoff) return false; // 7-day rule
+          seen.add(h.link);
+          return true;
+        })
+        // Strict newest-first, matching the stored version's `sort: "-publishedAt"`.
+        .sort((a, b) => new Date(b.isoDate).getTime() - new Date(a.isoDate).getTime());
+
+      const totalDocs = items.length;
+      const totalPages = Math.max(1, Math.ceil(totalDocs / perPage));
+      // Clamp the requested page: ?page=99 must not render a blank page just
+      // because the live feed happens to hold fewer headlines than the store did.
+      const safePage = Math.min(Math.max(1, page), totalPages);
+      const start = (safePage - 1) * perPage;
+
+      console.log(
+        `[pulse] /pulse served from LIVE feeds: ${totalDocs} headlines, ${totalPages} pages`
+      );
+
+      return {
+        items: items.slice(start, start + perPage),
+        page: safePage,
+        totalPages,
+        totalDocs,
+      };
+    } catch (liveError) {
+      // Feeds unreachable too (rare) — only now do we give up and show an empty
+      // page, which still renders the layout rather than erroring at the visitor.
+      const liveMessage =
+        liveError instanceof Error ? liveError.message : String(liveError);
+      console.error(`[pulse] live-feed fallback also failed: ${liveMessage}`);
+      return { items: [], page: 1, totalPages: 1, totalDocs: 0 };
+    }
   }
 
   // Refresh the store in the background after the response, same as the teaser.

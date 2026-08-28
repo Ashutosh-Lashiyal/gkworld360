@@ -115,6 +115,39 @@ doubling the load for no benefit.
 
 ---
 
+### UptimeRobot — Site & Database Monitoring
+- **What it does:** Checks `https://gkworld360.vercel.app/api/health` every 5 minutes and
+  emails you when the result changes. That URL queries the database on every request, so
+  this is effectively a live database alarm, not just a "is the website up" check.
+- **Free tier:** 50 monitors, 5-minute checks, email alerts
+- **Card added:** No
+- **Added:** 28 Aug 2026
+- **Monitor name:** `GKWorld360 database`
+
+**Why it exists:** during the 14 Aug 2026 outage the site returned HTTP `200` and looked
+completely healthy for **two weeks** while its database was dead — Vercel was serving
+12-day-old cached HTML, because Next.js deliberately keeps serving the last good copy when
+a background rebuild fails. Nothing alerted anyone. This monitor closes that blind spot.
+
+**How to read the alerts:**
+- Emails fire on **state CHANGES only**, not on every check — so a long outage does not spam you.
+- A newly created (or edited, paused, or resumed) monitor starts in an "up" state before its
+  first real check. That can produce a harmless **down → up → down** burst of emails.
+  It does not mean the database recovered. Check the monitor's own log — every entry shows
+  the real HTTP code (e.g. `HTTP 503 - Service Unavailable`).
+- Genuine repeated flapping, each backed by real HTTP codes in the log, IS worth
+  investigating — it would suggest connection-pool exhaustion or quota trouble.
+
+**What the endpoint returns:**
+
+| Response | Meaning |
+|---|---|
+| `200` `{"status":"ok","database":"reachable"}` | Everything healthy |
+| `503` `{"status":"error","database":"unreachable", "error": …}` | Database unreachable — the JSON carries the real reason (e.g. Neon quota) |
+| HTML error page instead of JSON | Payload itself failed to start — a code/deployment problem, not a database one (see the `sharp` incident in `PROJECT_CONTEXT.md`) |
+
+---
+
 ## Environment Variables Reference
 
 > **This table lists NAMES and LOCATIONS only — never the actual values.**

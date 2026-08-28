@@ -278,10 +278,16 @@ content/
 | Service | What it does | Free Limit | Cost after free | Card added? |
 |---|---|---|---|---|
 | **Vercel** | Hosts the website | Generous free tier | ~$20/month | No |
-| **Neon** | PostgreSQL database (stores articles, metadata) | 3 GB storage | $19/month | No |
+| **Neon** | PostgreSQL database (stores articles, metadata) | 0.5 GB storage · ~191 CU-hrs · **5 GB/month network transfer** | $19/month | No |
 | **Cloudflare R2** | Stores image files | 10 GB storage, 1M requests/month | $0.015/GB | **YES** |
 | **Google AI Studio** | Powers Gyaani chatbot (Gemini 2.5 Flash) | 15 RPM, limited daily | Pay-as-you-go | No |
 | **GitHub** | Stores code (version control) | Unlimited public repos | Free | No |
+| **cron-job.org** | Calls `/api/pulse/sync` every 30 min to refresh headlines | Free | Free | No |
+| **UptimeRobot** | Checks `/api/health` every 5 min, emails on state change | 50 monitors, 5-min checks | Free | No |
+
+⚠️ **Neon's limit that actually matters is NETWORK TRANSFER (5 GB/month), not storage.**
+Storage has never gone above ~42 MB. Transfer is what caused the 14 Aug 2026 outage.
+Full detail in `SERVICES.md`.
 
 ### Services With Card Added
 
@@ -439,7 +445,18 @@ Payload now boots correctly. Everything still failing is the Neon quota alone.
   ~10 outbound fetches plus a DB read.)
 - ✅ cron-job.org slowed from every 15 min to every 30 min.
 
+**Monitoring — set up 28 Aug 2026:**
+- ✅ **UptimeRobot** watches `/api/health` every 5 minutes and emails on state change.
+  This is now the early-warning system; it is what was missing when the 14 Aug outage
+  hid behind a stale cache for two weeks. Verified working (correctly reporting DOWN).
+- Note: a new/edited monitor starts in an "up" state before its first real check, which
+  can produce a harmless **down → up → down** email burst. Confirmed on 28 Aug that the
+  endpoint itself was rock-steady: 12/12 polls returned `503`, identical error,
+  `x-vercel-cache: MISS` (never cached). The flapping was UptimeRobot bookkeeping.
+
 **Still open — ON 1 SEPTEMBER 2026 (quota reset):**
+0. **Easiest signal: wait for the UptimeRobot "GKWorld360 database is UP" email.**
+   It should arrive on its own and then stay quiet.
 1. Check `/api/health` → should flip from **503** to **200** `"database":"reachable"`.
 2. Open `/admin` → should show the login screen instead of a 500.
 3. **Watch the Neon usage graph for 2–3 days.** Target ≈ **25 MB/day**
@@ -447,6 +464,35 @@ Payload now boots correctly. Everything still failing is the Neon quota alone.
    no successful query has yet run through the new `select` code paths, so the
    15× saving is arithmetic, not measurement.
 4. Check cron-job.org → **History** tab: runs should turn from `500` to `200`.
+
+**`/pulse` LIVE-FEED FALLBACK (built 28 Aug 2026)**
+
+Both reader paths now survive a database outage:
+- Homepage teaser (`getLatestHeadlines`) — already had a live path.
+- `/pulse` archive (`getHeadlinesPage`) — **added 28 Aug**. Previously it returned an empty
+  page, so during the outage the homepage showed headlines while `/pulse` showed "0 headlines".
+
+The fallback obeys **the same 7-day rule the page promises its readers** ("Headlines stay
+here for about 1 week") — the fallback must follow the page's stated contract, just with a
+different data source. It de-duplicates by `link`, sorts newest-first, paginates 50/page in
+memory, and clamps out-of-range `?page=` values.
+
+**Verified 28 Aug 2026 against the live outage** (production build, database refusing
+connections): `/pulse` → **HTTP 200, 762 headlines, 16 pages, ~1s**. Page 1 and 2 each
+showed 50 distinct articles; `?page=999` clamped to the last page (12 articles = 762−750).
+Server log confirmed `[pulse] /pulse served from LIVE feeds: 762 headlines, 16 pages`.
+
+**Measurement note:** the feeds carry ~1,120 items, ~760 within 7 days (Indian Express
+serves 200 per feed). An old comment in `lib/pulse.ts` claimed RSS "only keeps the last day
+or two" — that was outdated and has been corrected. The fallback is a genuinely full
+archive, not a stub.
+
+**Cost:** during an outage `/pulse` makes 10 RSS fetches per visit (it is `force-dynamic`,
+so no caching). Acceptable for a rare fallback; it is not the normal path.
+
+⚠️ **After any long outage, `/pulse` starts near-empty once the DB returns.** Each sync
+prunes anything older than 7 days, so everything stored before the outage is deleted and the
+window refills over the following days. Expected behaviour, not a fault.
 
 **Note:** `/pulse` cannot be ISR-cached — it reads `searchParams` (`?page=N`), which is a
 runtime API that forces dynamic rendering. Confirmed in `node_modules/next/dist/docs/`.
