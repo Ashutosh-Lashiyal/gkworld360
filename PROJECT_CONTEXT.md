@@ -318,6 +318,84 @@ verify the live site. Milestone-based deploys (at phase completions), not on eve
 
 ---
 
+## ⚠️ Incident — Neon data-transfer quota exhausted (14 Aug 2026)
+
+**Symptom:** `https://gkworld360.vercel.app/admin` returned HTTP 500. So did every Payload
+API route (`/api/users/me`, `/api/articles`, `/api/media`). Public pages still returned 200
+— but only because Vercel was serving **12-day-old stale HTML** (`x-vercel-cache: STALE`).
+When an ISR background rebuild fails, Next.js keeps serving the last good copy, so the
+outage was invisible on the front end for two weeks.
+
+**Root cause:** Neon free plan allows **5 GB/month network transfer**. We used 5.53 GB
+between 1–14 Aug and the database began refusing all connections
+(`53000 ... exceeded the data transfer quota`). Compute (67.99 CU-hrs) and storage
+(42 MB) were both well within limits — transfer alone was the problem.
+
+**Why transfer was so high (~390 MB/day):**
+- `lib/pulse.ts` fetched **2,000 full headline rows (~3 MB)** on every sync just to read
+  the `link` column for de-duplication.
+- Two crons were running: the GitHub Actions workflow (~35×/day) **and** cron-job.org
+  (~96×/day, every 15 min). The GitHub one was never switched off when cron-job.org
+  was added.
+- The homepage teaser fetched **300 rows to display 6**.
+
+**Timeline:** cron added 20 Jul → 414 successful runs → last success 14 Aug 23:52 UTC →
+100% failures since. Quota window resets **1 Sep 2026**.
+
+**Fixes applied (28 Aug 2026):**
+- `lib/pulse.ts` de-dupe query → `select: { link: true }` (one column, not all)
+- `getStoredHeadlines(limit)` → fetches only what the caller shows (6, not 300) + `select`
+- `getHeadlinesPage` → `select` for displayed columns only
+- Deleted `.github/workflows/pulse-refresh.yml` (the duplicate, permanently-failing cron)
+- Added **`/api/health`** — hits the DB on every request, returns **503** when it's
+  unreachable, so this can never hide behind a stale cache again
+
+Estimated result: ~390 MB/day → **~25 MB/day**.
+
+### Follow-on: the site was UNDEPLOYABLE during the outage — now fixed
+
+Setting `CRON_SECRET` in Vercel needs a redeploy to take effect, but **the redeploy failed**:
+`next build` prerenders the `revalidate = 60` pages, each one queried Payload, Neon threw,
+and the whole deployment aborted (`Error occurred prerendering page /history/...`).
+A failed build does not replace the live deployment, so nothing took effect.
+
+**Cause:** `lib/cms.ts` had **no error handling at all**. It returned `null` for
+"article not in CMS" (→ MDX fallback), but a thrown *database* error propagated and
+crashed the render. "Not found" was handled; "broken" was not.
+
+**Fix:** wrapped all five database read paths so an unreachable DB is treated like
+"not found", falling back to MDX:
+- `getCMSArticle`, `getCMSNews` → `null` on error
+- `getCMSNewsList` → `[]` on error
+- `lib/pulse.ts` `getStoredHeadlines` → `[]` on error (caller then uses live RSS feeds)
+- `lib/pulse.ts` `getHeadlinesPage` → empty page on error
+
+All log loudly via `console.error`; `/api/health` reports the real error. Nothing is
+silently swallowed.
+
+**Verified 28 Aug 2026 with the database still down:** `npm run build` **succeeds**
+(29/29 static pages generated, `BUILD_ID` written, `physics.html` = 29 KB of real content,
+zero error markers). This also closes pre-flight checklist item 2, which had never been
+tested with Payload installed.
+
+⚠️ **Note for Phase 5:** this safety net falls back to the MDX files. Once Phase 5 deletes
+`content/`, there is nothing left to fall back to — a DB outage would then mean no articles.
+`/api/health` + a real uptime monitor become the safeguard at that point.
+
+**Still to do (dashboard work, not code):**
+- Set `CRON_SECRET` in Vercel **and** in the cron-job.org request header.
+  The endpoint currently returns 500 (not 401) to an empty secret, which proves
+  `CRON_SECRET` is unset in production — **`/api/pulse/sync` is publicly callable by
+  anyone**, and each call triggers ~10 outbound fetches plus a DB read.
+- Slow cron-job.org from 15 min to 30–60 min.
+- After 1 Sep: verify `/admin` loads and watch the Neon usage graph for a few days.
+
+**Note:** `/pulse` cannot be ISR-cached — it reads `searchParams` (`?page=N`), which is a
+runtime API that forces dynamic rendering. Confirmed in `node_modules/next/dist/docs/`.
+Its queries were made lean via `select` instead.
+
+---
+
 ## Things to Do Next Session
 
 1. **Enable billing** on Google Cloud → Gyaani will work reliably

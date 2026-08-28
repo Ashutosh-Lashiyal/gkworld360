@@ -166,14 +166,22 @@ async function syncHeadlines(): Promise<SyncResult> {
   if (!live.length) return result;
   const payload = await getClient();
 
-  // Which links do we already have? Only RECENT stored links can collide (the
-  // feeds only return recent items), so fetch the newest 2000 instead of the
-  // whole table — a big saving on the cross-region round-trip to the database.
+  // Which links do we already have? We only need the `link` column to answer
+  // that — nothing else. `select` tells the database to send back ONLY that one
+  // field instead of every column (title, snippet, image, ...).
+  //
+  // Why this matters: our database lives in Singapore and the site runs on
+  // Vercel, so every byte is billed as "network transfer". Before this, each
+  // sync shipped ~2000 FULL rows (~3 MB) across the world just to compare a
+  // list of URLs, then threw ~99% of those bytes away. Running every 15 minutes,
+  // that alone burned through the whole 5 GB/month free allowance in two weeks
+  // (14 Aug 2026 outage). Selecting one field cuts it to roughly a tenth.
   const existing = await payload.find({
     collection: "headlines",
     limit: 2000,
     sort: "-publishedAt",
     depth: 0,
+    select: { link: true }, // ONLY the de-duplication key — no other columns
   });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const known = new Set(existing.docs.map((d: any) => d.link));
@@ -286,9 +294,42 @@ async function ensureFresh(): Promise<void> {
 }
 
 // Read the stored headlines (newest-first).
-async function getStoredHeadlines(): Promise<Headline[]> {
-  const payload = await getClient();
-  const res = await payload.find({ collection: "headlines", limit: 300, sort: "-publishedAt", depth: 0 });
+//
+// `limit` is how many rows to actually ask the database for. This used to be
+// hardcoded to 300 — so the homepage, which shows only 6, dragged 300 rows over
+// the network and threw 294 of them away on every single rebuild. Now the caller
+// says how many it needs and we fetch exactly that many.
+//
+// `select` lists the columns we genuinely use below. Anything not listed is
+// never sent by the database, which keeps the response small.
+async function getStoredHeadlines(limit = 300): Promise<Headline[]> {
+  let res;
+  try {
+    const payload = await getClient();
+    res = await payload.find({
+      collection: "headlines",
+      limit,
+      sort: "-publishedAt",
+      depth: 0,
+      select: {
+        title: true,
+        link: true,
+        snippet: true,
+        source: true,
+        category: true,
+        image: true,
+        publishedAt: true,
+      },
+    });
+  } catch (error) {
+    // Database unreachable. Return an empty list rather than throwing: the caller
+    // (getLatestHeadlines) already has a "store is empty" path that fetches the
+    // RSS feeds live instead, so the homepage still shows real headlines and the
+    // build still succeeds. See the 28 Aug 2026 note in lib/cms.ts.
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`[pulse] could not read stored headlines — using live feeds: ${message}`);
+    return [];
+  }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return res.docs.map((d: any) => ({
     title: d.title,
@@ -305,7 +346,10 @@ async function getStoredHeadlines(): Promise<Headline[]> {
 // THE HOMEPAGE TEASER: read the freshest headlines from the store, refresh it in
 // the background, and return the top `limit` in STRICT newest-first order.
 export async function getLatestHeadlines(limit = 30): Promise<Headline[]> {
-  let items = await getStoredHeadlines();
+  // Ask the database for exactly as many as we're going to show. The database
+  // already sorts by publishedAt (newest first), so the newest `limit` rows are
+  // precisely the ones we want — no need to over-fetch and slice in JavaScript.
+  let items = await getStoredHeadlines(limit);
 
   if (items.length) {
     // We have data — refresh AFTER the response is sent so the page stays fast.
@@ -336,16 +380,36 @@ export type HeadlinePage = {
 // straight from the store (which the 7-day prune keeps trimmed). `page` is
 // 1-based, so page 1 is always the freshest 50.
 export async function getHeadlinesPage(page = 1, perPage = 50): Promise<HeadlinePage> {
-  const payload = await getClient();
-  // Payload's find() does the paging + sorting for us in the database — far more
-  // efficient than loading everything and slicing in JavaScript.
-  const res = await payload.find({
-    collection: "headlines",
-    limit: perPage,
-    page,
-    sort: "-publishedAt", // newest first — no category shuffling
-    depth: 0,
-  });
+  let res;
+  try {
+    const payload = await getClient();
+    // Payload's find() does the paging + sorting for us in the database — far more
+    // efficient than loading everything and slicing in JavaScript.
+    res = await payload.find({
+      collection: "headlines",
+      limit: perPage,
+      page,
+      sort: "-publishedAt", // newest first — no category shuffling
+      depth: 0,
+      // Same trick as above: only the columns this page actually displays.
+      select: {
+        title: true,
+        link: true,
+        snippet: true,
+        source: true,
+        category: true,
+        image: true,
+        publishedAt: true,
+      },
+    });
+  } catch (error) {
+    // Database unreachable — hand back an EMPTY page. /pulse then renders its
+    // normal layout with "0 headlines" and no pagination, instead of throwing a
+    // 500 at the visitor. /api/health is what reports the real problem.
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`[pulse] could not read headlines page ${page}: ${message}`);
+    return { items: [], page: 1, totalPages: 1, totalDocs: 0 };
+  }
 
   // Refresh the store in the background after the response, same as the teaser.
   after(() => ensureFresh().catch(() => {}));

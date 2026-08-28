@@ -114,6 +114,29 @@ async function getClient() {
   return payloadInstance;
 }
 
+// ── WHEN THE DATABASE IS UNREACHABLE ─────────────────────────────────────────
+// There are TWO very different reasons a CMS lookup can come back empty:
+//
+//   1. "Not found"  — the article genuinely isn't in the CMS yet. Normal. The
+//                     page then falls back to the MDX file on disk.
+//   2. "Broken"     — the database itself is unreachable (down, out of quota,
+//                     bad credentials). NOT normal.
+//
+// Until now we only handled case 1. In case 2 the error flew straight up and
+// crashed whatever was rendering. That is what broke the Vercel deploy on
+// 28 Aug 2026: Neon had hit its transfer quota, so `next build` couldn't
+// prerender the article pages and the whole deployment failed — meaning we
+// couldn't ship ANY fix while the database was down.
+//
+// So we now treat "broken" the same way we treat "not found": return nothing and
+// let the caller fall back to MDX. The site degrades to static content instead of
+// collapsing. We still log loudly, and /api/health reports the real error, so a
+// dead database can't hide silently.
+function cmsUnavailable(fn: string, detail: string, error: unknown): void {
+  const message = error instanceof Error ? error.message : String(error);
+  console.error(`[cms] ${fn} failed (${detail}) — falling back to MDX: ${message}`);
+}
+
 // Look up a single article by its URL path, e.g.
 //   ["history", "modern-india", "revolt-of-1857"]
 // Returns the article ONLY if it exists in the CMS AND its subject matches the
@@ -124,26 +147,33 @@ export async function getCMSArticle(
   const subjectSlug = contentSlug[0];
   const articleSlug = contentSlug[contentSlug.length - 1];
 
-  const payload = await getClient();
+  try {
+    const payload = await getClient();
 
-  // Ask Payload: "find an article whose slug equals <articleSlug>".
-  // depth: 2 tells Payload to also fetch the related subject, category and
-  // images (not just their IDs) — "populate" them, in database terms.
-  const result = await payload.find({
-    collection: "articles",
-    where: { slug: { equals: articleSlug } },
-    depth: 2,
-    limit: 1,
-  });
+    // Ask Payload: "find an article whose slug equals <articleSlug>".
+    // depth: 2 tells Payload to also fetch the related subject, category and
+    // images (not just their IDs) — "populate" them, in database terms.
+    const result = await payload.find({
+      collection: "articles",
+      where: { slug: { equals: articleSlug } },
+      depth: 2,
+      limit: 1,
+    });
 
-  const doc = result.docs[0] as unknown as CMSArticle | undefined;
-  if (!doc) return null;
+    const doc = result.docs[0] as unknown as CMSArticle | undefined;
+    if (!doc) return null;
 
-  // Safety check: make sure the article's subject matches the first URL segment,
-  // so a wrong path like "/geography/.../revolt-of-1857" doesn't accidentally match.
-  if (doc.subject?.slug !== subjectSlug) return null;
+    // Safety check: make sure the article's subject matches the first URL segment,
+    // so a wrong path like "/geography/.../revolt-of-1857" doesn't accidentally match.
+    if (doc.subject?.slug !== subjectSlug) return null;
 
-  return doc;
+    return doc;
+  } catch (error) {
+    // Database unreachable — behave exactly as if the article simply wasn't in
+    // the CMS, so the page renders from its MDX file instead of crashing.
+    cmsUnavailable("getCMSArticle", contentSlug.join("/"), error);
+    return null;
+  }
 }
 
 // The shape of a News item (the fields we use on the page).
@@ -168,25 +198,40 @@ export type CMSNews = {
 // Returns the item if it exists in the CMS, else null (so the page can fall back
 // to the old MDX news handling).
 export async function getCMSNews(slug: string): Promise<CMSNews | null> {
-  const payload = await getClient();
-  const result = await payload.find({
-    collection: "news",
-    where: { slug: { equals: slug } },
-    depth: 2, // populate the cover image
-    limit: 1,
-  });
-  return (result.docs[0] as unknown as CMSNews) ?? null;
+  try {
+    const payload = await getClient();
+    const result = await payload.find({
+      collection: "news",
+      where: { slug: { equals: slug } },
+      depth: 2, // populate the cover image
+      limit: 1,
+    });
+    return (result.docs[0] as unknown as CMSNews) ?? null;
+  } catch (error) {
+    // Database unreachable — treat it as "no such news item" so the page falls
+    // back to the MDX news handling rather than crashing the render/build.
+    cmsUnavailable("getCMSNews", slug, error);
+    return null;
+  }
 }
 
 // Fetch ALL news items from the CMS, newest event first — used by the /news
 // listing and the homepage "Current Affairs" section.
 export async function getCMSNewsList(limit = 200): Promise<CMSNews[]> {
-  const payload = await getClient();
-  const result = await payload.find({
-    collection: "news",
-    depth: 2, // populate cover images
-    limit,
-    sort: "-eventDate", // newest event first
-  });
-  return result.docs as unknown as CMSNews[];
+  try {
+    const payload = await getClient();
+    const result = await payload.find({
+      collection: "news",
+      depth: 2, // populate cover images
+      limit,
+      sort: "-eventDate", // newest event first
+    });
+    return result.docs as unknown as CMSNews[];
+  } catch (error) {
+    // Database unreachable — return an EMPTY list. Both callers (the homepage
+    // and /news) merge this with their MDX news items, so the page still builds
+    // and still shows the MDX-based news instead of failing outright.
+    cmsUnavailable("getCMSNewsList", `limit=${limit}`, error);
+    return [];
+  }
 }
