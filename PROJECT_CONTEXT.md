@@ -13,16 +13,46 @@
 
 ---
 
-# 🔴 START HERE — status as of 28 Aug 2026
+# 🔴 START HERE — status as of 1 Sep 2026
 
-**The site is mid-incident. There is a dated action plan for 1 September 2026.**
+**BLOCKED WAITING ON NEON SUPPORT. Nothing to fix in this codebase.**
 Read this block before doing anything else. Full detail is in the
 "⚠️ Incident — Neon data-transfer quota exhausted" section further down this file.
 
-### One-line summary
+### ⛔ CURRENT BLOCKER (1 Sep 2026) — Neon quota block is STUCK
+
+The August quota reset **did** happen, but the database is **still refusing every
+connection**. This is a Neon-side fault, not ours:
+
+- Neon dashboard shows `Usage since Sep 1, 2026`, Network transfer **0 / 5 GB**, status **All OK**
+- Yet every connection — pooled AND direct, from Vercel AND from a local machine —
+  fails with `53000 — Your project has exceeded the data transfer quota`
+- The branch was **archived** after ~18 days idle. Unarchiving from the Neon SQL Editor
+  stalls forever at *"Compute is starting up. Reconnecting automatically"*; the compute
+  never becomes available.
+- Neon's own AI assistant confirmed this is **"inconsistent with documented behavior"** —
+  quota suspension is supposed to lift at the billing-cycle reset.
+
+**Action taken 1 Sep 2026:** posted in the **Neon Discord #help channel**
+(https://discord.gg/neon) asking them to clear the stuck quota block. Free tier has no
+human ticket support, so Discord is the channel. **→ Next step is simply Neon's reply.**
+
+Identifiers for any follow-up:
+`project orange-poetry-31408334` · `branch br-blue-rain-ao9w7vvg` · `endpoint ep-sweet-tree-ao0sqfwp` · AWS ap-southeast-1
+
+**Do NOT try to fix this in code — there is nothing wrong with the code.** Also do not run
+the Neon "reset quota via API" suggestion their bot offers: its sample *sets* new
+`active_time_seconds`/`compute_time_seconds` quotas rather than clearing anything, and could
+cause a second suspension. It also targets user-configured project quotas, which we never set.
+
+### One-line summary of how we got here
 Neon's free plan allows **5 GB/month network transfer**. We used 5.53 GB and the database
-locked us out on **14 Aug 2026**. The quota resets **1 Sep 2026**. Code fixes are deployed;
-the site is live and serving readers, but `/admin` is down and the fixes are unverified.
+locked us out on **14 Aug 2026**. Code fixes are deployed; the public site is live and
+serving readers, but `/admin` is down and the query fixes remain unverified.
+
+### Data is safe
+An archived branch is cold storage, not deletion. The dashboard reading `Storage 0 / 0.5 GB`
+is the "not updated for inactive projects" artifact it warns about — the ~42 MB is intact.
 
 ### Current state (all code committed and deployed to `main`)
 
@@ -34,8 +64,10 @@ the site is live and serving readers, but `/admin` is down and the fixes are unv
 | `/api/pulse/sync` | ✅ Locked with `CRON_SECRET` (401 without it) |
 | UptimeRobot | ✅ Watching `/api/health` every 5 min, emails on state change |
 
-### ▶️ DO THIS ON 1 SEPTEMBER 2026
+### ▶️ DO THIS ONCE NEON UNBLOCKS THE PROJECT (not before — see the blocker above)
 1. **Easiest signal:** wait for the UptimeRobot email *"GKWorld360 database is UP"*.
+   It watches `/api/health` every 5 min and only emails on a state CHANGE, so silence
+   means nothing has changed yet — that is correct behaviour, not a broken monitor.
 2. Check `/api/health` → should be **200** `"database":"reachable"`.
 3. Open `/admin` → should show the login screen, not a 500.
 4. **⭐ THE IMPORTANT ONE — watch Neon usage for 2–3 days.**
