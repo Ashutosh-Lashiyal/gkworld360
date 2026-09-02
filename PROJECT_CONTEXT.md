@@ -35,7 +35,51 @@ connection**. This is a Neon-side fault, not ours:
 
 **Action taken 1 Sep 2026:** posted in the **Neon Discord #help channel**
 (https://discord.gg/neon) asking them to clear the stuck quota block. Free tier has no
-human ticket support, so Discord is the channel. **→ Next step is simply Neon's reply.**
+human ticket support, so Discord is the channel.
+
+### 📅 AGREED PLAN (decided 2 Sep 2026)
+- **Check once a day** whether the block has lifted. Quickest test — either open
+  https://gkworld360.vercel.app/api/health (200 = back, 503 = still blocked), or run a
+  direct connection test with `pg` using `DATABASE_URL` from `.env.local`.
+- **Bump the Discord thread** if there is no reply after a day or two.
+- **DEADLINE: 8 September 2026.** If Neon has still not fixed it by then,
+  **abandon the stuck project and create a NEW Neon project** (see the fallback plan below).
+  Do not wait longer than this.
+
+**Status log:**
+- 1 Sep — quota reset confirmed on the dashboard, but connections still fail. Discord posted.
+- 2 Sep — re-checked, still `53000`. Both pooled and direct. No change.
+
+### 🔄 FALLBACK PLAN — if Neon does not fix it by 8 Sep
+Create a **new Neon project** (a new *branch* will NOT work — the block is project-level,
+and Backup & Restore needs a working compute, which is the broken part).
+
+1. New project in the Neon console → copy both connection strings
+2. Update `DATABASE_URL` + `DATABASE_URL_DIRECT` in `.env.local` AND in Vercel
+3. Redeploy — **Payload recreates all its tables automatically** on first boot
+4. Create the admin user again
+5. Re-enter the "Smart Border Project" news item (the ONLY unrecoverable content —
+   everything else lives in `content/*.mdx`, which is in git)
+6. Headlines refill automatically within ~30 minutes via the cron
+
+Takes ~30–45 min. **Do NOT delete the old project** — if Neon fixes it later the data is
+still there. Caveat: usage is metered per *organisation*, so there is a small chance a new
+project inherits the block; we would know within five minutes. If so, the next option is a
+different provider (Supabase free tier).
+
+### ⚠️ BIGGEST LESSON FROM THIS INCIDENT — WE HAVE NO BACKUPS
+We escaped lightly ONLY because all real content still lives in `content/*.mdx` in git.
+**Once Phase 5 deletes those files, the database becomes the single copy of the whole site** —
+and this exact situation would then mean total content loss with no way to export, because
+you cannot connect to a suspended project.
+
+Neon's own "Backup & Restore" does not help here: it lives *inside* Neon, and Neon is what
+locked us out. **A backup only your provider can hand you is not a backup.**
+
+**REQUIRED BEFORE PHASE 5:** a scheduled `pg_dump` export written somewhere OUTSIDE Neon
+(Cloudflare R2 — already owned — or a private git repo). Weekly is enough at this scale.
+Also consider upgrading to a paid plan once the content is large enough that retyping it
+would be painful; paid plans do not suspend this way.
 
 Identifiers for any follow-up:
 `project orange-poetry-31408334` · `branch br-blue-rain-ao9w7vvg` · `endpoint ep-sweet-tree-ao0sqfwp` · AWS ap-southeast-1
