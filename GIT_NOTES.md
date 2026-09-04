@@ -56,7 +56,8 @@ Committing does NOT put anything online. It's just a local checkpoint (like a sa
 ## Staging: everything vs specific files
 
 ```bash
-git add .                    # stage EVERYTHING
+git add .                    # stage EVERYTHING (see the trap below)
+git add -A                   # stage everything INCLUDING deleted files
 git add payload.config.ts    # stage one specific file
 git add collections/         # stage a whole folder
 git add file1.ts file2.ts    # stage several specific files
@@ -65,6 +66,46 @@ git restore --staged file    # UN-stage a file (green → red), keeps my edits
 
 Why stage selectively? To make **atomic commits** — each commit = one logical change.
 Clean history, and easy to undo one thing without undoing another.
+
+### ⚠️ The `git add .` trap — DELETED files (learned 28 Aug 2026)
+
+`git add .` does not reliably stage **deletions**. If you delete a file, `git add .` may
+stage all your edits but quietly leave the deletion behind — so you push a commit that
+still contains the file you thought you removed.
+
+**Use `git add -A` whenever a commit includes a deleted file.** The `-A` means *all*:
+new files, modified files, **and** deleted ones.
+
+Real example: when we deleted `.github/workflows/pulse-refresh.yml` (a duplicate cron job
+that was doubling our database load), `git add -A` is what actually recorded the deletion.
+
+> Plain-English: `git add .` mostly means *"notice what's here."*
+> `git add -A` means *"notice what's here AND what's gone."*
+
+---
+
+## Undoing changes you have NOT committed yet (28 Aug 2026)
+
+Sometimes you edit a file and then decide you don't want the change at all — it was an
+accident, or a formatter reformatted a file you never meant to touch.
+
+```bash
+git checkout -- "app/(frontend)/about/page.tsx"   # throw away MY edits to this file
+git restore "app/(frontend)/about/page.tsx"       # newer, clearer name — same thing
+```
+
+Both mean: *"forget my edits to this file and put back the last committed version."*
+
+**⚠️ This permanently destroys those edits — there is no undo.** Git can only recover what
+it has recorded, and uncommitted edits were never recorded. Always check `git status` and
+`git diff <file>` first so you know exactly what you are throwing away.
+
+Real example: our editor had silently reformatted `about/page.tsx`, changing every
+`"double quote"` to a `'single quote'` — 30 lines changed, zero behaviour changed. Rather
+than commit that noise alongside a real bug fix, we discarded it.
+
+> **Rule of thumb:** `git restore <file>` = undo *uncommitted* edits.
+> Undoing something already committed is a different, safer job (`git revert`).
 
 ---
 

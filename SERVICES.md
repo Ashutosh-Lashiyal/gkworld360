@@ -113,6 +113,30 @@ transfer that caused the 14 Aug 2026 outage. **If a cron is ever replaced, DELET
 one** — we were running two at once (this plus a GitHub Actions workflow, now removed),
 doubling the load for no benefit.
 
+**⚠️⚠️ cron-job.org AUTO-DISABLES a job after repeated failures — check this after ANY
+outage (learned 4 Sep 2026).**
+
+When the database went down on 14 Aug, this job started returning `500` on every run.
+cron-job.org kept trying, then **silently switched the job off**. Last execution:
+**25 Aug 2026 (Failed)**. It then did not run at all — for over a week after the database
+recovered — and nothing warned us.
+
+**How to spot it:** on the Cronjobs list, the **"Next execution"** column reads
+**`Inactive`** instead of a future time. The History tab is blank because there is nothing
+to show.
+
+**How to fix it:** click **EDIT** on the job → turn the enable toggle back **ON** →
+confirm the schedule and the `Authorization: Bearer <CRON_SECRET>` header are still
+correct → **Save**. Then watch History for `200`s.
+
+**How we detected it:** headlines had stopped arriving on schedule. Inserts in the database
+showed 24-hour gaps instead of one batch every 30 minutes. What kept the feed alive at all
+was the visit-triggered refresh (`after(() => ensureFresh())` in `lib/pulse.ts`), NOT the
+cron — so the site looked fine while its scheduled job was dead.
+
+**The general lesson: after any outage, verify your scheduled jobs are still ENABLED.**
+Fixing the thing that broke does not automatically restart the robots that gave up on it.
+
 ---
 
 ### UptimeRobot — Site & Database Monitoring
