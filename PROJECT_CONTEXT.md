@@ -13,59 +13,89 @@
 
 ---
 
-# 🔴 START HERE — status as of 1 Sep 2026
+# 🟢 START HERE — status as of 4 Sep 2026
 
-**BLOCKED WAITING ON NEON SUPPORT. Nothing to fix in this codebase.**
-Read this block before doing anything else. Full detail is in the
-"⚠️ Incident — Neon data-transfer quota exhausted" section further down this file.
+**RESOLVED — the database is back and everything is verified working.**
+One action is still outstanding for the user (re-enable the cron — see below).
 
-### ⛔ CURRENT BLOCKER (1 Sep 2026) — Neon quota block is STUCK
+### ✅ RECOVERY (4 Sep 2026)
+The Neon block cleared on its own. First successful write: **3 Sep 2026 01:18 UTC**
+(after ~20 days down). No support reply was ever needed — the archived branch woke and the
+stuck quota flag cleared. **No data was lost:** 18 tables, 1 article, 1 news item, 1 admin
+user, all intact.
 
-The August quota reset **did** happen, but the database is **still refusing every
-connection**. This is a Neon-side fault, not ours:
+| Route | Status |
+|---|---|
+| `/` `/pulse` `/news` articles | ✅ 200 |
+| `/admin` | ✅ 200 — working for the first time since 14 Aug |
+| `/api/health` | ✅ 200 `{"status":"ok","database":"reachable"}` |
 
-- Neon dashboard shows `Usage since Sep 1, 2026`, Network transfer **0 / 5 GB**, status **All OK**
-- Yet every connection — pooled AND direct, from Vercel AND from a local machine —
-  fails with `53000 — Your project has exceeded the data transfer quota`
-- The branch was **archived** after ~18 days idle. Unarchiving from the Neon SQL Editor
-  stalls forever at *"Compute is starting up. Reconnecting automatically"*; the compute
-  never becomes available.
-- Neon's own AI assistant confirmed this is **"inconsistent with documented behavior"** —
-  quota suspension is supposed to lift at the billing-cycle reset.
+### ⭐ THE QUERY FIXES ARE NOW VERIFIED — they work
+This was the one thing left unproven from 28 Aug. Measured 4 Sep against real usage:
 
-**Action taken 1 Sep 2026:** posted in the **Neon Discord #help channel**
-(https://discord.gg/neon) asking them to clear the stuck quota block. Free tier has no
-human ticket support, so Discord is the channel.
+| | |
+|---|---|
+| August (before fixes) | ~390 MB/day |
+| Target | ~25 MB/day |
+| **Measured (10 MB over 29 h)** | **~8.3 MB/day** ✅ |
 
-### 📅 AGREED PLAN (decided 2 Sep 2026)
-- **Check once a day** whether the block has lifted. Quickest test — either open
-  https://gkworld360.vercel.app/api/health (200 = back, 503 = still blocked), or run a
-  direct connection test with `pg` using `DATABASE_URL` from `.env.local`.
-- **Bump the Discord thread** if there is no reply after a day or two.
-- **DEADLINE: 8 September 2026.** If Neon has still not fixed it by then,
-  **abandon the stuck project and create a NEW Neon project** (see the fallback plan below).
-  Do not wait longer than this.
+That is ~47× less than August, about 5% of the 5 GB monthly allowance. Caveat: measured while
+the cron was disabled, so real load will be a little higher — estimate ~12–15 MB/day once the
+cron runs again. Still far inside budget.
 
-**Status log:**
-- 1 Sep — quota reset confirmed on the dashboard, but connections still fail. Discord posted.
-- 2 Sep — re-checked, still `53000`. Both pooled and direct. No change.
+### ⚠️ ACTION STILL NEEDED FROM THE USER — the cron is DISABLED
+cron-job.org shows the job as **"Inactive"**, last execution **25 Aug 2026 (Failed)**.
+cron-job.org auto-disables jobs after repeated failures, and ours failed continuously from
+15 Aug while the database was down. **It has not run since.**
 
-### 🔄 FALLBACK PLAN — if Neon does not fix it by 8 Sep
-Create a **new Neon project** (a new *branch* will NOT work — the block is project-level,
-and Backup & Restore needs a working compute, which is the broken part).
+The site kept refreshing headlines only via the visit-triggered `after(() => ensureFresh())`
+path, not the cron. **User must re-enable it:** cron-job.org → EDIT the job → turn the
+enable toggle ON → confirm the 30-minute schedule and the
+`Authorization: Bearer <CRON_SECRET>` header → Save.
 
-1. New project in the Neon console → copy both connection strings
-2. Update `DATABASE_URL` + `DATABASE_URL_DIRECT` in `.env.local` AND in Vercel
-3. Redeploy — **Payload recreates all its tables automatically** on first boot
-4. Create the admin user again
-5. Re-enter the "Smart Border Project" news item (the ONLY unrecoverable content —
-   everything else lives in `content/*.mdx`, which is in git)
-6. Headlines refill automatically within ~30 minutes via the cron
+### 🐛 BUG FOUND AND FIXED (4 Sep 2026) — the 7-day prune was silently failing
+`/pulse` was showing **7,983 headlines going back to 8 Aug** — four weeks — while the page
+promises "Headlines stay here for about 1 week".
 
-Takes ~30–45 min. **Do NOT delete the old project** — if Neon fixes it later the data is
-still there. Caveat: usage is metered per *organisation*, so there is a small chance a new
-project inherits the block; we would know within five minutes. If so, the next option is a
-different provider (Supabase free tier).
+**Cause:** the prune deleted every expired row in ONE statement, wrapped in an empty
+`catch {}`. Fine while deletes were small, but after the outage 7,923 expired rows had piled
+up — too many to delete inside the route's 60-second budget. The delete timed out and the
+empty catch threw the error away silently.
+
+**Fix (`lib/pulse.ts`):** delete in batches of 200, capped at 10 batches (2,000 rows) per
+sync so it always finishes in time, and **log failures instead of swallowing them**. A
+backlog bigger than one run now self-heals over the next few runs.
+
+**One-off cleanup run 4 Sep:** deleted the 7,923 expired rows directly via SQL in a
+transaction (checked the `payload_locked_documents_rels` foreign key first — it is CASCADE
+and had 0 referencing rows). `/pulse` went 7,983 → **60 headlines**, oldest now 2 Sep. ✅
+
+**Lesson: never write `catch {}`.** An empty catch turned a visible failure into a silent
+one that hid for three weeks. Every catch we added on 28 Aug logs; this one predated that.
+
+### Then resume normal work
+**Payload CMS migration, Phase 4** — the `/news` listing, subject/category pages, search and
+Hindi still read from MDX and need wiring to the CMS. Blocked since 14 Aug; now unblocked.
+
+### How the original outage happened (three INDEPENDENT causes — took hours to unpick)
+1. **Neon transfer quota** — over-fetching queries (2,000 full rows to read one column;
+   300 rows to show 6) plus **two crons running at once**.
+2. **No error handling in `lib/cms.ts`** — a database error crashed `next build`, so the
+   site could not be deployed at all while the DB was down.
+3. **`sharp`/libvips missing from the Vercel bundle** — crashed Payload on boot,
+   completely unrelated to the database. Fixing the DB alone would NOT have fixed `/admin`.
+
+### Hard-won lessons (do not re-learn these)
+- **A green `200` proves nothing.** The site looked healthy for two weeks while its database
+  was dead — Vercel was serving 12-day-old cached HTML (`x-vercel-cache: STALE`). Check
+  `/api/health`, not the homepage.
+- **Every route touching one library failing with an HTML 500 in under a second** = a
+  module-load/import crash, not a query or timeout. **Go to the Vercel runtime logs
+  immediately.** One log line named `sharp` and saved hours of wrong guesses.
+- **Crons run 24/7 whether or not you are working.** If you replace one, DELETE the old one.
+  And note they can be **auto-disabled** after repeated failures — check they are still
+  enabled after any outage.
+- **Never write an empty `catch {}`.** See the prune bug above.
 
 ### ⚠️ BIGGEST LESSON FROM THIS INCIDENT — WE HAVE NO BACKUPS
 We escaped lightly ONLY because all real content still lives in `content/*.mdx` in git.
@@ -83,70 +113,6 @@ would be painful; paid plans do not suspend this way.
 
 Identifiers for any follow-up:
 `project orange-poetry-31408334` · `branch br-blue-rain-ao9w7vvg` · `endpoint ep-sweet-tree-ao0sqfwp` · AWS ap-southeast-1
-
-**Do NOT try to fix this in code — there is nothing wrong with the code.** Also do not run
-the Neon "reset quota via API" suggestion their bot offers: its sample *sets* new
-`active_time_seconds`/`compute_time_seconds` quotas rather than clearing anything, and could
-cause a second suspension. It also targets user-configured project quotas, which we never set.
-
-### One-line summary of how we got here
-Neon's free plan allows **5 GB/month network transfer**. We used 5.53 GB and the database
-locked us out on **14 Aug 2026**. Code fixes are deployed; the public site is live and
-serving readers, but `/admin` is down and the query fixes remain unverified.
-
-### Data is safe
-An archived branch is cold storage, not deletion. The dashboard reading `Storage 0 / 0.5 GB`
-is the "not updated for inactive projects" artifact it warns about — the ~42 MB is intact.
-
-### Current state (all code committed and deployed to `main`)
-
-| Thing | State |
-|---|---|
-| Public site (`/`, `/pulse`, `/news`, articles) | ✅ Working — headlines served from live RSS via fallback |
-| `/admin` | ❌ 500 — needs the database, expect recovery 1 Sep |
-| `/api/health` | ✅ Working, returns **503** + the real Neon error |
-| `/api/pulse/sync` | ✅ Locked with `CRON_SECRET` (401 without it) |
-| UptimeRobot | ✅ Watching `/api/health` every 5 min, emails on state change |
-
-### ▶️ DO THIS ONCE NEON UNBLOCKS THE PROJECT (not before — see the blocker above)
-1. **Easiest signal:** wait for the UptimeRobot email *"GKWorld360 database is UP"*.
-   It watches `/api/health` every 5 min and only emails on a state CHANGE, so silence
-   means nothing has changed yet — that is correct behaviour, not a broken monitor.
-2. Check `/api/health` → should be **200** `"database":"reachable"`.
-3. Open `/admin` → should show the login screen, not a 500.
-4. **⭐ THE IMPORTANT ONE — watch Neon usage for 2–3 days.**
-   Target ≈ **25 MB/day**. August ran at ~390 MB/day.
-   Check at [console.neon.tech](https://console.neon.tech) → project → Usage/Billing.
-   **This is the ONLY fix from 28 Aug that is still UNVERIFIED** — no successful query has
-   ever run through the new `select` code, because the database has been locked the whole
-   time. The ~15× saving is arithmetic, not measurement. If usage climbs much faster than
-   ~25 MB/day, the query fixes are not working and need re-investigation.
-5. Check cron-job.org → **History** tab: runs should turn from `500` to `200`.
-6. `/pulse` will look near-empty at first — expected. The 7-day prune deletes everything
-   stored before the outage, and it refills over the following days.
-
-### Then resume normal work
-**Payload CMS migration, Phase 4** — the `/news` listing, subject/category pages, search and
-Hindi still read from MDX and need wiring to the CMS. That work needs `/admin`, so it has
-been blocked since 14 Aug.
-
-### Three things that caused the outage (they were INDEPENDENT — this took hours to unpick)
-1. **Neon transfer quota** — over-fetching queries (2,000 full rows to read one column;
-   300 rows to show 6) plus **two crons running at once**.
-2. **No error handling in `lib/cms.ts`** — a database error crashed `next build`, so the
-   site could not be deployed at all while the DB was down.
-3. **`sharp`/libvips missing from the Vercel bundle** — crashed Payload on boot,
-   completely unrelated to the database. Fixing the DB alone would NOT have fixed `/admin`.
-
-### Hard-won lessons (do not re-learn these)
-- **A green `200` proves nothing.** The site looked healthy for two weeks while its database
-  was dead — Vercel was serving 12-day-old cached HTML (`x-vercel-cache: STALE`). Check
-  `/api/health`, not the homepage.
-- **Every route touching one library failing with an HTML 500 in under a second** = a
-  module-load/import crash, not a query or timeout. **Go to the Vercel runtime logs
-  immediately** rather than probing from outside. That one log line named `sharp` and saved
-  hours of wrong guesses.
-- **Crons run 24/7 whether or not you are working.** If you replace one, DELETE the old one.
 
 ---
 

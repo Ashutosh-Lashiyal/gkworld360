@@ -255,12 +255,53 @@ async function syncHeadlines(): Promise<SyncResult> {
     });
   }
 
-  // Prune the rolling 7-day window.
+  // ── PRUNE THE ROLLING 7-DAY WINDOW ──────────────────────────────────────────
+  // This is what keeps the promise /pulse makes to readers ("Headlines stay here
+  // for about 1 week"). Anything published more than 7 days ago is deleted.
+  //
+  // WHY THIS IS BATCHED (bug found 4 Sep 2026):
+  // The old version deleted EVERY expired row in one statement, inside a
+  // `catch {}` that threw the error away silently. That worked while the table
+  // was pruned regularly and deletes were small. But after the 14 Aug–3 Sep
+  // outage, 7,923 expired rows had piled up — far too many to delete inside the
+  // route's 60-second budget. The delete timed out, the empty `catch` swallowed
+  // the failure without a word, and /pulse quietly started showing 7,983
+  // headlines going back four weeks: exactly what the page says it will not do.
+  //
+  // So now we delete in small batches with a per-run cap, and we LOG failures
+  // instead of hiding them. If a backlog is bigger than one run can clear, the
+  // next sync picks up where this one stopped — it self-heals over a few runs
+  // instead of failing forever.
   const cutoff = new Date(Date.now() - SEVEN_DAYS_MS).toISOString();
+  const PRUNE_BATCH = 200; // rows deleted per statement — small enough to finish fast
+  const MAX_PRUNE_BATCHES = 10; // hard cap per sync (≤2000 rows) so we never blow the 60s budget
+  let pruned = 0;
+
   try {
-    await payload.delete({ collection: "headlines", where: { publishedAt: { less_than: cutoff } } });
-  } catch {
-    /* ignore */
+    for (let i = 0; i < MAX_PRUNE_BATCHES; i++) {
+      // Find the next batch of expired rows. `select` keeps the response tiny —
+      // we only need each row's id to delete it (Payload always returns `id`).
+      const expired = await payload.find({
+        collection: "headlines",
+        where: { publishedAt: { less_than: cutoff } },
+        limit: PRUNE_BATCH,
+        sort: "publishedAt", // oldest first, so the worst offenders go first
+        depth: 0,
+        select: { publishedAt: true },
+      });
+
+      if (!expired.docs.length) break; // nothing left to prune — done
+
+      const ids = expired.docs.map((d) => d.id);
+      await payload.delete({ collection: "headlines", where: { id: { in: ids } } });
+      pruned += ids.length;
+    }
+
+    if (pruned) console.log(`[pulse] pruned ${pruned} headlines older than 7 days`);
+  } catch (error) {
+    // Log loudly. The old silent `catch {}` is what let this bug hide for weeks.
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`[pulse] prune FAILED after deleting ${pruned}: ${message}`);
   }
 
   console.log(`[pulse] sync done: +${result.added} new`, result.bySource);
