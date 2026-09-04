@@ -55,6 +55,41 @@ export async function generateStaticParams() {
   return slugs.map((slug) => ({ slug }));
 }
 
+// ── SEO METADATA FOR CMS-ONLY PAGES ───────────────────────────────────────────
+// Builds the same tag set we produce for MDX pages, but from a CMS record.
+// Kept as a small helper so articles and news items cannot drift apart.
+function cmsMetadata(
+  title: string,
+  description: string | null | undefined,
+  imageUrl: string | null | undefined,
+  url: string
+): Metadata {
+  const images = imageUrl ? [{ url: imageUrl }] : undefined;
+  return {
+    // Just the bare title — do NOT append the site name here. The root layout
+    // (app/(frontend)/layout.tsx) sets `template: "%s | GKWorld360"`, which adds
+    // it automatically. Appending it here too produced the double-suffix
+    // "The Revolt of 1857 | GKWorld360 | GKWorld360" (caught in testing).
+    title: title || SITE_NAME,
+    description: description ?? undefined,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "article",
+      title,
+      description: description ?? undefined,
+      url,
+      siteName: SITE_NAME,
+      images,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description: description ?? undefined,
+      images,
+    },
+  };
+}
+
 // ── SEO METADATA ──────────────────────────────────────────────────────────────
 export async function generateMetadata({
   params,
@@ -63,16 +98,48 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const filePath = slugToFilePath(slug);
-  if (!filePath) return {};
+  // Work out the language up front — both branches below need it.
+  const { lang: metaLang, contentSlug } = parseLangSlug(slug);
+
+  // ── CMS-ONLY PAGES (no MDX file on disk) ────────────────────────────────────
+  // Content written in /admin exists ONLY in the database. `slugToFilePath()`
+  // looks at the filesystem, so it returns null for those pages — and this
+  // function used to give up with `return {}`. Next.js then fell back to the
+  // site-wide default title, meaning EVERY CMS-only page shared the homepage's
+  // <title> and description. For a site whose whole strategy is search and AI
+  // discoverability, that is a serious bug. (Confirmed live 4 Sep 2026: the
+  // "Smart Border Project" news item was serving the generic homepage title.)
+  //
+  // So when there is no file, ask the CMS before giving up.
+  if (!filePath) {
+    const url = absoluteUrl("/" + slug.join("/"));
+
+    // News items live at the flat URL /news/<slug>
+    if (contentSlug[0] === "news" && contentSlug.length === 2 && metaLang === "en") {
+      const news = await getCMSNews(contentSlug[1]);
+      if (news) return cmsMetadata(news.title, news.description, news.coverImage?.url, url);
+    }
+
+    // Articles live at /<subject>/<category>/<topic> (or /<subject>/<topic>).
+    // The length check keeps a bare subject URL like /history from being
+    // mistaken for an article whose slug happens to be "history".
+    if (contentSlug[0] !== "news" && contentSlug.length >= 2 && metaLang === "en") {
+      const article = await getCMSArticle(contentSlug);
+      if (article) {
+        return cmsMetadata(article.title, article.description, article.coverImage?.url, url);
+      }
+    }
+
+    return {}; // genuinely nothing here — Next will 404 the page itself
+  }
 
   const meta = getContentMeta(filePath);
   const url = absoluteUrl("/" + slug.join("/"));
   // Use the topic's banner image for the social-media preview, if it has one
   const ogImages = meta.image ? [{ url: meta.image }] : undefined;
 
-  // Work out the language and build hreflang links to the other-language version
-  // (if it exists), so Google understands they're the same article in two languages.
-  const { contentSlug } = parseLangSlug(slug);
+  // Build hreflang links to the other-language version (if it exists), so
+  // Google understands they're the same article in two languages.
   const languages: Record<string, string> = {};
   if (hasTranslation(contentSlug, "en")) {
     languages["en"] = absoluteUrl("/" + contentSlug.join("/"));
@@ -152,6 +219,41 @@ export default async function ContentPage({
     const cmsNews = await getCMSNews(contentSlug[1]);
     if (cmsNews) {
       return <CMSNewsView news={cmsNews} />;
+    }
+  }
+
+  // ── PAYLOAD-FIRST ARTICLES (CMS) ───────────────────────────────────────────
+  // This MUST run before the MDX lookup below, for exactly the same reason as
+  // the news block above: an article written in /admin has NO .mdx file, and
+  // `resolveContentFile()` is a plain filesystem check — so `notFound()` would
+  // fire before we ever asked the database.
+  //
+  // THE BUG THIS FIXES (found 4 Sep 2026): this check used to sit ~180 lines
+  // further down, after the `if (!resolved) notFound()` line. The intended
+  // design was "Payload-first, MDX-fallback", and that IS how it behaved for
+  // an article that existed in BOTH places (the CMS copy won). But a NEW
+  // article created only in /admin returned 404 — the MDX file was silently
+  // acting as a REQUIREMENT rather than a fallback. That made the admin panel
+  // unusable for adding content, which is the entire point of having a CMS.
+  //
+  // The length check keeps a bare subject URL like /history from matching an
+  // article whose slug happens to be "history".
+  if (contentSlug[0] !== "news" && contentSlug.length >= 2 && lang === "en") {
+    const cmsArticle = await getCMSArticle(contentSlug);
+    if (cmsArticle) {
+      // Breadcrumbs come from the CMS record here, not from MDX frontmatter —
+      // there may be no file to read. buildBreadcrumbs() prettifies any segment
+      // we don't supply a title for, so the parent crumbs still read correctly.
+      const cmsBreadcrumbs = buildBreadcrumbs(contentSlug, {
+        [contentSlug[contentSlug.length - 1]]: cmsArticle.title,
+      });
+      return (
+        <CMSTopicView
+          article={cmsArticle}
+          breadcrumbs={cmsBreadcrumbs}
+          colors={colors}
+        />
+      );
     }
   }
 
@@ -332,23 +434,11 @@ export default async function ContentPage({
     );
   }
 
-  // ── PAYLOAD-FIRST (CMS migration) ──────────────────────────────────────────
-  // If this topic exists in the Payload CMS, render it from the database instead
-  // of the MDX file. Topics not yet migrated simply fall through to the MDX
-  // rendering below — so migrating happens one article at a time, safely.
-  // (News and Hindi stay on MDX for now; this first slice covers English topics.)
-  if (contentSlug[0] !== "news" && lang === "en") {
-    const cmsArticle = await getCMSArticle(contentSlug);
-    if (cmsArticle) {
-      return (
-        <CMSTopicView
-          article={cmsArticle}
-          breadcrumbs={breadcrumbs}
-          colors={colors}
-        />
-      );
-    }
-  }
+  // NOTE: the Payload-first CMS lookup for articles used to live HERE. It moved
+  // up to just after the CMS news block (see the comment there) — it has to run
+  // before `if (!resolved) notFound()`, or CMS-only articles 404 before the
+  // database is ever consulted. Anything reaching this point has an MDX file
+  // and no CMS entry, so it renders from MDX exactly as before.
 
   // ── TOPIC PAGE (actual article) ────────────────────────────────────────────
   // Build ONE import path (always ending in ".mdx") covering all four shapes:

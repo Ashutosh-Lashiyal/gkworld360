@@ -73,9 +73,56 @@ and had 0 referencing rows). `/pulse` went 7,983 → **60 headlines**, oldest no
 **Lesson: never write `catch {}`.** An empty catch turned a visible failure into a silent
 one that hid for three weeks. Every catch we added on 28 Aug logs; this one predated that.
 
+### ✅ 4 Sep 2026 — THE ADMIN PANEL CAN NOW ACTUALLY CREATE CONTENT
+
+**Two bugs were blocking this. Both fixed in `app/(frontend)/[...slug]/page.tsx`.**
+
+**Bug 1 — a new article created in `/admin` returned 404.**
+The design was always "Payload-first, MDX-fallback", and that IS how it behaved for an
+article existing in BOTH places (the CMS copy won). But the CMS lookup sat ~180 lines
+*below* `if (!resolved) notFound()`, and `resolveContentFile()` is a plain filesystem
+check. So for an article with no `.mdx` file, the page 404'd **before ever asking the
+database** — the MDX file was silently acting as a REQUIREMENT, not a fallback. That made
+the CMS unusable for adding content, which is the entire point of having one.
+
+*Fix:* moved the `getCMSArticle` lookup up to sit just after the CMS **news** block, before
+the MDX 404 — exactly the pattern the news block already used (its comment says why).
+Breadcrumbs now come from the CMS record rather than MDX frontmatter, since there may be no
+file to read. A `contentSlug.length >= 2` guard stops a bare subject URL like `/history`
+matching an article whose slug happens to be "history".
+
+**Bug 2 — every CMS-only page served the site-wide default `<title>`.**
+`generateMetadata` called `slugToFilePath()`, got `null` for CMS-only pages, and returned
+`{}` — so Next fell back to the homepage title and description. Verified live: the
+"Smart Border Project" news item was serving *"GKWorld360 | Trusted Educational Content…"*
+instead of its own title. **Serious for a site whose whole strategy is SEO/GEO.**
+
+*Fix:* `generateMetadata` now falls back to the CMS (articles AND news) when no file
+exists, via a shared `cmsMetadata()` helper so the two cannot drift apart.
+⚠️ It returns the BARE title — the root layout already applies
+`template: "%s | GKWorld360"`. Appending the site name here too produced the double
+suffix *"The Revolt of 1857 | GKWorld360 | GKWorld360"* (caught in testing).
+
+**Verified 4 Sep 2026** by temporarily moving `revolt-of-1857.mdx` out of `content/` and
+rebuilding, so the article existed ONLY in the database — i.e. exactly the "new article
+created in /admin" case:
+
+| Test | Result |
+|---|---|
+| CMS-only article, no MDX file | **200** — full 68 KB page, correct title/breadcrumbs/canonical ✅ |
+| Hindi version (`.hi.mdx`) | **200** — still MDX; CMS lookup is gated to `lang === "en"` ✅ |
+| A pure-MDX article | **200** — unaffected ✅ |
+| Subject + category pages | **200** — unaffected ✅ |
+| A genuinely missing page | **404** — still 404s correctly ✅ |
+
+The MDX file was restored afterwards.
+
+**What this means in practice:** News items AND English subject articles can now be written
+entirely in `/admin`, with no code and no MDX file. Hindi still requires a `.hi.mdx` file.
+
 ### Then resume normal work
-**Payload CMS migration, Phase 4** — the `/news` listing, subject/category pages, search and
-Hindi still read from MDX and need wiring to the CMS. Blocked since 14 Aug; now unblocked.
+**Payload CMS migration, Phase 4** — still on MDX: **subject/category pages, search, and
+Hindi**. Blocked since 14 Aug; now unblocked.
 
 ### How the original outage happened (three INDEPENDENT causes — took hours to unpick)
 1. **Neon transfer quota** — over-fetching queries (2,000 full rows to read one column;
@@ -146,7 +193,7 @@ An Indian educational platform for students preparing for competitive exams (UPS
 - ✅ Phase 1 (DONE): Create Neon + Cloudflare accounts, save credentials
 - ✅ Phase 2 (DONE, 2 Jul 2026): Install Payload CMS v3, admin panel live at `/admin`, connected to Neon + R2, first admin user created
 - ✅ Phase 3 (DONE, 2 Jul 2026): Content schema built — 4 collections + Hindi localization + editor blocks (see below). Tables auto-created in Neon.
-- 🔄 Phase 4 (IN PROGRESS): Connect Payload to the pages. **Vertical slice DONE (7 Jul 2026):** English topic pages now render from the CMS when the article exists there, via a **"Payload-first, MDX-fallback"** check in `app/(frontend)/[...slug]/page.tsx`. The Revolt of 1857 article was created in `/admin` and renders live at `/history/modern-india/revolt-of-1857` with banner, meta bar (subject · reading time · updated date), rich-text body (headings/paragraphs + KeyTakeaways/TopicImage blocks), and an auto Table-of-Contents sidebar. Editing in `/admin` + refresh updates the page. **News wired too (13 Jul 2026):** CMS news items render at the flat URL `/news/<slug>` via `getCMSNews` + `CMSNewsView` (reuses `NewsArticleView`); the "Smart Border Project" item is live at `/news/smart-border-project-india`. Editor now also has **tables** (`EXPERIMENTAL_TableFeature`) and the Image block has an **align/wrap** option. Next in Phase 4: the `/news` listing + homepage "recent news" (still MDX), subject/category pages, search, and Hindi.
+- 🔄 Phase 4 (IN PROGRESS): Connect Payload to the pages. **English topic pages and News now render from the CMS**, via a Payload-first check in `app/(frontend)/[...slug]/page.tsx` (`getCMSArticle` / `getCMSNews`), with MDX as the fallback. CMS articles render through `CMSTopicView` with banner, meta bar (subject · reading time · updated date), rich-text body (headings/paragraphs + KeyTakeaways/TopicImage blocks) and an auto Table-of-Contents sidebar. Editing in `/admin` + refresh updates the page. The editor also has **tables** (`EXPERIMENTAL_TableFeature`) and the Image block has an **align/wrap** option. **✅ 4 Sep 2026 — you can now CREATE new articles in `/admin` with no MDX file and they render correctly** (see the fix below). Still on MDX and outstanding in Phase 4: **subject/category pages, search, and Hindi** (Hindi articles are deliberately still MDX-only — the CMS lookup is gated to `lang === "en"`).
 - ⬜ Phase 5: Migrate remaining articles into Payload, delete MDX files + `content/` folder
 
 **Phase 4 files added:**
