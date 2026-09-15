@@ -6,12 +6,27 @@ import NewsArticleView from "@/components/NewsArticleView";
 import CMSRichText from "@/components/cms/CMSRichText";
 import {
   type CMSNews,
+  type CMSLocale,
   estimateReadingTime,
   extractHeadingsFromLexical,
 } from "@/lib/cms";
 import type { ContentMeta } from "@/lib/content";
 
-export default function CMSNewsView({ news }: { news: CMSNews }) {
+export default function CMSNewsView({
+  news,
+  lang = "en",
+  enHref,
+  hiHref,
+}: {
+  news: CMSNews;
+  // Which language this page shows. NewsArticleView already knows how to render
+  // Hindi (font + lang attribute) and how to draw the English|हिन्दी toggle —
+  // this wrapper used to hard-code "en" and pass no links, so CMS news could
+  // never appear in Hindi and never showed the toggle. Fixed 15 Sep 2026.
+  lang?: CMSLocale;
+  enHref?: string;
+  hiHref?: string;
+}) {
   // NewsArticleView expects a `meta` object (the same shape MDX frontmatter
   // produces). We build one from the CMS fields so we can reuse that component.
   const meta = {
@@ -28,8 +43,10 @@ export default function CMSNewsView({ news }: { news: CMSNews }) {
   return (
     <NewsArticleView
       meta={meta}
-      lang="en"
-      url={`/news/${news.slug}`}
+      lang={lang}
+      enHref={enHref}
+      hiHref={hiHref}
+      url={lang === "hi" ? `/hi/news/${news.slug}` : `/news/${news.slug}`}
       readingTime={estimateReadingTime(news.body)}
       recent={[]} // "More News" list — left empty for now (wired up later)
       headings={extractHeadingsFromLexical(news.body)}

@@ -13,10 +13,23 @@ export const News: CollectionConfig = {
   },
   admin: {
     useAsTitle: "title",
-    defaultColumns: ["title", "category", "eventDate"],
+    defaultColumns: ["title", "category", "_status", "eventDate"],
   },
   access: {
     read: () => true,
+  },
+  // ── DRAFT MODE ───────────────────────────────────────────────────────────────
+  // Identical to Articles (see collections/Articles.ts for the full note).
+  // Current Affairs items go through the same AI-draft → owner-reviews → Publish
+  // pipeline as articles, so they need the same draft/published status. One
+  // Publish click publishes both languages, and the public site only ever
+  // shows `_status: "published"` (lib/cms.ts).
+  //
+  // ⚠️ Turning this on hides pre-existing items from the admin LIST until they
+  // are re-saved once (they have no version history yet). Done for the Smart
+  // Border item on dev 15 Sep 2026; must be repeated on production after deploy.
+  versions: {
+    drafts: true,
   },
   fields: [
     {

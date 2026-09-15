@@ -8,10 +8,29 @@ export const Articles: CollectionConfig = {
   slug: "articles",
   admin: {
     useAsTitle: "title",
-    defaultColumns: ["title", "subject", "category", "publishedDate"],
+    // `_status` is the Draft/Published column that `versions.drafts` adds —
+    // showing it in the list view means you can see at a glance what is live.
+    defaultColumns: ["title", "subject", "category", "_status", "publishedDate"],
   },
   access: {
     read: () => true,
+  },
+  // ── DRAFT MODE ───────────────────────────────────────────────────────────────
+  // Turning on `versions.drafts` gives every article a status: "draft" or
+  // "published". This is the foundation of the content pipeline
+  // (docs/GKWORLD360_CONTENT_PIPELINE.md): AI-written articles are saved as
+  // DRAFTS and only the owner's Publish click in /admin makes them public.
+  //
+  // What it changes in practice:
+  //   - /admin gains "Save Draft" and "Publish" buttons instead of just "Save"
+  //   - the public site must ask for `_status: "published"` only (see lib/cms.ts)
+  //   - Payload keeps a history of versions, so a bad edit can be rolled back
+  //
+  // Because title/description/body are `localized`, ONE document holds both the
+  // English and Hindi text — so one Publish publishes both languages together.
+  // That enforces the rule "a topic is complete only when both languages exist".
+  versions: {
+    drafts: true,
   },
   fields: [
     {
@@ -35,6 +54,30 @@ export const Articles: CollectionConfig = {
       admin: {
         position: "sidebar",
         description: "Optional — the category this article sits under.",
+      },
+    },
+    {
+      // Controls the READING ORDER of this article within its category.
+      //
+      // Why this exists: study topics build on each other, so "Causes of the
+      // Revolt" should come before "Consequences" — not whichever happens to be
+      // alphabetically first. MDX articles have always had this as an `order:`
+      // value in their frontmatter; without the same field here, articles
+      // written in /admin could not be sequenced at all.
+      //
+      // How it behaves (identical to the MDX version, see lib/content.ts):
+      //   - Lower numbers come first: 1, then 2, then 3…
+      //   - Leave it EMPTY and the article sorts to the END (treated as 999).
+      //   - Two articles with the same number fall back to alphabetical order.
+      //
+      // Tip: number in 10s (10, 20, 30) rather than 1, 2, 3 — then inserting a
+      // new topic between two existing ones is just "15", with nothing to renumber.
+      name: "order",
+      type: "number",
+      admin: {
+        position: "sidebar",
+        description:
+          "Reading order within the category. Lower numbers first; empty sorts last. Tip: use 10, 20, 30 so you can insert between later.",
       },
     },
     {

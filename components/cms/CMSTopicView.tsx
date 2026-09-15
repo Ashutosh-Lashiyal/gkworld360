@@ -5,9 +5,11 @@
 import Image from "next/image";
 import Breadcrumb from "@/components/Breadcrumb";
 import TableOfContents from "@/components/TableOfContents";
+import LanguageToggle from "@/components/LanguageToggle";
 import CMSRichText from "@/components/cms/CMSRichText";
 import {
   type CMSArticle,
+  type CMSLocale,
   estimateReadingTime,
   extractHeadingsFromLexical,
 } from "@/lib/cms";
@@ -18,10 +20,21 @@ export default function CMSTopicView({
   article,
   breadcrumbs,
   colors,
+  lang = "en",
+  enHref,
+  hiHref,
 }: {
   article: CMSArticle;
   breadcrumbs: { label: string; href: string }[];
   colors: SubjectColors | null;
+  // Which language this page is showing. Drives the Devanagari font for Hindi
+  // and which pill is highlighted in the toggle.
+  lang?: CMSLocale;
+  // Links to the two language versions. LanguageToggle only renders when BOTH
+  // exist, so an English-only article simply shows no toggle — same behaviour
+  // as the MDX topic page.
+  enHref?: string;
+  hiHref?: string;
 }) {
   const subjectLabel = article.subject?.name ?? "";
   const coverUrl = article.coverImage?.url ?? undefined;
@@ -112,9 +125,18 @@ export default function CMSTopicView({
               </>
             )}
 
+            {/* Language toggle (English | हिन्दी) — only appears when both
+                versions exist, exactly like the MDX topic page. */}
+            <div className="mb-6">
+              <LanguageToggle current={lang} enHref={enHref} hiHref={hiHref} />
+            </div>
+
             {/* The article body, rendered from the CMS. `prose` gives it the
-                same typography as the MDX articles. */}
-            <article className="prose mt-6">
+                same typography as the MDX articles. For Hindi, `lang="hi"`
+                tells the browser the language (screen readers, hyphenation)
+                and `font-hindi` applies the Devanagari font — mirroring the
+                MDX page. */}
+            <article lang={lang} className={`prose mt-6 ${lang === "hi" ? "font-hindi" : ""}`}>
               <CMSRichText data={article.body} />
             </article>
           </div>

@@ -5,9 +5,11 @@
 // /api/... over the network and only ever runs on the server (never the browser).
 import { getPayload } from "payload";
 import { configPromise } from "@/app/(payload)/config";
-// TocHeading is a plain type ({ depth, text, id }); `import type` means we borrow
-// only its shape, not any of lib/content's server-only (fs) code.
-import type { TocHeading } from "@/lib/content";
+// TocHeading and ContentMeta are plain types; `import type` means we borrow only
+// their shape, not any of lib/content's server-only (fs) code. That distinction
+// matters: lib/content reads the filesystem, and a normal import would drag that
+// code in here too. `import type` disappears completely once compiled.
+import type { TocHeading, ContentMeta } from "@/lib/content";
 
 // A small, hand-written shape of the Article fields we actually use on the page.
 // (Payload can auto-generate full types, but this keeps things simple for now and
@@ -92,8 +94,8 @@ export function extractHeadingsFromLexical(body: unknown): TocHeading[] {
     if (node?.type === "heading" && typeof node.tag === "string") {
       const depth = parseInt(node.tag.slice(1), 10); // "h2" → 2
       if (depth < 2 || depth > 3) continue;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const text = (node.children ?? [])
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .map((c: any) => c?.text ?? "")
         .join("")
         .trim();
@@ -137,12 +139,77 @@ function cmsUnavailable(fn: string, detail: string, error: unknown): void {
   console.error(`[cms] ${fn} failed (${detail}) — falling back to MDX: ${message}`);
 }
 
+// The two languages the site speaks. Kept as a type so a typo like "hn" is
+// caught by TypeScript instead of silently returning English.
+export type CMSLocale = "en" | "hi";
+
+// ── WHICH LANGUAGES DOES THIS ARTICLE REALLY HAVE? ───────────────────────────
+// Payload is configured with `fallback: true` (payload.config.ts): if you ask
+// for the Hindi version of an article that has no Hindi, it quietly hands you
+// the ENGLISH text instead. That is helpful in /admin, but on the public site
+// it would mean a /hi/... URL silently showing an English article — which is
+// worse than a 404, because nothing looks wrong.
+//
+// So before serving a Hindi page we ask a different question: "does a Hindi
+// title actually exist for this article?" `locale: "all"` returns every
+// language's value side by side ({ en: "...", hi: "..." }) in ONE query, and we
+// only `select` the title, so the answer costs a few bytes.
+//
+// The page also uses this to decide whether to show the English|हिन्दी toggle
+// and the hreflang tags — the MDX equivalent (`hasTranslation` in lib/content)
+// checks for a .hi.mdx file on disk; this is the same check for the database.
+export async function getCMSArticleLanguages(
+  contentSlug: string[]
+): Promise<{ en: boolean; hi: boolean }> {
+  const subjectSlug = contentSlug[0];
+  const articleSlug = contentSlug[contentSlug.length - 1];
+  const none = { en: false, hi: false };
+
+  try {
+    const payload = await getClient();
+    const result = await payload.find({
+      collection: "articles",
+      where: {
+        slug: { equals: articleSlug },
+        "subject.slug": { equals: subjectSlug },
+        _status: { equals: "published" },
+      },
+      locale: "all",
+      depth: 0,
+      limit: 1,
+      select: { title: true },
+    });
+    // With locale:"all", `title` is an object keyed by locale, not a string.
+    const title = result.docs[0]?.title as unknown as
+      | Partial<Record<CMSLocale, string | null>>
+      | undefined;
+    if (!title) return none;
+    return {
+      en: Boolean(title.en?.trim()),
+      hi: Boolean(title.hi?.trim()),
+    };
+  } catch (error) {
+    cmsUnavailable("getCMSArticleLanguages", contentSlug.join("/"), error);
+    return none;
+  }
+}
+
 // Look up a single article by its URL path, e.g.
 //   ["history", "modern-india", "revolt-of-1857"]
-// Returns the article ONLY if it exists in the CMS AND its subject matches the
-// URL. Otherwise returns null — which lets the page fall back to the MDX file.
+// in the requested language. Returns the article ONLY if it exists in the CMS
+// AND its subject matches the URL. Otherwise returns null — which lets the page
+// fall back to the MDX file.
+//
+// `locale` picks which language's title/description/body come back. Because of
+// Payload's `fallback: true`, asking for "hi" on an article with no Hindi would
+// return English — so callers serving a Hindi URL must check
+// getCMSArticleLanguages() FIRST and only call this when `.hi` is true.
+// (We deliberately keep the fallback on here rather than disabling it, so that
+// relationship fields like the subject NAME still show in English when they
+// have no Hindi translation, instead of rendering blank.)
 export async function getCMSArticle(
-  contentSlug: string[]
+  contentSlug: string[],
+  locale: CMSLocale = "en"
 ): Promise<CMSArticle | null> {
   const subjectSlug = contentSlug[0];
   const articleSlug = contentSlug[contentSlug.length - 1];
@@ -155,7 +222,15 @@ export async function getCMSArticle(
     // images (not just their IDs) — "populate" them, in database terms.
     const result = await payload.find({
       collection: "articles",
-      where: { slug: { equals: articleSlug } },
+      where: {
+        slug: { equals: articleSlug },
+        // PUBLISHED ONLY. Articles now have draft mode (collections/Articles.ts):
+        // AI-written drafts sit in /admin until the owner clicks Publish. This
+        // line is what keeps an unreviewed draft off the public site — without
+        // it, a draft would render the moment it was created.
+        _status: { equals: "published" },
+      },
+      locale,
       depth: 2,
       limit: 1,
     });
@@ -197,12 +272,53 @@ export type CMSNews = {
 // Look up a single news item by its slug (news lives at the flat URL /news/<slug>).
 // Returns the item if it exists in the CMS, else null (so the page can fall back
 // to the old MDX news handling).
-export async function getCMSNews(slug: string): Promise<CMSNews | null> {
+// ── WHICH LANGUAGES DOES THIS NEWS ITEM REALLY HAVE? ─────────────────────────
+// Same idea, same reason as getCMSArticleLanguages(): Payload's `fallback: true`
+// would hand us English for a Hindi URL, so we first ask which titles exist.
+export async function getCMSNewsLanguages(
+  slug: string
+): Promise<{ en: boolean; hi: boolean }> {
+  const none = { en: false, hi: false };
   try {
     const payload = await getClient();
     const result = await payload.find({
       collection: "news",
-      where: { slug: { equals: slug } },
+      where: { slug: { equals: slug }, _status: { equals: "published" } },
+      locale: "all",
+      depth: 0,
+      limit: 1,
+      select: { title: true },
+    });
+    const title = result.docs[0]?.title as unknown as
+      | Partial<Record<CMSLocale, string | null>>
+      | undefined;
+    if (!title) return none;
+    return { en: Boolean(title.en?.trim()), hi: Boolean(title.hi?.trim()) };
+  } catch (error) {
+    cmsUnavailable("getCMSNewsLanguages", slug, error);
+    return none;
+  }
+}
+
+// Look up a single news item by its slug (news lives at the flat URL /news/<slug>)
+// in the requested language. Returns the item if it exists in the CMS AND is
+// published, else null (so the page can fall back to the old MDX news handling).
+// Callers serving a Hindi URL must check getCMSNewsLanguages() first — see the
+// note on getCMSArticle for why.
+export async function getCMSNews(
+  slug: string,
+  locale: CMSLocale = "en"
+): Promise<CMSNews | null> {
+  try {
+    const payload = await getClient();
+    const result = await payload.find({
+      collection: "news",
+      where: {
+        slug: { equals: slug },
+        // Published only — drafts stay in /admin until the owner's Publish click.
+        _status: { equals: "published" },
+      },
+      locale,
       depth: 2, // populate the cover image
       limit: 1,
     });
@@ -215,13 +331,15 @@ export async function getCMSNews(slug: string): Promise<CMSNews | null> {
   }
 }
 
-// Fetch ALL news items from the CMS, newest event first — used by the /news
-// listing and the homepage "Current Affairs" section.
+// Fetch ALL published news items from the CMS, newest event first — used by
+// the /news listing and the homepage "Current Affairs" section. English text.
 export async function getCMSNewsList(limit = 200): Promise<CMSNews[]> {
   try {
     const payload = await getClient();
     const result = await payload.find({
       collection: "news",
+      where: { _status: { equals: "published" } }, // never list a draft
+      locale: "en",
       depth: 2, // populate cover images
       limit,
       sort: "-eventDate", // newest event first
@@ -232,6 +350,113 @@ export async function getCMSNewsList(limit = 200): Promise<CMSNews[]> {
     // and /news) merge this with their MDX news items, so the page still builds
     // and still shows the MDX-based news instead of failing outright.
     cmsUnavailable("getCMSNewsList", `limit=${limit}`, error);
+    return [];
+  }
+}
+
+// Which published news items have a Hindi version? Returns a Set of slugs.
+// The /news listing shows a "हिन्दी" link per item; for MDX items it checks for a
+// .hi.mdx file, and this is the equivalent check for CMS items. ONE query for the
+// whole list (locale:"all" + only the title column) — never one query per item.
+export async function getCMSNewsHindiSlugs(limit = 200): Promise<Set<string>> {
+  try {
+    const payload = await getClient();
+    const result = await payload.find({
+      collection: "news",
+      where: { _status: { equals: "published" } },
+      locale: "all",
+      depth: 0,
+      limit,
+      select: { slug: true, title: true },
+    });
+    const withHindi = new Set<string>();
+    for (const d of result.docs) {
+      const title = d.title as unknown as Partial<Record<CMSLocale, string | null>>;
+      if (title?.hi?.trim()) withHindi.add(d.slug as string);
+    }
+    return withHindi;
+  } catch (error) {
+    cmsUnavailable("getCMSNewsHindiSlugs", `limit=${limit}`, error);
+    return new Set();
+  }
+}
+
+// ── ARTICLES FOR A LISTING PAGE (category / subject) ─────────────────────────
+// Returns every CMS article that belongs to one subject (and optionally one
+// category), shaped so a listing page can render it.
+//
+// WHY THE RETURN SHAPE LOOKS LIKE THIS:
+// The MDX equivalent, `getTopicsInCategory()` in lib/content.ts, returns
+//   { slug: string[]; meta: ContentMeta }[]
+// We return the EXACT same shape on purpose. That means the page can merge the
+// two lists and render them with the same JSX — the rendering code never has to
+// know, or care, whether a topic came from a file or from the database. Match
+// the shape at the DATA layer and the UI layer stays untouched.
+//
+// `categorySlug = null` means "articles sitting directly under the subject, with
+// no category" — the case the subject page needs.
+export async function getCMSArticlesInCategory(
+  subjectSlug: string,
+  categorySlug: string | null
+): Promise<{ slug: string[]; meta: ContentMeta }[]> {
+  try {
+    const payload = await getClient();
+
+    const result = await payload.find({
+      collection: "articles",
+      // Filter in the DATABASE, not in JavaScript. Fetching every article and
+      // filtering here would drag rows across the network only to throw most of
+      // them away — exactly the mistake that exhausted our Neon transfer quota
+      // in August (see PROJECT_CONTEXT.md). Let Postgres do the work.
+      where: {
+        "subject.slug": { equals: subjectSlug },
+        // Published only — drafts must never appear in a public listing.
+        _status: { equals: "published" },
+        ...(categorySlug
+          ? { "category.slug": { equals: categorySlug } }
+          : { category: { exists: false } }),
+      },
+      // depth 1 populates the coverImage upload so we can read its URL.
+      depth: 1,
+      limit: 500,
+      // Only the columns a listing card actually shows — again, fewer bytes.
+      select: {
+        slug: true,
+        title: true,
+        description: true,
+        order: true,
+        coverImage: true,
+      },
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return result.docs.map((d: any) => ({
+      // Rebuild the URL path. We already know the subject and category from the
+      // function's arguments, so there is no need to fetch them back.
+      slug: categorySlug ? [subjectSlug, categorySlug, d.slug] : [subjectSlug, d.slug],
+      meta: {
+        title: d.title ?? "",
+        description: d.description ?? "",
+        subject: subjectSlug,
+        category: categorySlug ?? undefined,
+        // `order` drives the reading sequence. Left empty in /admin it becomes
+        // undefined here, and the sort treats that as 999 — i.e. last — exactly
+        // like a missing `order:` in MDX frontmatter.
+        order: typeof d.order === "number" ? d.order : undefined,
+        image: d.coverImage?.url ?? undefined,
+        imageWidth: d.coverImage?.width ?? undefined,
+        imageHeight: d.coverImage?.height ?? undefined,
+      },
+    }));
+  } catch (error) {
+    // Same fail-safe rule as every other reader in this file: a dead database
+    // returns an EMPTY list rather than throwing, so the page still renders its
+    // MDX articles instead of collapsing. /api/health reports the real problem.
+    cmsUnavailable(
+      "getCMSArticlesInCategory",
+      `${subjectSlug}/${categorySlug ?? "(no category)"}`,
+      error
+    );
     return [];
   }
 }

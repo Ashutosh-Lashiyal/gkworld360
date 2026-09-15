@@ -56,6 +56,33 @@ the website. It has nothing to do with how much content we store — a tiny data
 blow through it easily if queries ask for more columns/rows than they need. This is what
 took the site down on 14 Aug 2026 (see the incident write-up in `PROJECT_CONTEXT.md`).
 
+**🌿 Two branches — which is which (set up 15 Sep 2026):**
+
+| Branch | Host (`ep-…` in the connection string) | Used by | Set in |
+|---|---|---|---|
+| **`production`** (default) | `ep-sweet-tree-ao0sqfwp` | The LIVE site | **Vercel → Environment Variables ONLY** |
+| **`dev`** (`br-calm-fire-aodrldzr`) | `ep-raspy-shadow-aoxy4u8p` | Your laptop (`npm run dev`) | `.env.local` ONLY |
+
+**Why:** until 15 Sep, local and production shared ONE database. So starting the dev
+server pushed schema changes to the live site instantly, test drafts appeared on the live
+site, and a wrong command on the laptop (e.g. the 4 Sep bulk delete) ran against real data
+with no safety net. The `dev` branch is a copy-on-write clone of `production`: it starts
+identical, shares unchanged data (so costs ~0 storage), and nothing done on it can touch
+the live database.
+
+- **Rule:** the `production` string never goes in `.env.local`; the `dev` string never goes in Vercel.
+- **Tell them apart:** `sweet-tree` = production, `raspy-shadow` = dev. Every DB script prints the
+  host before running — if you see `sweet-tree` during local work, STOP.
+- **`dev` is a snapshot** — the cron writes new headlines to `production` only, so local `/pulse`
+  goes stale over time. To refresh: Neon → Branches → `dev` → **Reset from parent**. This
+  discards any local test data, which is usually what you want.
+- **Schema changes** (new fields) now land on `dev` first when the dev server starts. They must
+  be moved to `production` deliberately before the code that needs them is deployed — for now by
+  running the dev server once against production; a proper migration step is a later improvement.
+- **Auto-delete is OFF** ("Expires: Never"). Don't turn it on — the branch is permanent.
+- **R2 (images) is NOT branched** — local uploads land in the real bucket. Delete test media after
+  local testing. A separate dev prefix/bucket is a later refinement.
+
 - **Usage resets:** the 1st of every month. The dashboard shows "Usage since <date>".
 - **When exceeded:** Neon refuses ALL connections with
   `53000 — Your project has exceeded the data transfer quota`. Nothing works until reset.

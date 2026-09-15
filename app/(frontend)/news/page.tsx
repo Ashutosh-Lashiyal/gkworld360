@@ -11,7 +11,7 @@ import {
   getContentMeta,
   type ContentMeta,
 } from "@/lib/content";
-import { getCMSNewsList } from "@/lib/cms";
+import { getCMSNewsList, getCMSNewsHindiSlugs } from "@/lib/cms";
 
 // Re-generate every 60 seconds so newly-published Current Affairs (from the
 // Payload admin) appear on the live site within a minute, without a redeploy.
@@ -68,9 +68,13 @@ export default async function NewsListingPage() {
   });
 
   // ── Source 2: CMS (Payload) news ──
+  // Which CMS items also have a Hindi version? One query for the whole list
+  // (never one per item) — the CMS equivalent of the .hi.mdx check above.
+  const cmsHindi = await getCMSNewsHindiSlugs();
   const cmsItems: NewsListItem[] = (await getCMSNewsList()).map((n) => ({
     key: n.slug,
     url: `/news/${n.slug}`,
+    hindiHref: cmsHindi.has(n.slug) ? `/hi/news/${n.slug}` : undefined,
     meta: {
       title: n.title,
       description: n.description ?? "",

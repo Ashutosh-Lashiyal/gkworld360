@@ -11,7 +11,7 @@ import NewsCard from "@/components/NewsCard";
 import LatestHeadlinesSection from "@/components/LatestHeadlinesSection";
 import { getHomepageSubjects, getRecentTopics, hasTranslation, resolveContentFile, getContentMeta, type ContentMeta } from "@/lib/content";
 import { getRecentNews } from "@/lib/news";
-import { getCMSNewsList } from "@/lib/cms";
+import { getCMSNewsList, getCMSNewsHindiSlugs } from "@/lib/cms";
 import { getDailyQuote } from "@/lib/quote";
 
 // Re-generate the homepage at most once every 60 seconds so the headline teaser
@@ -54,6 +54,8 @@ export default async function HomePage() {
       hindiTitle: hi ? getContentMeta(hi.filePath).title : (undefined as string | undefined),
     };
   });
+  // Which CMS items also exist in Hindi — one query for the whole list.
+  const cmsHindi = await getCMSNewsHindiSlugs();
   const cmsRecent = (await getCMSNewsList()).map((n) => ({
     key: n.slug,
     url: `/news/${n.slug}`,
@@ -67,7 +69,7 @@ export default async function HomePage() {
       imageHeight: n.coverImage?.height ?? undefined,
       imageCaption: n.coverImageCaption ?? undefined,
     } as ContentMeta,
-    hindiHref: undefined as string | undefined,
+    hindiHref: cmsHindi.has(n.slug) ? `/hi/news/${n.slug}` : undefined,
     hindiTitle: undefined as string | undefined,
   }));
   // Merge (CMS wins on same slug), newest first, take 3.

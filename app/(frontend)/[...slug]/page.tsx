@@ -38,7 +38,7 @@ import { SITE_URL, SITE_NAME, absoluteUrl } from "@/lib/site";
 import { getSubjectColors } from "@/lib/subject-colors";
 import { formatNewsDate } from "@/lib/date-utils";
 // CMS (Payload) — used to render topics & news from the database when they exist there.
-import { getCMSArticle, getCMSNews } from "@/lib/cms";
+import { getCMSArticle, getCMSArticleLanguages, getCMSNews, getCMSNewsLanguages } from "@/lib/cms";
 import CMSTopicView from "@/components/cms/CMSTopicView";
 import CMSNewsView from "@/components/cms/CMSNewsView";
 
@@ -115,18 +115,51 @@ export async function generateMetadata({
     const url = absoluteUrl("/" + slug.join("/"));
 
     // News items live at the flat URL /news/<slug>
-    if (contentSlug[0] === "news" && contentSlug.length === 2 && metaLang === "en") {
-      const news = await getCMSNews(contentSlug[1]);
-      if (news) return cmsMetadata(news.title, news.description, news.coverImage?.url, url);
+    if (contentSlug[0] === "news" && contentSlug.length === 2) {
+      const langs = await getCMSNewsLanguages(contentSlug[1]);
+      if (langs[metaLang]) {
+        const news = await getCMSNews(contentSlug[1], metaLang);
+        if (news) {
+          const meta = cmsMetadata(news.title, news.description, news.coverImage?.url, url);
+          if (langs.en && langs.hi) {
+            meta.alternates = {
+              ...meta.alternates,
+              languages: {
+                en: absoluteUrl("/news/" + contentSlug[1]),
+                hi: absoluteUrl("/hi/news/" + contentSlug[1]),
+              },
+            };
+          }
+          return meta;
+        }
+      }
     }
 
     // Articles live at /<subject>/<category>/<topic> (or /<subject>/<topic>).
     // The length check keeps a bare subject URL like /history from being
     // mistaken for an article whose slug happens to be "history".
-    if (contentSlug[0] !== "news" && contentSlug.length >= 2 && metaLang === "en") {
-      const article = await getCMSArticle(contentSlug);
-      if (article) {
-        return cmsMetadata(article.title, article.description, article.coverImage?.url, url);
+    // Works for BOTH languages: a /hi/... URL asks for the Hindi title and
+    // description. We first check which languages genuinely exist — Payload's
+    // fallback would otherwise hand us the English title for a Hindi URL.
+    if (contentSlug[0] !== "news" && contentSlug.length >= 2) {
+      const langs = await getCMSArticleLanguages(contentSlug);
+      if (langs[metaLang]) {
+        const article = await getCMSArticle(contentSlug, metaLang);
+        if (article) {
+          const meta = cmsMetadata(article.title, article.description, article.coverImage?.url, url);
+          // hreflang: tell Google the two language versions are the same
+          // article. Only emitted when both exist — same rule as the MDX path.
+          if (langs.en && langs.hi) {
+            meta.alternates = {
+              ...meta.alternates,
+              languages: {
+                en: absoluteUrl("/" + contentSlug.join("/")),
+                hi: absoluteUrl("/hi/" + contentSlug.join("/")),
+              },
+            };
+          }
+          return meta;
+        }
       }
     }
 
@@ -215,10 +248,23 @@ export default async function ContentPage({
   // A CMS news item lives at the flat URL /news/<slug> (e.g. /news/smart-border).
   // We check this BEFORE the MDX lookup below, because a CMS-only news item has
   // no MDX file — so the MDX lookup would 404 it. Falls through if not in the CMS.
-  if (contentSlug[0] === "news" && contentSlug.length === 2 && lang === "en") {
-    const cmsNews = await getCMSNews(contentSlug[1]);
-    if (cmsNews) {
-      return <CMSNewsView news={cmsNews} />;
+  // Both languages (15 Sep 2026): the `lang === "en"` gate is gone, same as for
+  // articles. We check which languages genuinely exist first, because Payload's
+  // fallback would otherwise serve English on a /hi/news/... URL.
+  if (contentSlug[0] === "news" && contentSlug.length === 2) {
+    const newsLangs = await getCMSNewsLanguages(contentSlug[1]);
+    if (newsLangs[lang]) {
+      const cmsNews = await getCMSNews(contentSlug[1], lang);
+      if (cmsNews) {
+        return (
+          <CMSNewsView
+            news={cmsNews}
+            lang={lang}
+            enHref={newsLangs.en ? "/news/" + contentSlug[1] : undefined}
+            hiHref={newsLangs.hi ? "/hi/news/" + contentSlug[1] : undefined}
+          />
+        );
+      }
     }
   }
 
@@ -238,22 +284,40 @@ export default async function ContentPage({
   //
   // The length check keeps a bare subject URL like /history from matching an
   // article whose slug happens to be "history".
-  if (contentSlug[0] !== "news" && contentSlug.length >= 2 && lang === "en") {
-    const cmsArticle = await getCMSArticle(contentSlug);
-    if (cmsArticle) {
-      // Breadcrumbs come from the CMS record here, not from MDX frontmatter —
-      // there may be no file to read. buildBreadcrumbs() prettifies any segment
-      // we don't supply a title for, so the parent crumbs still read correctly.
-      const cmsBreadcrumbs = buildBreadcrumbs(contentSlug, {
-        [contentSlug[contentSlug.length - 1]]: cmsArticle.title,
-      });
-      return (
-        <CMSTopicView
-          article={cmsArticle}
-          breadcrumbs={cmsBreadcrumbs}
-          colors={colors}
-        />
-      );
+  //
+  // BOTH LANGUAGES (added 15 Sep 2026): this used to be gated to `lang === "en"`,
+  // so a /hi/... URL never asked the CMS and Hindi written in /admin could only
+  // ever 404. Now the URL's language is passed straight through. The one trap is
+  // Payload's `fallback: true` — asking for Hindi that doesn't exist returns
+  // English — so we check which languages REALLY exist first, and only serve a
+  // Hindi CMS page when there is a Hindi title. Otherwise we fall through to
+  // the .hi.mdx file (or 404), exactly as before.
+  if (contentSlug[0] !== "news" && contentSlug.length >= 2) {
+    const cmsLangs = await getCMSArticleLanguages(contentSlug);
+    if (cmsLangs[lang]) {
+      const cmsArticle = await getCMSArticle(contentSlug, lang);
+      if (cmsArticle) {
+        // Breadcrumbs come from the CMS record here, not from MDX frontmatter —
+        // there may be no file to read. buildBreadcrumbs() prettifies any segment
+        // we don't supply a title for, so the parent crumbs still read correctly.
+        const cmsBreadcrumbs = buildBreadcrumbs(contentSlug, {
+          [contentSlug[contentSlug.length - 1]]: cmsArticle.title,
+        });
+        // The toggle needs a link to each version that exists. A CMS article's
+        // languages come from the database, not from .mdx files on disk.
+        const cmsEnHref = cmsLangs.en ? "/" + contentSlug.join("/") : undefined;
+        const cmsHiHref = cmsLangs.hi ? "/hi/" + contentSlug.join("/") : undefined;
+        return (
+          <CMSTopicView
+            article={cmsArticle}
+            breadcrumbs={cmsBreadcrumbs}
+            colors={colors}
+            lang={lang}
+            enHref={cmsEnHref}
+            hiHref={cmsHiHref}
+          />
+        );
+      }
     }
   }
 

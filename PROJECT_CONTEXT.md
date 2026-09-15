@@ -7,16 +7,18 @@
 > - **`docs/GKWORLD360_MASTER_BLUEPRINT.md`** = ⭐ MAIN source of truth — vision, core decisions, future roadmap.
 > - **`PROJECT_CONTEXT.md`** (this file) = the current-state handoff — what's built/in-progress right now. Updated after every task.
 > - **`docs/GKWORLD360_TECH_FOUNDATION.md`** = tech-stack detail · **`GKWORLD360_PROJECT_STRUCTURE.md`** = folder/file guide · **`SETUP_GUIDE.md`** = how to set up & run · **`GKWORLD360_DESIGN_SYSTEM.md`** = design tokens.
+> - **`docs/GKWORLD360_CONTENT_PIPELINE.md`** = ⭐ how content gets onto the site — the AI-assisted photo → draft → review → publish workflow and every decision behind it (copyright line, image policy, bilingual rule).
 > - **`SERVICES.md`** = third-party services & billing · **`GIT_NOTES.md`** = git learning notes.
 > - **`IDEAS.md`** = parking lot for raw, undecided ideas (they graduate to the Blueprint or here when decided).
 > Each doc has one lane; keep them in it so they don't drift.
 
 ---
 
-# 🟢 START HERE — status as of 4 Sep 2026
+# 🟢 START HERE — status as of 15 Sep 2026
 
-**RESOLVED — the database is back and everything is verified working.**
-One action is still outstanding for the user (re-enable the cron — see below).
+**Incident RESOLVED. Content pipeline DESIGNED, draft mode BUILT.**
+Next work: the content pipeline, piece 2 onward — see the 14 Sep section below and
+`docs/GKWORLD360_CONTENT_PIPELINE.md`.
 
 ### ✅ RECOVERY (4 Sep 2026)
 The Neon block cleared on its own. First successful write: **3 Sep 2026 01:18 UTC**
@@ -43,15 +45,12 @@ That is ~47× less than August, about 5% of the 5 GB monthly allowance. Caveat: 
 the cron was disabled, so real load will be a little higher — estimate ~12–15 MB/day once the
 cron runs again. Still far inside budget.
 
-### ⚠️ ACTION STILL NEEDED FROM THE USER — the cron is DISABLED
-cron-job.org shows the job as **"Inactive"**, last execution **25 Aug 2026 (Failed)**.
-cron-job.org auto-disables jobs after repeated failures, and ours failed continuously from
-15 Aug while the database was down. **It has not run since.**
-
-The site kept refreshing headlines only via the visit-triggered `after(() => ensureFresh())`
-path, not the cron. **User must re-enable it:** cron-job.org → EDIT the job → turn the
-enable toggle ON → confirm the 30-minute schedule and the
-`Authorization: Bearer <CRON_SECRET>` header → Save.
+### ✅ Cron re-enabled 4 Sep 2026
+cron-job.org had **auto-disabled** the job after it failed continuously from 15 Aug (database
+down). It showed "Inactive", last run 25 Aug. The owner re-enabled it on 4 Sep; verified
+firing every 30 min (2 batches/hour in the database). **Lesson recorded in `SERVICES.md`:
+after any outage, check scheduled jobs are still enabled — fixing the fault does not restart
+the robots that gave up on it.**
 
 ### 🐛 BUG FOUND AND FIXED (4 Sep 2026) — the 7-day prune was silently failing
 `/pulse` was showing **7,983 headlines going back to 8 Aug** — four weeks — while the page
@@ -119,6 +118,56 @@ The MDX file was restored afterwards.
 
 **What this means in practice:** News items AND English subject articles can now be written
 entirely in `/admin`, with no code and no MDX file. Hindi still requires a `.hi.mdx` file.
+
+### 🚀 14 Sep 2026 — CONTENT PIPELINE designed; Draft mode BUILT (piece 1 of 8)
+
+The real bottleneck was never code — it was **content entry** (45–60 min per article by
+hand, owner has 5–8 h/week, ~13 articles after months). Decided to build an AI-assisted
+pipeline: **photograph book pages → Claude extracts facts → writes ORIGINAL bilingual
+articles → saved as DRAFTS in Payload → owner reviews in /admin → Publish.**
+
+**Full design + every decision: `docs/GKWORLD360_CONTENT_PIPELINE.md`.** Key rules:
+- Source books are *purchased* → facts are used, expression is never paraphrased
+- Both English and Hindi every time; one Publish publishes both
+- Everything on the site is illustration; **people are always sketches** (house style)
+- **Subject + category are always confirmed with the owner** before anything is created
+- Duplicates: detect → explain → owner decides. Never overwrite.
+- Nothing goes live without the owner's Publish click
+
+**Piece 1 — draft mode — DONE and verified 14 Sep:** `versions: { drafts: true }` on
+Articles; `lib/cms.ts` queries filter `_status: "published"`. Test draft → 404 publicly;
+published article still rendered from CMS. ⚠️ Enabling drafts flipped the existing article
+to `draft` — corrected to `published` via SQL (versions table was empty, so safe).
+
+**15 Sep 2026 — three more pieces done, plus the first real article:**
+- **Neon `dev` branch** — laptop now reads a copy (`raspy-shadow`); live site keeps
+  `production` (`sweet-tree`). Local work can no longer touch the live DB. See `SERVICES.md`.
+- **Telegram inbox** — `scripts/telegram-inbox.mjs`; photos from phone → `~/Desktop/gk-inbox/`.
+  Bot: @Gkworld360_bot. Token + chat id in `.env.local`. Tested end to end.
+- **First article by hand** — "The Portuguese in India", English + Hindi, draft **#3 on the
+  dev branch**, from one photographed page. Facts-to-verify list given in chat (the
+  `reviewNotes` field isn't built yet). Length follows the source (~350 words/language).
+- **Hindi rendering from CMS (piece 6)** — `/hi/…` URLs now serve CMS Hindi; language
+  toggle + Devanagari font added to `CMSTopicView`; hreflang when both exist. Verified.
+- **Current Affairs parity** — News got the same treatment (draft mode, published-only,
+  Hindi from CMS, toggle, Hindi links in listings). Owner's rule: articles and news work
+  identically. Verified with a throwaway bilingual item.
+
+**⚠️ POST-DEPLOY STEP (required once, after the draft-mode code reaches production):**
+Two pre-existing items have no version rows, so the live `/admin` will HIDE them once
+drafts are on — AND their `_status` will default to `draft`, taking them off the public site
+(they'd fall back to MDX / 404). Fix each by opening its direct URL and clicking **Publish**:
+- Article: https://gkworld360.vercel.app/admin/collections/articles/1  (Revolt of 1857)
+- News:    https://gkworld360.vercel.app/admin/collections/news/1      (Smart Border Project)
+Then confirm both show "Published" in their lists. (Already done on the dev branch.)
+Check the live pages afterwards: `/history/modern-india/revolt-of-1857` and
+`/news/smart-border-project-india` must be 200.
+
+**Next (owner's priority):** Telegram "draft ready" ping with **[Publish]** button +
+approve-from-phone via a webhook on Vercel (both guards: facts list in the message +
+confirmation tap). One bot handles photos-in and drafts-out. Requires deploy; real drafts
+must then be created on the PRODUCTION DB. Then: P4-a (category listings from CMS),
+`reviewNotes`, ingestion script, seed subjects, images, tracker.
 
 ### Then resume normal work
 **Payload CMS migration, Phase 4** — still on MDX: **subject/category pages, search, and
