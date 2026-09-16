@@ -130,7 +130,10 @@ export default async function HomePage() {
           gradient that darkens toward the bottom where the text sits. Same
           recipe as every band on the site, in the brand colour instead of a
           subject's — the homepage belongs to the site, not to one subject.   */}
-      <section className="relative overflow-hidden bg-navy-dark text-on-dark">
+      {/* No `overflow-hidden` here on purpose: the search box's results list
+          drops BELOW the hero's bottom edge, and overflow-hidden clipped it. The
+          background photo doesn't need it — `fill` already confines it. */}
+      <section className="relative bg-navy-dark text-on-dark">
         <Image
           src="/images/hero-banner.png"
           alt=""

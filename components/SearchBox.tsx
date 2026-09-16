@@ -161,7 +161,10 @@ export default function SearchBox({
       {open && trimmed && (
         <div
           className={[
-            "absolute z-50 left-0 right-0 mt-2",
+            // z-30: ABOVE the page content that follows, but BELOW the sticky
+            // header (z-50) — otherwise the open list slid over the menu when
+            // the page was scrolled. (Fixed 16 Sep 2026.)
+            "absolute z-30 left-0 right-0 mt-2",
             "bg-surface border border-hairline rounded-card shadow-card-hover",
             "overflow-hidden text-left",
             // On wide screens the input row may include the button; keep the

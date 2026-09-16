@@ -48,6 +48,13 @@ const FEEDS: { source: string; category: string; url: string }[] = [
   { source: "Indian Express", category: "Sports", url: "https://indianexpress.com/section/sports/feed/" },
 ];
 
+// The filter chips on /pulse are built from the feed list above, so adding a
+// feed automatically adds its chip. (Redesign, 16 Sep 2026.)
+export const HEADLINE_CATEGORIES: string[] = Array.from(new Set(FEEDS.map((f) => f.category)));
+export const HEADLINE_SOURCES: { source: string; feeds: number }[] = Array.from(
+  FEEDS.reduce((m, f) => m.set(f.source, (m.get(f.source) ?? 0) + 1), new Map<string, number>())
+).map(([source, feeds]) => ({ source, feeds }));
+
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 const SYNC_INTERVAL_MS = 15 * 60 * 1000; // re-sync at most every 15 min
 
@@ -430,7 +437,15 @@ export type HeadlinePage = {
 // THE /pulse FEED: one page of headlines in STRICT newest-first order, read
 // straight from the store (which the 7-day prune keeps trimmed). `page` is
 // 1-based, so page 1 is always the freshest 50.
-export async function getHeadlinesPage(page = 1, perPage = 50): Promise<HeadlinePage> {
+// Optional filters for /pulse's chips. Only exact values from the lists above
+// are accepted (checked by the page), so these go straight into the query.
+export type HeadlineFilters = { category?: string; source?: string };
+
+export async function getHeadlinesPage(
+  page = 1,
+  perPage = 50,
+  filters: HeadlineFilters = {}
+): Promise<HeadlinePage> {
   let res;
   try {
     const payload = await getClient();
@@ -438,6 +453,11 @@ export async function getHeadlinesPage(page = 1, perPage = 50): Promise<Headline
     // efficient than loading everything and slicing in JavaScript.
     res = await payload.find({
       collection: "headlines",
+      // Filter in the database, not in JavaScript (the August lesson).
+      where: {
+        ...(filters.category ? { category: { equals: filters.category } } : {}),
+        ...(filters.source ? { source: { equals: filters.source } } : {}),
+      },
       limit: perPage,
       page,
       sort: "-publishedAt", // newest first — no category shuffling
@@ -481,6 +501,9 @@ export async function getHeadlinesPage(page = 1, perPage = 50): Promise<Headline
       const items = live
         .filter((h) => {
           if (!h.link || seen.has(h.link)) return false;
+          // Same chips as the stored path
+          if (filters.category && h.category !== filters.category) return false;
+          if (filters.source && h.source !== filters.source) return false;
           const published = new Date(h.isoDate).getTime();
           if (Number.isNaN(published) || published < cutoff) return false; // 7-day rule
           seen.add(h.link);

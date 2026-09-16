@@ -35,9 +35,11 @@ export default function ReadLaterButton({
   className?: string;
   // "overlay" — the round translucent button that sits ON a card's photo.
   // "row"     — REDESIGN 16 Sep 2026: a 44px square with 10px corners for a
-  //             list row on a dark band (homepage headlines); outline when
+  //             list row on a DARK band (homepage headlines); outline when
   //             unsaved, mint fill when saved.
-  variant?: "overlay" | "row";
+  // "light"   — the same 44px square for a row on the LIGHT page (/pulse):
+  //             white with a hairline border; dark fill when saved.
+  variant?: "overlay" | "row" | "light";
 }) {
   const [saved, setSaved] = useState(false);
 
@@ -77,6 +79,12 @@ export default function ReadLaterButton({
               saved
                 ? "bg-mint border-mint text-navy-dark"
                 : "border-on-dark/25 text-on-dark/70 hover:border-mint hover:text-mint"
+            }`
+          : variant === "light"
+          ? `w-11 h-11 rounded-button border ${
+              saved
+                ? "bg-navy-dark border-navy-dark text-mint"
+                : "bg-surface border-hairline text-muted hover:border-navy-dark hover:text-navy-dark"
             }`
           : `w-9 h-9 rounded-full backdrop-blur-sm ${
               saved ? "bg-sapphire text-on-dark" : "bg-navy-dark/70 text-on-dark hover:bg-sapphire"

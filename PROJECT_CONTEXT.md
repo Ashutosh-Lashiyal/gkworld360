@@ -16,10 +16,10 @@
 
 # 🟢 START HERE — status as of 16 Sep 2026
 
-**Incident RESOLVED. Content pipeline DESIGNED, draft mode BUILT. Redesign Phases 1–5 BUILT
+**Incident RESOLVED. Content pipeline DESIGNED, draft mode BUILT. Redesign Phases 1–6 (ALL) BUILT
 on branch `redesign` (16 Sep) — check `git branch` and `git status` first.** Owner has chosen
 to review ALL phases at once at the end, committing a snapshot after each phase.
-Next work: Phase 6 (/pulse) → owner review →
+Next work: owner reviews everything locally →
 merge to `main`. Then back to the content pipeline (`docs/GKWORLD360_CONTENT_PIPELINE.md`).
 Design decisions and rollout plan: "16 Sep 2026 (later)" section below.
 
@@ -252,6 +252,19 @@ version rows + sets published), then restoring `.env.local` to dev. Verified liv
   `NewsCard` is now a thin wrapper over ContentCard too — **its hover-flip for Hindi is gone**
   (unreachable on touch). `ContentCard` gained `badge` and `flat` props. `/news` listing got the
   compact band. `TopicCard`/`ArticleCard` are now unused by pages (left in place).
+- **Phase 6 DONE (/pulse, boards 6/6b):** brand-teal `PageBand` (colors=null → `FRAME_COLORS`),
+  **filter chips** by category and source (`?category=`/`?source=`, validated against
+  `HEADLINE_CATEGORIES`/`HEADLINE_SOURCES` exported from `lib/pulse.ts`; `getHeadlinesPage()` now
+  takes `filters` and applies them in the DB query AND in the live-RSS fallback), list of
+  `HeadlineRow`s with **option-B 72px thumbnails — NO schema change was needed, the `image`
+  column already existed** — numbered dark square when there is no image or it fails to load
+  (`HeadlineThumb` got a `row` variant + a mount-time check for images that break before
+  hydration), `ReadLaterButton variant="light"`, pagination Buttons keeping filters, aggregation
+  note, sidebar = `ReadLaterPeek` (client, localStorage) + dark Sources card. Chips scroll
+  sideways on phones. `LatestHeadlines.tsx` (old card grid) is now unused by pages.
+- **ALL SIX PHASES BUILT.** Owner to review everything locally, then merge `redesign` → `main`
+  (see GIT_NOTES "Using a branch for real"). No schema changes anywhere in the redesign, so no
+  prod-schema-first step is needed before deploying.
 - Not yet in Phase 3: prev/next cards styled per board (TopicNav still old style — pipeline item),
   "Sources: N facts verified" meta (needs pipeline data). Long CMS `description`s make the band
   tall (Smart Border) — the writing template should cap summaries at ~2 sentences.
