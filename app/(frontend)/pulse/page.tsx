@@ -2,7 +2,7 @@
 // Shows ALL stored headlines (the rolling 7-day window) in strict newest-first
 // order, 50 per page with Previous/Next paging (URL: /pulse?page=2).
 import type { Metadata } from "next";
-import Link from "next/link";
+import Button from "@/components/Button";
 import { getHeadlinesPage } from "@/lib/pulse";
 import LatestHeadlines from "@/components/LatestHeadlines";
 
@@ -44,15 +44,13 @@ export default async function PulsePage({
             Tap any headline to read the full story at its original source.
           </p>
         </div>
-        <Link
-          href="/saved"
-          className="flex items-center gap-2 font-body text-sm font-medium text-sapphire hover:text-sapphire-dark border border-hairline hover:border-sapphire rounded-full px-4 py-2 whitespace-nowrap transition-colors"
-        >
+        {/* Secondary action on a light surface → the outline ("ghost") button */}
+        <Button href="/saved" variant="ghost">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
           </svg>
           Read Later
-        </Link>
+        </Button>
       </header>
 
       {/* Retention notice — headlines are kept for a rolling week */}
@@ -77,17 +75,12 @@ export default async function PulsePage({
           className="mt-10 flex items-center justify-between gap-4"
           aria-label="Headlines pagination"
         >
+          {/* Pagination uses the one Button; the end of the list is the grey
+              "disabled" variant, which renders a <span> — nowhere to go. */}
           {page > 1 ? (
-            <Link
-              href={`/pulse?page=${page - 1}`}
-              className="font-body text-sm font-medium text-sapphire hover:text-sapphire-dark border border-hairline hover:border-sapphire rounded-full px-4 py-2 transition-colors"
-            >
-              ← Newer
-            </Link>
+            <Button href={`/pulse?page=${page - 1}`}>← Newer</Button>
           ) : (
-            <span className="font-body text-sm font-medium text-muted/40 border border-hairline rounded-full px-4 py-2 cursor-not-allowed">
-              ← Newer
-            </span>
+            <Button variant="disabled">← Newer</Button>
           )}
 
           <span className="font-body text-sm text-muted">
@@ -96,16 +89,9 @@ export default async function PulsePage({
           </span>
 
           {page < totalPages ? (
-            <Link
-              href={`/pulse?page=${page + 1}`}
-              className="font-body text-sm font-medium text-sapphire hover:text-sapphire-dark border border-hairline hover:border-sapphire rounded-full px-4 py-2 transition-colors"
-            >
-              Older →
-            </Link>
+            <Button href={`/pulse?page=${page + 1}`}>Older →</Button>
           ) : (
-            <span className="font-body text-sm font-medium text-muted/40 border border-hairline rounded-full px-4 py-2 cursor-not-allowed">
-              Older →
-            </span>
+            <Button variant="disabled">Older →</Button>
           )}
         </nav>
       )}

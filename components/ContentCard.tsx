@@ -17,14 +17,16 @@
 //   label        — small caps, subject accent colour (e.g. "MODERN INDIA")
 //   title        — serif heading, links to the English page
 //   description  — clamped to 2 lines so every card stays the same height
-//   buttons      — 10px-radius buttons, ≥44px tall (Apple's minimum comfortable
-//                  tap target), black text on the page tint with a subject-colour
-//                  border. "English" + "हिन्दी" when both exist; "Read →" if not.
+//   buttons      — THE site button (components/Button.tsx): dark teal fill,
+//                  white text, 10px corners, ≥44px tall. "English" + "हिन्दी"
+//                  when both exist (two equal choices, so two identical
+//                  buttons); a single "Read →" / "Explore →" if not.
 //
 // No `"use client"` — there is no browser state any more, so this is a plain
 // server component. Less JavaScript shipped to the reader.
 import Link from "next/link";
 import Image from "next/image";
+import Button from "@/components/Button";
 
 type ContentCardProps = {
   title: string;
@@ -33,7 +35,7 @@ type ContentCardProps = {
   image?: string; // cover image URL (from CMS `coverImage` or MDX frontmatter)
   label?: string; // small caps text above the title, e.g. the category name
   // Subject colours. `bg` tints the image placeholder; `accent` colours the
-  // label and buttons. Both optional so the card also works with no subject.
+  // label and the thin bar. Both optional so the card also works with no subject.
   hoverBg?: string; // kept under its old name so existing call sites still work
   accent?: string;
   hindiHref?: string; // /hi/... URL — when present, the card shows a Hindi button
@@ -56,25 +58,15 @@ export default function ContentCard({
   hindiTitle,
   ctaLabel = "Read →",
 }: ContentCardProps) {
-  // Fall back to the site's sapphire when a card has no subject colour.
-  const accentColor = accent ?? "#2d7a4f";
-  const placeholderBg = hoverBg ?? "#f5f5f5";
+  // Fall back to the site's emerald when a card has no subject colour.
+  const accentColor = accent ?? "#059669";
+  const placeholderBg = hoverBg ?? "#f0ede6";
 
-  // One style for every button: full tap-height, centred text. `flex-1` makes
-  // the buttons share the row equally — wide targets on a phone, and a single
-  // "Read →" stretches to fill the row on its own.
-  //
-  // Look (owner's spec, 16 Sep 2026): 10px corners — not a pill — black text,
-  // and the button's fill is the PAGE colour (the subject's soft background
-  // tint), so the button belongs to the page it sits on. Because that tint is
-  // very pale and the card is white, a 1px border in the subject colour gives
-  // the button a visible edge; without it a cream button on a white card would
-  // all but disappear. Hover darkens the tint slightly instead of fading.
-  const button =
-    "inline-flex flex-1 items-center justify-center min-h-[44px] px-4 rounded-[10px] " +
-    "font-semibold text-sm text-foreground border transition-[filter] hover:brightness-95 " +
-    "focus-visible:outline-2 focus-visible:outline-offset-2";
-  const buttonStyle = { backgroundColor: placeholderBg, borderColor: accentColor };
+  // The buttons come from components/Button.tsx — one look for the whole site.
+  // `flex-1` makes them share the row equally: wide targets on a phone, and a
+  // single "Read →" stretches to fill the row on its own. (An earlier version
+  // of this card used page-tint buttons with a subject border; the owner then
+  // asked for ONE button style everywhere, so that styling moved out of here.)
 
   return (
     // `h-full` + `flex-col` + `mt-auto` on the button row = every card in a grid
@@ -137,23 +129,25 @@ export default function ContentCard({
         <div className="mt-auto pt-4 flex gap-2">
           {hindiHref ? (
             <>
-              <Link href={href} className={`${button} font-body`} style={buttonStyle}>
+              <Button href={href} className="flex-1">
                 English
-              </Link>
-              <Link
+              </Button>
+              {/* text-[15px]: Devanagari sits visually smaller than Latin at the
+                  same size, so the Hindi label gets one extra pixel to match. */}
+              <Button
                 href={hindiHref}
                 title={hindiTitle}
                 lang="hi"
-                className={`${button} font-hindi`}
-                style={buttonStyle}
+                hrefLang="hi"
+                className="flex-1 font-hindi text-[15px]"
               >
                 हिन्दी
-              </Link>
+              </Button>
             </>
           ) : (
-            <Link href={href} className={`${button} font-body`} style={buttonStyle}>
+            <Button href={href} className="flex-1">
               {ctaLabel}
-            </Link>
+            </Button>
           )}
         </div>
       </div>

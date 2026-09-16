@@ -45,7 +45,9 @@ export default function BellNotification() {
           (useful on mobile where hover doesn't exist).                        */}
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center justify-center w-11 h-11 rounded-full text-sapphire hover:bg-surface-mid transition-colors cursor-pointer"
+        // Sits on the dark header bar, so it uses the mint accent (the one
+        // colour allowed on dark surfaces) and a faint white hover halo.
+        className="flex items-center justify-center w-11 h-11 rounded-full text-mint hover:bg-on-dark/10 transition-colors cursor-pointer"
         aria-label="Hindi language availability"
       >
         <span className="bell-ring">

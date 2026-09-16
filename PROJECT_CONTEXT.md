@@ -16,9 +16,11 @@
 
 # 🟢 START HERE — status as of 16 Sep 2026
 
-**Incident RESOLVED. Content pipeline DESIGNED, draft mode BUILT.**
-Next work: the content pipeline, piece 2 onward — see the 14 Sep section below and
-`docs/GKWORLD360_CONTENT_PIPELINE.md`.
+**Incident RESOLVED. Content pipeline DESIGNED, draft mode BUILT. Redesign Phase 1 BUILT
+on branch `redesign` (16 Sep, evening) — check `git branch` and `git status` first.**
+Next work: owner reviews Phase 1 locally → commit on `redesign` → Phase 2 (Subjects menu)
+or back to the content pipeline (piece 2 onward, `docs/GKWORLD360_CONTENT_PIPELINE.md`).
+Design decisions and rollout plan: "16 Sep 2026 (later)" section below.
 
 ### ✅ RECOVERY (4 Sep 2026)
 The Neon block cleared on its own. First successful write: **3 Sep 2026 01:18 UTC**
@@ -186,6 +188,34 @@ version rows + sets published), then restoring `.env.local` to dev. Verified liv
   spec). "English" + "हिन्दी" when both exist, else "Read →". Wired into all 5 call sites.
 - Homepage redesign **PARKED** — see `IDEAS.md` (two mocked directions + canvas link).
   Content first, then real-user feedback, then design.
+
+**16 Sep 2026 (later) — page SYSTEM designed, redesign UN-parked, Phase 1 built on branch `redesign`:**
+- Design canvas (10 boards: system, article desktop+phone, subject, category, home, /pulse
+  desktop+phone, buttons, Subjects menu): https://claude.ai/artifact/WQeVvX9VEHEWxJMuQtgWGF
+  Two layers: constant **FRAME** (deep teal `#122a26`/`#1e3d38`, warm page `#f7f6f2`, white
+  cards, mint `#6ee7b7` on dark / emerald `#059669` on light) + one **SIGNAL** colour per
+  subject used small. Seven rules incl. "≤4 colours per page" and "ONE button everywhere".
+- Owner asked why EN/Hindi buttons differed → answer: no reason. **Superseded the page-tint
+  card button above.** Now ONE button: dark teal fill, white text, 10px, 44px, shared hover.
+  Exceptions only for contrast: `onDark` (white) on dark bands, `ghost`/`ghostOnDark` for the
+  inactive side of a toggle, `disabled` (grey `<span>`).
+- **Rollout plan (7–9 sittings):** 1 Foundation → 2 Subjects menu → 3 Article page → 4
+  Subject+Category → 5 Homepage → 6 /pulse (+thumbnails only if option B chosen; needs a
+  schema column → prod-schema-first rule). All on branch `redesign`; test locally; Vercel
+  preview URL on push; merge to `main` only on owner's go. Rollback = Vercel Instant Rollback
+  or `git revert`. Redesign touches presentation only (no content/URLs/DB).
+- **Phase 1 DONE locally (not yet committed at time of writing):** `globals.css` token values
+  retuned (names unchanged), `--radius-card` 8→10px, new `--color-mint`, `--radius-button`,
+  `--shadow-button(-dark)`; **new `components/Button.tsx`** (variants primary/onDark/
+  ghostOnDark/ghost/disabled; `href`→Link, else `<button>`, disabled→`<span>`); Header dark
+  (white-silhouette logo via CSS `filter: brightness(0) invert(1)`, ~72px tall, mint underline
+  on active link, dark phone sheet with signal bars); Footer dark; ContentCard, LanguageToggle
+  (solid = current, ghost = other; `onDark` prop for Phase 3), SortToggle, /pulse pagination +
+  Read Later, not-found, about, contact, SearchBox (`onDark` prop used on the hero) all on
+  `<Button>`. Verified with screenshots at 1440 and 390 px. `tsc` + eslint clean.
+- Known pre-existing lint error left alone: unescaped `'` in `app/(frontend)/about/page.tsx:115`.
+- Dev DB (`/pulse` locally) shows 2,278 headlines — the dev branch has no cron pruning it.
+  Harmless; production prunes on sync.
 
 **Next (owner's priority):** Telegram "draft ready" ping with **[Publish]** button +
 approve-from-phone via a webhook on Vercel (both guards: facts list in the message +

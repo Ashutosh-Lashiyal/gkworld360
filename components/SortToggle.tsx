@@ -4,6 +4,7 @@
 // topics page with the correct sort order — no page reload needed.
 
 import { useRouter } from "next/navigation";
+import Button from "@/components/Button";
 
 type SortToggleProps = {
   // Which sort is currently active — read from the URL's ?sort= param by the page
@@ -13,15 +14,10 @@ type SortToggleProps = {
 export default function SortToggle({ activeSort }: SortToggleProps) {
   const router = useRouter();
 
-  const buttonClass = (sort: "popular" | "recent") =>
-    [
-      "font-body text-sm font-semibold px-5 py-2 rounded-full border transition-all duration-200",
-      // Active sort: filled sapphire background
-      // Inactive sort: outlined, switches to sapphire on hover
-      activeSort === sort
-        ? "bg-sapphire text-white border-sapphire"
-        : "text-muted border-hairline hover:border-sapphire hover:text-sapphire bg-surface",
-    ].join(" ");
+  // REDESIGN 16 Sep 2026 — the site's one Button. This is a toggle, so the
+  // active sort is the solid button and the other is the outline ("ghost").
+  const variantFor = (sort: "popular" | "recent") =>
+    activeSort === sort ? "primary" : "ghost";
 
   return (
     <div className="flex items-center gap-3">
@@ -29,19 +25,21 @@ export default function SortToggle({ activeSort }: SortToggleProps) {
 
       {/* Clicking navigates to /topics?sort=popular — the server re-renders
           with popular sort active and the button highlights automatically     */}
-      <button
-        className={buttonClass("popular")}
+      <Button
+        variant={variantFor("popular")}
         onClick={() => router.push("/topics?sort=popular")}
+        aria-current={activeSort === "popular" ? "true" : undefined}
       >
         Popular
-      </button>
+      </Button>
 
-      <button
-        className={buttonClass("recent")}
+      <Button
+        variant={variantFor("recent")}
         onClick={() => router.push("/topics?sort=recent")}
+        aria-current={activeSort === "recent" ? "true" : undefined}
       >
         Recently Added
-      </button>
+      </Button>
     </div>
   );
 }

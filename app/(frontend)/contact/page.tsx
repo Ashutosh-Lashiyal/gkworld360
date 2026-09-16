@@ -4,6 +4,7 @@
 // For now the form is structural only — submitting does nothing yet.
 
 import type { Metadata } from "next";
+import Button from "@/components/Button";
 
 export const metadata: Metadata = {
   title: "Contact Us | GKWorld360",
@@ -148,12 +149,9 @@ export default function ContactPage() {
                 </div>
 
                 {/* Submit button */}
-                <button
-                  type="submit"
-                  className="w-full sm:w-auto font-body text-sm font-semibold text-on-dark bg-navy hover:bg-navy-dark rounded-card px-8 py-3 transition-colors"
-                >
+                <Button type="submit" className="w-full sm:w-auto">
                   Send message
-                </button>
+                </Button>
 
                 {/* Note about form functionality */}
                 <p className="font-body text-xs text-muted">

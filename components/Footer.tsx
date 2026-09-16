@@ -44,31 +44,29 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    // Background is the muted teal #b0c4c0 — light enough for dark text.
-    // text-navy (#1e3d38) is our darkest teal, giving strong contrast on this bg.
-    <footer style={{ backgroundColor: "#b0c4c0" }} className="text-navy">
+    // REDESIGN 16 Sep 2026 — the footer is the bottom half of the dark "frame":
+    // the same deep teal as the header, white text at reduced opacity for the
+    // quiet parts, full white on hover. Every page therefore ends on dark, which
+    // is what makes the light/dark alternation of the sections above it read.
+    <footer className="bg-navy-dark text-on-dark">
 
       <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12">
 
         {/* Logo + tagline
-            The logo PNG now has a transparent background, and its colours are
-            dark teal/green — which sit perfectly on the light #b0c4c0 background.
-            No CSS filter needed here (unlike when the footer was dark). */}
-        <div className="mb-10 pb-10 border-b border-navy/20">
+            Same trick as the header: the dark-teal PNG becomes a white silhouette
+            via `brightness(0) invert(1)`, so one logo file serves both bars. */}
+        <div className="mb-10 pb-10 border-b border-on-dark/10">
           <Link href="/" className="inline-block">
             <Image
               src="/images/logo.png"
               alt="GKWorld360 — Know More, Grow More"
               height={64}
               width={96}
-              className="h-20 md:h-24 w-auto"
-              // mix-blend-mode: multiply makes white pixels invisible by blending
-              // them with the background colour — the logo's dark teal/green stays
-              // visible while any leftover white fringe around the edges disappears.
-              style={{ mixBlendMode: "multiply" }}
+              className="h-14 md:h-16 w-auto"
+              style={{ filter: "brightness(0) invert(1)" }}
             />
           </Link>
-          <p className="font-body text-sm text-navy/60 mt-3 max-w-xs leading-relaxed">
+          <p className="font-body text-sm text-on-dark/60 mt-3 max-w-xs leading-relaxed">
             A curated repository of academics — history, science, polity, and more. In English and Hindi.
           </p>
         </div>
@@ -77,7 +75,7 @@ export default function Footer() {
           {footerColumns.map((column) => (
             <div key={column.heading}>
               {/* Column heading — slightly muted dark navy */}
-              <h3 className="font-body text-sm font-semibold text-navy/60 mb-4 uppercase tracking-wider">
+              <h3 className="font-body text-xs font-semibold text-on-dark/50 mb-4 uppercase tracking-[0.14em]">
                 {column.heading}
               </h3>
 
@@ -87,7 +85,7 @@ export default function Footer() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="font-body text-sm text-navy/80 hover:text-navy hover:text-sapphire transition-all"
+                      className="font-body text-sm text-on-dark/80 hover:text-on-dark transition-colors"
                     >
                       {link.label}
                     </Link>
@@ -100,10 +98,10 @@ export default function Footer() {
       </div>
 
       {/* ── COPYRIGHT BAR ──────────────────────────────────────────────────────
-          border-navy/20 gives a subtle dark divider that works on the light bg */}
-      <div className="border-t border-navy/20">
+          A faint white line (10% opacity) divides it from the columns above */}
+      <div className="border-t border-on-dark/10">
         <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-6">
-          <p className="font-body text-sm text-navy/60 text-center">
+          <p className="font-body text-sm text-on-dark/60 text-center">
             © {currentYear} GKWorld360. All rights reserved. Empowering academic excellence.
           </p>
         </div>

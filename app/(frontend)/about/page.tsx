@@ -3,7 +3,7 @@
 // Built using design tokens — no Stitch design needed, stays consistent with the site.
 
 import type { Metadata } from "next";
-import Link from "next/link";
+import Button from "@/components/Button";
 
 export const metadata: Metadata = {
   title: "About Us | GKWorld360",
@@ -164,18 +164,8 @@ export default function AboutPage() {
               article at a time.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Link
-                href="/subjects"
-                className="font-body text-sm font-semibold text-on-dark bg-navy hover:bg-navy-dark rounded-card px-6 py-3 transition-colors"
-              >
-                Browse all subjects
-              </Link>
-              <Link
-                href="/contact"
-                className="font-body text-sm font-semibold text-sapphire border border-sapphire hover:bg-surface-low rounded-card px-6 py-3 transition-colors"
-              >
-                Get in touch
-              </Link>
+              <Button href="/subjects">Browse all subjects</Button>
+              <Button href="/contact" variant="ghost">Get in touch</Button>
             </div>
           </div>
         </div>

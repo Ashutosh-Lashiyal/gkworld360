@@ -164,7 +164,7 @@ export default async function HomePage() {
 
           {/* Search bar */}
           <div className="mt-10 max-w-xl mx-auto">
-            <SearchBox buttonLabel="Explore" />
+            <SearchBox buttonLabel="Explore" onDark />
           </div>
 
           {/* Trust badges */}

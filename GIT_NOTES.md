@@ -146,6 +146,34 @@ git branch                     # list branches (star = the one I'm on)
 Solo + first commits: committing straight to `main` is fine.
 Later / features / teams: cut a branch per feature (good habit).
 
+### Using a branch for real — the `redesign` branch (16 Sep 2026)
+
+The first time I used a branch on purpose: the visual redesign lives on
+`redesign` so the live site (`main`) never sees half-finished styling.
+
+Things I learnt doing it:
+
+- **Uncommitted changes come WITH you.** Claude had already edited files while
+  I was still on `main`; running `git checkout -b redesign` moved me onto the
+  new branch *and carried those edits along* — nothing was lost, and `main`
+  itself was not changed (a branch only "owns" changes once you commit them).
+- **Vercel builds every branch you push.** `git push -u origin redesign` gives
+  a private preview URL (`gkworld360-git-redesign-….vercel.app`) — the redesign
+  live on the internet, but the real URL untouched. The `-u` ("upstream") is
+  needed only the FIRST time you push a new branch: it tells git which GitHub
+  branch this local branch pairs with, so later you can type plain `git push`.
+- **Going live = merging.** When the branch is approved:
+  ```bash
+  git switch main          # go back to the trunk
+  git merge redesign       # bring the branch's commits into main
+  git push                 # Vercel deploys main → the live site changes
+  ```
+- **Two ways back if it looks wrong after merging:** Vercel → Deployments →
+  "Instant Rollback" (30 seconds, no git), or `git revert -m 1 <merge-commit>`
+  which adds a new commit that undoes the merge while keeping history honest.
+- **Throwing the branch away** (never merged): `git switch main` then
+  `git branch -D redesign`. Capital D = "delete even though it's unmerged".
+
 ---
 
 ## Quick command cheat-sheet

@@ -1,7 +1,7 @@
 // Custom 404 page — shown when a visitor hits a URL that doesn't exist.
 // Next.js automatically uses this file for all 404 responses.
 
-import Link from "next/link";
+import Button from "@/components/Button";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -28,18 +28,8 @@ export default function NotFound() {
 
       {/* Action buttons */}
       <div className="flex flex-wrap items-center justify-center gap-4 mt-10">
-        <Link
-          href="/"
-          className="font-body text-sm font-semibold text-on-dark bg-navy hover:bg-navy-dark rounded-card px-6 py-3 transition-colors"
-        >
-          Go to homepage
-        </Link>
-        <Link
-          href="/subjects"
-          className="font-body text-sm font-semibold text-sapphire border border-sapphire hover:bg-surface-low rounded-card px-6 py-3 transition-colors"
-        >
-          Browse subjects
-        </Link>
+        <Button href="/">Go to homepage</Button>
+        <Button href="/subjects" variant="ghost">Browse subjects</Button>
       </div>
     </div>
   );

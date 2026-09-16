@@ -11,6 +11,7 @@
 //  - Clicking outside, or pressing Escape, closes the dropdown.
 
 import { useState, useRef, useEffect, useMemo } from "react";
+import Button from "@/components/Button";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { SearchItem } from "@/lib/search";
@@ -21,11 +22,16 @@ const MAX_DROPDOWN_RESULTS = 10;
 type SearchBoxProps = {
   buttonLabel?: string;
   placeholder?: string;
+  // Set true when the box sits on a DARK background (the homepage hero). The
+  // submit button then uses the white "onDark" variant so it stays visible —
+  // a dark button on a dark hero would disappear. See components/Button.tsx.
+  onDark?: boolean;
 };
 
 export default function SearchBox({
   buttonLabel = "Search",
   placeholder = "Search subjects, categories, topics, news...",
+  onDark = false,
 }: SearchBoxProps) {
   const router = useRouter();
 
@@ -124,12 +130,9 @@ export default function SearchBox({
             "transition-colors",
           ].join(" ")}
         />
-        <button
-          type="submit"
-          className="w-full sm:w-auto font-body text-sm font-semibold text-on-dark bg-sapphire hover:bg-sapphire-dark rounded-card px-6 py-3 transition-colors whitespace-nowrap"
-        >
+        <Button type="submit" variant={onDark ? "onDark" : "primary"} className="w-full sm:w-auto">
           {buttonLabel}
-        </button>
+        </Button>
       </form>
 
       {/* ── INSTANT RESULTS DROPDOWN ──────────────────────────────────────────

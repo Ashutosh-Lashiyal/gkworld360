@@ -84,24 +84,31 @@ export default function Header() {
     closeTimer.current = setTimeout(() => setSubjectsOpen(false), 150);
   };
 
+  // REDESIGN 16 Sep 2026 — the header is now part of the dark "frame" that is
+  // identical on every page (deep teal #122a26, white text, one mint accent).
+  // Nav links: white at 82% opacity, full white on hover. The ACTIVE link gets
+  // a 2px mint underline instead of a filled pill — the mint accent is reserved
+  // for "where am I / what can I do" cues, nowhere else.
   const linkClass = (href: string) => {
     const active = pathname === href;
     return [
       // whitespace-nowrap keeps each label on ONE line (no more "Current
       // Affairs" breaking in two); px-2.5 tightens spacing so all 7 items fit.
-      "font-body text-base font-medium whitespace-nowrap rounded-full px-2.5 py-1.5 transition-all duration-200",
+      "font-body text-[15px] font-medium whitespace-nowrap px-2.5 py-1.5 border-b-2 transition-colors duration-200",
       active
-        ? "bg-surface-mid text-sapphire"
-        : "text-navy hover:bg-surface-mid hover:text-sapphire",
+        ? "text-on-dark border-mint"
+        : "text-on-dark/80 border-transparent hover:text-on-dark",
     ].join(" ");
   };
 
   return (
+    // The subject "signal" survives as a thin 3px line under the dark bar —
+    // small, the way the design system wants signal colours used.
     <header
-      className="sticky top-0 z-50 bg-surface/95 backdrop-blur-md transition-all duration-300"
+      className="sticky top-0 z-50 bg-navy-dark text-on-dark transition-all duration-300"
       style={subjectColors
         ? { borderBottom: `3px solid ${subjectColors.border}` }
-        : { borderBottom: "1px solid var(--hairline)" }
+        : { borderBottom: "3px solid transparent" }
       }
     >
 
@@ -110,9 +117,15 @@ export default function Header() {
           links inside — so it always sits in the true middle of the header,
           regardless of how wide the logo or the search icon is.
           Logo stays at the far left, search stays at the far right. */}
-      <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-3 relative flex items-center">
+      {/* py-2 + a 56px logo ≈ a 72px bar (was ~120px). A slimmer header leaves
+          more of the screen for the article, which is what readers came for. */}
+      <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-2 relative flex items-center">
 
-        {/* Logo — far left, does not participate in centering the nav */}
+        {/* Logo — far left, does not participate in centering the nav.
+            The PNG is dark teal on transparent, which would vanish on this dark
+            bar. `brightness(0)` turns every visible pixel black, `invert(1)` then
+            flips black to white — a white silhouette of the logo, no second
+            image file needed. Remove the filter and the coloured logo is back. */}
         <div className="flex items-center flex-shrink-0">
           <Link href="/" className="inline-block">
             <Image
@@ -120,7 +133,8 @@ export default function Header() {
               alt="GKWorld360 — Know More, Grow More"
               height={64}
               width={96}
-              className="h-20 md:h-24 w-auto"
+              className="h-12 md:h-14 w-auto"
+              style={{ filter: "brightness(0) invert(1)" }}
               priority
             />
           </Link>
@@ -146,10 +160,11 @@ export default function Header() {
           >
             <button
               className={[
-                "font-body text-base font-medium whitespace-nowrap rounded-full px-2.5 py-1.5 transition-all duration-200 flex items-center gap-1",
-                subjectsOpen
-                  ? "bg-surface-mid text-sapphire"
-                  : "text-navy hover:bg-surface-mid hover:text-sapphire",
+                "font-body text-[15px] font-medium whitespace-nowrap px-2.5 py-1.5 border-b-2 transition-colors duration-200 flex items-center gap-1",
+                // Open, or on a subject page → treated as the active link
+                subjectsOpen || subjectSlug
+                  ? "text-on-dark border-mint"
+                  : "text-on-dark/80 border-transparent hover:text-on-dark",
               ].join(" ")}
               aria-expanded={subjectsOpen}
               aria-haspopup="true"
@@ -160,7 +175,12 @@ export default function Header() {
 
             {subjectsOpen && (
               <div
-                className="absolute top-full left-1/2 -translate-x-1/2 w-[580px] bg-surface rounded-card border border-hairline shadow-card-hover z-50 overflow-hidden"
+                // A WHITE panel dropping from the DARK bar — the same "white
+                // card on a dark stage" move the whole design system is built
+                // on. `mt-[3px]` lets it clear the subject line under the bar.
+                // (Full board-8 restyle — signal bars, Hindi names, counts — is
+                // Phase 2.)
+                className="absolute top-full left-1/2 -translate-x-1/2 mt-[3px] w-[580px] bg-surface text-foreground rounded-card border border-hairline shadow-card-hover z-50 overflow-hidden"
                 onMouseEnter={openSubjects}
                 onMouseLeave={scheduleClose}
               >
@@ -223,9 +243,11 @@ export default function Header() {
               Clicking it navigates to /search where the real search works.
               We use a Link (not a real <input>) here because the header search
               is just a shortcut — the actual typing happens on the /search page. */}
+          {/* On the dark bar the search box is a slightly LIGHTER teal block
+              (#1e3d38) with 10px corners — reads as "a field", not a button. */}
           <Link
             href="/search"
-            className="hidden lg:flex items-center gap-2 xl:w-52 bg-surface border border-hairline rounded-full px-2.5 xl:px-4 py-2 text-muted hover:border-sapphire hover:text-sapphire transition-all duration-200 group"
+            className="hidden lg:flex items-center gap-2 xl:w-52 h-9 bg-navy rounded-button px-2.5 xl:px-4 text-on-dark/60 hover:text-on-dark hover:bg-navy/80 transition-colors duration-200 group"
             aria-label="Search"
           >
             {/* Search icon inside the bar */}
@@ -239,7 +261,8 @@ export default function Header() {
 
           {/* Hamburger — mobile only */}
           <button
-            className="lg:hidden text-navy hover:text-sapphire transition-colors"
+            // w-11 h-11 = a 44px tap target around the 24px icon
+            className="lg:hidden flex items-center justify-center w-11 h-11 text-on-dark hover:text-mint transition-colors"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileMenuOpen}
@@ -250,23 +273,27 @@ export default function Header() {
       </div>
 
       {/* Mobile menu */}
+      {/* Mobile menu — a dark sheet continuing the bar. Every row is at least
+          48px tall (py-3 + text) so it's comfortable under a thumb. Rows are
+          divided by faint white lines (white at 10% opacity) instead of grey. */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-surface border-t border-hairline">
+        <div className="lg:hidden bg-navy-dark border-t border-on-dark/10">
           <nav className="max-w-[1200px] mx-auto px-4 py-2" aria-label="Mobile navigation">
 
             <Link
               href="/"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center py-3 font-body text-sm font-medium text-navy hover:text-sapphire transition-colors border-b border-hairline"
+              className="flex items-center min-h-12 font-body text-base font-medium text-on-dark/85 hover:text-on-dark transition-colors border-b border-on-dark/10"
             >
               Home
             </Link>
 
             {/* Subjects — expands inline on mobile */}
-            <div className="border-b border-hairline">
+            <div className="border-b border-on-dark/10">
               <button
-                className="flex items-center justify-between w-full py-3 font-body text-sm font-medium text-navy hover:text-sapphire transition-colors"
+                className="flex items-center justify-between w-full min-h-12 font-body text-base font-medium text-on-dark/85 hover:text-on-dark transition-colors"
                 onClick={() => setMobileSubjectsOpen(!mobileSubjectsOpen)}
+                aria-expanded={mobileSubjectsOpen}
               >
                 <span>Subjects</span>
                 <ChevronDownIcon open={mobileSubjectsOpen} />
@@ -274,15 +301,21 @@ export default function Header() {
 
               {mobileSubjectsOpen && (
                 <div className="pb-3">
+                  {/* Two columns of subjects; each gets its 4px signal bar on
+                      the left so the subject colours are learnt here first. */}
                   <div className="grid grid-cols-2 gap-1 mb-3">
                     {SUBJECTS.map((subject) => (
                       <Link
                         key={subject.slug}
                         href={`/${subject.slug}`}
                         onClick={() => { setMobileMenuOpen(false); setMobileSubjectsOpen(false); }}
-                        className="flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm text-navy hover:text-sapphire hover:bg-surface-low transition-colors"
+                        className="flex items-center gap-2.5 min-h-11 px-2 rounded-sm text-sm text-on-dark/85 hover:text-on-dark hover:bg-on-dark/10 transition-colors"
                       >
-                        <span aria-hidden="true">{subject.icon}</span>
+                        <span
+                          aria-hidden="true"
+                          className="w-1 h-5 rounded-sm flex-shrink-0"
+                          style={{ backgroundColor: SUBJECT_COLORS[subject.slug]?.border ?? "#6ee7b7" }}
+                        />
                         <span className="font-medium">{subject.label}</span>
                       </Link>
                     ))}
@@ -290,7 +323,7 @@ export default function Header() {
                   <Link
                     href="/subjects"
                     onClick={() => { setMobileMenuOpen(false); setMobileSubjectsOpen(false); }}
-                    className="block pt-2 border-t border-hairline font-body text-sm font-semibold text-sapphire hover:text-sapphire-dark transition-colors"
+                    className="block pt-3 border-t border-on-dark/10 font-body text-sm font-semibold text-mint hover:text-on-dark transition-colors"
                   >
                     View All Subjects →
                   </Link>
@@ -303,7 +336,7 @@ export default function Header() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center py-3 font-body text-sm font-medium text-navy hover:text-sapphire transition-colors border-b border-hairline"
+                className="flex items-center min-h-12 font-body text-base font-medium text-on-dark/85 hover:text-on-dark transition-colors border-b border-on-dark/10"
               >
                 {link.label}
               </Link>
@@ -312,7 +345,7 @@ export default function Header() {
             <Link
               href="/search"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2 py-3 font-body text-sm font-medium text-navy hover:text-sapphire transition-colors"
+              className="flex items-center gap-2 min-h-12 font-body text-base font-medium text-on-dark/85 hover:text-on-dark transition-colors"
             >
               <SearchIcon />
               <span>Search</span>

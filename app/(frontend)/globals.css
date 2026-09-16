@@ -2,10 +2,20 @@
 @import "tailwindcss";
 
 /*
-  @theme inline — GKWorld360 "Academic Clarity" Design Tokens
+  @theme inline — GKWorld360 Design Tokens
   ─────────────────────────────────────────────────────────────
   This block is the Single Source of Truth for every visual value on the site.
-  All values come directly from the Stitch "Academic Clarity" theme.
+
+  REDESIGN, 16 Sep 2026 — "Frame + Signal" page system (see the design canvas
+  linked in IDEAS.md). Two layers:
+    • the FRAME  — deep teal (#122a26 / #1e3d38), a warm off-white page
+                   (#f7f6f2), white cards, and ONE accent (mint on dark,
+                   emerald on light). Identical on every page.
+    • the SIGNAL — one subject colour per page, used small (a label, a 4px
+                   bar, a tinted band). Those live in lib/subject-colors.ts.
+  The token NAMES below are unchanged (navy, sapphire, hairline…) so no
+  component had to be touched to pick up the new values — only the VALUES
+  moved. That's the whole point of tokens.
 
   HOW IT WORKS:
   Every token defined here automatically becomes a Tailwind utility class.
@@ -30,21 +40,23 @@
   /* ── BRAND COLOURS ───────────────────────────────────────────────────────────
      "Sage & Teal" — a calm, eye-friendly palette for long study sessions.
      Dark teal for structure/headings, forest green for interactive accents.      */
-  --color-navy:           #1e3d38;  /* Dark Teal    — headings, navigation, primary brand  */
-  --color-navy-dark:      #122a26;  /* Deep Teal    — hero backgrounds, footer             */
-  --color-sapphire:       #2d7a4f;  /* Forest Green — links, interactive elements, buttons */
-  --color-sapphire-dark:  #1f5c39;  /* Forest Dark  — hover states on interactive items   */
-  --color-emerald:        #059669;  /* Emerald      — success states, positive cues        */
+  --color-navy:           #1e3d38;  /* Lifted Teal  — headings, button HOVER fill          */
+  --color-navy-dark:      #122a26;  /* Deep Teal    — header, footer, dark bands, BUTTONS  */
+  --color-sapphire:       #059669;  /* Emerald      — links and small actions on LIGHT     */
+  --color-sapphire-dark:  #047857;  /* Emerald Dark — hover state of those links           */
+  --color-emerald:        #059669;  /* (same as sapphire — kept so old class names work)  */
+  --color-mint:           #6ee7b7;  /* Mint         — the accent on DARK: EN toggle, focus */
   --color-slate:          #5a7a75;  /* Teal Slate   — neutral, secondary UI elements       */
 
   /* ── PAGE & SURFACE COLOURS ──────────────────────────────────────────────────
-     Clean white base with very subtle teal-grey tints on alternating sections.
-     White + light grey is the easiest combination for long reading sessions.     */
-  --color-background:   #ffffff;   /* Page background  — pure white, maximum readability  */
-  --color-surface:      #ffffff;   /* Cards, modals    — pure white, elevated above page  */
-  --color-surface-low:  #f5f5f5;   /* Subtle sections  — very light grey                  */
-  --color-surface-mid:  #edf2f0;   /* Medium sections  — light teal-grey tint             */
-  --color-surface-high: #e2ece8;   /* Strong sections  — more prominent teal-grey block   */
+     A warm off-white page with pure-white cards sitting on it. The warmth is
+     deliberate: pure white + dark teal read "AI template"; paper-white + teal
+     reads "printed reference book". Cards stay white so they lift off the page. */
+  --color-background:   #f7f6f2;   /* Page background  — warm paper white                 */
+  --color-surface:      #ffffff;   /* Cards, modals    — pure white, lifts off the page   */
+  --color-surface-low:  #f0ede6;   /* Hover tint       — a shade deeper than the page     */
+  --color-surface-mid:  #e6e3dc;   /* Disabled fill, quiet dividers                        */
+  --color-surface-high: #e2ece8;   /* Strong sections  — teal-grey block (legacy)          */
 
   /* ── TEXT COLOURS ────────────────────────────────────────────────────────────
      Body text stays near-black for maximum readability — the teal palette only
@@ -57,9 +69,9 @@
      border-border        → dividers, section separators
      border-border-subtle → quieter, less visible dividers
      border-hairline      → the 1px card border                                  */
-  --color-border:        #7a9e99;  /* Standard borders and dividers                       */
-  --color-border-subtle: #b8d0cc;  /* Subtle borders — for less prominent separators      */
-  --color-hairline:      #c0cfd0;  /* Card hairline border — from the palette             */
+  --color-border:        #d9d6cf;  /* Standard borders and dividers — warm grey           */
+  --color-border-subtle: #e6e3dc;  /* Subtle borders — for less prominent separators      */
+  --color-hairline:      #d9d6cf;  /* Card hairline border — warm grey, not teal-grey     */
 
   /* ── STATUS COLOURS ──────────────────────────────────────────────────────────
      Used for form errors, validation messages. Not used in MVP content pages.    */
@@ -70,15 +82,19 @@
      The shape language is "soft and precise" — never bubbly, never sharp.
      rounded-sm   → tags, badges, checkboxes, small pills
      rounded-card → cards, buttons, inputs — the standard component radius        */
-  --radius-sm:   4px;   /* Small elements  — 0.25rem */
-  --radius-card: 8px;   /* Cards & buttons — 0.5rem  */
+  --radius-sm:     4px;   /* Small elements  — tags, badges                    */
+  --radius-card:  10px;   /* Cards, buttons, inputs — the owner's 10px rule    */
+  --radius-button: 10px;  /* Same value, named so a button never drifts        */
 
   /* ── SHADOWS ─────────────────────────────────────────────────────────────────
      A single, soft, diffused shadow gives cards a "tactile, printed" quality.
-     shadow-card      → resting state  — very subtle, barely lifts the card
-     shadow-card-hover → hover state   — card lifts noticeably when user hovers   */
-  --shadow-card:       0px 4px 20px rgba(15, 23, 42, 0.05);
-  --shadow-card-hover: 0px 8px 30px rgba(15, 23, 42, 0.12);
+     shadow-card        → resting state  — very subtle, barely lifts the card
+     shadow-card-hover  → hover state    — card lifts noticeably on hover
+     shadow-button      → the one button's hover lift (see components/Button.tsx) */
+  --shadow-card:        0px 4px 20px rgba(15, 23, 42, 0.05);
+  --shadow-card-hover:  0px 8px 30px rgba(15, 23, 42, 0.12);
+  --shadow-button:      0px 4px 12px rgba(18, 42, 38, 0.18);
+  --shadow-button-dark: 0px 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 /* These base styles live inside @layer base so that Tailwind utility classes
@@ -91,7 +107,7 @@
      These apply to the whole site automatically.
      Individual components can override them with specific Tailwind classes.      */
   body {
-    background-color: #ffffff;    /* matches --color-background */
+    background-color: #f7f6f2;    /* matches --color-background — warm paper white */
     color: #1a1a1a;               /* matches --color-foreground — near-black for readability */
 
     /* Inter with safe fallbacks — if Inter hasn't loaded yet, system fonts show */
@@ -140,7 +156,7 @@
    itself. scroll-margin-top adds a gap so the heading lands BELOW the header.
    8rem = 128px matches the sticky top-32 (128px) we use on the sidebar.           */
 h1, h2, h3, h4, h5, h6 {
-  scroll-margin-top: 10rem; /* 160px — header is ~120px tall, this gives a 40px gap above */
+  scroll-margin-top: 7rem; /* 112px — header is ~72px tall, this gives a 40px gap above */
 }
 
 /* ── ARTICLE PROSE ───────────────────────────────────────────────────────────────
@@ -166,7 +182,7 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: 0.875rem;
   line-height: 1.3;
   padding-bottom: 0.5rem;
-  border-bottom: 2px solid #c0cfd0;
+  border-bottom: 2px solid #d9d6cf;
 }
 
 .prose h3 {
@@ -220,18 +236,18 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .prose a {
-  color: #2d7a4f;
+  color: #059669;
   text-decoration: underline;
   text-underline-offset: 2px;
   text-decoration-thickness: 1px;
 }
 
 .prose a:hover {
-  color: #1f5c39;
+  color: #047857;
 }
 
 .prose blockquote {
-  border-left: 4px solid #2d7a4f;
+  border-left: 4px solid #059669;
   padding: 0.25em 0 0.25em 1.25em;
   margin: 1.75em 0;
   font-style: italic;
@@ -240,7 +256,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Inline code (e.g. `variable`) */
 .prose :not(pre) > code {
-  background-color: #edf2f0;
+  background-color: #f0ede6;
   color: #1e3d38;
   font-size: 0.875em;
   padding: 0.2em 0.45em;
@@ -279,30 +295,30 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .prose thead th {
-  background-color: #edf2f0;
+  background-color: #f0ede6;
   color: #1e3d38;
   font-family: var(--font-body), system-ui, sans-serif;
   font-weight: 600;
   font-size: 0.875rem;
   text-align: left;
   padding: 0.625rem 0.875rem;
-  border: 1px solid #E2E8F0;
+  border: 1px solid #e6e3dc;
   white-space: nowrap;
 }
 
 .prose tbody td {
   padding: 0.625rem 0.875rem;
-  border: 1px solid #E2E8F0;
+  border: 1px solid #e6e3dc;
   vertical-align: top;
 }
 
 .prose tbody tr:nth-child(even) {
-  background-color: #f5f5f5;
+  background-color: #f7f6f2;
 }
 
 .prose hr {
   border: none;
-  border-top: 1px solid #E2E8F0;
+  border-top: 1px solid #e6e3dc;
   margin: 2.5rem 0;
 }
 
