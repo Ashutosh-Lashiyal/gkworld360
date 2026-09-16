@@ -48,7 +48,9 @@ export default function Footer() {
     // the same deep teal as the header, white text at reduced opacity for the
     // quiet parts, full white on hover. Every page therefore ends on dark, which
     // is what makes the light/dark alternation of the sections above it read.
-    <footer className="bg-navy-dark text-on-dark">
+    // border-t: a faint seam so the footer still reads as its own block when the
+    // section above it is ALSO dark (e.g. a subject page's "Recently added" band).
+    <footer className="bg-navy-dark text-on-dark border-t border-on-dark/10">
 
       <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12">
 

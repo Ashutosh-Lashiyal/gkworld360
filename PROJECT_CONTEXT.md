@@ -16,10 +16,10 @@
 
 # 🟢 START HERE — status as of 16 Sep 2026
 
-**Incident RESOLVED. Content pipeline DESIGNED, draft mode BUILT. Redesign Phases 1–3 BUILT
+**Incident RESOLVED. Content pipeline DESIGNED, draft mode BUILT. Redesign Phases 1–4 BUILT
 on branch `redesign` (16 Sep) — check `git branch` and `git status` first.** Owner has chosen
 to review ALL phases at once at the end, committing a snapshot after each phase.
-Next work: Phase 4 (subject + category pages) → 5 (homepage) → 6 (/pulse) → owner review →
+Next work: Phase 5 (homepage) → 6 (/pulse) → owner review →
 merge to `main`. Then back to the content pipeline (`docs/GKWORLD360_CONTENT_PIPELINE.md`).
 Design decisions and rollout plan: "16 Sep 2026 (later)" section below.
 
@@ -232,6 +232,15 @@ version rows + sets published), then restoring `.env.local` to dev. Verified liv
   rendered bold; `layout.tsx` now loads 400 + italic. (2) `slugifyHeading` stripped Devanagari,
   so every Hindi heading had id `""` (dead Contents links, duplicate-key warning) → Unicode-aware
   regex `[^\p{L}\p{M}\p{N}\s-]`.
+- **Phase 4 DONE (subject + category pages, boards 3/4):** new `components/PageBand.tsx`
+  (tall/compact tinted band with optional floating white card; `BandLabel`, `BandStat` helpers).
+  Subject page = tall band (title + Hindi name from `lib/subjects.ts`, description, stats, "Start
+  here" card listing first topics + one Button) → light Categories grid (cards carry topic
+  counts, "Explore →") → dark "Recently added" band (numbered rows; sorted by `date` when
+  present, else reverse reading order). Category page = compact band + numbered topic cards.
+  Subject-tinted page backgrounds removed. `getCMSArticlesInCategory` now selects
+  `publishedDate` → `meta.date`. Footer got a faint top seam for dark-on-dark stacking.
+  `/subjects` index untouched (already fine); its `SubjectCard` link → Button in Phase 5.
 - Not yet in Phase 3: prev/next cards styled per board (TopicNav still old style — pipeline item),
   "Sources: N facts verified" meta (needs pipeline data). Long CMS `description`s make the band
   tall (Smart Border) — the writing template should cap summaries at ~2 sentences.

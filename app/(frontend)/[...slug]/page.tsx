@@ -26,8 +26,11 @@ import {
   hasTranslation,
 } from "@/lib/content";
 import ArticleBand from "@/components/ArticleBand";
+import PageBand, { BandLabel, BandStat } from "@/components/PageBand";
+import Button from "@/components/Button";
+import Link from "next/link";
+import { getSubjectInfo } from "@/lib/subjects";
 import ArticleLayout from "@/components/ArticleLayout";
-import Breadcrumb from "@/components/Breadcrumb";
 import ContentCard from "@/components/ContentCard";
 import TableOfContents from "@/components/TableOfContents";
 import QuickFacts from "@/components/QuickFacts";
@@ -384,67 +387,150 @@ export default async function ContentPage({
   // ── SUBJECT PAGE (top-level folder, e.g. /history) ────────────────────────
   // A subject shows its CATEGORIES if it has any (e.g. History → Modern India).
   // If it has no categories, it shows its TOPICS directly (e.g. Human Body → Blood).
+  //
+  // REDESIGN 16 Sep 2026 (board 3): tall tinted band with a white "Start here"
+  // card floating on it → light section of category cards → dark "Recently
+  // added" band → footer. Strict light/dark alternation; no subject-tinted page
+  // background any more (the signal colour never sits below the band).
   if (pageType === "subject") {
     const categories = getCategoriesInSubject(slug[0]);
-    // Topics sitting directly under the subject (no category) — from BOTH the
-    // .mdx folder and the CMS, merged. Only shown when there are no categories.
-    const looseTopics =
-      categories.length === 0
-        ? mergeTopics(getTopicsInSubject(slug[0]), await getCMSArticlesInCategory(slug[0], null))
-        : [];
+    const subjectInfo = getSubjectInfo(slug[0]); // English + Hindi names
+
+    // Every topic in the subject, from BOTH sources (MDX folder + CMS), grouped
+    // by category so we can show counts, "Start here" and "Recently added".
+    // One CMS query per category; subject pages are generated statically, so
+    // this runs at build/revalidate time, not on every visit.
+    const topicsByCategory = new Map<string, ListedTopic[]>();
+    if (categories.length === 0) {
+      topicsByCategory.set(
+        "",
+        mergeTopics(getTopicsInSubject(slug[0]), await getCMSArticlesInCategory(slug[0], null))
+      );
+    } else {
+      for (const cat of categories) {
+        topicsByCategory.set(
+          cat.slug,
+          mergeTopics(getTopicsInCategory(slug[0], cat.slug), await getCMSArticlesInCategory(slug[0], cat.slug))
+        );
+      }
+    }
+    const allTopics = Array.from(topicsByCategory.values()).flat();
+    const looseTopics = topicsByCategory.get("") ?? [];
+    const hasHindi = allTopics.some((t) => t.hindiHref || getHindiInfo(t.slug));
+
+    // "Start here": the first topics in reading order (already sorted by mergeTopics).
+    const startHere = allTopics.slice(0, 3);
+    // "Recently added": newest by date when we have dates, otherwise the LAST
+    // topics in reading order (a fair proxy — new topics are appended).
+    const recentlyAdded = [...allTopics]
+      .sort((x, y) => {
+        if (x.meta.date && y.meta.date) return y.meta.date.localeCompare(x.meta.date);
+        if (x.meta.date) return -1;
+        if (y.meta.date) return 1;
+        return (y.meta.order ?? 0) - (x.meta.order ?? 0);
+      })
+      .slice(0, 4);
+
+    // Pretty category name for a topic's small caption, e.g. "Modern India"
+    const categoryTitle = (t: ListedTopic) =>
+      categories.find((c) => c.slug === t.slug[1])?.meta.title ?? "";
 
     return (
-      <div className="w-full min-h-screen transition-colors duration-300" style={colors ? { backgroundColor: colors.bg } : undefined}>
-        <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12">
-          <Breadcrumb items={breadcrumbs} />
-
-          {/* Subject header */}
-          <div className="mb-10">
-            <h1 className="font-heading text-4xl font-bold leading-tight" style={colors ? { color: colors.accent } : undefined}>
-              {meta.title}
-            </h1>
-            {meta.description && (
-              <p className="font-body text-lg text-muted mt-3 max-w-2xl">
-                {meta.description}
-              </p>
+      <>
+        <PageBand
+          colors={colors}
+          breadcrumbs={[{ label: "Subjects", href: "/subjects" }]}
+          coverUrl={meta.image}
+          size="tall"
+          aside={
+            startHere.length > 0 && (
+              // The white card ON the band — the Paymint move: a light object on
+              // a dark stage. Lists the first topics so a new reader has a door.
+              <div className="flex flex-col gap-1 bg-surface text-foreground rounded-[12px] p-6 shadow-[0_12px_40px_rgba(0,0,0,0.25)]">
+                <span
+                  className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] mb-2"
+                  style={{ color: colors?.accent ?? "#059669" }}
+                >
+                  Start here
+                </span>
+                {startHere.map((t) => {
+                  const hindi = t.hindiHref ? { href: t.hindiHref } : getHindiInfo(t.slug);
+                  return (
+                    <Link
+                      key={t.slug.join("/")}
+                      href={`/${t.slug.join("/")}`}
+                      className="flex flex-col gap-1 py-3 border-b border-border-subtle hover:text-sapphire transition-colors"
+                    >
+                      <span className="font-heading text-lg font-semibold leading-snug">{t.meta.title}</span>
+                      <span className="font-body text-[13px] text-muted">
+                        {[categoryTitle(t), hindi ? "EN · हिन्दी" : "EN"].filter(Boolean).join(" · ")}
+                      </span>
+                    </Link>
+                  );
+                })}
+                <Button href={categories.length > 0 ? "#categories" : "#topics"} className="mt-4">
+                  Browse all {meta.title} topics
+                </Button>
+              </div>
+            )
+          }
+        >
+          <BandLabel colors={colors}>Subject</BandLabel>
+          <h1 className="m-0 font-heading text-5xl md:text-[64px] font-bold leading-[1.02] tracking-[-0.02em] text-[#fffbf4]">
+            {meta.title}
+            {subjectInfo?.labelHi && (
+              <span lang="hi" className="font-hindi text-3xl md:text-[44px] font-semibold opacity-85">
+                {" "}· {subjectInfo.labelHi}
+              </span>
             )}
-            {colors && <div className="mt-5 h-[3px] w-14 rounded-full" style={{ backgroundColor: colors.border }} />}
+          </h1>
+          {meta.description && (
+            <p className="m-0 font-heading text-lg md:text-xl leading-[1.5] text-[#fffbf4]/88 max-w-[620px]">
+              {meta.description}
+            </p>
+          )}
+          <div className="flex flex-wrap gap-7 mt-1.5">
+            {categories.length > 0 && (
+              <BandStat value={categories.length} label={categories.length === 1 ? "category" : "categories"} />
+            )}
+            <BandStat value={allTopics.length} label={allTopics.length === 1 ? "topic" : "topics"} />
+            <BandStat value={hasHindi ? "EN · हिन्दी" : "EN"} label={hasHindi ? "both languages" : "English"} />
           </div>
+        </PageBand>
 
+        {/* ── LIGHT: categories (or loose topics) ─────────────────────────── */}
+        <div id={categories.length > 0 ? "categories" : "topics"} className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 pt-12 md:pt-16 pb-12 md:pb-16 flex flex-col gap-6">
           {categories.length > 0 ? (
-            // This subject has categories → show category cards
             <>
-              <h2 className="font-heading text-xl font-semibold text-navy mb-5">
-                Categories
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em]" style={{ color: colors?.accent ?? "#059669" }}>
+                  {meta.title}
+                </span>
+                <h2 className="m-0 font-heading text-3xl md:text-4xl font-bold text-navy-dark tracking-[-0.015em]">Categories</h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {categories.map((cat) => {
-                  const catSlug = [slug[0], cat.slug];
-                  const hindi = getHindiInfo(catSlug);
+                  const count = topicsByCategory.get(cat.slug)?.length ?? 0;
                   return (
                     <ContentCard
                       key={cat.slug}
                       title={cat.meta.title}
                       description={cat.meta.description}
+                      label={`${count} ${count === 1 ? "topic" : "topics"}`}
                       href={`/${slug[0]}/${cat.slug}`}
                       hoverBg={colors?.bg}
                       accent={colors?.accent}
                       image={cat.meta.image}
                       ctaLabel="Explore →"
-                      hindiHref={hindi?.href}
-                      hindiTitle={hindi?.title}
                     />
                   );
                 })}
               </div>
             </>
           ) : looseTopics.length > 0 ? (
-            // No categories, but topics exist directly under the subject → show topics
             <>
-              <h2 className="font-heading text-xl font-semibold text-navy mb-5">
-                Topics
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <h2 className="m-0 font-heading text-3xl md:text-4xl font-bold text-navy-dark tracking-[-0.015em]">Topics</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {looseTopics.map((topic) => {
                   const hindi = topic.hindiHref
                     ? { href: topic.hindiHref, title: topic.hindiTitle }
@@ -468,17 +554,51 @@ export default async function ContentPage({
           ) : (
             // Nothing yet — empty state
             <div className="py-16 text-center">
-              <p className="font-body text-lg text-muted">
-                Topics coming soon. Check back later.
-              </p>
+              <p className="font-body text-lg text-muted">Topics coming soon. Check back later.</p>
             </div>
           )}
         </div>
-      </div>
+
+        {/* ── DARK: recently added (the light/dark alternation) ────────────── */}
+        {recentlyAdded.length > 0 && (
+          <section className="bg-navy-dark text-on-dark">
+            <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12 md:py-14 flex flex-col gap-6">
+              <div className="flex items-end justify-between gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-mint">Recently added</span>
+                  <h2 className="m-0 font-heading text-3xl md:text-4xl font-bold tracking-[-0.015em] text-on-dark">New in {meta.title}</h2>
+                </div>
+              </div>
+              {/* Numbered rows, two columns on desktop. The mint number is the
+                  one accent; everything else is white at varying opacity. */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12">
+                {recentlyAdded.map((t, i) => {
+                  const hindi = t.hindiHref ? { href: t.hindiHref } : getHindiInfo(t.slug);
+                  return (
+                    <Link
+                      key={t.slug.join("/")}
+                      href={`/${t.slug.join("/")}`}
+                      className="grid grid-cols-[40px_minmax(0,1fr)_auto] gap-3.5 items-baseline py-4 border-b border-on-dark/10 hover:text-mint transition-colors"
+                    >
+                      <span className="font-heading text-xl font-bold text-mint">{String(i + 1).padStart(2, "0")}</span>
+                      <span className="flex flex-col gap-0.5">
+                        <span className="font-heading text-lg font-semibold leading-snug">{t.meta.title}</span>
+                        <span className="font-body text-[13px] text-on-dark/60">{categoryTitle(t)}</span>
+                      </span>
+                      <span className="font-body text-xs text-on-dark/60 whitespace-nowrap">{hindi ? "EN · हिन्दी" : "EN"}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        )}
+      </>
     );
   }
 
   // ── CATEGORY PAGE (folder with topic files, no sub-folders) ───────────────
+  // REDESIGN 16 Sep 2026 (board 4): compact band, then the topic cards.
   if (pageType === "category") {
     // Could be a subject with no categories, or an actual category inside a subject
     // Topics from BOTH sources — the .mdx folder and the CMS — merged, CMS wins
@@ -491,32 +611,37 @@ export default async function ContentPage({
     const cmsTopics = await getCMSArticlesInCategory(slug[0], slug.length === 1 ? null : slug[1]);
     const topics = mergeTopics(mdxTopics, cmsTopics);
 
+    // Breadcrumb trail WITHOUT the current page (the band's title is the page)
+    const parentCrumbs = breadcrumbs.slice(0, -1);
+
     return (
-      <div className="w-full min-h-screen transition-colors duration-300" style={colors ? { backgroundColor: colors.bg } : undefined}>
-        <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12">
-          <Breadcrumb items={breadcrumbs} />
-
-          {/* Category/subject header */}
-          <div className="mb-10">
-            <h1 className="font-heading text-4xl font-bold leading-tight" style={colors ? { color: colors.accent } : undefined}>
-              {meta.title}
-            </h1>
-            {meta.description && (
-              <p className="font-body text-lg text-muted mt-3 max-w-2xl">
-                {meta.description}
-              </p>
-            )}
-            {colors && <div className="mt-5 h-[3px] w-14 rounded-full" style={{ backgroundColor: colors.border }} />}
+      <>
+        <PageBand colors={colors} breadcrumbs={parentCrumbs} coverUrl={meta.image} size="compact">
+          <div className="flex flex-col gap-3.5 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
+            <div className="flex flex-col gap-3">
+              <BandLabel colors={colors}>{[getSubjectInfo(slug[0])?.label ?? breadcrumbs[0]?.label, slug.length > 1 ? "Category" : "Subject"].filter(Boolean).join(" · ")}</BandLabel>
+              <h1 className="m-0 font-heading text-4xl md:text-5xl font-bold leading-[1.05] tracking-[-0.02em] text-[#fffbf4]">
+                {meta.title}
+              </h1>
+              {meta.description && (
+                <p className="m-0 font-heading text-lg leading-[1.5] text-[#fffbf4]/88 max-w-[640px]">{meta.description}</p>
+              )}
+            </div>
+            <span className="font-body text-[13px] text-[#fffbf4]/75 whitespace-nowrap">
+              {topics.length} {topics.length === 1 ? "topic" : "topics"} · reading order
+            </span>
           </div>
+        </PageBand>
 
-          {/* Topic list */}
+        <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12 md:py-16 flex flex-col gap-6">
           {topics.length > 0 ? (
             <>
-              <h2 className="font-heading text-xl font-semibold text-navy mb-5">
-                Topics
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {topics.map((topic) => {
+              <div className="flex items-baseline justify-between gap-4">
+                <h2 className="m-0 font-heading text-2xl md:text-3xl font-bold text-navy-dark">Topics</h2>
+                <span className="font-body text-[13px] text-muted">Sorted by reading order</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {topics.map((topic, i) => {
                   // CMS topics carry their own Hindi link; MDX topics use the file check.
                   const hindi = topic.hindiHref
                     ? { href: topic.hindiHref, title: topic.hindiTitle }
@@ -526,6 +651,7 @@ export default async function ContentPage({
                       key={topic.slug.join("/")}
                       title={topic.meta.title}
                       description={topic.meta.description}
+                      label={`${meta.title} · ${String(i + 1).padStart(2, "0")}`}
                       href={`/${topic.slug.join("/")}`}
                       hoverBg={colors?.bg}
                       accent={colors?.accent}
@@ -539,13 +665,11 @@ export default async function ContentPage({
             </>
           ) : (
             <div className="py-16 text-center">
-              <p className="font-body text-lg text-muted">
-                Topics coming soon. Check back later.
-              </p>
+              <p className="font-body text-lg text-muted">Topics coming soon. Check back later.</p>
             </div>
           )}
         </div>
-      </div>
+      </>
     );
   }
 

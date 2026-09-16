@@ -449,6 +449,7 @@ export async function getCMSArticlesInCategory(
         description: true,
         order: true,
         coverImage: true,
+        publishedDate: true, // for "Recently added" on subject pages (redesign, 16 Sep)
       },
     });
 
@@ -472,6 +473,7 @@ export async function getCMSArticlesInCategory(
           // undefined here, and the sort treats that as 999 — i.e. last — exactly
           // like a missing `order:` in MDX frontmatter.
           order: typeof d.order === "number" ? d.order : undefined,
+          date: d.publishedDate ?? undefined,
           image: d.coverImage?.url ?? undefined,
           imageWidth: d.coverImage?.width ?? undefined,
           imageHeight: d.coverImage?.height ?? undefined,
