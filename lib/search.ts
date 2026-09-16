@@ -8,6 +8,7 @@
 // Algolia/Meilisearch) — the search UI would stay the same.
 
 import { getAllSlugs, slugToFilePath, getContentMeta, getPageType } from "@/lib/content";
+import { getCMSSearchEntries } from "@/lib/cms";
 
 // One searchable item shown in results
 export type SearchItem = {
@@ -25,28 +26,41 @@ const TYPE_LABEL: Record<string, string> = {
   topic: "Topic",
 };
 
-export function getSearchIndex(): SearchItem[] {
-  const slugs = getAllSlugs(); // every content page as a slug array
-  const items: SearchItem[] = [];
+// Builds the full search index: every MDX page PLUS every published CMS
+// article and news item, in both languages. Async since 16 Sep 2026 — before
+// that the index came only from MDX files, so once the dummy MDX articles were
+// deleted and real writing moved to the CMS, the search could not find any of
+// it. If the same URL exists in both places the CMS entry wins, matching how
+// the pages themselves resolve (Payload-first, MDX-fallback).
+export async function getSearchIndex(): Promise<SearchItem[]> {
+  const byUrl = new Map<string, SearchItem>();
 
-  for (const slug of slugs) {
+  // 1. MDX pages (subject overviews, categories, any remaining MDX topics)
+  for (const slug of getAllSlugs()) {
     const filePath = slugToFilePath(slug);
     if (!filePath) continue; // skip anything that can't be resolved to a file
-
     const meta = getContentMeta(filePath);
     const type = getPageType(slug);
-
-    items.push({
+    const url = "/" + slug.join("/");
+    byUrl.set(url, {
       title: meta.title,
       description: meta.description ?? "",
-      url: "/" + slug.join("/"),
-      // News articles live under content/news/... and getPageType() classifies
-      // them as "topic" since they're individual content files. We override that
-      // here so they show as "News" in search results instead of "Topic".
+      url,
       type: slug[0] === "news" ? "News" : (TYPE_LABEL[type] ?? "Page"),
       subject: slug[0],
     });
   }
 
-  return items;
+  // 2. CMS articles + news (English and Hindi entries)
+  for (const e of await getCMSSearchEntries()) {
+    byUrl.set(e.url, {
+      title: e.title,
+      description: e.description,
+      url: e.url,
+      type: e.type,
+      subject: e.subject,
+    });
+  }
+
+  return Array.from(byUrl.values());
 }

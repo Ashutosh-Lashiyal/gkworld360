@@ -467,6 +467,95 @@ export async function getCMSLatestArticles(limit = 1): Promise<CMSListedTopic[]>
   }
 }
 
+// ── SEARCH ───────────────────────────────────────────────────────────────────
+// Everything published in the CMS, shaped for the site search (lib/search.ts):
+// one row per article per LANGUAGE (an English entry at /history/... and, when
+// a Hindi title exists, a Hindi entry at /hi/history/...), plus the same for
+// news. Two small queries — title, description and the slugs only — so a
+// search index refresh costs a few kilobytes, not the article bodies.
+// (Added 16 Sep 2026: the search only knew MDX files, so CMS articles were
+// invisible to it.)
+export type CMSSearchEntry = {
+  title: string;
+  description: string;
+  url: string;
+  type: "Topic" | "News";
+  subject: string; // subject slug for articles; "news" for news
+  lang: CMSLocale;
+};
+
+export async function getCMSSearchEntries(): Promise<CMSSearchEntry[]> {
+  try {
+    const payload = await getClient();
+    const entries: CMSSearchEntry[] = [];
+    type Localized = Partial<Record<CMSLocale, string | null>>;
+
+    // Articles
+    const articles = await payload.find({
+      collection: "articles",
+      where: { _status: { equals: "published" } },
+      locale: "all",
+      depth: 1, // populate subject + category so we can build the URL
+      limit: 1000,
+      select: { slug: true, title: true, description: true, subject: true, category: true },
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for (const d of articles.docs as any[]) {
+      const subjectSlug: string = d.subject?.slug ?? "";
+      if (!subjectSlug) continue;
+      const path = [subjectSlug, d.category?.slug, d.slug].filter(Boolean).join("/");
+      const title = (d.title ?? {}) as Localized;
+      const description = (d.description ?? {}) as Localized;
+      for (const lang of ["en", "hi"] as CMSLocale[]) {
+        const t = title[lang]?.trim();
+        if (!t) continue; // no version in this language
+        entries.push({
+          title: t,
+          description: description[lang] ?? "",
+          url: (lang === "hi" ? "/hi/" : "/") + path,
+          type: "Topic",
+          subject: subjectSlug,
+          lang,
+        });
+      }
+    }
+
+    // News
+    const news = await payload.find({
+      collection: "news",
+      where: { _status: { equals: "published" } },
+      locale: "all",
+      depth: 0,
+      limit: 1000,
+      select: { slug: true, title: true, description: true },
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for (const d of news.docs as any[]) {
+      const title = (d.title ?? {}) as Localized;
+      const description = (d.description ?? {}) as Localized;
+      for (const lang of ["en", "hi"] as CMSLocale[]) {
+        const t = title[lang]?.trim();
+        if (!t) continue;
+        entries.push({
+          title: t,
+          description: description[lang] ?? "",
+          url: (lang === "hi" ? "/hi/news/" : "/news/") + d.slug,
+          type: "News",
+          subject: "news",
+          lang,
+        });
+      }
+    }
+
+    return entries;
+  } catch (error) {
+    // Same fail-safe as every reader here: the search keeps working on the
+    // MDX pages alone rather than breaking outright.
+    cmsUnavailable("getCMSSearchEntries", "articles+news", error);
+    return [];
+  }
+}
+
 export async function getCMSArticlesInCategory(
   subjectSlug: string,
   categorySlug: string | null

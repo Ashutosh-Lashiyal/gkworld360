@@ -3,15 +3,17 @@
 // fetches this once (the first time the user clicks into the search field),
 // then filters it in the browser — so the homepage itself stays light and fast.
 //
-// "force-static" makes this a cached, static JSON file served from the CDN.
-// It's rebuilt only when the site is rebuilt (i.e. when content changes), so
-// there is no per-request server work.
+// `revalidate = 3600`: the JSON is cached and REBUILT AT MOST ONCE AN HOUR.
+// (It used to be "force-static" — built once per deploy — which was fine while
+// every page was an MDX file in the repo. Now articles are published from
+// /admin without a deploy, so the index has to refresh on its own. One small
+// database query per hour, at most.)  Changed 16 Sep 2026.
 
 import { getSearchIndex } from "@/lib/search";
 
-export const dynamic = "force-static";
+export const revalidate = 3600;
 
 export async function GET() {
-  const index = getSearchIndex();
+  const index = await getSearchIndex();
   return Response.json(index);
 }

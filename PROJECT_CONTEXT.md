@@ -262,6 +262,13 @@ version rows + sets published), then restoring `.env.local` to dev. Verified liv
   hydration), `ReadLaterButton variant="light"`, pagination Buttons keeping filters, aggregation
   note, sidebar = `ReadLaterPeek` (client, localStorage) + dark Sources card. Chips scroll
   sideways on phones. `LatestHeadlines.tsx` (old card grid) is now unused by pages.
+- **Search now reads the CMS (16 Sep, on `redesign`):** `getSearchIndex()` is async and merges
+  MDX pages with `getCMSSearchEntries()` (published articles + news, EN and HI entries, two
+  small select queries). `/api/search-index` went from `force-static` (once per deploy) to
+  `revalidate = 3600` (hourly), so an article published in /admin is searchable within the hour.
+  Before this the index knew only the 7 MDX overviews — "Revolt of 1857" was unfindable once the
+  dummy MDX was deleted. Also fixed: homepage search list clipped by the hero and stacking over
+  the header (z-30 < header z-50; hero no longer `overflow-hidden`).
 - **ALL SIX PHASES BUILT.** Owner to review everything locally, then merge `redesign` → `main`
   (see GIT_NOTES "Using a branch for real"). No schema changes anywhere in the redesign, so no
   prod-schema-first step is needed before deploying.

@@ -22,7 +22,7 @@ export default async function SearchPage({
   const initialQuery = q ?? "";
 
   // Build the full search index once, on the server
-  const index = getSearchIndex();
+  const index = await getSearchIndex();
 
   return (
     <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12">
