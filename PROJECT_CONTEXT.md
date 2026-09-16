@@ -14,7 +14,7 @@
 
 ---
 
-# 🟢 START HERE — status as of 15 Sep 2026
+# 🟢 START HERE — status as of 16 Sep 2026
 
 **Incident RESOLVED. Content pipeline DESIGNED, draft mode BUILT.**
 Next work: the content pipeline, piece 2 onward — see the 14 Sep section below and
@@ -153,15 +153,39 @@ to `draft` — corrected to `published` via SQL (versions table was empty, so sa
   Hindi from CMS, toggle, Hindi links in listings). Owner's rule: articles and news work
   identically. Verified with a throwaway bilingual item.
 
-**⚠️ POST-DEPLOY STEP (required once, after the draft-mode code reaches production):**
-Two pre-existing items have no version rows, so the live `/admin` will HIDE them once
-drafts are on — AND their `_status` will default to `draft`, taking them off the public site
-(they'd fall back to MDX / 404). Fix each by opening its direct URL and clicking **Publish**:
-- Article: https://gkworld360.vercel.app/admin/collections/articles/1  (Revolt of 1857)
-- News:    https://gkworld360.vercel.app/admin/collections/news/1      (Smart Border Project)
-Then confirm both show "Published" in their lists. (Already done on the dev branch.)
-Check the live pages afterwards: `/history/modern-india/revolt-of-1857` and
-`/news/smart-border-project-india` must be 200.
+**✅ POST-DEPLOY — done 15 Sep 2026, after a self-inflicted outage:**
+The deploy went out with the News draft-mode schema present only on the `dev` branch —
+production had no `news._status` column or `_news_v` tables, so every CMS news query
+failed: Smart Border 404'd, CMS news vanished from `/news` and the homepage, and the live
+`/admin` showed BLANK for Current Affairs and EMPTY for Articles (no version rows).
+**This was exactly the "move schema to production deliberately" rule from SERVICES.md,
+not followed before saying "push".** Fixed by temporarily pointing the local dev server
+at production (schema push), re-saving article #1 and news #1 through Payload (creates
+version rows + sets published), then restoring `.env.local` to dev. Verified live.
+
+**⚠️ NEW PRE-DEPLOY RULE — whenever a collection changes (new field, drafts, etc.):**
+1. Test on `dev` as usual
+2. **Before `git push`:** point `.env.local` at production for one dev-server start
+   (schema push), then point it straight back. Verify with a read-only host check.
+3. If drafts were enabled: re-save existing items on production so they get version rows
+   and `published` status
+4. Then push. Longer term: proper Payload migration files so this cannot be forgotten.
+
+**16 Sep 2026 — P4-a done + dummy content removed:**
+- Category/subject listings now merge MDX + CMS (CMS wins), sorted by `order`. A published
+  CMS article finally appears on its category page. `mergeTopics()` in the catch-all page.
+- Deleted the 4 dummy articles (+2 Hindi twins) from `content/` — they were June sample
+  data, not real content. Only the 7 `overview.mdx` files remain (needed by subject/category
+  pages until subjects are seeded). **No schema change → no pre-deploy DB step needed.**
+- Correction: earlier notes said "13 MDX articles"; the real count was 4 (+7 overviews).
+
+**16 Sep 2026 — card redesign + design work parked:**
+- `ContentCard` rebuilt: one face, no hover-flip (unreachable on touch; back face clipped).
+  Image slot (cover or subject-tint placeholder), optional label, title, 2-line description,
+  buttons ≥44px: **10px radius, black text, page-tint fill, subject-colour border** (owner's
+  spec). "English" + "हिन्दी" when both exist, else "Read →". Wired into all 5 call sites.
+- Homepage redesign **PARKED** — see `IDEAS.md` (two mocked directions + canvas link).
+  Content first, then real-user feedback, then design.
 
 **Next (owner's priority):** Telegram "draft ready" ping with **[Publish]** button +
 approve-from-phone via a webhook on Vercel (both guards: facts list in the message +

@@ -5,7 +5,7 @@
 > For the site's vision see `GKWORLD360_MASTER_BLUEPRINT.md`; for today's build status
 > see `PROJECT_CONTEXT.md` in the project root.
 >
-> _Decided: 14 Sep 2026. Status: BEING BUILT — pieces 1, 6, inbox and first article done (see §9). Last updated 15 Sep 2026._
+> _Decided: 14 Sep 2026. Status: BEING BUILT — pieces 1, 6, P4-a, News parity, inbox and first article done (see §9). Last updated 16 Sep 2026._
 
 ---
 
@@ -210,7 +210,7 @@ possible at all.
 | 7 | **Image generation** — three candidates via Gemini, upload to R2, attach; manual fallback | ⬜ |
 | 8 | **Topic tracker** — done / drafted / pending, once volume needs it | ⬜ |
 | 9 | **Telegram "draft ready" ping + approve-from-phone** (for BOTH articles and news) — one bot (`@Gkworld360_bot`) via a webhook on Vercel: records incoming photos to a tiny DB table (file_id + caption only, ~200 bytes; the image never touches Neon/R2), sends the draft notification with the facts list + **[Publish]** button, and a confirmation tap before publishing. Only the owner's chat ID is accepted; Telegram's secret token verified. Real drafts must live on the PRODUCTION DB for this to work. | ⬜ **next** |
-| P4-a | **Category + subject listings from CMS** — `getCMSArticlesInCategory()` exists, not yet wired into the page; a published CMS article is currently listed nowhere | ⬜ |
+| P4-a | **Category + subject listings from CMS** — merged with MDX (CMS wins on a clash), sorted by `order` then title; Hindi link on the card comes from the CMS for CMS topics. `getCMSArticlesInCategory` now uses `locale:"all"` in one query to know whether Hindi exists. | ✅ **done 16 Sep** |
 
 **Technical notes learned building this (15 Sep 2026):**
 - Payload stores rich text as **Lexical JSON**. The exact node shapes (root / heading / paragraph / text / `keyTakeaways` block with `version: 2`) were copied from the existing Revolt of 1857 article and used directly — no converter needed for our own generated content.
@@ -221,6 +221,21 @@ possible at all.
 - Length follows the source: a one-page section produced ~350 words per language. Do not pad with facts from memory. Facts the model adds for context (e.g. "Calicut is on the south-western coast") are listed separately in the verify list as **not from the book**.
 
 ---
+
+## 9b. Dummy content removed (16 Sep 2026)
+
+The site's only pre-pipeline content was **sample data built on 23–25 Jun 2026** while the
+page templates were being designed — 3 history articles + 1 news item (with 2 Hindi twins),
+NOT the "13 articles" mistakenly quoted earlier. The owner decided it was all dummy and
+deleted it, so the site now carries only pipeline content. Order mattered: **P4-a was wired
+first**, otherwise `/history/modern-india` would have listed nothing after the files went.
+
+Still on disk: the 7 `overview.mdx` files (subject/category intro text). Subject and
+category pages need them to render; they move into the Subjects/Categories collections
+when the 18 subjects are seeded.
+
+Still in the CMS from the June/July tests: article #1 "Revolt of 1857" (English only) and
+news #1 "Smart Border Project". Whether those two also go is the owner's call — see chat.
 
 ## 10. Decisions log
 

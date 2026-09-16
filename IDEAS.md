@@ -170,3 +170,33 @@ The browser console logs *"Encountered two children with the same key"* on **/co
 that page renders a list (a `.map()`) with **non-unique `key` props** (likely using a repeated value
 or a hard-coded key). Harmless visually, but React keys must be unique. Fix: find the `.map()` on the
 contact page and give each item a unique `key`. Spotted 16 Jul 2026 while debugging the headlines feed.
+
+---
+
+## 🤔 Homepage / visual redesign — PARKED 16 Sep 2026 (revisit after real content + user feedback)
+
+**Owner's view:** the site looks plain — "a normal site made out of AI." Diagnosis agreed:
+generic dark-overlay stock-photo hero; every section the same white card in the same 3-column
+grid; the teal palette and six subject colours defined but barely used; empty "Popular / Recently
+Added" bands; nothing that could only be *this* site.
+
+**Two directions were mocked up** (real content, exact tokens) — canvas:
+https://claude.ai/artifact/VaJ5z9wuELH4k6FEWHPTW8
+- **A — "The Reference Book":** warm paper, sepia textbook sketches as the identity (ties to the
+  "everything is illustration" image policy), bold subject tiles, numbered Contents list, ruled
+  sections, Devanagari as a motif. Most distinctive; biggest change; needs the sketches to exist.
+- **B — "Modern Academic":** keep the teal tokens, use them boldly — deep teal hero with a giant
+  ज्ञान glyph as art, colour strip of subjects, tinted headline band with a numbered list.
+  Least disruption; still a familiar shape.
+
+**Decision:** park it. **Content first, then a few days of real use and user reviews, then
+design.** Real feedback will say what to fix better than another round of mockups.
+
+**Owner also offered reference screenshots** (buttons / cards / graphics from other sites) as a
+mood board when the time comes. Rule agreed: take the *feel* and rebuild with our tokens — never
+copy a specific company's distinctive UI. An HTML template with a permissive licence is even
+better than screenshots (real spacing values).
+
+**Done now regardless:** the article card was rebuilt (single face, no hover-flip — the flip was
+unreachable on touch and its absolute-positioned back face clipped). Buttons: 10px radius, black
+text, filled with the page tint, 1px subject-colour border, ≥44px tall.

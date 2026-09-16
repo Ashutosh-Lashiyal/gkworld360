@@ -77,8 +77,13 @@ the live database.
   goes stale over time. To refresh: Neon → Branches → `dev` → **Reset from parent**. This
   discards any local test data, which is usually what you want.
 - **Schema changes** (new fields) now land on `dev` first when the dev server starts. They must
-  be moved to `production` deliberately before the code that needs them is deployed — for now by
+  be moved to `production` deliberately BEFORE the code that needs them is deployed — for now by
   running the dev server once against production; a proper migration step is a later improvement.
+  **⚠️ Forgetting this broke the live site on 15 Sep 2026** (News draft-mode schema was dev-only →
+  CMS news 404'd, admin Current Affairs page blank). It is now a numbered pre-deploy rule in
+  `PROJECT_CONTEXT.md`. The production connection string lives ONLY in Vercel; if it is ever
+  needed locally for a schema push, copy it from Vercel → Settings → Environment Variables,
+  use it for the one start, then remove it.
 - **Auto-delete is OFF** ("Expires: Never"). Don't turn it on — the branch is permanent.
 - **R2 (images) is NOT branched** — local uploads land in the real bucket. Delete test media after
   local testing. A separate dev prefix/bucket is a later refinement.

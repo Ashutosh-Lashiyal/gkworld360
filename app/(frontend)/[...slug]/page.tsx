@@ -38,7 +38,14 @@ import { SITE_URL, SITE_NAME, absoluteUrl } from "@/lib/site";
 import { getSubjectColors } from "@/lib/subject-colors";
 import { formatNewsDate } from "@/lib/date-utils";
 // CMS (Payload) — used to render topics & news from the database when they exist there.
-import { getCMSArticle, getCMSArticleLanguages, getCMSNews, getCMSNewsLanguages } from "@/lib/cms";
+import {
+  getCMSArticle,
+  getCMSArticleLanguages,
+  getCMSArticlesInCategory,
+  getCMSNews,
+  getCMSNewsLanguages,
+  type CMSListedTopic,
+} from "@/lib/cms";
 import CMSTopicView from "@/components/cms/CMSTopicView";
 import CMSNewsView from "@/components/cms/CMSNewsView";
 
@@ -207,6 +214,27 @@ export async function generateMetadata({
   };
 }
 
+// ── MERGE MDX + CMS TOPICS FOR A LISTING ──────────────────────────────────────
+// A category (or subject) page lists its topics from TWO sources: the .mdx files
+// on disk (the old system) and the CMS database (the new one). Both hand back
+// the same shape, so merging is simple:
+//   1. If the same topic exists in both, the CMS copy wins (Payload-first).
+//   2. Sort by `order` (missing = 999, i.e. last), then alphabetically —
+//      the same rule lib/content.ts uses for Previous/Next.
+// This is the same pattern the /news listing already used for news items.
+type ListedTopic = CMSListedTopic; // { slug, meta, hindiHref?, hindiTitle? }
+function mergeTopics(mdx: ListedTopic[], cms: ListedTopic[]): ListedTopic[] {
+  const byPath = new Map<string, ListedTopic>();
+  for (const t of mdx) byPath.set(t.slug.join("/"), t);
+  for (const t of cms) byPath.set(t.slug.join("/"), t); // overwrites → CMS wins
+  return Array.from(byPath.values()).sort((a, b) => {
+    const ao = a.meta.order ?? 999;
+    const bo = b.meta.order ?? 999;
+    if (ao !== bo) return ao - bo;
+    return a.meta.title.localeCompare(b.meta.title);
+  });
+}
+
 // ── BREADCRUMB BUILDER ────────────────────────────────────────────────────────
 // Converts a slug array into breadcrumb items.
 // ['history', 'modern-india', 'revolt-of-1857'] →
@@ -357,7 +385,12 @@ export default async function ContentPage({
   // If it has no categories, it shows its TOPICS directly (e.g. Human Body → Blood).
   if (pageType === "subject") {
     const categories = getCategoriesInSubject(slug[0]);
-    const looseTopics = categories.length === 0 ? getTopicsInSubject(slug[0]) : [];
+    // Topics sitting directly under the subject (no category) — from BOTH the
+    // .mdx folder and the CMS, merged. Only shown when there are no categories.
+    const looseTopics =
+      categories.length === 0
+        ? mergeTopics(getTopicsInSubject(slug[0]), await getCMSArticlesInCategory(slug[0], null))
+        : [];
 
     return (
       <div className="w-full min-h-screen transition-colors duration-300" style={colors ? { backgroundColor: colors.bg } : undefined}>
@@ -394,6 +427,9 @@ export default async function ContentPage({
                       description={cat.meta.description}
                       href={`/${slug[0]}/${cat.slug}`}
                       hoverBg={colors?.bg}
+                      accent={colors?.accent}
+                      image={cat.meta.image}
+                      ctaLabel="Explore →"
                       hindiHref={hindi?.href}
                       hindiTitle={hindi?.title}
                     />
@@ -409,7 +445,9 @@ export default async function ContentPage({
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {looseTopics.map((topic) => {
-                  const hindi = getHindiInfo(topic.slug);
+                  const hindi = topic.hindiHref
+                    ? { href: topic.hindiHref, title: topic.hindiTitle }
+                    : getHindiInfo(topic.slug);
                   return (
                     <ContentCard
                       key={topic.slug.join("/")}
@@ -417,6 +455,8 @@ export default async function ContentPage({
                       description={topic.meta.description}
                       href={`/${topic.slug.join("/")}`}
                       hoverBg={colors?.bg}
+                      accent={colors?.accent}
+                      image={topic.meta.image}
                       hindiHref={hindi?.href}
                       hindiTitle={hindi?.title}
                     />
@@ -440,10 +480,15 @@ export default async function ContentPage({
   // ── CATEGORY PAGE (folder with topic files, no sub-folders) ───────────────
   if (pageType === "category") {
     // Could be a subject with no categories, or an actual category inside a subject
-    const topics =
+    // Topics from BOTH sources — the .mdx folder and the CMS — merged, CMS wins
+    // on a clash, sorted by reading order. Without the CMS half, an article
+    // written in /admin rendered at its URL but was listed NOWHERE (fixed 16 Sep).
+    const mdxTopics =
       slug.length === 1
         ? getTopicsInSubject(slug[0])           // subject with no categories
         : getTopicsInCategory(slug[0], slug[1]); // category inside a subject
+    const cmsTopics = await getCMSArticlesInCategory(slug[0], slug.length === 1 ? null : slug[1]);
+    const topics = mergeTopics(mdxTopics, cmsTopics);
 
     return (
       <div className="w-full min-h-screen transition-colors duration-300" style={colors ? { backgroundColor: colors.bg } : undefined}>
@@ -471,7 +516,10 @@ export default async function ContentPage({
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {topics.map((topic) => {
-                  const hindi = getHindiInfo(topic.slug);
+                  // CMS topics carry their own Hindi link; MDX topics use the file check.
+                  const hindi = topic.hindiHref
+                    ? { href: topic.hindiHref, title: topic.hindiTitle }
+                    : getHindiInfo(topic.slug);
                   return (
                     <ContentCard
                       key={topic.slug.join("/")}
@@ -479,6 +527,8 @@ export default async function ContentPage({
                       description={topic.meta.description}
                       href={`/${topic.slug.join("/")}`}
                       hoverBg={colors?.bg}
+                      accent={colors?.accent}
+                      image={topic.meta.image}
                       hindiHref={hindi?.href}
                       hindiTitle={hindi?.title}
                     />
@@ -750,6 +800,8 @@ export default async function ContentPage({
                       title={topic.meta.title}
                       href={`/${topic.slug.join("/")}`}
                       hoverBg={colors?.bg}
+                      accent={colors?.accent}
+                      image={topic.meta.image}
                       hindiHref={hindi?.href}
                       hindiTitle={hindi?.title}
                     />

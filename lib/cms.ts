@@ -3,7 +3,7 @@
 // It uses Payload's "Local API": a way to query the database DIRECTLY from
 // server-side code, without making an HTTP request. It's faster than calling
 // /api/... over the network and only ever runs on the server (never the browser).
-import { getPayload } from "payload";
+import { getPayload, type Where } from "payload";
 import { configPromise } from "@/app/(payload)/config";
 // TocHeading and ContentMeta are plain types; `import type` means we borrow only
 // their shape, not any of lib/content's server-only (fs) code. That distinction
@@ -382,44 +382,59 @@ export async function getCMSNewsHindiSlugs(limit = 200): Promise<Set<string>> {
 }
 
 // ── ARTICLES FOR A LISTING PAGE (category / subject) ─────────────────────────
-// Returns every CMS article that belongs to one subject (and optionally one
-// category), shaped so a listing page can render it.
+// Returns every PUBLISHED CMS article that belongs to one subject (and optionally
+// one category), shaped so a listing page can render it.
 //
 // WHY THE RETURN SHAPE LOOKS LIKE THIS:
 // The MDX equivalent, `getTopicsInCategory()` in lib/content.ts, returns
 //   { slug: string[]; meta: ContentMeta }[]
-// We return the EXACT same shape on purpose. That means the page can merge the
-// two lists and render them with the same JSX — the rendering code never has to
-// know, or care, whether a topic came from a file or from the database. Match
-// the shape at the DATA layer and the UI layer stays untouched.
+// We return the SAME shape on purpose (plus an optional Hindi link). That means
+// the page can merge the two lists and render them with the same JSX — the
+// rendering code never has to know, or care, whether a topic came from a file
+// or from the database. Match the shape at the DATA layer and the UI layer
+// stays untouched.
 //
 // `categorySlug = null` means "articles sitting directly under the subject, with
 // no category" — the case the subject page needs.
+export type CMSListedTopic = {
+  slug: string[];
+  meta: ContentMeta;
+  // Set when the article also has a Hindi version. The MDX path works this out
+  // by looking for a .hi.mdx file; for CMS articles it comes from the database.
+  hindiHref?: string;
+  hindiTitle?: string;
+};
+
 export async function getCMSArticlesInCategory(
   subjectSlug: string,
   categorySlug: string | null
-): Promise<{ slug: string[]; meta: ContentMeta }[]> {
+): Promise<CMSListedTopic[]> {
   try {
     const payload = await getClient();
 
+    // Build the filter. Written the long way (rather than a compact ternary)
+    // because this file is one the owner learns from.
+    const where: Where = {
+      "subject.slug": { equals: subjectSlug },
+      _status: { equals: "published" }, // never list a draft
+    };
+    if (categorySlug) {
+      where["category.slug"] = { equals: categorySlug };
+    } else {
+      where["category"] = { exists: false };
+    }
+
     const result = await payload.find({
       collection: "articles",
-      // Filter in the DATABASE, not in JavaScript. Fetching every article and
-      // filtering here would drag rows across the network only to throw most of
-      // them away — exactly the mistake that exhausted our Neon transfer quota
-      // in August (see PROJECT_CONTEXT.md). Let Postgres do the work.
-      where: {
-        "subject.slug": { equals: subjectSlug },
-        // Published only — drafts must never appear in a public listing.
-        _status: { equals: "published" },
-        ...(categorySlug
-          ? { "category.slug": { equals: categorySlug } }
-          : { category: { exists: false } }),
-      },
-      // depth 1 populates the coverImage upload so we can read its URL.
-      depth: 1,
+      // Filter in the DATABASE, not in JavaScript — fetching everything and
+      // filtering here is the mistake that exhausted our Neon quota in August.
+      where,
+      // `locale: "all"` returns each localized field as { en, hi } in ONE query,
+      // so we learn whether a Hindi version exists without a second round-trip.
+      locale: "all",
+      depth: 1, // populate the coverImage upload so we can read its URL
       limit: 500,
-      // Only the columns a listing card actually shows — again, fewer bytes.
+      // Only the columns a listing card actually shows — fewer bytes.
       select: {
         slug: true,
         title: true,
@@ -430,24 +445,33 @@ export async function getCMSArticlesInCategory(
     });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return result.docs.map((d: any) => ({
+    return result.docs.map((d: any) => {
+      // With locale:"all", localized fields are objects keyed by language.
+      const title = (d.title ?? {}) as Partial<Record<CMSLocale, string | null>>;
+      const description = (d.description ?? {}) as Partial<Record<CMSLocale, string | null>>;
       // Rebuild the URL path. We already know the subject and category from the
       // function's arguments, so there is no need to fetch them back.
-      slug: categorySlug ? [subjectSlug, categorySlug, d.slug] : [subjectSlug, d.slug],
-      meta: {
-        title: d.title ?? "",
-        description: d.description ?? "",
-        subject: subjectSlug,
-        category: categorySlug ?? undefined,
-        // `order` drives the reading sequence. Left empty in /admin it becomes
-        // undefined here, and the sort treats that as 999 — i.e. last — exactly
-        // like a missing `order:` in MDX frontmatter.
-        order: typeof d.order === "number" ? d.order : undefined,
-        image: d.coverImage?.url ?? undefined,
-        imageWidth: d.coverImage?.width ?? undefined,
-        imageHeight: d.coverImage?.height ?? undefined,
-      },
-    }));
+      const slug = categorySlug ? [subjectSlug, categorySlug, d.slug] : [subjectSlug, d.slug];
+      const hasHindi = Boolean(title.hi?.trim());
+      return {
+        slug,
+        meta: {
+          title: title.en ?? "",
+          description: description.en ?? "",
+          subject: subjectSlug,
+          category: categorySlug ?? undefined,
+          // `order` drives the reading sequence. Left empty in /admin it becomes
+          // undefined here, and the sort treats that as 999 — i.e. last — exactly
+          // like a missing `order:` in MDX frontmatter.
+          order: typeof d.order === "number" ? d.order : undefined,
+          image: d.coverImage?.url ?? undefined,
+          imageWidth: d.coverImage?.width ?? undefined,
+          imageHeight: d.coverImage?.height ?? undefined,
+        },
+        hindiHref: hasHindi ? "/hi/" + slug.join("/") : undefined,
+        hindiTitle: hasHindi ? (title.hi ?? undefined) : undefined,
+      };
+    });
   } catch (error) {
     // Same fail-safe rule as every other reader in this file: a dead database
     // returns an EMPTY list rather than throwing, so the page still renders its

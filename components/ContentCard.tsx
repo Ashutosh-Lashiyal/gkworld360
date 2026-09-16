@@ -1,144 +1,162 @@
-"use client";
-// "use client" — needed for useState (hover + flip state tracking in the browser)
-
-import { useState } from "react";
+// ContentCard — the card used in every listing (category pages, subject pages,
+// the /topics index). One card = one article, category, or topic.
+//
+// REDESIGNED 16 Sep 2026. The previous card was a hover-triggered 3D "flip":
+// English on the front, a Hindi chooser on the back. Two problems killed it:
+//   1. Touch screens have no hover, so on a phone the Hindi option was
+//      unreachable — half our readers could never see it.
+//   2. The back face was positioned `absolute`, which takes it OUT of the
+//      layout, so the card was sized by the front face only. The back's taller
+//      content then overflowed and got clipped at the top edge.
+// This card has ONE face, works identically on mouse and touch, and can never
+// clip: everything is in normal flow, so the card grows to fit its content.
+//
+// Layout (top → bottom):
+//   image slot   — the cover sketch when there is one; otherwise a soft block in
+//                  the subject's colour so cards without images still look designed
+//   label        — small caps, subject accent colour (e.g. "MODERN INDIA")
+//   title        — serif heading, links to the English page
+//   description  — clamped to 2 lines so every card stays the same height
+//   buttons      — 10px-radius buttons, ≥44px tall (Apple's minimum comfortable
+//                  tap target), black text on the page tint with a subject-colour
+//                  border. "English" + "हिन्दी" when both exist; "Read →" if not.
+//
+// No `"use client"` — there is no browser state any more, so this is a plain
+// server component. Less JavaScript shipped to the reader.
 import Link from "next/link";
+import Image from "next/image";
 
 type ContentCardProps = {
   title: string;
+  href: string; // the English page
   description?: string;
-  href: string;
-  icon?: string;
-  meta?: string;
-  hoverBg?: string;
-  hindiHref?: string;   // /hi/... URL — if provided, the card gets a flip animation
-  hindiTitle?: string;  // The article title in Hindi (Devanagari), shown on the back
+  image?: string; // cover image URL (from CMS `coverImage` or MDX frontmatter)
+  label?: string; // small caps text above the title, e.g. the category name
+  // Subject colours. `bg` tints the image placeholder; `accent` colours the
+  // label and buttons. Both optional so the card also works with no subject.
+  hoverBg?: string; // kept under its old name so existing call sites still work
+  accent?: string;
+  hindiHref?: string; // /hi/... URL — when present, the card shows a Hindi button
+  hindiTitle?: string; // the Hindi title, used as the Hindi button's tooltip
+  // What the single button says when there is no Hindi version. Articles read
+  // "Read →"; a category card (which leads to a list, not an article) should
+  // say "Explore →" — pass it from the call site.
+  ctaLabel?: string;
 };
 
 export default function ContentCard({
   title,
-  description,
   href,
-  icon,
-  meta,
+  description,
+  image,
+  label,
   hoverBg,
+  accent,
   hindiHref,
   hindiTitle,
+  ctaLabel = "Read →",
 }: ContentCardProps) {
-  const [hovered, setHovered] = useState(false);
-  const [flipped, setFlipped] = useState(false);
+  // Fall back to the site's sapphire when a card has no subject colour.
+  const accentColor = accent ?? "#2d7a4f";
+  const placeholderBg = hoverBg ?? "#f5f5f5";
 
-  // ── NO HINDI VERSION — plain card, no flip ─────────────────────────────────
-  if (!hindiHref) {
-    return (
+  // One style for every button: full tap-height, centred text. `flex-1` makes
+  // the buttons share the row equally — wide targets on a phone, and a single
+  // "Read →" stretches to fill the row on its own.
+  //
+  // Look (owner's spec, 16 Sep 2026): 10px corners — not a pill — black text,
+  // and the button's fill is the PAGE colour (the subject's soft background
+  // tint), so the button belongs to the page it sits on. Because that tint is
+  // very pale and the card is white, a 1px border in the subject colour gives
+  // the button a visible edge; without it a cream button on a white card would
+  // all but disappear. Hover darkens the tint slightly instead of fading.
+  const button =
+    "inline-flex flex-1 items-center justify-center min-h-[44px] px-4 rounded-[10px] " +
+    "font-semibold text-sm text-foreground border transition-[filter] hover:brightness-95 " +
+    "focus-visible:outline-2 focus-visible:outline-offset-2";
+  const buttonStyle = { backgroundColor: placeholderBg, borderColor: accentColor };
+
+  return (
+    // `h-full` + `flex-col` + `mt-auto` on the button row = every card in a grid
+    // row is the same height and the buttons line up along the bottom.
+    <article className="group flex flex-col h-full rounded-card border border-hairline bg-surface shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
+      {/* ── IMAGE SLOT ────────────────────────────────────────────────────
+          Always rendered, so cards with and without images stay the same
+          height. `aspect-video` = 16:9. The whole slot is a link to the page. */}
       <Link
         href={href}
-        className="group flex items-start gap-4 border border-hairline rounded-card p-5 shadow-card hover:shadow-card-hover hover:border-sapphire hover:-translate-y-0.5 transition-all duration-200"
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        style={{
-          backgroundColor: hovered && hoverBg ? hoverBg : hoverBg ? "#ffffff" : undefined,
-        }}
+        aria-label={title}
+        className="relative block aspect-video w-full"
+        style={{ backgroundColor: placeholderBg }}
       >
-        {icon && (
-          <span className="text-2xl mt-0.5 flex-shrink-0" aria-hidden="true">{icon}</span>
+        {image ? (
+          <Image
+            src={image}
+            alt=""
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover"
+          />
+        ) : (
+          // No image yet — a thin accent bar at the top gives the empty slot
+          // some structure instead of looking like a missing picture.
+          <span
+            aria-hidden="true"
+            className="absolute inset-x-0 top-0 h-1"
+            style={{ backgroundColor: accentColor }}
+          />
         )}
-        <div className="flex flex-col gap-1 flex-1 min-w-0">
-          <h3 className="font-heading text-lg font-semibold text-navy group-hover:text-sapphire transition-colors leading-snug">
-            {title}
-          </h3>
-          {description && (
-            <p className="font-body text-sm text-muted leading-relaxed line-clamp-2">{description}</p>
-          )}
-          {meta && <span className="font-body text-xs text-muted mt-1">{meta}</span>}
-        </div>
-        <span className="text-muted group-hover:text-sapphire transition-colors flex-shrink-0 mt-1" aria-hidden="true">
-          →
-        </span>
       </Link>
-    );
-  }
 
-  // ── HINDI VERSION EXISTS — flip card ───────────────────────────────────────
-  // How CSS 3D flip works:
-  // 1. `perspective` on the outer wrapper creates the 3D depth effect
-  // 2. `transformStyle: preserve-3d` on the flip container tells the browser
-  //    to keep both faces in 3D space (not flatten them)
-  // 3. On hover, we rotate the flip container 180° around the Y axis
-  // 4. `backfaceVisibility: hidden` hides each face when it's pointing away
-  //    from the viewer — so the front hides when flipped, back hides by default
-  // 5. The back face starts at rotateY(180deg) so it's "pre-flipped" and
-  //    appears correctly when the container rotates another 180deg
-  // h-full on the outer div and flip container ensures the flip card
-  // stretches to fill its grid cell — same height as its non-flip neighbours.
-  // Without h-full the flip card is only as tall as its content, making it
-  // shorter than the other cards in the same grid row.
-  return (
-    <div
-      className="relative h-full"
-      style={{ perspective: "1200px" }}
-      onMouseEnter={() => setFlipped(true)}
-      onMouseLeave={() => setFlipped(false)}
-    >
-      {/* Flip container — this is what rotates */}
-      <div
-        className="relative h-full transition-transform duration-500"
-        style={{
-          transformStyle: "preserve-3d",
-          transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
-        }}
-      >
-        {/* ── FRONT FACE — English content ─────────────────────────────── */}
-        <Link
-          href={href}
-          className="flex items-start gap-4 border border-hairline rounded-card p-5 shadow-card bg-surface h-full"
-          style={{ backfaceVisibility: "hidden" }}
-        >
-          {icon && (
-            <span className="text-2xl mt-0.5 flex-shrink-0" aria-hidden="true">{icon}</span>
-          )}
-          <div className="flex flex-col gap-1 flex-1 min-w-0">
-            <h3 className="font-heading text-lg font-semibold text-navy leading-snug">{title}</h3>
-            {description && (
-              <p className="font-body text-sm text-muted leading-relaxed line-clamp-2">{description}</p>
-            )}
-            {meta && <span className="font-body text-xs text-muted mt-1">{meta}</span>}
-          </div>
-          <span className="text-muted flex-shrink-0 mt-1" aria-hidden="true">→</span>
-        </Link>
-
-        {/* ── BACK FACE — language choice ──────────────────────────────
-            This is a <div> (not a Link) because it contains TWO links —
-            one for Hindi, one for English. You cannot nest a <Link> inside
-            another <Link> in HTML, so the wrapper must be a plain div.    */}
-        <div
-          className="absolute inset-0 flex flex-col items-center justify-center rounded-card p-5 border-2 border-sapphire"
-          style={{
-            backfaceVisibility: "hidden",
-            transform: "rotateY(180deg)",
-            backgroundColor: hoverBg ?? "#f0fdfa",
-          }}
-        >
-          {/* Small label */}
-          <span className="font-body text-xs font-semibold text-sapphire uppercase tracking-widest mb-3">
-            हिन्दी में उपलब्ध
+      {/* ── TEXT ──────────────────────────────────────────────────────────── */}
+      <div className="flex flex-col flex-1 gap-1.5 p-5">
+        {label && (
+          <span
+            className="font-body text-[11px] font-semibold uppercase tracking-widest"
+            style={{ color: accentColor }}
+          >
+            {label}
           </span>
+        )}
 
-          {/* Hindi title in Devanagari script */}
-          <p className="font-hindi text-lg font-semibold text-navy text-center leading-snug mb-5">
-            {hindiTitle ?? title}
+        <h3 className="font-heading text-lg font-semibold text-navy leading-snug">
+          <Link href={href} className="group-hover:text-sapphire transition-colors">
+            {title}
+          </Link>
+        </h3>
+
+        {description && (
+          <p className="font-body text-sm text-muted leading-relaxed line-clamp-2">
+            {description}
           </p>
+        )}
 
-          <div className="flex flex-col items-center gap-2">
-            <Link href={hindiHref} className="font-hindi text-sm font-semibold text-sapphire hover:underline">
-              हिन्दी में पढ़ें →
+        {/* ── BUTTONS ────────────────────────────────────────────────────────
+            `mt-auto` pushes this row to the bottom of the card, whatever the
+            text height above it. Two buttons when Hindi exists, one if not. */}
+        <div className="mt-auto pt-4 flex gap-2">
+          {hindiHref ? (
+            <>
+              <Link href={href} className={`${button} font-body`} style={buttonStyle}>
+                English
+              </Link>
+              <Link
+                href={hindiHref}
+                title={hindiTitle}
+                lang="hi"
+                className={`${button} font-hindi`}
+                style={buttonStyle}
+              >
+                हिन्दी
+              </Link>
+            </>
+          ) : (
+            <Link href={href} className={`${button} font-body`} style={buttonStyle}>
+              {ctaLabel}
             </Link>
-            <Link href={href} className="font-body text-sm font-semibold text-sapphire hover:underline">
-              Read in English →
-            </Link>
-          </div>
+          )}
         </div>
       </div>
-    </div>
+    </article>
   );
 }

@@ -59,6 +59,8 @@ export default async function TopicsPage({
       href:        "/" + item.slug.join("/"),
       subjectLabel: subject?.label ?? item.slug[0],
       hoverBg:     colors?.bg,
+      accent:      colors?.accent,
+      image:       item.meta.image,
       hindiHref:   hindiResolved ? "/hi/" + item.slug.join("/") : undefined,
       hindiTitle:  hindiResolved
         ? getContentMeta(hindiResolved.filePath).title
@@ -105,6 +107,9 @@ export default async function TopicsPage({
               description={topic.description}
               href={topic.href}
               hoverBg={topic.hoverBg}
+              accent={topic.accent}
+              image={topic.image}
+              label={topic.subjectLabel}
               hindiHref={topic.hindiHref}
               hindiTitle={topic.hindiTitle}
             />
