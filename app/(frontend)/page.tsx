@@ -1,17 +1,28 @@
 // GKWorld360 Homepage
-// All 9 sections matching the Stitch "Academic Clarity" design (Jun 2026).
 // Server Component — runs on the server, no client-side JS needed.
+//
+// REDESIGN 16 Sep 2026 (board 5). Built entirely from the page system:
+//   1. HERO         — DARK. Brand-teal tint over the photo (the frame's colour,
+//                     not a subject's), the search as a white box on the dark,
+//                     and a white "Featured today" card floating on the right.
+//   2. SUBJECTS     — LIGHT. Six white cards; signal colours only as bars/labels.
+//   3. HEADLINES    — DARK band. Numbered list, mint numbers (LatestHeadlinesSection).
+//   4. CURRENT AFFAIRS + QUOTE — LIGHT. Write-up cards, then the quote as a white card.
+//   5. FOOTER       — DARK (in layout.tsx).
+// Strict light/dark alternation. The old "Popular Topics" / "Recently Added
+// Topics" / "About" sections are gone: the first two were empty bands, the
+// About text lives on /about.
 
 import Link from "next/link";
 import Image from "next/image";
 import SearchBox from "@/components/SearchBox";
 import SubjectCard from "@/components/SubjectCard";
-import TopicCard from "@/components/TopicCard";
+import ContentCard from "@/components/ContentCard";
 import NewsCard from "@/components/NewsCard";
 import LatestHeadlinesSection from "@/components/LatestHeadlinesSection";
 import { getHomepageSubjects, getRecentTopics, hasTranslation, resolveContentFile, getContentMeta, type ContentMeta } from "@/lib/content";
 import { getRecentNews } from "@/lib/news";
-import { getCMSNewsList, getCMSNewsHindiSlugs } from "@/lib/cms";
+import { getCMSNewsList, getCMSNewsHindiSlugs, getCMSLatestArticles, type CMSListedTopic } from "@/lib/cms";
 import { getDailyQuote } from "@/lib/quote";
 
 // Re-generate the homepage at most once every 60 seconds so the headline teaser
@@ -21,21 +32,8 @@ export const revalidate = 60;
 import { SUBJECT_COLORS } from "@/lib/subject-colors";
 // getSubjectInfo maps a subject slug like "history" to its display label
 // ("History") and emoji icon ("🏛️") so TopicCards show the right category.
-import { getSubjectInfo } from "@/lib/subjects";
+import { getSubjectInfo, SUBJECTS } from "@/lib/subjects";
 
-
-// ── ADDED TIME FORMATTER ──────────────────────────────────────────────────────
-// Converts an article date like "2026-06-22" into a friendly string like
-// "Added today", "Added yesterday", or "Added 3 days ago".
-function formatAddedTime(date?: string): string {
-  if (!date) return "Recently added";
-  const d = new Date(date);
-  const diffDays = Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
-  if (diffDays === 0) return "Added today";
-  if (diffDays === 1) return "Added yesterday";
-  if (diffDays < 7) return `Added ${diffDays} days ago`;
-  return `Added ${d.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
-}
 
 // ── HOMEPAGE ──────────────────────────────────────────────────────────────────
 export default async function HomePage() {
@@ -80,42 +78,45 @@ export default async function HomePage() {
     .sort((a, b) => new Date(b.meta.date ?? 0).getTime() - new Date(a.meta.date ?? 0).getTime())
     .slice(0, 3);
 
-  // ── REAL TOPIC DATA ───────────────────────────────────────────────────────
-  // getRecentTopics fetches real articles sorted by most recent date.
-  // We get 7 and split them: first 4 → Popular Topics, next 3 → Recently Added.
-  // Until a real popularity mechanism is built, both sections use recency.
-  // When popularity tracking is ready, replace the popularTopics slice with
-  // a ranked list — the TopicCard rendering code below stays exactly the same.
-  const allRecentTopics = getRecentTopics(7);
-
-  // Enrich each topic with subject label, icon, subject colour, and Hindi info.
-  // We do this once here so the JSX maps below stay clean and readable.
-  const enrichedTopics = allRecentTopics.map((item) => {
-    const subject = getSubjectInfo(item.slug[0]);
-    const hindiResolved = hasTranslation(item.slug, "hi")
-      ? resolveContentFile(item.slug, "hi")
-      : null;
-    return {
-      title:       item.meta.title,
-      description: item.meta.description ?? "",
-      href:        "/" + item.slug.join("/"),
-      category:    subject?.label ?? item.slug[0],
-      icon:        subject?.icon,
-      addedTime:   formatAddedTime(item.meta.date),
-      hoverBg:     SUBJECT_COLORS[item.slug[0]]?.bg,
-      image:       item.meta.image,  // real photo — shows in Popular Topics thumbnail
-      hindiHref:   hindiResolved ? "/hi/" + item.slug.join("/") : undefined,
-      hindiTitle:  hindiResolved ? getContentMeta(hindiResolved.filePath).title : undefined,
-    };
-  });
-
-  // First 4 → Popular Topics section (vertical cards with gradient thumbnail)
-  const popularTopics = enrichedTopics.slice(0, 4);
-  // First 3 → Recently Added Topics section (compact horizontal cards).
-  // Both sections draw from the same pool for now — as more topics are added,
-  // they'll appear here automatically. A proper popularity mechanism can be
-  // added later; only the data source needs to change, not the card code.
-  const recentlyAddedTopics = enrichedTopics.slice(0, 3);
+  // ── FEATURED TOPIC (hero card) ────────────────────────────────────────────
+  // The most recently published topic, shown as the white card floating on the
+  // hero. CMS first (that is where new content comes from now), MDX as the
+  // fallback. Until a real "featured" flag exists in the CMS, recency stands in.
+  const [cmsLatest] = await getCMSLatestArticles(1);
+  const [mdxLatest] = getRecentTopics(1);
+  const featuredRaw: CMSListedTopic | undefined =
+    cmsLatest ??
+    (mdxLatest
+      ? {
+          slug: mdxLatest.slug,
+          meta: mdxLatest.meta,
+          hindiHref: hasTranslation(mdxLatest.slug, "hi") ? "/hi/" + mdxLatest.slug.join("/") : undefined,
+          hindiTitle: (() => {
+            const hi = hasTranslation(mdxLatest.slug, "hi") ? resolveContentFile(mdxLatest.slug, "hi") : null;
+            return hi ? getContentMeta(hi.filePath).title : undefined;
+          })(),
+        }
+      : undefined);
+  const featured = featuredRaw
+    ? {
+        title: featuredRaw.meta.title,
+        description: featuredRaw.meta.description ?? "",
+        href: "/" + featuredRaw.slug.join("/"),
+        // "History · Modern India" — subject name + prettified category slug
+        label: [
+          getSubjectInfo(featuredRaw.slug[0])?.label ?? featuredRaw.slug[0],
+          featuredRaw.slug.length > 2
+            ? featuredRaw.slug[1].split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")
+            : undefined,
+        ]
+          .filter(Boolean)
+          .join(" · "),
+        image: featuredRaw.meta.image,
+        colors: SUBJECT_COLORS[featuredRaw.slug[0]],
+        hindiHref: featuredRaw.hindiHref,
+        hindiTitle: featuredRaw.hindiTitle,
+      }
+    : null;
 
   // recentNews already carries hindiHref/hindiTitle (built above), so the news
   // section can use it directly.
@@ -124,12 +125,12 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* ══ SECTION 1: HERO ════════════════════════════════════════════════════
-          Full-bleed background image with a dark overlay so white text stays
-          readable regardless of the photo's brightness.                          */}
-      <section className="relative overflow-hidden border-b border-hairline">
-
-        {/* Background photo */}
+      {/* ══ 1. HERO — DARK ═══════════════════════════════════════════════════
+          The photo is tinted with the FRAME teal (#122a26) at 66%, plus a
+          gradient that darkens toward the bottom where the text sits. Same
+          recipe as every band on the site, in the brand colour instead of a
+          subject's — the homepage belongs to the site, not to one subject.   */}
+      <section className="relative overflow-hidden bg-navy-dark text-on-dark">
         <Image
           src="/images/hero-banner.png"
           alt=""
@@ -138,308 +139,163 @@ export default async function HomePage() {
           className="object-cover object-center"
           sizes="100vw"
         />
+        <div aria-hidden="true" className="absolute inset-0 bg-navy-dark/65" />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0"
+          style={{ background: "linear-gradient(to top, rgba(18,42,38,0.85) 0%, rgba(18,42,38,0.35) 55%, rgba(18,42,38,0.2) 100%)" }}
+        />
 
-        {/* Dark overlay — navy tint + gradient darkens bottom more than top.
-            Adjust the opacity numbers here to make the image lighter or darker. */}
-        <div className="absolute inset-0 bg-navy-dark/60" />
-        <div className="absolute inset-0 bg-gradient-to-t from-navy-dark/80 via-navy-dark/40 to-navy-dark/20" />
+        <div className="relative max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-14 md:py-20 lg:grid lg:grid-cols-12 lg:gap-12 lg:items-center">
+          {/* Left: the words */}
+          <div className="lg:col-span-7 flex flex-col gap-5">
+            <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-mint">
+              Trusted educational content · General knowledge · Current affairs
+            </span>
 
-        <div className="relative max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-20 md:py-28 text-center">
+            {/* One word in mint — the single accent moment in the headline */}
+            <h1 className="m-0 font-heading text-5xl md:text-6xl lg:text-[72px] font-bold leading-[1.02] tracking-[-0.025em] text-on-dark max-w-[760px] [text-wrap:balance]">
+              Master the World&apos;s <span className="text-mint">Core</span> Knowledge
+            </h1>
+            <p lang="hi" className="m-0 font-hindi text-xl md:text-2xl leading-[1.4] text-on-dark/80">
+              विश्व के मूल ज्ञान में महारत हासिल करें
+            </p>
+            <p className="m-0 font-body text-base md:text-lg leading-[1.6] text-on-dark/80 max-w-[580px]">
+              A curated reference for UPSC, SSC, Railways and lifelong learners — every
+              topic in English and Hindi, fact-checked and written to be remembered.
+            </p>
 
-          {/* Small eyebrow label */}
-          <p className="font-body text-xs font-semibold text-on-dark/60 uppercase tracking-[0.15em] mb-5">
-            Trusted Educational Content · General Knowledge · Current Affairs
-          </p>
+            {/* Search as a WHITE box on the dark — the one big input */}
+            <div className="max-w-[580px] mt-1">
+              <SearchBox buttonLabel="Search" boxed />
+            </div>
 
-          {/* Headline */}
-          <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl font-extrabold text-on-dark leading-tight max-w-3xl mx-auto">
-            Master the World&apos;s Core Knowledge
-          </h1>
-
-          {/* Subtitle */}
-          <p className="font-body text-lg text-on-dark/70 mt-6 max-w-2xl mx-auto leading-relaxed">
-            A curated repository of academics — from the depths of history to the frontiers of science.
-            In English and Hindi.
-          </p>
-
-          {/* Search bar */}
-          <div className="mt-10 max-w-xl mx-auto">
-            <SearchBox buttonLabel="Explore" onDark />
+            {/* Four quiet stats instead of tick-badges */}
+            <div className="flex flex-wrap gap-x-8 gap-y-3 mt-2 font-body text-[13px] text-on-dark/65">
+              {[
+                [String(SUBJECTS.length), "subjects"], // the real count, same as the menu
+                ["EN · हिन्दी", "every topic"],
+                ["Daily", "current affairs"],
+                ["Free", "always"],
+              ].map(([value, label]) => (
+                <span key={label} className="flex flex-col gap-0.5">
+                  <span className="font-heading text-[26px] font-bold leading-none text-on-dark">{value}</span>
+                  <span>{label}</span>
+                </span>
+              ))}
+            </div>
           </div>
 
-          {/* Trust badges */}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-            {["18 Subjects", "English & हिन्दी", "Free to read", "Updated daily"].map((badge) => (
-              <span key={badge} className="font-body text-xs font-medium text-on-dark/80 border border-on-dark/25 rounded-full px-3 py-1">
-                ✓ {badge}
-              </span>
-            ))}
-          </div>
+          {/* Right: the white card ON the stage — today's featured topic */}
+          {featured && (
+            <div className="mt-10 lg:mt-0 lg:col-span-5">
+              <ContentCard
+                title={featured.title}
+                description={featured.description}
+                href={featured.href}
+                image={featured.image}
+                label={featured.label}
+                badge="Featured today"
+                hoverBg={featured.colors?.bg}
+                accent={featured.colors?.accent}
+                hindiHref={featured.hindiHref}
+                hindiTitle={featured.hindiTitle}
+                flat
+              />
+            </div>
+          )}
         </div>
       </section>
 
-      {/* ══ SECTION 2: EXPLORE SUBJECTS ════════════════════════════════════════
-          White background. 3×2 grid of 6 subject cards.
-          Cards are read from content/ folder — change homepageOrder in overview.mdx
-          to swap which 6 subjects appear here.                                    */}
+      {/* ══ 2. EXPLORE SUBJECTS — LIGHT ══════════════════════════════════════
+          Six subject cards, read from content/ — change homepageOrder in a
+          subject's overview.mdx to swap which six appear here.               */}
       <section className="bg-background">
-        <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-16">
-
-          <div className="flex items-end justify-between mb-8">
-            <div>
-              <h2 className="font-heading text-3xl font-bold text-navy tracking-tight">
+        <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-14 md:py-[72px] flex flex-col gap-6">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="flex flex-col gap-1.5">
+              <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Part one</span>
+              <h2 className="m-0 font-heading text-3xl md:text-[40px] font-bold tracking-[-0.015em] text-navy-dark">
                 Explore Subjects
               </h2>
-              <p className="font-body text-base text-muted mt-1">
-                Choose a subject to start learning
-              </p>
             </div>
-            <Link href="/subjects" className="font-body text-sm font-medium text-sapphire hover:text-sapphire-dark transition-colors whitespace-nowrap">
-              View all subjects →
+            <Link href="/subjects" className="font-body text-sm font-semibold text-sapphire hover:text-sapphire-dark transition-colors whitespace-nowrap">
+              All subjects →
             </Link>
           </div>
 
-          {/* 3 columns desktop, 2 tablet, 1 mobile */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {homepageSubjects.map((subject) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {homepageSubjects.map((subject, i) => (
               <SubjectCard
                 key={subject.slug}
                 title={subject.meta.title}
                 description={subject.meta.description}
                 slug={subject.slug}
-                icon={subject.meta.icon}
                 image={subject.meta.image}
-                // Pass the subject's background colour so the card body
-                // highlights in the matching colour on hover.
-                // The ?. (optional chaining) safely returns undefined if
-                // this subject slug isn't in the colour map yet.
-                hoverBg={SUBJECT_COLORS[subject.slug]?.bg}
+                index={i}
               />
             ))}
           </div>
         </div>
       </section>
 
-      {/* ══ SECTION 2.5: LATEST HEADLINES (aggregated RSS) ════════════════════
-          Auto-updating current-affairs headlines from trusted sources (The Hindu,
-          Indian Express, LiveMint…). Fetched + cached in LatestHeadlinesSection
-          (lib/pulse), refreshed every ~30 min. Each headline links out to its
-          source — we aggregate, we don't host.                                    */}
+      {/* ══ 3. LATEST HEADLINES — DARK band ══════════════════════════════════ */}
       <LatestHeadlinesSection />
 
-      {/* ══ SECTION 3: QUOTE BLOCK ═════════════════════════════════════════════
-          Daily quote — edit content/daily-quote.mdx to change the quote,
-          add a person photo, and update the author description.                   */}
-      <section className="bg-surface-low border-y border-hairline">
-        <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-14 text-center">
-          <div className="max-w-3xl mx-auto">
+      {/* ══ 4. CURRENT AFFAIRS + QUOTE — LIGHT ═══════════════════════════════ */}
+      <section className="bg-background">
+        <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-14 md:py-[72px] flex flex-col gap-14">
+          {recentNews.length > 0 && (
+            <div className="flex flex-col gap-6">
+              <div className="flex flex-wrap items-end justify-between gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em]" style={{ color: SUBJECT_COLORS["current-affairs"].accent }}>
+                    Part three · <span lang="hi" className="font-hindi normal-case tracking-normal">समसामयिकी</span>
+                  </span>
+                  <h2 className="m-0 font-heading text-3xl md:text-[40px] font-bold tracking-[-0.015em] text-navy-dark">
+                    Current Affairs
+                  </h2>
+                </div>
+                <Link href="/news" className="font-body text-sm font-semibold text-sapphire hover:text-sapphire-dark transition-colors whitespace-nowrap">
+                  All write-ups →
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {recentNewsWithHindi.map((item) => (
+                  <NewsCard
+                    key={item.url}
+                    url={item.url}
+                    meta={item.meta}
+                    hindiHref={item.hindiHref}
+                    hindiTitle={item.hindiTitle}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
-            {/* Large decorative quote mark */}
-            <span className="font-heading text-6xl text-sapphire opacity-30 leading-none select-none" aria-hidden="true">
-              &ldquo;
-            </span>
-
-            <blockquote className="font-heading text-xl md:text-2xl font-semibold text-navy italic leading-relaxed -mt-4">
+          {/* Quote of the day — a white card, quiet. Edit content/daily-quote.mdx. */}
+          <figure className="m-0 flex flex-col items-center gap-4 text-center bg-surface border border-hairline rounded-card px-6 py-10 md:px-14 md:py-12">
+            <span className="font-heading text-[56px] leading-[0.6] text-sapphire select-none" aria-hidden="true">&ldquo;</span>
+            <blockquote className="m-0 font-heading text-xl md:text-[26px] leading-[1.45] italic text-navy-dark max-w-[860px] [text-wrap:balance]">
               {dailyQuote.quote}
             </blockquote>
-
-            {/* Author row — photo (if set) + name + description */}
-            <div className="flex items-center justify-center gap-4 mt-6">
+            <figcaption className="flex items-center gap-3">
               {dailyQuote.authorImage && (
-                <div className="relative w-14 h-14 rounded-full overflow-hidden border-2 border-hairline flex-shrink-0">
-                  <Image
-                    src={dailyQuote.authorImage}
-                    alt={dailyQuote.author}
-                    fill
-                    className="object-cover"
-                    sizes="56px"
-                  />
-                </div>
+                <span className="relative w-10 h-10 rounded-full overflow-hidden border border-hairline flex-shrink-0">
+                  <Image src={dailyQuote.authorImage} alt={dailyQuote.author} fill className="object-cover" sizes="40px" />
+                </span>
               )}
-              <div className={dailyQuote.authorImage ? "text-left" : ""}>
-                <p className="font-body text-sm font-semibold text-navy">
-                  — {dailyQuote.author}
-                </p>
+              <span className="flex flex-col gap-1 text-left">
+                <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+                  — {dailyQuote.author} · Quote of the day
+                </span>
                 {dailyQuote.authorTitle && (
-                  <p className="font-body text-xs text-muted mt-0.5 leading-snug">
-                    {dailyQuote.authorTitle}
-                  </p>
+                  <span className="font-body text-xs text-muted leading-snug max-w-[560px]">{dailyQuote.authorTitle}</span>
                 )}
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      {/* ══ SECTION 4: POPULAR TOPICS ══════════════════════════════════════════
-          White background. 4-column card grid with placeholder content.
-          Replace dummy data with real popular topics once articles are published. */}
-      <section className="bg-background">
-        <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-16">
-
-          <div className="flex items-end justify-between mb-8">
-            <div>
-              <h2 className="font-heading text-3xl font-bold text-navy tracking-tight">
-                Popular Topics
-              </h2>
-              <p className="font-body text-base text-muted mt-1">
-                Most read topics across all subjects
-              </p>
-            </div>
-            {/* /topics?sort=popular — opens the topics page with Popular sort active */}
-            <Link href="/topics?sort=popular" className="font-body text-sm font-medium text-sapphire hover:text-sapphire-dark transition-colors whitespace-nowrap">
-              View all topics →
-            </Link>
-          </div>
-
-          {/* 4 columns desktop, 2 tablet, 1 mobile */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {popularTopics.map((topic) => (
-              <TopicCard
-                key={topic.href}
-                variant="popular"
-                title={topic.title}
-                category={topic.category}
-                description={topic.description}
-                href={topic.href}
-                hoverBg={topic.hoverBg}
-                hindiHref={topic.hindiHref}
-                hindiTitle={topic.hindiTitle}
-                image={topic.image}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ══ SECTION 5: RECENTLY ADDED TOPICS ══════════════════════════════════
-          White background. Horizontal scrollable carousel of compact topic items.
-          Replace dummy data once real topics are published.                       */}
-      <section className="bg-surface-low border-y border-hairline">
-        <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-16">
-
-          <div className="flex items-end justify-between mb-8">
-            <div>
-              <h2 className="font-heading text-3xl font-bold text-navy tracking-tight">
-                Recently Added Topics
-              </h2>
-              <p className="font-body text-base text-muted mt-1">
-                The latest topics added to GKWorld360
-              </p>
-            </div>
-            {/* /topics?sort=recent — opens the topics page with Recently Added sort active */}
-            <Link href="/topics?sort=recent" className="font-body text-sm font-medium text-sapphire hover:text-sapphire-dark transition-colors whitespace-nowrap">
-              View all →
-            </Link>
-          </div>
-
-          {/* 3 columns desktop, 2 tablet, 1 mobile — no horizontal scroll */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {recentlyAddedTopics.map((topic) => (
-              <TopicCard
-                key={topic.href}
-                variant="recent"
-                title={topic.title}
-                category={topic.category}
-                href={topic.href}
-                addedTime={topic.addedTime}
-                icon={topic.icon}
-                hoverBg={topic.hoverBg}
-                hindiHref={topic.hindiHref}
-                hindiTitle={topic.hindiTitle}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ══ SECTION 6: RECENTLY ADDED NEWS ════════════════════════════════════
-          White background. 3-column card grid, populated from real news items
-          (newest first). Hidden entirely when no news has been published yet.    */}
-      {recentNews.length > 0 && (
-        <section className="bg-background">
-          <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-16">
-
-            <div className="flex items-end justify-between mb-8">
-              <div>
-                <h2 className="font-heading text-3xl font-bold text-navy tracking-tight">
-                  Current Affairs
-                </h2>
-                <p className="font-body text-base text-muted mt-1">
-                  In-depth, exam-focused write-ups
-                </p>
-              </div>
-              <Link href="/news" className="font-body text-sm font-medium text-sapphire hover:text-sapphire-dark transition-colors whitespace-nowrap">
-                View all →
-              </Link>
-            </div>
-
-            {/* 3 columns desktop, 2 tablet, 1 mobile */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {recentNewsWithHindi.map((item) => (
-                <NewsCard
-                  key={item.url}
-                  url={item.url}
-                  meta={item.meta}
-                  hindiHref={item.hindiHref}
-                  hindiTitle={item.hindiTitle}
-                />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ══ SECTION 7: ABOUT GKWORLD360 ════════════════════════════════════════
-          Dark navy background — now distinct from the light #b0c4c0 footer below.
-          Text switches back to white (text-on-dark) since the background is dark. */}
-      <section className="bg-navy-dark border-t border-hairline">
-        <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-16">
-
-          {/* Two columns on desktop, single column on mobile */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-
-            {/* Text column */}
-            <div>
-              {/* text-on-dark = white — readable on the dark navy background */}
-              <h2 className="font-heading text-3xl font-bold text-on-dark tracking-tight mb-6 leading-snug">
-                Empowering Academic Excellence Through Structured Knowledge
-              </h2>
-              <p className="font-body text-lg text-on-dark/75 leading-relaxed mb-4">
-                GKWorld360 is a curated educational platform for students, competitive exam aspirants, and lifelong learners. Every topic is carefully written and organised so you always know where you are and where to go next.
-              </p>
-              <p className="font-body text-lg text-on-dark/75 leading-relaxed mb-6">
-                Whether you are preparing for UPSC, SSC, Railways, or simply curious about the world — GKWorld360 is built for you. New topics are added every day.
-              </p>
-
-              {/* Testimonial quote */}
-              <blockquote className="border-l-4 border-sapphire pl-5 py-1">
-                {/* text-on-dark/60 — white at 60% opacity, softer for quoted text */}
-                <p className="font-body text-base text-on-dark/60 italic leading-relaxed">
-                  &ldquo;The standard for general knowledge resources.&rdquo;
-                </p>
-                <cite className="font-body text-sm text-on-dark/50 not-italic mt-1 block">
-                  — Education Review 2024
-                </cite>
-              </blockquote>
-            </div>
-
-            {/* Image column
-                Once you place about.jpg in public/images/, it will appear here.
-                `relative` + `fill` is the standard Next.js pattern for an image
-                that fills a fixed-height container — the image stretches to cover
-                the full width and height of the div, cropped neatly with object-cover. */}
-            <div className="relative rounded-card h-72 lg:h-80 overflow-hidden bg-navy">
-              <Image
-                src="/images/about.png"
-                alt="About GKWorld360"
-                fill
-                className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 560px"
-              />
-            </div>
-          </div>
+              </span>
+            </figcaption>
+          </figure>
         </div>
       </section>
     </>

@@ -59,7 +59,8 @@ export default function PageBand({
         ].join(" ")}
       >
         <div className={`flex flex-col gap-3.5 ${aside ? "lg:col-span-7" : ""}`}>
-          {breadcrumbs && breadcrumbs.length > 0 && <Breadcrumb items={breadcrumbs} tone="light" />}
+          {/* Breadcrumb prepends "Home" itself, so an empty array = "Home" alone */}
+          {breadcrumbs && <Breadcrumb items={breadcrumbs} tone="light" />}
           {children}
         </div>
 

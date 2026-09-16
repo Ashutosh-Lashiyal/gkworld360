@@ -26,12 +26,17 @@ type SearchBoxProps = {
   // submit button then uses the white "onDark" variant so it stays visible —
   // a dark button on a dark hero would disappear. See components/Button.tsx.
   onDark?: boolean;
+  // boxed → REDESIGN 16 Sep 2026 (board 5): the whole thing is ONE white box
+  // with the dark button sitting inside it — "the search as a white card on
+  // the dark stage". Used on the homepage hero. Overrides `onDark`.
+  boxed?: boolean;
 };
 
 export default function SearchBox({
   buttonLabel = "Search",
   placeholder = "Search subjects, categories, topics, news...",
   onDark = false,
+  boxed = false,
 }: SearchBoxProps) {
   const router = useRouter();
 
@@ -108,8 +113,15 @@ export default function SearchBox({
   const trimmed = value.trim();
 
   return (
-    <div ref={wrapperRef} className="relative max-w-xl mx-auto">
-      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center gap-3">
+    <div ref={wrapperRef} className={boxed ? "relative" : "relative max-w-xl mx-auto"}>
+      <form
+        onSubmit={handleSubmit}
+        className={
+          boxed
+            ? "flex items-center gap-1.5 bg-surface rounded-card p-1.5"
+            : "flex flex-col sm:flex-row items-center gap-3"
+        }
+      >
         <input
           type="text"
           value={value}
@@ -122,15 +134,24 @@ export default function SearchBox({
             setOpen(true);
           }}
           placeholder={placeholder}
-          className={[
-            "w-full font-body text-base text-foreground placeholder:text-muted",
-            "bg-background border border-hairline rounded-card",
-            "px-4 py-3",
-            "outline-none focus:border-sapphire focus:ring-2 focus:ring-sapphire/20",
-            "transition-colors",
-          ].join(" ")}
+          className={
+            boxed
+              ? // Inside the white box: no border of its own, just the text
+                "flex-1 min-w-0 font-body text-[15px] text-foreground placeholder:text-muted bg-transparent px-4 py-2.5 outline-none"
+              : [
+                  "w-full font-body text-base text-foreground placeholder:text-muted",
+                  "bg-background border border-hairline rounded-card",
+                  "px-4 py-3",
+                  "outline-none focus:border-sapphire focus:ring-2 focus:ring-sapphire/20",
+                  "transition-colors",
+                ].join(" ")
+          }
         />
-        <Button type="submit" variant={onDark ? "onDark" : "primary"} className="w-full sm:w-auto">
+        <Button
+          type="submit"
+          variant={onDark && !boxed ? "onDark" : "primary"}
+          className={boxed ? "flex-shrink-0" : "w-full sm:w-auto"}
+        >
           {buttonLabel}
         </Button>
       </form>

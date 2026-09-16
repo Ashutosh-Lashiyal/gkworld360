@@ -29,9 +29,15 @@ function writeSaved(list: SavedHeadline[]) {
 export default function ReadLaterButton({
   headline,
   className = "",
+  variant = "overlay",
 }: {
   headline: Headline;
   className?: string;
+  // "overlay" — the round translucent button that sits ON a card's photo.
+  // "row"     — REDESIGN 16 Sep 2026: a 44px square with 10px corners for a
+  //             list row on a dark band (homepage headlines); outline when
+  //             unsaved, mint fill when saved.
+  variant?: "overlay" | "row";
 }) {
   const [saved, setSaved] = useState(false);
 
@@ -63,11 +69,19 @@ export default function ReadLaterButton({
       onClick={toggle}
       aria-label={saved ? "Remove from Read Later" : "Save to Read Later"}
       title={saved ? "Saved — click to remove" : "Read Later"}
-      className={`${className} flex items-center justify-center w-9 h-9 rounded-full backdrop-blur-sm transition-colors ${
-        saved
-          ? "bg-sapphire text-on-dark"
-          : "bg-navy-dark/70 text-on-dark hover:bg-sapphire"
-      }`}
+      className={[
+        className,
+        "flex items-center justify-center transition-colors",
+        variant === "row"
+          ? `w-11 h-11 rounded-button border ${
+              saved
+                ? "bg-mint border-mint text-navy-dark"
+                : "border-on-dark/25 text-on-dark/70 hover:border-mint hover:text-mint"
+            }`
+          : `w-9 h-9 rounded-full backdrop-blur-sm ${
+              saved ? "bg-sapphire text-on-dark" : "bg-navy-dark/70 text-on-dark hover:bg-sapphire"
+            }`,
+      ].join(" ")}
     >
       {/* Bookmark icon — filled when saved, outline when not */}
       <svg

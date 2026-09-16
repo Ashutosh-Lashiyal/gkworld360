@@ -16,10 +16,10 @@
 
 # 🟢 START HERE — status as of 16 Sep 2026
 
-**Incident RESOLVED. Content pipeline DESIGNED, draft mode BUILT. Redesign Phases 1–4 BUILT
+**Incident RESOLVED. Content pipeline DESIGNED, draft mode BUILT. Redesign Phases 1–5 BUILT
 on branch `redesign` (16 Sep) — check `git branch` and `git status` first.** Owner has chosen
 to review ALL phases at once at the end, committing a snapshot after each phase.
-Next work: Phase 5 (homepage) → 6 (/pulse) → owner review →
+Next work: Phase 6 (/pulse) → owner review →
 merge to `main`. Then back to the content pipeline (`docs/GKWORLD360_CONTENT_PIPELINE.md`).
 Design decisions and rollout plan: "16 Sep 2026 (later)" section below.
 
@@ -241,6 +241,17 @@ version rows + sets published), then restoring `.env.local` to dev. Verified liv
   Subject-tinted page backgrounds removed. `getCMSArticlesInCategory` now selects
   `publishedDate` → `meta.date`. Footer got a faint top seam for dark-on-dark stacking.
   `/subjects` index untouched (already fine); its `SubjectCard` link → Button in Phase 5.
+- **Phase 5 DONE (homepage, board 5):** `app/(frontend)/page.tsx` rebuilt — hero (brand-teal
+  tint over `hero-banner.png`, mint word in the headline, Hindi tagline, `SearchBox boxed` = white
+  box with the dark button inside, four stats) + white "Featured today" `ContentCard` floating
+  right (newest published CMS article via new `getCMSLatestArticles()`, MDX fallback) → Subjects
+  (light; `SubjectCard` is now a thin server wrapper over ContentCard with roman numeral + Hindi
+  label, "Explore →") → `LatestHeadlinesSection` rewritten as the DARK numbered band (2 columns,
+  mint numbers, source · time, `ReadLaterButton variant="row"`) → Current Affairs + quote card
+  (light). Removed: Popular Topics, Recently Added Topics, About section (text lives on /about).
+  `NewsCard` is now a thin wrapper over ContentCard too — **its hover-flip for Hindi is gone**
+  (unreachable on touch). `ContentCard` gained `badge` and `flat` props. `/news` listing got the
+  compact band. `TopicCard`/`ArticleCard` are now unused by pages (left in place).
 - Not yet in Phase 3: prev/next cards styled per board (TopicNav still old style — pipeline item),
   "Sources: N facts verified" meta (needs pipeline data). Long CMS `description`s make the band
   tall (Smart Border) — the writing template should cap summaries at ~2 sentences.

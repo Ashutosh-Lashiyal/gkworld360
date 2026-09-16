@@ -44,6 +44,11 @@ type ContentCardProps = {
   // "Read →"; a category card (which leads to a list, not an article) should
   // say "Explore →" — pass it from the call site.
   ctaLabel?: string;
+  // A small white pill over the image's top-left corner, e.g. "Featured today".
+  badge?: string;
+  // Turn off the card's own lift/shadow on hover — for a card that already
+  // floats on a dark band (the homepage hero), where more lift looks jumpy.
+  flat?: boolean;
 };
 
 export default function ContentCard({
@@ -57,6 +62,8 @@ export default function ContentCard({
   hindiHref,
   hindiTitle,
   ctaLabel = "Read →",
+  badge,
+  flat = false,
 }: ContentCardProps) {
   // Fall back to the site's emerald when a card has no subject colour.
   const accentColor = accent ?? "#059669";
@@ -71,7 +78,14 @@ export default function ContentCard({
   return (
     // `h-full` + `flex-col` + `mt-auto` on the button row = every card in a grid
     // row is the same height and the buttons line up along the bottom.
-    <article className="group flex flex-col h-full rounded-card border border-hairline bg-surface shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
+    <article
+      className={[
+        "group flex flex-col h-full rounded-card bg-surface overflow-hidden transition-all duration-200",
+        flat
+          ? "border-0 shadow-[0_16px_48px_rgba(0,0,0,0.3)]"
+          : "border border-hairline shadow-card hover:shadow-card-hover hover:-translate-y-0.5",
+      ].join(" ")}
+    >
       {/* ── IMAGE SLOT ────────────────────────────────────────────────────
           Always rendered, so cards with and without images stay the same
           height. `aspect-video` = 16:9. The whole slot is a link to the page. */}
@@ -97,6 +111,14 @@ export default function ContentCard({
             className="absolute inset-x-0 top-0 h-1"
             style={{ backgroundColor: accentColor }}
           />
+        )}
+        {badge && (
+          <span
+            className="absolute left-3.5 top-3.5 px-2 py-1 rounded-md bg-surface font-body text-[11px] font-semibold uppercase tracking-[0.14em]"
+            style={{ color: accentColor }}
+          >
+            {badge}
+          </span>
         )}
       </Link>
 

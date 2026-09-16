@@ -413,6 +413,60 @@ export type CMSListedTopic = {
   hindiTitle?: string;
 };
 
+// The newest published articles across ALL subjects — for the homepage's
+// "Featured today" card (redesign, 16 Sep 2026). One small query: only the
+// listing columns, sorted newest-first, `limit` rows. Same fail-safe as every
+// reader here: a dead database returns [] and the homepage simply shows no card.
+export async function getCMSLatestArticles(limit = 1): Promise<CMSListedTopic[]> {
+  try {
+    const payload = await getClient();
+    const result = await payload.find({
+      collection: "articles",
+      where: { _status: { equals: "published" } },
+      sort: "-publishedDate", // newest first ("-" = descending)
+      locale: "all",
+      depth: 1, // populate subject, category and coverImage so we can build the URL
+      limit,
+      select: {
+        slug: true,
+        title: true,
+        description: true,
+        order: true,
+        coverImage: true,
+        publishedDate: true,
+        subject: true,
+        category: true,
+      },
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return result.docs.map((d: any) => {
+      const title = (d.title ?? {}) as Partial<Record<CMSLocale, string | null>>;
+      const description = (d.description ?? {}) as Partial<Record<CMSLocale, string | null>>;
+      const subjectSlug: string = d.subject?.slug ?? "";
+      const categorySlug: string | undefined = d.category?.slug ?? undefined;
+      const slug = categorySlug ? [subjectSlug, categorySlug, d.slug] : [subjectSlug, d.slug];
+      const hasHindi = Boolean(title.hi?.trim());
+      return {
+        slug,
+        meta: {
+          title: title.en ?? "",
+          description: description.en ?? "",
+          subject: subjectSlug,
+          category: categorySlug,
+          order: typeof d.order === "number" ? d.order : undefined,
+          date: d.publishedDate ?? undefined,
+          image: d.coverImage?.url ?? undefined,
+        },
+        hindiHref: hasHindi ? "/hi/" + slug.join("/") : undefined,
+        hindiTitle: hasHindi ? (title.hi ?? undefined) : undefined,
+      };
+    });
+  } catch (error) {
+    cmsUnavailable("getCMSLatestArticles", `limit=${limit}`, error);
+    return [];
+  }
+}
+
 export async function getCMSArticlesInCategory(
   subjectSlug: string,
   categorySlug: string | null

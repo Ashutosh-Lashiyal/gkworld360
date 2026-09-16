@@ -4,6 +4,8 @@
 // disappears. (Individual items are rendered by the catch-all route.)
 import type { Metadata } from "next";
 import NewsCard from "@/components/NewsCard";
+import PageBand, { BandLabel } from "@/components/PageBand";
+import { getSubjectColors } from "@/lib/subject-colors";
 import { getAllNews } from "@/lib/news";
 import {
   hasTranslation,
@@ -109,14 +111,32 @@ export default async function NewsListingPage() {
     );
   }
 
+  // REDESIGN 16 Sep 2026: the same compact band every listing page has, in the
+  // Current Affairs signal colour, then the month-by-month grid on the light page.
+  const colors = getSubjectColors("current-affairs");
+
   return (
-    <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12">
-      <div className="mb-10">
-        <h1 className="font-heading text-4xl font-bold text-navy">Current Affairs</h1>
-        <p className="font-body text-lg text-muted mt-3 max-w-2xl">
-          In-depth current affairs for competitive exams — organised by month.
-        </p>
+    <>
+    <PageBand colors={colors} breadcrumbs={[]} size="compact">
+      <div className="flex flex-col gap-3.5 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
+        <div className="flex flex-col gap-3">
+          <BandLabel colors={colors}>
+            Current Affairs · <span lang="hi" className="font-hindi normal-case tracking-normal">समसामयिकी</span>
+          </BandLabel>
+          <h1 className="m-0 font-heading text-4xl md:text-5xl font-bold leading-[1.05] tracking-[-0.02em] text-[#fffbf4]">
+            Current Affairs
+          </h1>
+          <p className="m-0 font-heading text-lg leading-[1.5] text-[#fffbf4]/88 max-w-[640px]">
+            In-depth, exam-focused write-ups — organised by month, in English and Hindi.
+          </p>
+        </div>
+        <span className="font-body text-[13px] text-[#fffbf4]/75 whitespace-nowrap">
+          {all.length} {all.length === 1 ? "write-up" : "write-ups"} · newest first
+        </span>
       </div>
+    </PageBand>
+
+    <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12 md:py-16">
 
       {all.length > 0 ? (
         <div className="space-y-14">
@@ -148,5 +168,6 @@ export default async function NewsListingPage() {
         </div>
       )}
     </div>
+    </>
   );
 }
