@@ -74,13 +74,21 @@ export function estimateReadingTime(body: unknown): string {
 // renderer stamps this same id onto each heading — so they must use THIS exact
 // function to stay in sync.
 export function slugifyHeading(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, "") // drop punctuation
-    .replace(/\s+/g, "-") // spaces → hyphens
-    .replace(/-+/g, "-") // collapse repeats
-    .replace(/^-+|-+$/g, ""); // trim leading/trailing hyphens
+  return (
+    text
+      .toLowerCase()
+      .trim()
+      // Drop punctuation but KEEP letters from any script. The old pattern
+      // `[^\w\s-]` only knew Latin letters, so every Hindi heading was reduced
+      // to "" — all of them shared one empty id, the Contents links were dead,
+      // and React warned about duplicate keys. (Fixed 16 Sep 2026.)
+      // `\p{L}` = any letter, `\p{M}` = combining marks (the vowel signs that sit
+      // on Devanagari consonants), `\p{N}` = any digit; `u` = Unicode mode.
+      .replace(/[^\p{L}\p{M}\p{N}\s-]/gu, "")
+      .replace(/\s+/g, "-") // spaces → hyphens
+      .replace(/-+/g, "-") // collapse repeats
+      .replace(/^-+|-+$/g, "") // trim leading/trailing hyphens
+  );
 }
 
 // Pull the h2/h3 headings out of the Lexical body to build the Table of Contents.

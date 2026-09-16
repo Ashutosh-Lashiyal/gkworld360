@@ -21,11 +21,15 @@ import "./globals.css";
 // The `variable` option creates a CSS custom property we reference in globals.css.
 
 // Source Serif 4 — the heading font ("literary, authoritative" feel)
-// Used for: h1, h2, h3 — hero titles, section headings, article titles
+// Used for: h1, h2, h3 — hero titles, section headings, article titles — AND,
+// since the 16 Sep 2026 redesign, the article BODY text (19px, regular weight).
+// Weight 400 was missing before; without it the browser "faked" regular text
+// with the nearest weight it had (600), so whole articles rendered bold.
 const sourceSerif4 = Source_Serif_4({
   variable: "--font-source-serif", // sets --font-source-serif on <html>
   subsets: ["latin"],
-  weight: ["600", "700"],          // 600 = section headings, 700 = hero/display
+  weight: ["400", "600", "700"],   // 400 = article body, 600 = headings, 700 = hero/display
+  style: ["normal", "italic"],     // articles use *emphasis*; without an italic face it's faked
   display: "swap",                 // show text in a fallback font while loading — no invisible text
 });
 

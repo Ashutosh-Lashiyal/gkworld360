@@ -48,31 +48,34 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
   if (headings.length === 0) return null;
 
   return (
-    <nav aria-label="Table of contents" className="bg-surface border border-hairline rounded-card p-5">
-      <h2 className="font-body text-xs font-semibold text-muted uppercase tracking-wider mb-4">
-        On this page
+    // REDESIGN 16 Sep 2026 (board 2): "Contents" as a white card. Each entry has
+    // a 2px rule on its left; the entry currently on screen turns emerald and
+    // its rule lights up — a reading progress marker without a progress bar.
+    <nav aria-label="Table of contents" className="bg-surface border border-hairline rounded-card px-5 py-5">
+      <h2 className="font-body text-[11px] font-semibold text-muted uppercase tracking-[0.14em] mb-3">
+        Contents
       </h2>
-      <ul className="flex flex-col gap-2">
-        {headings.map((heading) => (
-          <li
-            key={heading.id}
-            // h3 headings are indented to show they sit under an h2
-            style={{ paddingLeft: heading.depth === 3 ? "0.75rem" : "0" }}
-          >
-            <a
-              href={`#${heading.id}`}
-              className={[
-                "font-body text-sm leading-snug block transition-colors",
-                // Active heading is sapphire and bold; others are muted
-                activeId === heading.id
-                  ? "text-sapphire font-medium"
-                  : "text-muted hover:text-navy",
-              ].join(" ")}
-            >
-              {heading.text}
-            </a>
-          </li>
-        ))}
+      <ul className="flex flex-col">
+        {headings.map((heading) => {
+          const active = activeId === heading.id;
+          return (
+            <li key={heading.id}>
+              <a
+                href={`#${heading.id}`}
+                className={[
+                  "block py-2 pl-3 -ml-px border-l-2 font-body text-sm leading-snug transition-colors",
+                  heading.depth === 3 ? "pl-6" : "",
+                  active
+                    ? "border-sapphire text-sapphire font-semibold"
+                    : "border-border-subtle text-foreground/80 hover:text-navy-dark hover:border-hairline",
+                ].join(" ")}
+                aria-current={active ? "true" : undefined}
+              >
+                {heading.text}
+              </a>
+            </li>
+          );
+        })}
       </ul>
     </nav>
   );

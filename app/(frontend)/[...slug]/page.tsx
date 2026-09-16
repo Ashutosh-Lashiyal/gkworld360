@@ -25,7 +25,8 @@ import {
   resolveContentFile,
   hasTranslation,
 } from "@/lib/content";
-import LanguageToggle from "@/components/LanguageToggle";
+import ArticleBand from "@/components/ArticleBand";
+import ArticleLayout from "@/components/ArticleLayout";
 import Breadcrumb from "@/components/Breadcrumb";
 import ContentCard from "@/components/ContentCard";
 import TableOfContents from "@/components/TableOfContents";
@@ -643,30 +644,12 @@ export default async function ContentPage({
     );
   }
 
-  // Meta bar items reused in both the banner and the plain header
-  const metaBar = (light: boolean) => (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-      <span
-        className={`font-body text-xs font-semibold uppercase tracking-wider ${
-          light ? "text-on-dark" : "text-sapphire"
-        }`}
-      >
-        {subjectLabel}
-      </span>
-      <span className={light ? "text-on-dark/50" : "text-muted opacity-40"}>·</span>
-      <span className={`font-body text-sm ${light ? "text-on-dark/80" : "text-muted"}`}>
-        {readingTime}
-      </span>
-      {meta.date && (
-        <>
-          <span className={light ? "text-on-dark/50" : "text-muted opacity-40"}>·</span>
-          <span className={`font-body text-sm ${light ? "text-on-dark/80" : "text-muted"}`}>
-            Updated {formatNewsDate(meta.date)}
-          </span>
-        </>
-      )}
-    </div>
-  );
+  // Category label for the band, e.g. "Modern India" (second URL segment,
+  // pretty-printed the same way as the subject).
+  const categoryLabel =
+    contentSlug.length > 2
+      ? contentSlug[1].split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")
+      : "";
 
   // Structured data for this topic — an Article plus its breadcrumb trail.
   // This helps Google show rich results and helps AI engines cite the page.
@@ -696,102 +679,68 @@ export default async function ContentPage({
     ],
   };
 
+  // REDESIGN 16 Sep 2026: the page is built from the two shared article pieces
+  // (ArticleBand + ArticleLayout) that the CMS topic view and the news page also
+  // use, so every article on the site has one look. The old per-page banner,
+  // subject-tinted page background and duplicated column layout are gone.
   return (
-    <div className="w-full min-h-screen transition-colors duration-300" style={colors ? { backgroundColor: colors.bg } : undefined}>
-    <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-8 md:py-12">
-
+    <>
       {/* Structured data (invisible) — Article + breadcrumb trail for SEO/GEO */}
       <JsonLd data={articleJsonLd} />
       <JsonLd data={breadcrumbJsonLd} />
 
-      {/* ── HEADER ─────────────────────────────────────────────────────────────
-          If the topic has a banner image, show a big hero banner with the title,
-          breadcrumb, and meta bar overlaid on top of it (with a dark gradient
-          overlay for readability). If there is no image, fall back to a clean
-          text header inside the reading column further below.                    */}
-      {meta.image ? (
-        <section className="relative w-full h-[320px] md:h-[420px] rounded-card overflow-hidden mb-10">
-          {/* The banner image fills the whole section */}
-          <Image
-            src={meta.image}
-            alt={meta.imageCaption ?? meta.title}
-            fill
-            priority   // this is the largest image on the page — load it first (good for LCP)
-            className="object-cover"
-            sizes="(max-width: 1200px) 100vw, 1200px"
-          />
+      <ArticleBand
+        breadcrumbs={breadcrumbs}
+        label={[subjectLabel, categoryLabel].filter(Boolean).join(" · ")}
+        title={meta.title}
+        summary={meta.description}
+        metaItems={[readingTime, ...(meta.date ? [`Updated ${formatNewsDate(meta.date)}`] : [])]}
+        coverUrl={meta.image}
+        coverAlt={meta.imageCaption ?? meta.title}
+        lang={lang}
+        enHref={enHref}
+        hiHref={hiHref}
+        colors={colors}
+      />
 
-          {/* Dark gradient overlay — darker at the bottom so the white text on
-              top of the image stays readable regardless of the photo.
-              A flat dark tint is layered under the gradient for extra contrast. */}
-          <div className="absolute inset-0 bg-navy-dark/30" />
-          <div className="absolute inset-0 bg-gradient-to-t from-navy-dark/95 via-navy-dark/70 to-navy-dark/30" />
-
-          {/* Overlaid content, anchored to the bottom-left of the banner */}
-          <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-10">
-            <Breadcrumb items={breadcrumbs} tone="light" />
-            <h1
-              className={`text-3xl md:text-5xl font-bold text-on-dark leading-tight max-w-3xl ${
-                lang === "hi" ? "font-hindi" : "font-heading"
-              }`}
-              lang={lang}
-            >
-              {meta.title}
-            </h1>
-            <div className="mt-4">{metaBar(true)}</div>
-          </div>
-        </section>
-      ) : (
-        // No banner image — plain breadcrumb on the light page background
-        <Breadcrumb items={breadcrumbs} />
-      )}
-
-      {/* TWO-COLUMN LAYOUT:
-          - Main reading column (left, max 720px)
-          - Sticky sidebar (right, ~280px) — only on large screens (lg+)
-          On tablet/mobile the sidebar drops below the article.                   */}
-      <div className="flex flex-col lg:flex-row gap-10">
-
-        {/* ── MAIN READING COLUMN ──────────────────────────────────────────────*/}
-        <div className="min-w-0 flex-1 max-w-[720px]">
-
-          {/* Plain text header — only shown when there is NO banner image
-              (when there is a banner, the title + meta are already on it). */}
-          {!meta.image && (
-            <>
-              <h1
-                className="font-heading text-4xl font-bold leading-tight"
-                lang={lang}
-                style={colors ? { color: colors.accent } : undefined}
-              >
-                {meta.title}
-              </h1>
-              {colors && <div className="mt-4 h-[3px] w-14 rounded-full" style={{ backgroundColor: colors.border }} />}
-              <div className="mt-4 mb-8">{metaBar(false)}</div>
-            </>
-          )}
-
-          {/* Language toggle (English | हिन्दी) — only appears when both versions exist */}
-          <div className="mb-6">
-            <LanguageToggle current={lang} enHref={enHref} hiHref={hiHref} />
-          </div>
-
-          {/* The article content (rendered from MDX, styled via mdx-components.tsx).
-              For Hindi, `lang="hi"` + the font-hindi class apply the Devanagari font. */}
-          <article lang={lang} className={`prose ${lang === "hi" ? "font-hindi" : ""}`}>
-            <ContentComponent />
-          </article>
-
-          {/* Previous / Next navigation */}
-          <TopicNav previous={previous} next={next} />
-
-          {/* Related Topics */}
-          {relatedTopics.length > 0 && (
-            <section className="mt-12">
-              <h2 className="font-heading text-2xl font-semibold text-navy mb-5">
+      <ArticleLayout
+        colors={colors}
+        // The cover, shown clean as the article's one illustration (the band
+        // above shows the same image tinted — a deliberate echo).
+        figure={
+          meta.image && (
+            <figure className="m-0 flex flex-col gap-2.5">
+              <div className="relative aspect-[4/3] md:aspect-[16/10] w-full rounded-card border border-hairline overflow-hidden bg-surface-low">
+                <Image
+                  src={meta.image}
+                  alt={meta.imageCaption ?? meta.title}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 720px"
+                />
+              </div>
+              {meta.imageCaption && (
+                <figcaption className="font-body text-[13px] text-muted">{meta.imageCaption}</figcaption>
+              )}
+            </figure>
+          )
+        }
+        // Previous / Next navigation stays inside the reading column
+        after={<TopicNav previous={previous} next={next} />}
+        sidebar={
+          <>
+            <TableOfContents headings={headings} />
+            {meta.quickFacts && <QuickFacts facts={meta.quickFacts} />}
+          </>
+        }
+        // Related topics run full-width under both columns
+        below={
+          relatedTopics.length > 0 && (
+            <section className="mt-16">
+              <h2 className="font-heading text-2xl font-semibold text-navy-dark mb-5">
                 Related Topics
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {relatedTopics.map((topic) => {
                   const hindi = getHindiInfo(topic.slug);
                   return (
@@ -809,22 +758,15 @@ export default async function ContentPage({
                 })}
               </div>
             </section>
-          )}
-        </div>
-
-        {/* ── STICKY SIDEBAR ───────────────────────────────────────────────────
-            Hidden on mobile/tablet, visible on large screens.
-            `sticky top-32` keeps it visible as the user scrolls (128px clears the
-            taller header after the logo was enlarged). `self-start` is required
-            for sticky to work in flex.                                            */}
-        <aside className="hidden lg:block w-[280px] flex-shrink-0">
-          <div className="sticky top-32 flex flex-col gap-5">
-            <TableOfContents headings={headings} />
-            {meta.quickFacts && <QuickFacts facts={meta.quickFacts} />}
-          </div>
-        </aside>
-      </div>
-    </div>
-    </div>
+          )
+        }
+      >
+        {/* The article content (rendered from MDX, styled via mdx-components.tsx).
+            For Hindi, `lang="hi"` + the font-hindi class apply the Devanagari font. */}
+        <article lang={lang} className={`prose ${lang === "hi" ? "font-hindi" : ""}`}>
+          <ContentComponent />
+        </article>
+      </ArticleLayout>
+    </>
   );
 }

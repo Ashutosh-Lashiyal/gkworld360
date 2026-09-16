@@ -20,35 +20,40 @@ export default function KeyTakeaways({ points }: KeyTakeawaysProps) {
   if (!points || points.length === 0) return null;
 
   return (
-    <aside
-      className={[
-        "my-8",
-        "border-l-4 border-sapphire",   // sapphire left accent border
-        "bg-surface-low",               // light sapphire tint background (#eff4ff)
-        "rounded-r-card",               // rounded on the right side only
-        "px-6 py-5",
-      ].join(" ")}
-    >
-      {/* Heading — sapphire, uppercase, small, semibold */}
-      <p className="font-body text-xs font-bold text-sapphire uppercase tracking-wider mb-4">
-        Key Takeaways
-      </p>
+    // REDESIGN 16 Sep 2026 (board 2): a WHITE card with a 4px bar on top in the
+    // page's signal colour. `var(--signal)` is set by ArticleLayout from the
+    // subject, so this card is sepia-topped on History, violet on Physics, with
+    // no per-page code. The `not-prose` idea: this sits inside the .prose
+    // column, so the list resets in globals.css keep our own bullets.
+    <aside className="my-8 flex flex-col bg-surface border border-hairline rounded-card overflow-hidden">
+      <span aria-hidden="true" className="h-1 w-full" style={{ backgroundColor: "var(--signal, #059669)" }} />
 
-      {/* Bulleted list of takeaways */}
-      <ul className="flex flex-col gap-2.5">
-        {points.map((point, index) => (
-          <li key={index} className="flex items-start gap-2.5">
-            {/* Custom bullet dot in sapphire */}
-            <span
-              className="mt-2 w-1.5 h-1.5 rounded-full bg-sapphire flex-shrink-0"
-              aria-hidden="true"
-            />
-            <span className="font-body text-base text-foreground leading-relaxed">
-              {point}
-            </span>
-          </li>
-        ))}
-      </ul>
+      <div className="px-6 py-5 flex flex-col gap-3">
+        {/* Heading — small caps in the signal colour, like every label on the site */}
+        <p
+          className="font-body text-[11px] font-semibold uppercase tracking-[0.14em]"
+          style={{ color: "var(--signal, #059669)" }}
+        >
+          Key Takeaways
+        </p>
+
+        {/* Bulleted list of takeaways — 16px sans so it reads as a summary,
+            distinct from the 19px serif body around it */}
+        <ul className="flex flex-col gap-2">
+          {points.map((point, index) => (
+            <li key={index} className="flex items-start gap-2.5">
+              <span
+                className="mt-[9px] w-1.5 h-1.5 rounded-full flex-shrink-0"
+                style={{ backgroundColor: "var(--signal, #059669)" }}
+                aria-hidden="true"
+              />
+              <span className="font-body text-base text-foreground leading-relaxed">
+                {point}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
     </aside>
   );
 }

@@ -22,9 +22,20 @@ type LanguageToggleProps = {
   // redesign). The current language then inverts to white and the other
   // becomes a white outline — same idea, kept visible on dark.
   onDark?: boolean;
+  // compact → short labels ("English" / "हिन्दी") for narrow screens.
+  compact?: boolean;
+  // fullWidth → the pair stretches across its container, each button half.
+  fullWidth?: boolean;
 };
 
-export default function LanguageToggle({ current, enHref, hiHref, onDark = false }: LanguageToggleProps) {
+export default function LanguageToggle({
+  current,
+  enHref,
+  hiHref,
+  onDark = false,
+  compact = false,
+  fullWidth = false,
+}: LanguageToggleProps) {
   // Need both versions for a toggle to make sense
   if (!enHref || !hiHref) return null;
 
@@ -33,15 +44,19 @@ export default function LanguageToggle({ current, enHref, hiHref, onDark = false
   const otherVariant = onDark ? "ghostOnDark" : "ghost";
 
   return (
-    <div className="inline-flex items-center gap-2" role="group" aria-label="Choose language">
+    <div
+      className={`${fullWidth ? "flex" : "inline-flex"} items-center gap-2`}
+      role="group"
+      aria-label="Choose language"
+    >
       <Button
         href={enHref}
         variant={current === "en" ? activeVariant : otherVariant}
         aria-current={current === "en" ? "page" : undefined}
         hrefLang="en"
-        className="min-w-[140px]"
+        className={fullWidth ? "flex-1" : "min-w-[140px]"}
       >
-        {current === "en" ? "Reading in English" : "Read in English"}
+        {compact ? "English" : current === "en" ? "Reading in English" : "Read in English"}
       </Button>
       <Button
         href={hiHref}
@@ -51,9 +66,9 @@ export default function LanguageToggle({ current, enHref, hiHref, onDark = false
         lang="hi"
         // The label is Devanagari, so render it in the Hindi font, one px larger
         // (Devanagari sits visually smaller than Latin at the same size).
-        className="min-w-[140px] font-hindi text-[15px]"
+        className={`${fullWidth ? "flex-1" : "min-w-[140px]"} font-hindi text-[15px]`}
       >
-        {current === "hi" ? "हिन्दी में पढ़ रहे हैं" : "हिन्दी में पढ़ें"}
+        {compact ? "हिन्दी" : current === "hi" ? "हिन्दी में पढ़ रहे हैं" : "हिन्दी में पढ़ें"}
       </Button>
     </div>
   );

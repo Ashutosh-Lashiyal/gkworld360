@@ -1,11 +1,12 @@
-// NewsArticleView — layout for a single news article.
-// Two-column on desktop (article left, sticky sidebar right).
-// Sidebar shows Table of Contents only when the article has 2+ headings.
+// NewsArticleView — layout for a single news article (MDX or CMS — CMSNewsView
+// feeds this same component). Band on top, reading column + sticky sidebar
+// below; the sidebar's Contents list appears only when there are 2+ headings.
 
 import Link from "next/link";
 import Image from "next/image";
-import Breadcrumb from "@/components/Breadcrumb";
-import LanguageToggle from "@/components/LanguageToggle";
+import ArticleBand from "@/components/ArticleBand";
+import ArticleLayout from "@/components/ArticleLayout";
+import { getSubjectColors } from "@/lib/subject-colors";
 import TableOfContents from "@/components/TableOfContents";
 import JsonLd from "@/components/JsonLd";
 import NewsCard from "@/components/NewsCard";
@@ -61,118 +62,72 @@ export default function NewsArticleView({
     publisher: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
   };
 
+  // News uses the Current Affairs signal colours (rust) on its band.
+  const colors = getSubjectColors("current-affairs");
+
+  // REDESIGN 16 Sep 2026: built from the shared ArticleBand + ArticleLayout so a
+  // current-affairs write-up looks like every other article on the site.
   return (
-    <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-8 md:py-12">
+    <>
       <JsonLd data={newsJsonLd} />
 
-      {/* ── TWO-COLUMN LAYOUT ─────────────────────────────────────────────────
-          Main article on the left, sticky sidebar on the right (desktop only).
-          On mobile/tablet the sidebar is hidden — no distractions.             */}
-      <div className="flex flex-col lg:flex-row gap-10">
+      <ArticleBand
+        breadcrumbs={breadcrumbs}
+        label={["Current Affairs", meta.category].filter(Boolean).join(" · ")}
+        title={meta.title}
+        summary={meta.description}
+        metaItems={[...(meta.date ? [formatNewsDate(meta.date)] : []), readingTime]}
+        coverUrl={meta.image}
+        coverAlt={meta.imageCaption ?? meta.title}
+        lang={lang}
+        enHref={enHref}
+        hiHref={hiHref}
+        colors={colors}
+      />
 
-        {/* ── MAIN ARTICLE COLUMN ─────────────────────────────────────────── */}
-        <div className="min-w-0 flex-1 max-w-[760px]">
-          <Breadcrumb items={breadcrumbs} />
-
-          {/* Category + date + reading time */}
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-3">
-            {meta.category && (
-              <span className="font-body text-xs font-semibold text-sapphire uppercase tracking-wider">
-                {meta.category}
-              </span>
-            )}
-            {meta.date && (
-              <>
-                <span className="text-muted opacity-40">·</span>
-                <span className="font-body text-sm text-muted">{formatNewsDate(meta.date)}</span>
-              </>
-            )}
-            <span className="text-muted opacity-40">·</span>
-            <span className="font-body text-sm text-muted">{readingTime}</span>
-          </div>
-
-          {/* Title */}
-          <h1
-            className={`text-3xl md:text-4xl font-bold text-navy leading-tight ${
-              lang === "hi" ? "font-hindi" : "font-heading"
-            }`}
-            lang={lang}
-          >
-            {meta.title}
-          </h1>
-
-          {/* Language toggle */}
-          <div className="mt-5">
-            <LanguageToggle current={lang} enHref={enHref} hiHref={hiHref} />
-          </div>
-
-          {/* Banner image */}
-          {meta.image && (
-            <figure className="mt-6">
-              {meta.imageWidth && meta.imageHeight ? (
+      <ArticleLayout
+        colors={colors}
+        figure={
+          meta.image && (
+            <figure className="m-0 flex flex-col gap-2.5">
+              <div className="relative aspect-[4/3] md:aspect-[16/10] w-full rounded-card border border-hairline overflow-hidden bg-surface-low">
                 <Image
                   src={meta.image}
                   alt={meta.imageCaption ?? meta.title}
-                  width={meta.imageWidth}
-                  height={meta.imageHeight}
-                  priority
-                  className="w-full h-auto rounded-card border border-hairline"
-                  sizes="(max-width: 760px) 100vw, 760px"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 720px"
                 />
-              ) : (
-                <div className="relative w-full aspect-video rounded-card overflow-hidden bg-surface-mid">
-                  <Image
-                    src={meta.image}
-                    alt={meta.imageCaption ?? meta.title}
-                    fill
-                    priority
-                    className="object-cover"
-                    sizes="(max-width: 760px) 100vw, 760px"
-                  />
-                </div>
-              )}
+              </div>
               {meta.imageCaption && (
-                <figcaption className="font-body text-sm text-muted italic mt-2 text-center">
-                  {meta.imageCaption}
-                </figcaption>
+                <figcaption className="font-body text-[13px] text-muted">{meta.imageCaption}</figcaption>
               )}
             </figure>
-          )}
-
-          {/* Article body */}
-          <article lang={lang} className={`prose mt-8 ${lang === "hi" ? "font-hindi" : ""}`}>
-            {children}
-          </article>
-        </div>
-
-        {/* ── STICKY SIDEBAR ────────────────────────────────────────────────
-            Only shown on large screens and only when there are 2+ headings.
-            top-32 clears the sticky header (128px) with comfortable spacing. */}
-        {showSidebar && (
-          <aside className="hidden lg:block w-[280px] flex-shrink-0">
-            <div className="sticky top-32">
-              <TableOfContents headings={headings} />
-            </div>
-          </aside>
-        )}
-      </div>
-
-      {/* More News */}
-      {recent.length > 0 && (
-        <section className="mt-16">
-          <div className="flex items-end justify-between mb-6">
-            <h2 className="font-heading text-2xl font-semibold text-navy">More Current Affairs</h2>
-            <Link href="/news" className="font-body text-sm font-medium text-sapphire hover:text-sapphire-dark transition-colors">
-              View all →
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {recent.map((item) => (
-              <NewsCard key={item.url} url={item.url} meta={item.meta} />
-            ))}
-          </div>
-        </section>
-      )}
-    </div>
+          )
+        }
+        sidebar={showSidebar ? <TableOfContents headings={headings} /> : undefined}
+        below={
+          recent.length > 0 && (
+            <section className="mt-16">
+              <div className="flex items-end justify-between mb-6">
+                <h2 className="font-heading text-2xl font-semibold text-navy-dark">More Current Affairs</h2>
+                <Link href="/news" className="font-body text-sm font-semibold text-sapphire hover:text-sapphire-dark transition-colors">
+                  View all →
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {recent.map((item) => (
+                  <NewsCard key={item.url} url={item.url} meta={item.meta} />
+                ))}
+              </div>
+            </section>
+          )
+        }
+      >
+        <article lang={lang} className={`prose ${lang === "hi" ? "font-hindi" : ""}`}>
+          {children}
+        </article>
+      </ArticleLayout>
+    </>
   );
 }

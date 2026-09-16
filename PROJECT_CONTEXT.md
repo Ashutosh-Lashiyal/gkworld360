@@ -16,10 +16,11 @@
 
 # 🟢 START HERE — status as of 16 Sep 2026
 
-**Incident RESOLVED. Content pipeline DESIGNED, draft mode BUILT. Redesign Phase 1 BUILT
-on branch `redesign` (16 Sep, evening) — check `git branch` and `git status` first.**
-Next work: owner reviews Phase 1 locally → commit on `redesign` → Phase 2 (Subjects menu)
-or back to the content pipeline (piece 2 onward, `docs/GKWORLD360_CONTENT_PIPELINE.md`).
+**Incident RESOLVED. Content pipeline DESIGNED, draft mode BUILT. Redesign Phases 1–3 BUILT
+on branch `redesign` (16 Sep) — check `git branch` and `git status` first.** Owner has chosen
+to review ALL phases at once at the end, committing a snapshot after each phase.
+Next work: Phase 4 (subject + category pages) → 5 (homepage) → 6 (/pulse) → owner review →
+merge to `main`. Then back to the content pipeline (`docs/GKWORLD360_CONTENT_PIPELINE.md`).
 Design decisions and rollout plan: "16 Sep 2026 (later)" section below.
 
 ### ✅ RECOVERY (4 Sep 2026)
@@ -213,6 +214,27 @@ version rows + sets published), then restoring `.env.local` to dev. Verified liv
   (solid = current, ghost = other; `onDark` prop for Phase 3), SortToggle, /pulse pagination +
   Read Later, not-found, about, contact, SearchBox (`onDark` prop used on the hero) all on
   `<Button>`. Verified with screenshots at 1440 and 390 px. `tsc` + eslint clean.
+- **Phase 2 DONE (commit `ecf206c`):** full-width Subjects panel in `Header.tsx` (3 columns,
+  4px signal bars, Hindi names, dim behind, Escape/click); `labelHi` added to `lib/subjects.ts`;
+  Button now passes `onClick` through to `<Link>`.
+- **Phase 3 DONE (article page):** two new shared pieces — `components/ArticleBand.tsx`
+  (tinted band: cover photo under the subject's `band` colour at 76% + gradient, breadcrumb,
+  small-caps label, 56px serif title, summary, meta; toggle on the band on desktop / two
+  half-width buttons under it on phones) and `components/ArticleLayout.tsx` (720px reading
+  column + sticky sidebar; sets CSS vars `--signal`/`--signal-bg` from the subject). All THREE
+  renderers now use them: MDX topics (`[...slug]/page.tsx`), `CMSTopicView`, `NewsArticleView`
+  (which `CMSNewsView` feeds). `lib/subject-colors.ts` gained `band` + `bandAccent` per subject
+  and `FRAME_COLORS` fallback. `.prose` = 19px Source Serif 1.75, H2 with 56px signal rule
+  (`h2::after`), tables as white cards with signal-tinted header row; `KeyTakeaways` = white card
+  with signal top bar; `TableOfContents` = "Contents" card with left rules. Subject-tinted page
+  backgrounds on article pages are gone (system rule: signal never below the band).
+  **Two bugs surfaced and fixed:** (1) Source Serif was loaded only at 600/700 → body text
+  rendered bold; `layout.tsx` now loads 400 + italic. (2) `slugifyHeading` stripped Devanagari,
+  so every Hindi heading had id `""` (dead Contents links, duplicate-key warning) → Unicode-aware
+  regex `[^\p{L}\p{M}\p{N}\s-]`.
+- Not yet in Phase 3: prev/next cards styled per board (TopicNav still old style — pipeline item),
+  "Sources: N facts verified" meta (needs pipeline data). Long CMS `description`s make the band
+  tall (Smart Border) — the writing template should cap summaries at ~2 sentences.
 - Known pre-existing lint error left alone: unescaped `'` in `app/(frontend)/about/page.tsx:115`.
 - Dev DB (`/pulse` locally) shows 2,278 headlines — the dev branch has no cron pruning it.
   Harmless; production prunes on sync.
