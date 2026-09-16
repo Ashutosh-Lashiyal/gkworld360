@@ -99,7 +99,8 @@ type ButtonProps = {
   // Give an href and you get a <Link> (a navigation). Leave it out and you
   // get a real <button> (an action on the current page, e.g. a form submit).
   href?: string;
-  onClick?: MouseEventHandler<HTMLButtonElement>;
+  // Works on both forms: closing a menu after a link click, or an action.
+  onClick?: MouseEventHandler<HTMLElement>;
   type?: 'button' | 'submit'; // only meaningful for the <button> form
   // Pass-through attributes some call sites need (kept as an explicit list
   // so it's obvious what a Button can carry):
@@ -135,7 +136,7 @@ export default function Button({
   // the click feels instant.
   if (href) {
     return (
-      <Link href={href} className={classes} {...rest}>
+      <Link href={href} className={classes} onClick={onClick} {...rest}>
         {children}
       </Link>
     );

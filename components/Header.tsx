@@ -11,6 +11,7 @@ import { SUBJECTS } from "@/lib/subjects";
 // SUBJECTS is now imported from the shared lib/subjects.ts file instead of
 // being defined here — so the header and the homepage both use the same list.
 import BellNotification from "@/components/BellNotification";
+import Button from "@/components/Button";
 
 
 const OTHER_LINKS = [
@@ -72,10 +73,6 @@ export default function Header() {
   const [mobileSubjectsOpen, setMobileSubjectsOpen] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Tracks which subject slug is currently being hovered in the dropdown.
-  // null means nothing is hovered → no special background shown.
-  const [hoveredSubject, setHoveredSubject] = useState<string | null>(null);
-
   const openSubjects = () => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
     setSubjectsOpen(true);
@@ -119,6 +116,9 @@ export default function Header() {
           Logo stays at the far left, search stays at the far right. */}
       {/* py-2 + a 56px logo ≈ a 72px bar (was ~120px). A slimmer header leaves
           more of the screen for the article, which is what readers came for. */}
+      {/* `relative` here (not on the Subjects button) is what lets the menu
+          panel stretch across the whole header width, edge to edge with the
+          logo and the search box, instead of hanging under one word. */}
       <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-2 relative flex items-center">
 
         {/* Logo — far left, does not participate in centering the nav.
@@ -152,13 +152,16 @@ export default function Header() {
 
           <Link href="/" className={linkClass("/")}>Home</Link>
 
-          {/* Subjects dropdown — wrapping div handles hover open/close */}
+          {/* Subjects dropdown — wrapping div handles hover open/close.
+              Clicking the button also toggles it (touch laptops, keyboards),
+              and Escape closes it. */}
           <div
-            className="relative"
             onMouseEnter={openSubjects}
             onMouseLeave={scheduleClose}
+            onKeyDown={(e) => { if (e.key === "Escape") setSubjectsOpen(false); }}
           >
             <button
+              onClick={() => setSubjectsOpen(!subjectsOpen)}
               className={[
                 "font-body text-[15px] font-medium whitespace-nowrap px-2.5 py-1.5 border-b-2 transition-colors duration-200 flex items-center gap-1",
                 // Open, or on a subject page → treated as the active link
@@ -174,52 +177,80 @@ export default function Header() {
             </button>
 
             {subjectsOpen && (
-              <div
-                // A WHITE panel dropping from the DARK bar — the same "white
-                // card on a dark stage" move the whole design system is built
-                // on. `mt-[3px]` lets it clear the subject line under the bar.
-                // (Full board-8 restyle — signal bars, Hindi names, counts — is
-                // Phase 2.)
-                className="absolute top-full left-1/2 -translate-x-1/2 mt-[3px] w-[580px] bg-surface text-foreground rounded-card border border-hairline shadow-card-hover z-50 overflow-hidden"
-                onMouseEnter={openSubjects}
-                onMouseLeave={scheduleClose}
-              >
-                <div className="grid grid-cols-3 gap-1 p-4">
-                  {SUBJECTS.map((subject) => (
+              <>
+                {/* Dim the page behind the open menu (board 8). It sits below
+                    the bar, ignores the mouse (pointer-events-none) so hover
+                    in/out of the panel still works, and is purely visual. */}
+                <div
+                  aria-hidden="true"
+                  // The container is centred and 1200px wide, so "left-0 right-0" would
+                  // only dim the middle. left-1/2 + -translate-x-1/2 + w-screen centres
+                  // a viewport-wide strip on it instead.
+                  className="absolute left-1/2 -translate-x-1/2 w-screen top-full mt-[3px] h-screen bg-navy-dark/35 pointer-events-none"
+                />
+
+                {/* THE PANEL — a white card dropping from the dark bar, the
+                    full width of the header content. All subjects in three
+                    columns; each row = 4px signal bar · English name (serif)
+                    · Hindi name. The signal colours are learnt here, before
+                    the reader ever reaches a subject page. Topic counts per
+                    subject arrive in Phase 4, when the CMS feeds this list. */}
+                <div
+                  className="absolute top-full left-4 md:left-8 lg:left-16 right-4 md:right-8 lg:right-16 mt-2 bg-surface text-foreground rounded-[12px] shadow-[0_24px_64px_rgba(0,0,0,0.28)] p-7 pb-6 flex flex-col gap-5 z-50"
+                  onMouseEnter={openSubjects}
+                  onMouseLeave={scheduleClose}
+                >
+                  <div className="flex items-baseline justify-between">
+                    <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+                      {SUBJECTS.length} subjects · every topic in English and Hindi
+                    </span>
                     <Link
-                      key={subject.slug}
-                      href={`/${subject.slug}`}
+                      href="/subjects"
                       onClick={() => setSubjectsOpen(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-sm transition-colors group"
-                      // Show the subject's own colour on hover — same colour
-                      // used on that subject's pages — so the user gets a
-                      // visual preview before they even click.
-                      onMouseEnter={() => setHoveredSubject(subject.slug)}
-                      onMouseLeave={() => setHoveredSubject(null)}
-                      style={{
-                        backgroundColor: hoveredSubject === subject.slug
-                          ? SUBJECT_COLORS[subject.slug]?.bg
-                          : undefined,
-                      }}
+                      className="font-body text-[13px] font-semibold text-sapphire hover:text-sapphire-dark transition-colors"
                     >
-                      <span className="text-base" aria-hidden="true">{subject.icon}</span>
-                      <span className="font-body text-sm font-medium text-navy group-hover:text-sapphire transition-colors">
-                        {subject.label}
-                      </span>
+                      All subjects →
                     </Link>
-                  ))}
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-x-10 gap-y-1">
+                    {SUBJECTS.map((subject) => (
+                      <Link
+                        key={subject.slug}
+                        href={`/${subject.slug}`}
+                        onClick={() => setSubjectsOpen(false)}
+                        // grid-cols-[4px_1fr]: a 4px column for the bar, the rest
+                        // for the names. Hover = the warm page tint, same as every
+                        // other hoverable row on the site.
+                        className="grid grid-cols-[4px_minmax(0,1fr)] gap-3.5 items-center py-2.5 pr-3 rounded-lg hover:bg-background transition-colors duration-100 group"
+                      >
+                        <span
+                          aria-hidden="true"
+                          className="w-1 h-9 rounded-sm"
+                          style={{ backgroundColor: SUBJECT_COLORS[subject.slug]?.accent ?? "#059669" }}
+                        />
+                        <span className="flex flex-col leading-tight">
+                          <span className="font-heading text-base font-semibold text-navy-dark group-hover:text-navy transition-colors">
+                            {subject.label}
+                          </span>
+                          <span lang="hi" className="font-hindi text-xs text-muted">
+                            {subject.labelHi}
+                          </span>
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-between gap-4 pt-4 border-t border-border-subtle">
+                    <span className="font-body text-[13px] text-muted">
+                      Not sure where to start? Every subject, with its categories, on one page.
+                    </span>
+                    <Button href="/subjects" onClick={() => setSubjectsOpen(false)}>
+                      Browse all subjects
+                    </Button>
+                  </div>
                 </div>
-                <div className="border-t border-hairline px-5 py-3 bg-surface-low flex items-center justify-between">
-                  <span className="font-body text-xs text-muted">{SUBJECTS.length} subjects available</span>
-                  <Link
-                    href="/subjects"
-                    onClick={() => setSubjectsOpen(false)}
-                    className="font-body text-sm font-semibold text-sapphire hover:text-sapphire-dark transition-colors"
-                  >
-                    View All Subjects →
-                  </Link>
-                </div>
-              </div>
+              </>
             )}
           </div>
 
@@ -313,10 +344,13 @@ export default function Header() {
                       >
                         <span
                           aria-hidden="true"
-                          className="w-1 h-5 rounded-sm flex-shrink-0"
+                          className="w-1 h-7 rounded-sm flex-shrink-0"
                           style={{ backgroundColor: SUBJECT_COLORS[subject.slug]?.border ?? "#6ee7b7" }}
                         />
-                        <span className="font-medium">{subject.label}</span>
+                        <span className="flex flex-col leading-tight">
+                          <span className="font-medium">{subject.label}</span>
+                          <span lang="hi" className="font-hindi text-[11px] text-on-dark/60">{subject.labelHi}</span>
+                        </span>
                       </Link>
                     ))}
                   </div>
