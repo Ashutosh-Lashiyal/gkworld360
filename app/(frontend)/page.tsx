@@ -34,12 +34,14 @@ export const revalidate = 60;
 import { SUBJECT_COLORS } from "@/lib/subject-colors";
 // getSubjectInfo maps a subject slug like "history" to its display label
 // ("History") and emoji icon ("🏛️") so TopicCards show the right category.
-import { getSubjectInfo, SUBJECTS } from "@/lib/subjects";
+import { getSubjectInfo } from "@/lib/subjects";
+import { getSiteStats } from "@/lib/site-stats";
 
 
 // ── HOMEPAGE ──────────────────────────────────────────────────────────────────
 export default async function HomePage() {
   const homepageSubjects = getHomepageSubjects();
+  const stats = await getSiteStats(); // live counts for the hero
 
   // ── CURRENT AFFAIRS (homepage) ────────────────────────────────────────────
   // Merge CMS (Payload) news with the legacy MDX news, newest 3. Each item is
@@ -135,9 +137,6 @@ export default async function HomePage() {
           <h1 className="m-0 font-heading text-5xl md:text-6xl lg:text-[72px] font-bold leading-[1.02] tracking-[-0.025em] text-on-dark max-w-[820px] [text-wrap:balance]">
             Master the World&apos;s <span className="text-mint">Core</span> Knowledge
           </h1>
-          <p lang="hi" className="m-0 font-hindi text-xl md:text-2xl leading-[1.4] text-on-dark/80">
-            विश्व के मूल ज्ञान में महारत हासिल करें
-          </p>
           <p className="m-0 font-body text-base md:text-lg leading-[1.6] text-on-dark/80 max-w-[620px]">
             A curated reference for UPSC, SSC, Railways and lifelong learners — every
             topic in English and Hindi, fact-checked and written to be remembered.
@@ -150,11 +149,12 @@ export default async function HomePage() {
 
           {/* Four quiet stats */}
           <div className="flex flex-wrap justify-center gap-x-10 gap-y-3 mt-2 font-body text-[13px] text-on-dark/65">
+            {/* Every number here is live (lib/site-stats.ts, cached hourly) */}
             {[
-              [String(SUBJECTS.length), "subjects"], // the real count, same as the menu
-              ["EN · हिन्दी", "every topic"],
-              ["Daily", "current affairs"],
-              ["Free", "always"],
+              [String(stats.subjects), stats.subjects === 1 ? "Subject" : "Subjects"],
+              [String(stats.topics), stats.topics === 1 ? "Topic" : "Topics"],
+              [String(stats.hindi), "In Hindi"],
+              [String(stats.writeups), "Current Affairs"],
             ].map(([value, label]) => (
               <span key={label} className="flex flex-col items-center gap-0.5">
                 <span className="font-heading text-[26px] font-bold leading-none text-on-dark">{value}</span>

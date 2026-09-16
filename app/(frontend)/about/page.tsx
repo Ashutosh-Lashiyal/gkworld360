@@ -4,6 +4,7 @@
 
 import type { Metadata } from "next";
 import Button from "@/components/Button";
+import { getSiteStats } from "@/lib/site-stats";
 
 export const metadata: Metadata = {
   title: "About Us | GKWorld360",
@@ -11,13 +12,17 @@ export const metadata: Metadata = {
     "Learn about GKWorld360 — a curated educational platform for students, competitive exam aspirants, and lifelong learners across India.",
 };
 
-// Key platform facts — easy to update as the site grows
-const STATS = [
-  { value: "18+", label: "Subjects" },
-  { value: "100+", label: "Topics" },
-  { value: "Daily", label: "New content" },
-  { value: "Free", label: "Always" },
-];
+// Key platform facts — LIVE from lib/site-stats.ts (16 Sep 2026). These used
+// to be typed in by hand ("18+", "100+") and drifted from the truth.
+async function getStats() {
+  const s = await getSiteStats();
+  return [
+    { value: String(s.subjects), label: s.subjects === 1 ? "Subject" : "Subjects" },
+    { value: String(s.topics), label: s.topics === 1 ? "Topic" : "Topics" },
+    { value: String(s.hindi), label: "In Hindi" },
+    { value: String(s.writeups), label: "Current Affairs" },
+  ];
+}
 
 // What the platform offers — shown as a feature grid
 const FEATURES = [
@@ -59,7 +64,8 @@ const FEATURES = [
   },
 ];
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const STATS = await getStats();
   return (
     <>
       {/* ── HERO ──────────────────────────────────────────────────────────────*/}

@@ -14,7 +14,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import Button from "@/components/Button";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import type { SearchItem } from "@/lib/search";
+import { rankResults, type SearchItem } from "@/lib/search-rank";
 
 // How many results to show inside the hero dropdown
 const MAX_DROPDOWN_RESULTS = 10;
@@ -66,13 +66,9 @@ export default function SearchBox({
   }
 
   // ── Filter the index against the query ───────────────────────────────────────
-  const allMatches = useMemo(() => {
-    const q = value.trim().toLowerCase();
-    if (!q) return [];
-    return index.filter((item) =>
-      `${item.title} ${item.description} ${item.subject}`.toLowerCase().includes(q)
-    );
-  }, [value, index]);
+  // rankResults = the ONE ranking shared with the /search page (lib/search-rank.ts):
+  // title matches first, then Topic → Category → Subject → Current Affairs.
+  const allMatches = useMemo(() => rankResults(index, value), [value, index]);
 
   const shown = allMatches.slice(0, MAX_DROPDOWN_RESULTS);
   const total = allMatches.length;
@@ -197,9 +193,10 @@ export default function SearchBox({
                     <Link
                       href={item.url}
                       onClick={() => setOpen(false)}
-                      className="block px-4 py-3 hover:bg-surface-low transition-colors border-b border-hairline"
+                      // Hover = the site's mint, same as buttons and the Subjects menu
+                      className="block px-4 py-3 hover:bg-mint transition-colors border-b border-hairline group"
                     >
-                      <span className="font-body text-[11px] font-semibold text-sapphire uppercase tracking-wider">
+                      <span className="font-body text-[11px] font-semibold text-sapphire group-hover:text-navy-dark uppercase tracking-wider transition-colors">
                         {item.type}
                       </span>
                       <span className="block font-heading text-base font-semibold text-navy leading-snug">
@@ -214,7 +211,7 @@ export default function SearchBox({
               <Link
                 href={`/search?q=${encodeURIComponent(trimmed)}`}
                 onClick={() => setOpen(false)}
-                className="block px-4 py-3 font-body text-sm font-semibold text-sapphire hover:bg-surface-low transition-colors text-center"
+                className="block px-4 py-3 font-body text-sm font-semibold text-sapphire hover:bg-mint hover:text-navy-dark transition-colors text-center"
               >
                 View all results →
               </Link>

@@ -279,6 +279,16 @@ version rows + sets published), then restoring `.env.local` to dev. Verified liv
   reads the same merged list (was MDX-only → empty). (d) **Board 9 "All Topics"** added to the
   canvas for the `/topics` page (sort toggle on the band, subject chips, rank badges) — owner to
   review before that page is restyled.
+- **Real numbers everywhere (16 Sep, owner's rule):** new `lib/site-stats.ts` →
+  `getSiteStats()` (cached 1 h via `unstable_cache`): subjects = those with a page (overview
+  exists), topics (MDX+CMS), hindi, categories, write-ups, `topicsBySubject`, `liveSubjects`.
+  Used by: hero stats (6 Subjects · 2 Topics · 1 In Hindi · 1 Current Affairs — "Daily"/"Free"/
+  "EN·हिन्दी every topic" claims removed), About page stats (were hand-typed "18+"/"100+"),
+  Subjects menu header line + per-row topic counts (layout passes props to the client Header).
+  **Bug surfaced:** 11 of 17 menu subjects had no page → 404. Now greyed "coming soon", not
+  linked, until an `overview.mdx` (or later a CMS subject page) exists. Search ranking unified
+  in `lib/search-rank.ts` (title-start > title > description; Topic → Category → Subject →
+  News). Footer duplicate React key fixed. Hindi hero tagline removed; menu/search rows hover mint.
 - **ALL SIX PHASES BUILT.** Owner to review everything locally, then merge `redesign` → `main`
   (see GIT_NOTES "Using a branch for real"). No schema changes anywhere in the redesign, so no
   prod-schema-first step is needed before deploying.

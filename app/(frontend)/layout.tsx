@@ -4,6 +4,7 @@ import { Source_Serif_4, Inter, Noto_Sans_Devanagari } from "next/font/google";
 
 // The permanent shell components — appear on every single page
 import Header from "@/components/Header";
+import { getSiteStats } from "@/lib/site-stats";
 import Footer from "@/components/Footer";
 import Gyaani from "@/components/Gyaani";
 
@@ -94,11 +95,14 @@ export const metadata: Metadata = {
 // ── ROOT LAYOUT ───────────────────────────────────────────────────────────────
 // This component wraps EVERY page on the site — it is the permanent outer shell.
 // The site header and footer will be added here in the next step (Step 3).
-export default function RootLayout({
+// async so it can read the site's live counts (cached for an hour) for the Header
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode; // children = whatever page is currently being viewed
 }>) {
+  const stats = await getSiteStats();
+
   return (
     <html
       lang="en"
@@ -150,7 +154,7 @@ export default function RootLayout({
         />
 
         {/* Header sits at the top of every page — sticky, always visible */}
-        <Header />
+        <Header topicsBySubject={stats.topicsBySubject} liveSubjects={stats.liveSubjects} totalTopics={stats.topics} />
 
         {/* flex-1 makes the main content area grow to fill all available space.
             This ensures the footer always stays at the bottom, even on short pages. */}

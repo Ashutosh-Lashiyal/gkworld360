@@ -63,7 +63,20 @@ function ChevronDownIcon({ open }: { open: boolean }) {
   );
 }
 
-export default function Header() {
+type HeaderProps = {
+  // Live counts from lib/site-stats.ts, passed in by the layout (this file is
+  // a client component and cannot read the database itself).
+  topicsBySubject?: Record<string, number>;
+  liveSubjects?: string[]; // subjects that have a page today
+  totalTopics?: number;
+};
+
+export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics = 0 }: HeaderProps) {
+  // A subject is "live" when its page exists. Without the list (shouldn't
+  // happen) treat everything as live rather than greying the whole menu.
+  const isLive = (slug: string) => !liveSubjects || liveSubjects.includes(slug);
+  const liveCount = liveSubjects ? liveSubjects.length : SUBJECTS.length;
+
   const pathname = usePathname();
   const subjectSlug = getSubjectFromPath(pathname);
   const subjectColors = subjectSlug ? getSubjectColors(subjectSlug) : null;
@@ -202,7 +215,7 @@ export default function Header() {
                 >
                   <div className="flex items-baseline justify-between">
                     <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
-                      {SUBJECTS.length} subjects · every topic in English and Hindi
+                      {liveCount} {liveCount === 1 ? "subject" : "subjects"} · {totalTopics} {totalTopics === 1 ? "topic" : "topics"} · English and Hindi
                     </span>
                     <Link
                       href="/subjects"
@@ -214,31 +227,56 @@ export default function Header() {
                   </div>
 
                   <div className="grid grid-cols-3 gap-x-10 gap-y-1">
-                    {SUBJECTS.map((subject) => (
-                      <Link
-                        key={subject.slug}
-                        href={`/${subject.slug}`}
-                        onClick={() => setSubjectsOpen(false)}
-                        // grid-cols-[4px_1fr]: a 4px column for the bar, the rest
-                        // for the names. Hover = the warm page tint, same as every
-                        // other hoverable row on the site.
-                        className="grid grid-cols-[4px_minmax(0,1fr)] gap-3.5 items-center py-2.5 pr-3 rounded-lg hover:bg-background transition-colors duration-100 group"
-                      >
-                        <span
-                          aria-hidden="true"
-                          className="w-1 h-9 rounded-sm"
-                          style={{ backgroundColor: SUBJECT_COLORS[subject.slug]?.accent ?? "#059669" }}
-                        />
-                        <span className="flex flex-col leading-tight">
-                          <span className="font-heading text-base font-semibold text-navy-dark group-hover:text-navy transition-colors">
-                            {subject.label}
+                    {SUBJECTS.map((subject) => {
+                      const live = isLive(subject.slug);
+                      const count = topicsBySubject[subject.slug] ?? 0;
+                      const inner = (
+                        <>
+                          <span
+                            aria-hidden="true"
+                            className="w-1 h-9 rounded-sm"
+                            style={{ backgroundColor: live ? SUBJECT_COLORS[subject.slug]?.accent ?? "#059669" : "#d9d6cf" }}
+                          />
+                          {/* Hover = the site's mint, same as every button (owner, 16 Sep).
+                              The fill sits on the TEXT block only, so the signal bar on
+                              the left stays clear of it (owner's note, same day). */}
+                          <span className={`grid grid-cols-[minmax(0,1fr)_auto] gap-3 items-center px-3 py-2.5 rounded-lg transition-colors duration-100 ${live ? "group-hover:bg-mint" : ""}`}>
+                            <span className="flex flex-col leading-tight">
+                              <span className={`font-heading text-base font-semibold ${live ? "text-navy-dark" : "text-muted"}`}>
+                                {subject.label}
+                              </span>
+                              <span lang="hi" className={`font-hindi text-xs ${live ? "text-muted group-hover:text-navy-dark/70" : "text-muted/70"} transition-colors`}>
+                                {subject.labelHi}
+                              </span>
+                            </span>
+                            {/* A real count, or an honest "coming soon" */}
+                            <span className={`font-body text-xs whitespace-nowrap ${live ? "text-muted group-hover:text-navy-dark/70" : "text-muted/70 italic"}`}>
+                              {live ? `${count} ${count === 1 ? "topic" : "topics"}` : "coming soon"}
+                            </span>
                           </span>
-                          <span lang="hi" className="font-hindi text-xs text-muted">
-                            {subject.labelHi}
-                          </span>
-                        </span>
-                      </Link>
-                    ))}
+                        </>
+                      );
+                      return live ? (
+                        <Link
+                          key={subject.slug}
+                          href={`/${subject.slug}`}
+                          onClick={() => setSubjectsOpen(false)}
+                          className="grid grid-cols-[4px_minmax(0,1fr)] gap-2.5 items-center group"
+                        >
+                          {inner}
+                        </Link>
+                      ) : (
+                        // No page yet → not a link. A dead link that 404s is worse
+                        // than a greyed name (11 of 17 did exactly that before).
+                        <div
+                          key={subject.slug}
+                          aria-disabled="true"
+                          className="grid grid-cols-[4px_minmax(0,1fr)] gap-2.5 items-center cursor-default"
+                        >
+                          {inner}
+                        </div>
+                      );
+                    })}
                   </div>
 
                   <div className="flex items-center justify-between gap-4 pt-4 border-t border-border-subtle">
@@ -335,7 +373,7 @@ export default function Header() {
                   {/* Two columns of subjects; each gets its 4px signal bar on
                       the left so the subject colours are learnt here first. */}
                   <div className="grid grid-cols-2 gap-1 mb-3">
-                    {SUBJECTS.map((subject) => (
+                    {SUBJECTS.map((subject) => isLive(subject.slug) ? (
                       <Link
                         key={subject.slug}
                         href={`/${subject.slug}`}
@@ -352,6 +390,15 @@ export default function Header() {
                           <span lang="hi" className="font-hindi text-[11px] text-on-dark/60">{subject.labelHi}</span>
                         </span>
                       </Link>
+                    ) : (
+                      // No page yet → greyed, not a link
+                      <div key={subject.slug} aria-disabled="true" className="flex items-center gap-2.5 min-h-11 px-2 rounded-sm text-sm text-on-dark/40">
+                        <span aria-hidden="true" className="w-1 h-7 rounded-sm flex-shrink-0 bg-on-dark/20" />
+                        <span className="flex flex-col leading-tight">
+                          <span className="font-medium">{subject.label}</span>
+                          <span className="font-body text-[11px] italic">coming soon</span>
+                        </span>
+                      </div>
                     ))}
                   </div>
                   <Link

@@ -5,7 +5,7 @@
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import type { SearchItem } from "@/lib/search";
+import { rankResults, type SearchItem } from "@/lib/search-rank";
 
 type SearchResultsProps = {
   index: SearchItem[];      // the full search index, passed from the server page
@@ -16,47 +16,11 @@ export default function SearchResults({ index, initialQuery }: SearchResultsProp
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
 
-  // ── TYPE PRIORITY for sorting ─────────────────────────────────────────────
-  // Lower number = appears higher in results.
-  // Subject → Category → Topic → News → anything else
-  const TYPE_ORDER: Record<string, number> = {
-    Subject: 1,
-    Category: 2,
-    Topic: 3,
-    News: 4,
-  };
-
-  // Filter + sort the index against the query.
-  // useMemo avoids re-running this on every render — only recalculates when
-  // the query or index changes.
-  const results = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return [];
-
-    // Step 1: keep only items where the query appears anywhere
-    // (title, description, or subject name)
-    const matched = index.filter((item) => {
-      const haystack = `${item.title} ${item.description} ${item.subject}`.toLowerCase();
-      return haystack.includes(q);
-    });
-
-    // Step 2: sort by relevance
-    // Rule A: title matches always beat description-only matches
-    // Rule B: within the same group, sort by type: Subject → Category → Topic → News
-    return matched.sort((a, b) => {
-      const aInTitle = a.title.toLowerCase().includes(q);
-      const bInTitle = b.title.toLowerCase().includes(q);
-
-      // One has a title match, the other doesn't → title match wins
-      if (aInTitle && !bInTitle) return -1;
-      if (!aInTitle && bInTitle) return 1;
-
-      // Both title matches, or both description-only → sort by type order
-      const aOrder = TYPE_ORDER[a.type] ?? 5;
-      const bOrder = TYPE_ORDER[b.type] ?? 5;
-      return aOrder - bOrder;
-    });
-  }, [query, index]);
+  // Filter + rank the index against the query — the ONE ranking shared with
+  // the homepage dropdown (lib/search-rank.ts): title matches first, then
+  // Topic → Category → Subject → Current Affairs. useMemo avoids re-running
+  // this on every render — only when the query or index changes.
+  const results = useMemo(() => rankResults(index, query), [query, index]);
 
   // Keep the URL in sync so results are shareable/bookmarkable (e.g. /search?q=1857)
   function handleChange(value: string) {

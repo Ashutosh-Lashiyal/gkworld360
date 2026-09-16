@@ -11,13 +11,10 @@ import { getAllSlugs, slugToFilePath, getContentMeta, getPageType } from "@/lib/
 import { getCMSSearchEntries } from "@/lib/cms";
 
 // One searchable item shown in results
-export type SearchItem = {
-  title: string;
-  description: string;
-  url: string;        // e.g. "/history/modern-india/revolt-of-1857"
-  type: string;       // "Subject" | "Category" | "Topic" — shown as a small label
-  subject: string;    // the top-level subject slug, e.g. "history"
-};
+// The SearchItem type (and the ranking) live in lib/search-rank.ts, a file
+// with no server-only imports so the browser components can use it too.
+export type { SearchItem } from "@/lib/search-rank";
+import type { SearchItem } from "@/lib/search-rank";
 
 // Turn the page type into a friendly label for the results list
 const TYPE_LABEL: Record<string, string> = {
