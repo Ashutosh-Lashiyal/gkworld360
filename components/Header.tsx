@@ -94,7 +94,7 @@ export default function Header() {
       "font-body text-[15px] font-medium whitespace-nowrap px-2.5 py-1.5 border-b-2 transition-colors duration-200",
       active
         ? "text-on-dark border-mint"
-        : "text-on-dark/80 border-transparent hover:text-on-dark",
+        : "text-on-dark/80 border-transparent hover:text-mint",
     ].join(" ");
   };
 
@@ -167,7 +167,7 @@ export default function Header() {
                 // Open, or on a subject page → treated as the active link
                 subjectsOpen || subjectSlug
                   ? "text-on-dark border-mint"
-                  : "text-on-dark/80 border-transparent hover:text-on-dark",
+                  : "text-on-dark/80 border-transparent hover:text-mint",
               ].join(" ")}
               aria-expanded={subjectsOpen}
               aria-haspopup="true"
@@ -278,7 +278,7 @@ export default function Header() {
               (#1e3d38) with 10px corners — reads as "a field", not a button. */}
           <Link
             href="/search"
-            className="hidden lg:flex items-center gap-2 xl:w-52 h-9 bg-navy rounded-button px-2.5 xl:px-4 text-on-dark/60 hover:text-on-dark hover:bg-navy/80 transition-colors duration-200 group"
+            className="hidden lg:flex items-center gap-2 xl:w-52 h-9 bg-navy rounded-button px-2.5 xl:px-4 text-on-dark/60 hover:text-mint hover:bg-navy/80 transition-colors duration-200 group"
             aria-label="Search"
           >
             {/* Search icon inside the bar */}
@@ -314,7 +314,7 @@ export default function Header() {
             <Link
               href="/"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center min-h-12 font-body text-base font-medium text-on-dark/85 hover:text-on-dark transition-colors border-b border-on-dark/10"
+              className="flex items-center min-h-12 font-body text-base font-medium text-on-dark/85 hover:text-mint transition-colors border-b border-on-dark/10"
             >
               Home
             </Link>
@@ -322,7 +322,7 @@ export default function Header() {
             {/* Subjects — expands inline on mobile */}
             <div className="border-b border-on-dark/10">
               <button
-                className="flex items-center justify-between w-full min-h-12 font-body text-base font-medium text-on-dark/85 hover:text-on-dark transition-colors"
+                className="flex items-center justify-between w-full min-h-12 font-body text-base font-medium text-on-dark/85 hover:text-mint transition-colors"
                 onClick={() => setMobileSubjectsOpen(!mobileSubjectsOpen)}
                 aria-expanded={mobileSubjectsOpen}
               >
@@ -340,7 +340,7 @@ export default function Header() {
                         key={subject.slug}
                         href={`/${subject.slug}`}
                         onClick={() => { setMobileMenuOpen(false); setMobileSubjectsOpen(false); }}
-                        className="flex items-center gap-2.5 min-h-11 px-2 rounded-sm text-sm text-on-dark/85 hover:text-on-dark hover:bg-on-dark/10 transition-colors"
+                        className="flex items-center gap-2.5 min-h-11 px-2 rounded-sm text-sm text-on-dark/85 hover:text-mint hover:bg-on-dark/10 transition-colors"
                       >
                         <span
                           aria-hidden="true"
@@ -370,7 +370,7 @@ export default function Header() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center min-h-12 font-body text-base font-medium text-on-dark/85 hover:text-on-dark transition-colors border-b border-on-dark/10"
+                className="flex items-center min-h-12 font-body text-base font-medium text-on-dark/85 hover:text-mint transition-colors border-b border-on-dark/10"
               >
                 {link.label}
               </Link>
@@ -379,7 +379,7 @@ export default function Header() {
             <Link
               href="/search"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2 min-h-12 font-body text-base font-medium text-on-dark/85 hover:text-on-dark transition-colors"
+              className="flex items-center gap-2 min-h-12 font-body text-base font-medium text-on-dark/85 hover:text-mint transition-colors"
             >
               <SearchIcon />
               <span>Search</span>

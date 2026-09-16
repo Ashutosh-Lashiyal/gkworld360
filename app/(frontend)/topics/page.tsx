@@ -9,12 +9,7 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  getRecentTopics,
-  hasTranslation,
-  resolveContentFile,
-  getContentMeta,
-} from "@/lib/content";
+import { getPopularTopics, getRecentlyAddedTopics } from "@/lib/topics";
 import { SUBJECT_COLORS } from "@/lib/subject-colors";
 import { getSubjectInfo } from "@/lib/subjects";
 import ContentCard from "@/components/ContentCard";
@@ -43,14 +38,11 @@ export default async function TopicsPage({
   // Both sorts use date-based ordering for now — when a real popularity
   // mechanism (e.g. view counts) is built, replace the popular branch with
   // a ranked fetch. The page UI does not need to change.
-  const topics = getRecentTopics(999);
-
-  // Enrich each topic with Hindi info and subject colour — same pattern used
-  // on the homepage. Done here on the server so ContentCard receives clean props.
+  // Every topic from BOTH sources (MDX + CMS), via lib/topics.ts. Until real
+  // view counts exist, "popular" and "recent" are the same newest-first list
+  // (that was already true of the old MDX-only version).
+  const topics = activeSort === "popular" ? await getPopularTopics(999) : await getRecentlyAddedTopics(999);
   const enrichedTopics = topics.map((item) => {
-    const hindiResolved = hasTranslation(item.slug, "hi")
-      ? resolveContentFile(item.slug, "hi")
-      : null;
     const subject = getSubjectInfo(item.slug[0]);
     const colors = SUBJECT_COLORS[item.slug[0]];
     return {
@@ -61,10 +53,8 @@ export default async function TopicsPage({
       hoverBg:     colors?.bg,
       accent:      colors?.accent,
       image:       item.meta.image,
-      hindiHref:   hindiResolved ? "/hi/" + item.slug.join("/") : undefined,
-      hindiTitle:  hindiResolved
-        ? getContentMeta(hindiResolved.filePath).title
-        : undefined,
+      hindiHref:   item.hindiHref,
+      hindiTitle:  item.hindiTitle,
     };
   });
 

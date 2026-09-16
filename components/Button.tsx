@@ -10,7 +10,8 @@
 //
 // THE LOOK (from board 7 of the design canvas)
 //   fill  #122a26 deep teal · text white · 10px corners · 44px tall minimum
-//   hover fill lightens to #1e3d38, lifts 1px, soft shadow
+//   hover fill turns MINT #6ee7b7 with dark text (owner's choice, 16 Sep — the
+//         same mint as the bell icon), lifts 1px, soft shadow
 //   press drops back down, shadow gone
 //   focus 2px mint ring — for keyboard users (Tab key), never shown on mouse click
 //
@@ -63,21 +64,21 @@ const BASE =
 const VARIANTS: Record<ButtonVariant, string> = {
   primary:
     'bg-navy-dark text-on-dark border-navy-dark ' +
-    'hover:bg-navy hover:border-navy hover:-translate-y-px hover:shadow-button ' +
+    'hover:bg-mint hover:border-mint hover:text-navy-dark hover:-translate-y-px hover:shadow-button ' +
     'active:translate-y-0 active:shadow-none',
 
   onDark:
     'bg-surface text-navy-dark border-surface ' +
-    'hover:bg-surface-low hover:border-surface-low hover:-translate-y-px hover:shadow-button-dark ' +
+    'hover:bg-mint hover:border-mint hover:-translate-y-px hover:shadow-button-dark ' +
     'active:translate-y-0 active:shadow-none',
 
   ghostOnDark:
     'bg-transparent text-on-dark border-on-dark/50 ' +
-    'hover:bg-on-dark/10 hover:border-on-dark/80',
+    'hover:border-mint hover:text-mint',
 
   ghost:
     'bg-transparent text-navy-dark border-navy-dark ' +
-    'hover:bg-surface-low hover:-translate-y-px hover:shadow-button ' +
+    'hover:bg-mint hover:border-mint hover:-translate-y-px hover:shadow-button ' +
     'active:translate-y-0 active:shadow-none',
 
   disabled:

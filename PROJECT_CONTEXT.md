@@ -269,6 +269,16 @@ version rows + sets published), then restoring `.env.local` to dev. Verified liv
   Before this the index knew only the 7 MDX overviews — "Revolt of 1857" was unfindable once the
   dummy MDX was deleted. Also fixed: homepage search list clipped by the hero and stacking over
   the header (z-30 < header z-50; hero no longer `overflow-hidden`).
+- **Owner review round 1 (16 Sep, evening):** (a) hover colour = MINT everywhere it can be: all
+  Button variants hover to mint fill/dark text, dark-surface links (header nav, footer, phone
+  sheet, chips) hover to mint; light-page links keep emerald (mint text on white unreadable).
+  Canvas boards updated to match. (b) Hero card removed — hero is centred words + boxed search +
+  stats. (c) **Popular Topics** (4 ContentCards, light) and **Recently Added** (dark numbered
+  band) are back between Headlines and Current Affairs, fed by new `lib/topics.ts`
+  (`getAllTopics()` merges MDX + CMS; popular = recent until view counts exist). `/topics` now
+  reads the same merged list (was MDX-only → empty). (d) **Board 9 "All Topics"** added to the
+  canvas for the `/topics` page (sort toggle on the band, subject chips, rank badges) — owner to
+  review before that page is restyled.
 - **ALL SIX PHASES BUILT.** Owner to review everything locally, then merge `redesign` → `main`
   (see GIT_NOTES "Using a branch for real"). No schema changes anywhere in the redesign, so no
   prod-schema-first step is needed before deploying.

@@ -1,28 +1,30 @@
 // GKWorld360 Homepage
 // Server Component — runs on the server, no client-side JS needed.
 //
-// REDESIGN 16 Sep 2026 (board 5). Built entirely from the page system:
-//   1. HERO         — DARK. Brand-teal tint over the photo (the frame's colour,
-//                     not a subject's), the search as a white box on the dark,
-//                     and a white "Featured today" card floating on the right.
-//   2. SUBJECTS     — LIGHT. Six white cards; signal colours only as bars/labels.
-//   3. HEADLINES    — DARK band. Numbered list, mint numbers (LatestHeadlinesSection).
-//   4. CURRENT AFFAIRS + QUOTE — LIGHT. Write-up cards, then the quote as a white card.
-//   5. FOOTER       — DARK (in layout.tsx).
-// Strict light/dark alternation. The old "Popular Topics" / "Recently Added
-// Topics" / "About" sections are gone: the first two were empty bands, the
-// About text lives on /about.
+// REDESIGN 16 Sep 2026 (board 5, revised the same evening on the owner's review):
+//   1. HERO            — DARK. Brand-teal tint over the photo; centred words, the
+//                        search as a white box, four stats. No card (it looked
+//                        cluttered — removed on review).
+//   2. SUBJECTS        — LIGHT. Six white cards; signal colours only as bars/labels.
+//   3. HEADLINES       — DARK band. Numbered list (LatestHeadlinesSection).
+//   4. POPULAR TOPICS  — LIGHT. Four cards → /topics?sort=popular
+//   5. RECENTLY ADDED  — DARK band. Numbered rows → /topics?sort=recent
+//   6. CURRENT AFFAIRS + QUOTE — LIGHT.
+//   7. FOOTER          — DARK (in layout.tsx).
+// Strict light/dark alternation. "Popular" is recency until real view counts
+// exist (see lib/topics.ts). The About block is gone; its text lives on /about.
 
 import Link from "next/link";
 import Image from "next/image";
 import SearchBox from "@/components/SearchBox";
 import SubjectCard from "@/components/SubjectCard";
 import ContentCard from "@/components/ContentCard";
+import { getPopularTopics, getRecentlyAddedTopics, formatAddedTime } from "@/lib/topics";
 import NewsCard from "@/components/NewsCard";
 import LatestHeadlinesSection from "@/components/LatestHeadlinesSection";
-import { getHomepageSubjects, getRecentTopics, hasTranslation, resolveContentFile, getContentMeta, type ContentMeta } from "@/lib/content";
+import { getHomepageSubjects, hasTranslation, resolveContentFile, getContentMeta, type ContentMeta } from "@/lib/content";
 import { getRecentNews } from "@/lib/news";
-import { getCMSNewsList, getCMSNewsHindiSlugs, getCMSLatestArticles, type CMSListedTopic } from "@/lib/cms";
+import { getCMSNewsList, getCMSNewsHindiSlugs } from "@/lib/cms";
 import { getDailyQuote } from "@/lib/quote";
 
 // Re-generate the homepage at most once every 60 seconds so the headline teaser
@@ -78,45 +80,19 @@ export default async function HomePage() {
     .sort((a, b) => new Date(b.meta.date ?? 0).getTime() - new Date(a.meta.date ?? 0).getTime())
     .slice(0, 3);
 
-  // ── FEATURED TOPIC (hero card) ────────────────────────────────────────────
-  // The most recently published topic, shown as the white card floating on the
-  // hero. CMS first (that is where new content comes from now), MDX as the
-  // fallback. Until a real "featured" flag exists in the CMS, recency stands in.
-  const [cmsLatest] = await getCMSLatestArticles(1);
-  const [mdxLatest] = getRecentTopics(1);
-  const featuredRaw: CMSListedTopic | undefined =
-    cmsLatest ??
-    (mdxLatest
-      ? {
-          slug: mdxLatest.slug,
-          meta: mdxLatest.meta,
-          hindiHref: hasTranslation(mdxLatest.slug, "hi") ? "/hi/" + mdxLatest.slug.join("/") : undefined,
-          hindiTitle: (() => {
-            const hi = hasTranslation(mdxLatest.slug, "hi") ? resolveContentFile(mdxLatest.slug, "hi") : null;
-            return hi ? getContentMeta(hi.filePath).title : undefined;
-          })(),
-        }
-      : undefined);
-  const featured = featuredRaw
-    ? {
-        title: featuredRaw.meta.title,
-        description: featuredRaw.meta.description ?? "",
-        href: "/" + featuredRaw.slug.join("/"),
-        // "History · Modern India" — subject name + prettified category slug
-        label: [
-          getSubjectInfo(featuredRaw.slug[0])?.label ?? featuredRaw.slug[0],
-          featuredRaw.slug.length > 2
-            ? featuredRaw.slug[1].split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")
-            : undefined,
-        ]
-          .filter(Boolean)
-          .join(" · "),
-        image: featuredRaw.meta.image,
-        colors: SUBJECT_COLORS[featuredRaw.slug[0]],
-        hindiHref: featuredRaw.hindiHref,
-        hindiTitle: featuredRaw.hindiTitle,
-      }
-    : null;
+  // ── POPULAR + RECENTLY ADDED ───────────────────────────────────────────────
+  // Both from lib/topics.ts, which merges MDX and CMS topics. Four for the
+  // Popular grid, six for the Recently Added rows (two columns of three).
+  const popularTopics = await getPopularTopics(4);
+  const recentlyAdded = await getRecentlyAddedTopics(6);
+  // "History · Modern India" for a topic's small label
+  const topicLabel = (slug: string[]) =>
+    [
+      getSubjectInfo(slug[0])?.label ?? slug[0],
+      slug.length > 2 ? slug[1].split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ") : undefined,
+    ]
+      .filter(Boolean)
+      .join(" · ");
 
   // recentNews already carries hindiHref/hindiTitle (built above), so the news
   // section can use it directly.
@@ -149,64 +125,43 @@ export default async function HomePage() {
           style={{ background: "linear-gradient(to top, rgba(18,42,38,0.85) 0%, rgba(18,42,38,0.35) 55%, rgba(18,42,38,0.2) 100%)" }}
         />
 
-        <div className="relative max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-14 md:py-20 lg:grid lg:grid-cols-12 lg:gap-12 lg:items-center">
-          {/* Left: the words */}
-          <div className="lg:col-span-7 flex flex-col gap-5">
-            <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-mint">
-              Trusted educational content · General knowledge · Current affairs
-            </span>
+        {/* Centred, one column, nothing competing with the words. */}
+        <div className="relative max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-14 md:py-20 flex flex-col items-center text-center gap-5">
+          <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-mint">
+            Trusted educational content · General knowledge · Current affairs
+          </span>
 
-            {/* One word in mint — the single accent moment in the headline */}
-            <h1 className="m-0 font-heading text-5xl md:text-6xl lg:text-[72px] font-bold leading-[1.02] tracking-[-0.025em] text-on-dark max-w-[760px] [text-wrap:balance]">
-              Master the World&apos;s <span className="text-mint">Core</span> Knowledge
-            </h1>
-            <p lang="hi" className="m-0 font-hindi text-xl md:text-2xl leading-[1.4] text-on-dark/80">
-              विश्व के मूल ज्ञान में महारत हासिल करें
-            </p>
-            <p className="m-0 font-body text-base md:text-lg leading-[1.6] text-on-dark/80 max-w-[580px]">
-              A curated reference for UPSC, SSC, Railways and lifelong learners — every
-              topic in English and Hindi, fact-checked and written to be remembered.
-            </p>
+          {/* One word in mint — the single accent moment in the headline */}
+          <h1 className="m-0 font-heading text-5xl md:text-6xl lg:text-[72px] font-bold leading-[1.02] tracking-[-0.025em] text-on-dark max-w-[820px] [text-wrap:balance]">
+            Master the World&apos;s <span className="text-mint">Core</span> Knowledge
+          </h1>
+          <p lang="hi" className="m-0 font-hindi text-xl md:text-2xl leading-[1.4] text-on-dark/80">
+            विश्व के मूल ज्ञान में महारत हासिल करें
+          </p>
+          <p className="m-0 font-body text-base md:text-lg leading-[1.6] text-on-dark/80 max-w-[620px]">
+            A curated reference for UPSC, SSC, Railways and lifelong learners — every
+            topic in English and Hindi, fact-checked and written to be remembered.
+          </p>
 
-            {/* Search as a WHITE box on the dark — the one big input */}
-            <div className="max-w-[580px] mt-1">
-              <SearchBox buttonLabel="Search" boxed />
-            </div>
-
-            {/* Four quiet stats instead of tick-badges */}
-            <div className="flex flex-wrap gap-x-8 gap-y-3 mt-2 font-body text-[13px] text-on-dark/65">
-              {[
-                [String(SUBJECTS.length), "subjects"], // the real count, same as the menu
-                ["EN · हिन्दी", "every topic"],
-                ["Daily", "current affairs"],
-                ["Free", "always"],
-              ].map(([value, label]) => (
-                <span key={label} className="flex flex-col gap-0.5">
-                  <span className="font-heading text-[26px] font-bold leading-none text-on-dark">{value}</span>
-                  <span>{label}</span>
-                </span>
-              ))}
-            </div>
+          {/* Search as a WHITE box on the dark — the one big input */}
+          <div className="w-full max-w-[620px] mt-1">
+            <SearchBox buttonLabel="Search" boxed />
           </div>
 
-          {/* Right: the white card ON the stage — today's featured topic */}
-          {featured && (
-            <div className="mt-10 lg:mt-0 lg:col-span-5">
-              <ContentCard
-                title={featured.title}
-                description={featured.description}
-                href={featured.href}
-                image={featured.image}
-                label={featured.label}
-                badge="Featured today"
-                hoverBg={featured.colors?.bg}
-                accent={featured.colors?.accent}
-                hindiHref={featured.hindiHref}
-                hindiTitle={featured.hindiTitle}
-                flat
-              />
-            </div>
-          )}
+          {/* Four quiet stats */}
+          <div className="flex flex-wrap justify-center gap-x-10 gap-y-3 mt-2 font-body text-[13px] text-on-dark/65">
+            {[
+              [String(SUBJECTS.length), "subjects"], // the real count, same as the menu
+              ["EN · हिन्दी", "every topic"],
+              ["Daily", "current affairs"],
+              ["Free", "always"],
+            ].map(([value, label]) => (
+              <span key={label} className="flex flex-col items-center gap-0.5">
+                <span className="font-heading text-[26px] font-bold leading-none text-on-dark">{value}</span>
+                <span>{label}</span>
+              </span>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -245,7 +200,84 @@ export default async function HomePage() {
       {/* ══ 3. LATEST HEADLINES — DARK band ══════════════════════════════════ */}
       <LatestHeadlinesSection />
 
-      {/* ══ 4. CURRENT AFFAIRS + QUOTE — LIGHT ═══════════════════════════════ */}
+      {/* ══ 4. POPULAR TOPICS — LIGHT ════════════════════════════════════════
+          Four cards. "View all" opens /topics with the Popular sort active. */}
+      {popularTopics.length > 0 && (
+        <section className="bg-background">
+          <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-14 md:py-[72px] flex flex-col gap-6">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div className="flex flex-col gap-1.5">
+                <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Part three · most read</span>
+                <h2 className="m-0 font-heading text-3xl md:text-[40px] font-bold tracking-[-0.015em] text-navy-dark">
+                  Popular Topics
+                </h2>
+              </div>
+              <Link href="/topics?sort=popular" className="font-body text-sm font-semibold text-sapphire hover:text-sapphire-dark transition-colors whitespace-nowrap">
+                All topics →
+              </Link>
+            </div>
+            {/* 4 across on desktop, 2 on tablet, 1 on phones */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {popularTopics.map((t) => (
+                <ContentCard
+                  key={t.slug.join("/")}
+                  title={t.meta.title}
+                  description={t.meta.description}
+                  href={"/" + t.slug.join("/")}
+                  image={t.meta.image}
+                  label={topicLabel(t.slug)}
+                  hoverBg={SUBJECT_COLORS[t.slug[0]]?.bg}
+                  accent={SUBJECT_COLORS[t.slug[0]]?.accent}
+                  hindiHref={t.hindiHref}
+                  hindiTitle={t.hindiTitle}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ══ 5. RECENTLY ADDED — DARK band ════════════════════════════════════
+          Numbered rows, two columns — the same pattern as a subject page's
+          "New in History" band. "View all" opens /topics with Recent active. */}
+      {recentlyAdded.length > 0 && (
+        <section className="bg-navy-dark text-on-dark">
+          <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12 md:py-14 flex flex-col gap-6">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div className="flex flex-col gap-1.5">
+                <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-mint">Part four · fresh from the desk</span>
+                <h2 className="m-0 font-heading text-3xl md:text-[40px] font-bold tracking-[-0.015em] text-on-dark">
+                  Recently Added
+                </h2>
+              </div>
+              <Link href="/topics?sort=recent" className="font-body text-sm font-semibold text-mint hover:text-on-dark transition-colors whitespace-nowrap">
+                View all →
+              </Link>
+            </div>
+            <ol className="grid grid-cols-1 md:grid-cols-2 gap-x-12 list-none m-0 p-0">
+              {recentlyAdded.map((t, i) => (
+                <li key={t.slug.join("/")}>
+                  <Link
+                    href={"/" + t.slug.join("/")}
+                    className="grid grid-cols-[40px_minmax(0,1fr)_auto] gap-3.5 items-baseline py-4 border-b border-on-dark/10 hover:text-mint transition-colors"
+                  >
+                    <span className="font-heading text-xl font-bold text-mint">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="flex flex-col gap-0.5">
+                      <span className="font-heading text-lg font-semibold leading-snug">{t.meta.title}</span>
+                      <span className="font-body text-[13px] text-on-dark/60">
+                        {topicLabel(t.slug)} · {formatAddedTime(t.meta.date)}
+                      </span>
+                    </span>
+                    <span className="font-body text-xs text-on-dark/60 whitespace-nowrap">{t.hindiHref ? "EN · हिन्दी" : "EN"}</span>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+      )}
+
+      {/* ══ 6. CURRENT AFFAIRS + QUOTE — LIGHT ═══════════════════════════════ */}
       <section className="bg-background">
         <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-14 md:py-[72px] flex flex-col gap-14">
           {recentNews.length > 0 && (
@@ -253,7 +285,7 @@ export default async function HomePage() {
               <div className="flex flex-wrap items-end justify-between gap-4">
                 <div className="flex flex-col gap-1.5">
                   <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em]" style={{ color: SUBJECT_COLORS["current-affairs"].accent }}>
-                    Part three · <span lang="hi" className="font-hindi normal-case tracking-normal">समसामयिकी</span>
+                    Part five · <span lang="hi" className="font-hindi normal-case tracking-normal">समसामयिकी</span>
                   </span>
                   <h2 className="m-0 font-heading text-3xl md:text-[40px] font-bold tracking-[-0.015em] text-navy-dark">
                     Current Affairs

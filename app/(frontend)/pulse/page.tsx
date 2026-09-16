@@ -71,7 +71,7 @@ export default async function PulsePage({
         "inline-flex items-center min-h-9 px-3.5 rounded-button border font-body text-[13px] font-semibold whitespace-nowrap transition-colors",
         on
           ? "bg-navy-dark border-navy-dark text-on-dark"
-          : "bg-surface border-hairline text-foreground hover:border-navy-dark",
+          : "bg-surface border-hairline text-foreground hover:border-mint hover:bg-mint/20",
       ].join(" ")}
     >
       {label}
