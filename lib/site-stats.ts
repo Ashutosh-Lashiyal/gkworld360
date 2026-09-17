@@ -31,6 +31,9 @@ export type SiteStats = {
   hindi: number;
   categories: number;
   writeups: number;
+  // Registered readers. `undefined` until the login feature exists — pages
+  // that show it (the hero pills) simply skip it while it's undefined.
+  users?: number;
   // slug → number of topics, for the Subjects menu ("2 topics")
   topicsBySubject: Record<string, number>;
   // slugs that have a page today — the menu links these, greys out the rest
@@ -64,6 +67,7 @@ async function computeSiteStats(): Promise<SiteStats> {
     hindi,
     categories: categories.size,
     writeups: newsSlugs.size,
+    users: undefined, // ← set this from the users table once login exists
     topicsBySubject,
     liveSubjects,
   };

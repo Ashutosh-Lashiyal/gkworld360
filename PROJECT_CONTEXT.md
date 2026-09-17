@@ -289,6 +289,13 @@ version rows + sets published), then restoring `.env.local` to dev. Verified liv
   linked, until an `overview.mdx` (or later a CMS subject page) exists. Search ranking unified
   in `lib/search-rank.ts` (title-start > title > description; Topic → Category → Subject →
   News). Footer duplicate React key fixed. Hindi hero tagline removed; menu/search rows hover mint.
+- **17 Sep — second article + ingestion piece:** hero stats → 3 large pills (Subjects/Topics/
+  Categories; Readers pill wired but hidden until `users` is set). Pipeline piece 5 DONE:
+  `lib/ingest.ts` + dev-only `POST /api/ingest` + `scripts/create-article-draft.mjs` /
+  `delete-article.mjs` (see pipeline doc §9). **"The Dutch in India" (EN+HI) = draft #5 on
+  dev**, order 10, from `drafts/the-dutch-in-india.json` (facts list inside). Duplicate
+  Portuguese draft #4 deleted on dev (#3 is the real one). `publishedDate` now auto-fills on
+  first Publish (Articles hook) — Portuguese #3 still has none; set it by hand once in /admin.
 - **ALL SIX PHASES BUILT.** Owner to review everything locally, then merge `redesign` → `main`
   (see GIT_NOTES "Using a branch for real"). No schema changes anywhere in the redesign, so no
   prod-schema-first step is needed before deploying.

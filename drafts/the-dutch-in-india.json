@@ -1,0 +1,95 @@
+{
+  "slug": "the-dutch-in-india",
+  "subject": "history",
+  "category": "modern-india",
+  "order": 10,
+  "reviewNotes": "Source: owner's book, section 'The Dutch' (photo sent 17 Sep 2026). Facts to verify — 1595 first Dutch fleet reaches India; 1602 Dutch East India Company formed; 1605 first factory at Masulipatnam; factories: Pulicat 1610, Surat 1616, Bimlipatam 1641, Karaikal 1645, Chinsura 1653, Kasimbazar 1658, Baranagore 1658, Patna 1658, Balasore 1658, Cochin 1663; Pulicat chief centre till 1690, then Negapatam; Anglo-Dutch rivalry late 17th–early 18th c.; Battle of Bedara 1759, Dutch defeated by the English. Left out on purpose: the book's phrase 'their influence soon vanished' (contradicts the 1759 end date). Spellings standardised: Bimlipatam, Bedara, Negapatam.",
+
+  "en": {
+    "title": "The Dutch in India",
+    "description": "How the Dutch followed the Portuguese to India in 1595, built a chain of trading factories along both coasts, and were finally pushed out by the English at Bedara in 1759.",
+    "intro": [
+      "The Portuguese had shown that Europe could reach India by sea. The Dutch were the next to try. Their first fleet arrived on the Indian coast in 1595, and within a few years the traders of the Netherlands had organised themselves into a single powerful company to compete for the spice and textile trade of the East."
+    ],
+    "sections": [
+      {
+        "heading": "The Dutch East India Company",
+        "paragraphs": [
+          "In 1602 the Dutch merchants combined their separate ventures into one body: the Dutch East India Company. Pooling their ships and money under one company gave the Dutch the strength to plant permanent trading posts in India rather than simply sending occasional voyages.",
+          "Their first such post — called a factory, meaning a fortified warehouse and trading station, not a place of manufacture — was set up at Masulipatnam on the Coromandel coast in 1605."
+        ]
+      },
+      {
+        "heading": "A Chain of Factories on Both Coasts",
+        "paragraphs": [
+          "From Masulipatnam the Dutch spread steadily. Pulicat followed in 1610 and Surat, on the west coast, in 1616. Over the next decades they added Bimlipatam (1641) and Karaikal (1645), and then pushed into Bengal and Bihar with Chinsura (1653), Kasimbazar and Baranagore (both 1658), and Patna and Balasore in the same year, 1658. Cochin, on the Malabar coast, came into Dutch hands in 1663.",
+          "Notice the pattern that examiners like to test: the Dutch presence was not confined to one region. It ran from Surat in the west, down the Malabar coast to Cochin, around the Coromandel coast, and up into the Ganga delta."
+        ]
+      },
+      {
+        "heading": "Pulicat, then Negapatam",
+        "paragraphs": [
+          "For most of the seventeenth century the centre of Dutch trade in India was Pulicat, north of present-day Chennai. It remained their chief trading centre until 1690, after which the headquarters moved south to Negapatam on the Tamil coast."
+        ]
+      },
+      {
+        "heading": "Rivalry with the English and the End at Bedara",
+        "paragraphs": [
+          "The Dutch and the English were competing for the same trade, and their rivalry was at its sharpest in the late seventeenth and early eighteenth centuries. The contest was settled in 1759 at the Battle of Bedara, where the English defeated the Dutch. After this defeat Dutch power in India collapsed, leaving the English and the French as the remaining European rivals for the subcontinent."
+        ]
+      }
+    ],
+    "takeaways": [
+      "The first Dutch fleet reached India in 1595; the Dutch East India Company was formed in 1602.",
+      "Their first factory was at Masulipatnam (1605), followed by Pulicat (1610) and Surat (1616).",
+      "Later factories included Bimlipatam (1641), Karaikal (1645), Chinsura (1653), Kasimbazar, Baranagore, Patna and Balasore (all 1658), and Cochin (1663).",
+      "Pulicat was the chief Dutch trading centre until 1690; afterwards it was Negapatam.",
+      "Anglo-Dutch rivalry peaked in the late 17th and early 18th centuries.",
+      "The English defeated the Dutch at the Battle of Bedara in 1759, ending Dutch power in India."
+    ]
+  },
+
+  "hi": {
+    "title": "भारत में डच",
+    "description": "पुर्तगालियों के बाद 1595 में डच भारत कैसे पहुँचे, दोनों तटों पर व्यापारिक कोठियों की शृंखला कैसे बनाई, और 1759 में बेदरा के युद्ध में अंग्रेज़ों से हारकर भारत से कैसे बाहर हुए।",
+    "intro": [
+      "पुर्तगालियों ने दिखा दिया था कि यूरोप से समुद्र के रास्ते भारत पहुँचा जा सकता है। इसके बाद प्रयास करने वाले डच थे। उनका पहला बेड़ा 1595 में भारतीय तट पर पहुँचा, और कुछ ही वर्षों में नीदरलैंड के व्यापारियों ने पूर्व के मसाला और वस्त्र व्यापार में प्रतिस्पर्धा के लिए स्वयं को एक शक्तिशाली कंपनी के रूप में संगठित कर लिया।"
+    ],
+    "sections": [
+      {
+        "heading": "डच ईस्ट इंडिया कंपनी",
+        "paragraphs": [
+          "1602 में डच व्यापारियों ने अपने अलग-अलग उपक्रमों को मिलाकर एक संस्था बनाई — डच ईस्ट इंडिया कंपनी। जहाज़ और पूँजी एक कंपनी के अधीन आ जाने से डचों को केवल कभी-कभार यात्राएँ भेजने के बजाय भारत में स्थायी व्यापारिक केंद्र स्थापित करने की शक्ति मिली।",
+          "उनकी पहली ऐसी कोठी — जिसे 'फ़ैक्टरी' कहा जाता था, अर्थात किलेबंद गोदाम और व्यापारिक केंद्र, न कि कोई कारखाना — 1605 में कोरोमंडल तट पर मसूलीपट्टनम में स्थापित हुई।"
+        ]
+      },
+      {
+        "heading": "दोनों तटों पर कोठियों की शृंखला",
+        "paragraphs": [
+          "मसूलीपट्टनम से डच लगातार फैलते गए। 1610 में पुलिकट और 1616 में पश्चिमी तट पर सूरत में कोठियाँ बनीं। अगले दशकों में उन्होंने बिमलीपट्टम (1641) और कराइकल (1645) जोड़े, फिर बंगाल और बिहार की ओर बढ़े — चिनसुरा (1653), कासिमबाज़ार और बारानगर (दोनों 1658), तथा उसी वर्ष 1658 में पटना और बालासोर। मालाबार तट पर कोचीन 1663 में डचों के हाथ आया।",
+          "यहाँ वह पैटर्न ध्यान देने योग्य है जो परीक्षाओं में पूछा जाता है: डच उपस्थिति किसी एक क्षेत्र तक सीमित नहीं थी। यह पश्चिम में सूरत से मालाबार तट पर कोचीन तक, कोरोमंडल तट के चारों ओर, और गंगा के डेल्टा तक फैली थी।"
+        ]
+      },
+      {
+        "heading": "पहले पुलिकट, फिर नागपट्टनम",
+        "paragraphs": [
+          "सत्रहवीं शताब्दी के अधिकांश समय भारत में डच व्यापार का केंद्र पुलिकट था, जो वर्तमान चेन्नई के उत्तर में स्थित है। 1690 तक यह उनका प्रमुख व्यापारिक केंद्र बना रहा, जिसके बाद मुख्यालय दक्षिण में तमिल तट पर नागपट्टनम स्थानांतरित हो गया।"
+        ]
+      },
+      {
+        "heading": "अंग्रेज़ों से प्रतिद्वंद्विता और बेदरा में अंत",
+        "paragraphs": [
+          "डच और अंग्रेज़ एक ही व्यापार के लिए होड़ में थे, और उनकी प्रतिद्वंद्विता सत्रहवीं शताब्दी के अंत और अठारहवीं शताब्दी के आरंभ में अपने चरम पर थी। इसका फ़ैसला 1759 में बेदरा के युद्ध में हुआ, जहाँ अंग्रेज़ों ने डचों को पराजित किया। इस हार के बाद भारत में डच शक्ति ढह गई, और उपमहाद्वीप के लिए अंग्रेज़ और फ्रांसीसी ही शेष यूरोपीय प्रतिद्वंद्वी रह गए।"
+        ]
+      }
+    ],
+    "takeaways": [
+      "पहला डच बेड़ा 1595 में भारत पहुँचा; डच ईस्ट इंडिया कंपनी 1602 में बनी।",
+      "उनकी पहली कोठी मसूलीपट्टनम (1605) में थी, फिर पुलिकट (1610) और सूरत (1616)।",
+      "बाद की कोठियाँ: बिमलीपट्टम (1641), कराइकल (1645), चिनसुरा (1653), कासिमबाज़ार, बारानगर, पटना और बालासोर (सभी 1658), तथा कोचीन (1663)।",
+      "1690 तक पुलिकट डचों का प्रमुख व्यापारिक केंद्र था; उसके बाद नागपट्टनम।",
+      "आंग्ल-डच प्रतिद्वंद्विता 17वीं शताब्दी के अंत और 18वीं शताब्दी के आरंभ में चरम पर थी।",
+      "1759 में बेदरा के युद्ध में अंग्रेज़ों ने डचों को हराया, जिससे भारत में डच शक्ति समाप्त हो गई।"
+    ]
+  }
+}

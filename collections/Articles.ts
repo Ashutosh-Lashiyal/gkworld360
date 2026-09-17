@@ -115,8 +115,30 @@ export const Articles: CollectionConfig = {
         date: {
           displayFormat: "dd-MMM-yyyy",
         },
-        description: "When this article was published.",
+        description: "When this article was published. Fills itself in the first time you press Publish; you can still change it.",
       },
     },
   ],
+
+  // ── HOOKS ────────────────────────────────────────────────────────────────────
+  // A "hook" is a small function Payload runs at a fixed moment — here, just
+  // before an article is saved. This one fills in `publishedDate` the FIRST
+  // time an article is published (added 17 Sep 2026: "The Portuguese in India"
+  // went live with the date left blank, because the box is manual).
+  //   - `data._status === "published"` → the save that is happening is a Publish
+  //   - `!data.publishedDate`           → and no date has been typed in
+  //   - `originalDoc?._status !== "published"` → and it wasn't already published
+  //     (so re-saving an old article never overwrites its real date)
+  // Only then do we stamp today. The owner can always edit the date afterwards.
+  hooks: {
+    beforeChange: [
+      ({ data, originalDoc }) => {
+        const publishingNow = data._status === "published" && originalDoc?._status !== "published";
+        if (publishingNow && !data.publishedDate) {
+          data.publishedDate = new Date().toISOString();
+        }
+        return data;
+      },
+    ],
+  },
 };

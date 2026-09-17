@@ -147,21 +147,28 @@ export default async function HomePage() {
             <SearchBox buttonLabel="Search" boxed />
           </div>
 
-          {/* Four quiet stats */}
-          <div className="flex flex-wrap justify-center gap-x-10 gap-y-3 mt-2 font-body text-[13px] text-on-dark/65">
-            {/* Every number here is live (lib/site-stats.ts, cached hourly) */}
+          {/* Live counts as PILLS (owner, 17 Sep): Subjects · Topics · Categories,
+              and Users once the login feature exists (`stats.users` is undefined
+              until then, so that pill simply doesn't render). Every number is
+              real — lib/site-stats.ts, cached hourly. */}
+          <ul className="flex flex-wrap justify-center gap-3 mt-3 m-0 p-0 list-none">
             {[
-              [String(stats.subjects), stats.subjects === 1 ? "Subject" : "Subjects"],
-              [String(stats.topics), stats.topics === 1 ? "Topic" : "Topics"],
-              [String(stats.hindi), "In Hindi"],
-              [String(stats.writeups), "Current Affairs"],
+              [stats.subjects, stats.subjects === 1 ? "Subject" : "Subjects"],
+              [stats.topics, stats.topics === 1 ? "Topic" : "Topics"],
+              [stats.categories, stats.categories === 1 ? "Category" : "Categories"],
+              ...(stats.users !== undefined ? [[stats.users, stats.users === 1 ? "Reader" : "Readers"]] : []),
             ].map(([value, label]) => (
-              <span key={label} className="flex flex-col items-center gap-0.5">
-                <span className="font-heading text-[26px] font-bold leading-none text-on-dark">{value}</span>
-                <span>{label}</span>
-              </span>
+              <li
+                key={String(label)}
+                // A translucent white pill on the dark hero: big enough to read
+                // at a glance (48px tall), number in the serif, label in the sans.
+                className="inline-flex items-center gap-2.5 min-h-12 px-6 rounded-full bg-on-dark/10 border border-on-dark/25 backdrop-blur-sm"
+              >
+                <span className="font-heading text-2xl font-bold leading-none text-on-dark">{value}</span>
+                <span className="font-body text-[15px] font-medium text-on-dark/85">{label}</span>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </section>
 
