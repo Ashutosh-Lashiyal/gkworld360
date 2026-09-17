@@ -114,3 +114,98 @@ export async function deleteArticle(id: number): Promise<{ id: number; title: st
   await payload.delete({ collection: "articles", id });
   return { id, title: String(doc.title), status: String(doc._status) };
 }
+
+// ── Adding Hindi to an EXISTING English article ──────────────────────────────
+// For articles written before the pipeline (e.g. The Revolt of 1857, June 2026,
+// English only). The Hindi is written from the English text, block by block,
+// and supplied as a map { "<English text>": "<Hindi text>" }. We walk the
+// English body and swap each paragraph / heading / list item / table cell /
+// takeaway / image caption for its Hindi — so the Hindi page has EXACTLY the
+// same structure: same images, same table, same order. Saved as a draft;
+// the English stays published until the owner presses Publish.
+
+export type HindiAddition = {
+  slug: string;
+  hi: { title: string; description?: string; map: Record<string, string> };
+};
+
+// Joins the visible text of a node's children (paragraph, heading, cell…)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const textOf = (node: any): string =>
+  (node?.children ?? [])
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .map((c: any) => (c?.type === "text" ? c.text ?? "" : textOf(c)))
+    .join("");
+
+// Replaces a node's children with ONE Hindi text run (bold/italic runs inside
+// the English are flattened — fine for these articles).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function withText(node: any, hindi: string) {
+  return { ...node, children: [{ type: "text", text: hindi, mode: "normal", style: "", detail: 0, format: 0, version: 1 }] };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function translateNode(node: any, map: Record<string, string>, missing: string[]): any {
+  const t = node?.type;
+  if (t === "paragraph" || t === "heading" || t === "listitem" || t === "tablecell") {
+    // table cells and list items hold paragraphs; translate at the innermost text-bearing level
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const hasBlockChildren = (node.children ?? []).some((c: any) => c?.type === "paragraph");
+    if (hasBlockChildren) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return { ...node, children: node.children.map((c: any) => translateNode(c, map, missing)) };
+    }
+    const en = textOf(node).trim();
+    if (!en) return node; // empty paragraph — keep as is
+    const hi = map[en];
+    if (hi === undefined) { missing.push(en); return node; }
+    return withText(node, hi);
+  }
+  if (t === "block") {
+    const f = node.fields ?? {};
+    if (f.blockType === "keyTakeaways") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const points = (f.points ?? []).map((p: any) => {
+        const hi = map[(p.text ?? "").trim()];
+        if (hi === undefined) missing.push(p.text);
+        return { ...p, text: hi ?? p.text };
+      });
+      return { ...node, fields: { ...f, points } };
+    }
+    if (f.blockType === "topicImage" && typeof f.caption === "string" && f.caption.trim()) {
+      const hi = map[f.caption.trim()];
+      if (hi === undefined) missing.push(f.caption);
+      return { ...node, fields: { ...f, caption: hi ?? f.caption } };
+    }
+    return node;
+  }
+  if (Array.isArray(node?.children)) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return { ...node, children: node.children.map((c: any) => translateNode(c, map, missing)) };
+  }
+  return node;
+}
+
+/** Adds (or replaces) the Hindi locale of an existing article, as a draft. */
+export async function addHindiToArticle(input: HindiAddition): Promise<{ id: number | string; missing: string[] }> {
+  const payload = await getPayload({ config: configPromise });
+  const doc = (await payload.find({ collection: "articles", where: { slug: { equals: input.slug } }, limit: 1, locale: "en", depth: 0, draft: true })).docs[0];
+  if (!doc) throw new Error(`No article with slug "${input.slug}".`);
+
+  const missing: string[] = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const body = translateNode((doc as any).body, input.hi.map, missing);
+  if (missing.length > 0) {
+    // Refuse a half-translated page — list what the map is missing so it can be added.
+    throw new Error(`Hindi missing for ${missing.length} block(s):\n- ` + missing.map((m) => m.slice(0, 80)).join("\n- "));
+  }
+
+  await payload.update({
+    collection: "articles",
+    id: doc.id,
+    locale: "hi",
+    draft: true,
+    data: { title: input.hi.title, ...(input.hi.description ? { description: input.hi.description } : {}), body, _status: "draft" },
+  });
+  return { id: doc.id, missing };
+}

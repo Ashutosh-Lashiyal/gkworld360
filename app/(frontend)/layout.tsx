@@ -4,6 +4,7 @@ import { Source_Serif_4, Inter, Noto_Sans_Devanagari } from "next/font/google";
 
 // The permanent shell components — appear on every single page
 import Header from "@/components/Header";
+import Toast from "@/components/Toast";
 import { getSiteStats } from "@/lib/site-stats";
 import Footer from "@/components/Footer";
 import Gyaani from "@/components/Gyaani";
@@ -167,6 +168,8 @@ export default async function RootLayout({
 
         {/* Gyaani — floating AI chatbot, visible on every page */}
         <Gyaani />
+        {/* Site-wide confirmation bar (e.g. "Saved to Read Later") — see components/Toast.tsx */}
+        <Toast />
 
         {/* Vercel Web Analytics — counts visitors, page views, top pages, referrers.
             Privacy-friendly (no cookies). Must also be enabled once in the Vercel

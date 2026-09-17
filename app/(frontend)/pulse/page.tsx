@@ -5,8 +5,8 @@
 // publisher; we aggregate, we don't host. If the database is unreachable the
 // data helper falls back to the live RSS feeds (see lib/pulse.ts).
 //
-// REDESIGN 16 Sep 2026 (boards 6 / 6b): brand-teal band (headlines belong to
-// the site, not to a subject) → filter chips → the list with 72px thumbnails
+// REDESIGN 16 Sep 2026 (boards 6 / 6b), title block instead of a band since
+// 17 Sep (board 11) → filter chips → the list with 72px thumbnails
 // (option B: a numbered square when the feed has no image, so the list never
 // has a hole) + a sidebar (Read Later peek, Sources) → pagination buttons.
 //
@@ -15,7 +15,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Button from "@/components/Button";
-import PageBand from "@/components/PageBand";
+import PageTitle from "@/components/PageTitle";
 import HeadlineRow from "@/components/HeadlineRow";
 import ReadLaterPeek from "@/components/ReadLaterPeek";
 import { getHeadlinesPage, HEADLINE_CATEGORIES, HEADLINE_SOURCES } from "@/lib/pulse";
@@ -82,31 +82,38 @@ export default async function PulsePage({
 
   return (
     <>
-      <PageBand colors={null} breadcrumbs={[]} size="compact">
-        <div className="flex flex-col gap-3.5 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
-          <div className="flex flex-col gap-3">
-            <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-mint">
-              Aggregated from trusted Indian sources · kept for about a week
+      {/* 17 Sep 2026: the same centred title block as every other page (board 11);
+          no breadcrumb here — a lone "Home" link was noise. */}
+      <PageTitle
+        colors={null}
+        label="Aggregated from trusted Indian sources · kept for about a week"
+        title="Latest Headlines"
+      >
+        <p className="m-0 w-full flex flex-wrap justify-center items-center gap-x-2 gap-y-1 font-body text-sm text-muted">
+          <span>
+            <strong className="font-semibold text-navy-dark">{totalDocs}</strong> Headlines from the last 7 days
+            {category || source ? " matching your filter" : ""}
+          </span>
+          <span aria-hidden="true" className="opacity-50">·</span>
+          <span>Newest first</span>
+          <span aria-hidden="true" className="opacity-50">·</span>
+          <span className="inline-flex items-center gap-1.5">
+            Tap the bookmark
+            <span aria-hidden="true" className="inline-flex items-center justify-center w-6 h-6 border border-hairline bg-surface">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg>
             </span>
-            <h1 className="m-0 font-heading text-4xl md:text-5xl font-bold leading-[1.05] tracking-[-0.02em] text-[#fffbf4]">
-              Latest Headlines
-            </h1>
-            <p className="m-0 font-body text-sm text-[#fffbf4]/75">
-              <strong className="font-semibold text-[#fffbf4]">{totalDocs}</strong> headlines from the last 7 days
-              {category || source ? " matching your filter" : ""} · newest first · tap the bookmark to save one to Read Later
-            </p>
-          </div>
-          {/* Read Later on a dark band → the inverted (white) button */}
-          <Button href="/saved" variant="onDark">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-            </svg>
-            Read Later
-          </Button>
-        </div>
-      </PageBand>
+            to save one to Read Later
+          </span>
+        </p>
+        <Button href="/saved">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+          </svg>
+          Read Later
+        </Button>
+      </PageTitle>
 
-      <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 pt-6 pb-14">
+      <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 pt-10 pb-14">
         {/* ── FILTER CHIPS — scroll sideways on phones, wrap on desktop ─────── */}
         <div className="-mx-4 px-4 md:mx-0 md:px-0 flex md:flex-wrap items-center gap-2.5 overflow-x-auto [scrollbar-width:none] pb-1">
           {chip("All", href({ category: undefined }), !category)}

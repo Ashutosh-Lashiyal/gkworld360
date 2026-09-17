@@ -3,8 +3,8 @@
 // below; the sidebar's Contents list appears only when there are 2+ headings.
 
 import Link from "next/link";
-import Image from "next/image";
-import ArticleBand from "@/components/ArticleBand";
+import ArticleHeader from "@/components/ArticleHeader";
+import KeyTakeaways from "@/components/KeyTakeaways";
 import ArticleLayout from "@/components/ArticleLayout";
 import { getSubjectColors } from "@/lib/subject-colors";
 import TableOfContents from "@/components/TableOfContents";
@@ -25,7 +25,8 @@ type NewsArticleViewProps = {
   hiHref?: string;
   readingTime: string;
   recent: NewsItem[];
-  headings: TocHeading[];      // extracted from the article for the sidebar TOC
+  headings: TocHeading[];      // extracted from the article for the Contents rail
+  takeaways?: string[];        // Key Takeaways pulled out of a CMS body, shown first
   children: React.ReactNode;
 };
 
@@ -38,6 +39,7 @@ export default function NewsArticleView({
   readingTime,
   recent,
   headings,
+  takeaways,
   children,
 }: NewsArticleViewProps) {
   const breadcrumbs = [
@@ -62,50 +64,35 @@ export default function NewsArticleView({
     publisher: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
   };
 
-  // News uses the Current Affairs signal colours (rust) on its band.
+  // News uses the Current Affairs signal colours (rust).
   const colors = getSubjectColors("current-affairs");
 
-  // REDESIGN 16 Sep 2026: built from the shared ArticleBand + ArticleLayout so a
-  // current-affairs write-up looks like every other article on the site.
+  // EDITORIAL LAYOUT, 17 Sep 2026: built from the shared ArticleHeader +
+  // ArticleLayout so a current-affairs write-up looks like every other article.
   return (
     <>
       <JsonLd data={newsJsonLd} />
 
-      <ArticleBand
-        breadcrumbs={breadcrumbs}
-        label={["Current Affairs", meta.category].filter(Boolean).join(" · ")}
-        title={meta.title}
-        summary={meta.description}
-        metaItems={[...(meta.date ? [formatNewsDate(meta.date)] : []), readingTime]}
-        coverUrl={meta.image}
-        coverAlt={meta.imageCaption ?? meta.title}
-        lang={lang}
-        enHref={enHref}
-        hiHref={hiHref}
-        colors={colors}
-      />
-
       <ArticleLayout
         colors={colors}
-        figure={
-          meta.image && (
-            <figure className="m-0 flex flex-col gap-2.5">
-              <div className="relative aspect-[4/3] md:aspect-[16/10] w-full rounded-card border border-hairline overflow-hidden bg-surface-low">
-                <Image
-                  src={meta.image}
-                  alt={meta.imageCaption ?? meta.title}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 720px"
-                />
-              </div>
-              {meta.imageCaption && (
-                <figcaption className="font-body text-[13px] text-muted">{meta.imageCaption}</figcaption>
-              )}
-            </figure>
-          )
+        header={
+          <ArticleHeader
+            breadcrumbs={breadcrumbs}
+            label={["Current Affairs", meta.category].filter(Boolean).join(" · ")}
+            title={meta.title}
+            summary={meta.description}
+            metaItems={[...(meta.date ? [formatNewsDate(meta.date)] : []), readingTime]}
+            coverUrl={meta.image}
+            coverAlt={meta.imageCaption ?? meta.title}
+            coverCaption={meta.imageCaption}
+            lang={lang}
+            enHref={enHref}
+            hiHref={hiHref}
+            colors={colors}
+          />
         }
-        sidebar={showSidebar ? <TableOfContents headings={headings} /> : undefined}
+        above={takeaways && takeaways.length > 0 ? <KeyTakeaways points={takeaways} first /> : undefined}
+        rail={showSidebar ? <TableOfContents headings={headings} /> : undefined}
         below={
           recent.length > 0 && (
             <section className="mt-16">

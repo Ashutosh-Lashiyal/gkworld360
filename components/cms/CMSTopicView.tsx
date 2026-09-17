@@ -2,21 +2,23 @@
 // Payload CMS (rather than an MDX file). This is what you SEE when a CMS
 // article renders.
 //
-// REDESIGN 16 Sep 2026: the layout now comes from two shared pieces —
-// ArticleBand (the tinted header) and ArticleLayout (reading column + sidebar)
-// — which the MDX topic page and the news page use too. So this file only has
-// to turn CMS data into the props those pieces expect; the look lives in one
-// place and every article on the site matches.
-import Image from "next/image";
-import ArticleBand from "@/components/ArticleBand";
+// EDITORIAL LAYOUT, 17 Sep 2026 (board 10b): the layout comes from two shared
+// pieces — ArticleHeader (centred title block on the page, no banner) and
+// ArticleLayout (one centred reading column + a quiet Contents rail + the
+// reading-progress bar). Key Takeaways are pulled OUT of the body and shown
+// FIRST, so exam readers get the summary before the read. The MDX topic page
+// and the news page use the same pieces, so every article looks the same.
+import ArticleHeader from "@/components/ArticleHeader";
 import ArticleLayout from "@/components/ArticleLayout";
 import TableOfContents from "@/components/TableOfContents";
+import KeyTakeaways from "@/components/KeyTakeaways";
 import CMSRichText from "@/components/cms/CMSRichText";
 import {
   type CMSArticle,
   type CMSLocale,
   estimateReadingTime,
   extractHeadingsFromLexical,
+  splitKeyTakeaways,
 } from "@/lib/cms";
 import type { SubjectColors } from "@/lib/subject-colors";
 import { formatNewsDate } from "@/lib/date-utils";
@@ -42,62 +44,43 @@ export default function CMSTopicView({
 }) {
   const subjectLabel = article.subject?.name ?? "";
   const categoryLabel = article.category?.name ?? "";
-  const coverUrl = article.coverImage?.url ?? undefined;
-  const coverAlt = article.coverImage?.alt ?? article.title;
   const readingTime = estimateReadingTime(article.body);
   // Show the published date if set, otherwise the last-updated date.
   const dateStr = article.publishedDate ?? article.updatedAt ?? null;
-  // The h2/h3 headings, used to build the Contents sidebar.
-  const headings = extractHeadingsFromLexical(article.body);
+  // Key Takeaways come out of the body and go to the top.
+  const { points, body } = splitKeyTakeaways(article.body);
+  // The h2/h3 headings, for the Contents rail.
+  const headings = extractHeadingsFromLexical(body);
 
   return (
-    <>
-      <ArticleBand
-        breadcrumbs={breadcrumbs}
-        label={[subjectLabel, categoryLabel].filter(Boolean).join(" · ")}
-        title={article.title}
-        summary={article.description ?? undefined}
-        metaItems={[readingTime, ...(dateStr ? [`Updated ${formatNewsDate(dateStr)}`] : [])]}
-        coverUrl={coverUrl}
-        coverAlt={coverAlt}
-        lang={lang}
-        enHref={enHref}
-        hiHref={hiHref}
-        colors={colors}
-      />
-
-      <ArticleLayout
-        colors={colors}
-        // The cover, shown clean (untinted) as the article's one illustration.
-        // The same image sits tinted behind the band above — a deliberate echo.
-        figure={
-          coverUrl && (
-            <figure className="m-0 flex flex-col gap-2.5">
-              <div className="relative aspect-[4/3] md:aspect-[16/10] w-full rounded-card border border-hairline overflow-hidden bg-surface-low">
-                <Image
-                  src={coverUrl}
-                  alt={coverAlt}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 720px"
-                />
-              </div>
-              {article.coverImage?.alt && (
-                <figcaption className="font-body text-[13px] text-muted">{article.coverImage.alt}</figcaption>
-              )}
-            </figure>
-          )
-        }
-        sidebar={headings.length >= 2 ? <TableOfContents headings={headings} /> : undefined}
-      >
-        {/* The article body, rendered from the CMS. `prose` gives it the site's
-            article typography. For Hindi, `lang="hi"` tells the browser the
-            language (screen readers, hyphenation) and `font-hindi` applies the
-            Devanagari font. */}
-        <article lang={lang} className={`prose ${lang === "hi" ? "font-hindi" : ""}`}>
-          <CMSRichText data={article.body} />
-        </article>
-      </ArticleLayout>
-    </>
+    <ArticleLayout
+      colors={colors}
+      header={
+        <ArticleHeader
+          breadcrumbs={breadcrumbs}
+          label={[subjectLabel, categoryLabel].filter(Boolean).join(" · ")}
+          title={article.title}
+          summary={article.description ?? undefined}
+          metaItems={[readingTime, ...(dateStr ? [`Published ${formatNewsDate(dateStr)}`] : [])]}
+          coverUrl={article.coverImage?.url ?? undefined}
+          coverAlt={article.coverImage?.alt ?? article.title}
+          coverCaption={article.coverImage?.alt ?? undefined}
+          lang={lang}
+          enHref={enHref}
+          hiHref={hiHref}
+          colors={colors}
+        />
+      }
+      above={points.length > 0 ? <KeyTakeaways points={points} first /> : undefined}
+      rail={headings.length >= 2 ? <TableOfContents headings={headings} /> : undefined}
+    >
+      {/* The article body, rendered from the CMS. `prose` gives it the site's
+          article typography. For Hindi, `lang="hi"` tells the browser the
+          language (screen readers, hyphenation) and `font-hindi` applies the
+          Devanagari font. */}
+      <article lang={lang} className={`prose ${lang === "hi" ? "font-hindi" : ""}`}>
+        <CMSRichText data={body} />
+      </article>
+    </ArticleLayout>
   );
 }

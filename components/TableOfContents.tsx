@@ -48,14 +48,15 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
   if (headings.length === 0) return null;
 
   return (
-    // REDESIGN 16 Sep 2026 (board 2): "Contents" as a white card. Each entry has
-    // a 2px rule on its left; the entry currently on screen turns emerald and
-    // its rule lights up — a reading progress marker without a progress bar.
-    <nav aria-label="Table of contents" className="bg-surface border border-hairline rounded-card px-5 py-5">
-      <h2 className="font-body text-[11px] font-semibold text-muted uppercase tracking-[0.14em] mb-3">
+    // EDITORIAL, 17 Sep 2026 (board 10b): no card, no border — a quiet rail.
+    // Small-caps "Contents", plain muted links with a 2px rule; the section on
+    // screen turns emerald and its rule lights up. There when you look for it,
+    // invisible while you read.
+    <nav aria-label="Table of contents" className="flex flex-col gap-2.5">
+      <h2 className="font-body text-[11px] font-semibold text-muted/70 uppercase tracking-[0.14em] m-0">
         Contents
       </h2>
-      <ul className="flex flex-col">
+      <ul className="flex flex-col m-0 p-0 list-none border-l-2 border-border-subtle">
         {headings.map((heading) => {
           const active = activeId === heading.id;
           return (
@@ -63,11 +64,11 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
               <a
                 href={`#${heading.id}`}
                 className={[
-                  "block py-2 pl-3 -ml-px border-l-2 font-body text-sm leading-snug transition-colors",
-                  heading.depth === 3 ? "pl-6" : "",
+                  "block py-1.5 -ml-0.5 border-l-2 font-body text-[13px] leading-snug transition-colors",
+                  heading.depth === 3 ? "pl-6" : "pl-3",
                   active
                     ? "border-sapphire text-sapphire font-semibold"
-                    : "border-border-subtle text-foreground/80 hover:text-navy-dark hover:border-hairline",
+                    : "border-transparent text-muted hover:text-navy-dark",
                 ].join(" ")}
                 aria-current={active ? "true" : undefined}
               >
@@ -77,6 +78,7 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
           );
         })}
       </ul>
+      <a href="#top" className="mt-1 font-body text-xs text-muted/70 hover:text-navy-dark transition-colors">↑ Back to top</a>
     </nav>
   );
 }

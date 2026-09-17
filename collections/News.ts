@@ -53,7 +53,9 @@ export const News: CollectionConfig = {
       name: "description",
       type: "textarea",
       localized: true,
-      admin: { description: "Short summary for SEO and card previews." },
+      // Cap at 220 characters (17 Sep 2026) — see the same field in Articles.ts.
+      maxLength: 220,
+      admin: { description: "One or two sentences (max 220 characters). Shown under the title and used by Google as the snippet." },
     },
     {
       name: "coverImage",

@@ -8,7 +8,6 @@
 
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import Image from "next/image";
 import {
   getAllSlugs,
   slugToFilePath,
@@ -25,9 +24,10 @@ import {
   resolveContentFile,
   hasTranslation,
 } from "@/lib/content";
-import ArticleBand from "@/components/ArticleBand";
-import PageBand, { BandLabel, BandStat } from "@/components/PageBand";
-import Button from "@/components/Button";
+import ArticleHeader from "@/components/ArticleHeader";
+import PageTitle from "@/components/PageTitle";
+import StatPill from "@/components/StatPill";
+import { formatAddedTime } from "@/lib/topics";
 import Link from "next/link";
 import { getSubjectInfo } from "@/lib/subjects";
 import ArticleLayout from "@/components/ArticleLayout";
@@ -416,7 +416,6 @@ export default async function ContentPage({
     }
     const allTopics = Array.from(topicsByCategory.values()).flat();
     const looseTopics = topicsByCategory.get("") ?? [];
-    const hasHindi = allTopics.some((t) => t.hindiHref || getHindiInfo(t.slug));
 
     // "Start here": the first topics in reading order (already sorted by mergeTopics).
     const startHere = allTopics.slice(0, 3);
@@ -435,78 +434,63 @@ export default async function ContentPage({
     const categoryTitle = (t: ListedTopic) =>
       categories.find((c) => c.slug === t.slug[1])?.meta.title ?? "";
 
+    // A row for the "Start here" / "Recently added" lists — numbered, quiet
+    const topicRow = (t: ListedTopic, i: number, tone: "signal" | "muted", meta: string) => {
+      const hindi = t.hindiHref ? { href: t.hindiHref } : getHindiInfo(t.slug);
+      return (
+        <li key={t.slug.join("/")}>
+          <Link
+            href={`/${t.slug.join("/")}`}
+            className="grid grid-cols-[40px_minmax(0,1fr)_auto] gap-3.5 items-baseline py-4 border-b border-border-subtle text-foreground hover:text-sapphire transition-colors"
+          >
+            <span className="font-heading text-xl font-bold" style={{ color: tone === "signal" ? colors?.accent ?? "#059669" : "#4a6460" }}>
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            <span className="flex flex-col gap-0.5">
+              <span className="font-heading text-lg font-semibold leading-snug text-navy-dark">{t.meta.title}</span>
+              <span className="font-body text-[13px] text-muted">{meta}</span>
+            </span>
+            <span className="font-body text-xs text-muted whitespace-nowrap">{hindi ? "EN · हिन्दी" : "EN"}</span>
+          </Link>
+        </li>
+      );
+    };
+
+    const hindiCount = allTopics.filter((t) => t.hindiHref || getHindiInfo(t.slug)).length;
+
+    // QUIET LAYOUT, 17 Sep 2026 (board 11): no banner. Centred title block on
+    // the page → live counts as pills → Categories grid → "Start here" and
+    // "Recently added" as two quiet lists side by side. Header · page · footer.
     return (
       <>
-        <PageBand
+        <PageTitle
           colors={colors}
           breadcrumbs={[{ label: "Subjects", href: "/subjects" }]}
-          coverUrl={meta.image}
-          size="tall"
-          aside={
-            startHere.length > 0 && (
-              // The white card ON the band — the Paymint move: a light object on
-              // a dark stage. Lists the first topics so a new reader has a door.
-              <div className="flex flex-col gap-1 bg-surface text-foreground rounded-[12px] p-6 shadow-[0_12px_40px_rgba(0,0,0,0.25)]">
-                <span
-                  className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] mb-2"
-                  style={{ color: colors?.accent ?? "#059669" }}
-                >
-                  Start here
-                </span>
-                {startHere.map((t) => {
-                  const hindi = t.hindiHref ? { href: t.hindiHref } : getHindiInfo(t.slug);
-                  return (
-                    <Link
-                      key={t.slug.join("/")}
-                      href={`/${t.slug.join("/")}`}
-                      className="flex flex-col gap-1 py-3 border-b border-border-subtle hover:text-sapphire transition-colors"
-                    >
-                      <span className="font-heading text-lg font-semibold leading-snug">{t.meta.title}</span>
-                      <span className="font-body text-[13px] text-muted">
-                        {[categoryTitle(t), hindi ? "EN · हिन्दी" : "EN"].filter(Boolean).join(" · ")}
-                      </span>
-                    </Link>
-                  );
-                })}
-                <Button href={categories.length > 0 ? "#categories" : "#topics"} className="mt-4">
-                  Browse all {meta.title} topics
-                </Button>
-              </div>
-            )
-          }
+          label="Subject"
+          title={meta.title}
+          titleHi={subjectInfo?.labelHi}
+          description={meta.description}
+          size="large"
         >
-          <BandLabel colors={colors}>Subject</BandLabel>
-          <h1 className="m-0 font-heading text-5xl md:text-[64px] font-bold leading-[1.02] tracking-[-0.02em] text-[#fffbf4]">
-            {meta.title}
-            {subjectInfo?.labelHi && (
-              <span lang="hi" className="font-hindi text-3xl md:text-[44px] font-semibold opacity-85">
-                {" "}· {subjectInfo.labelHi}
-              </span>
-            )}
-          </h1>
-          {meta.description && (
-            <p className="m-0 font-heading text-lg md:text-xl leading-[1.5] text-[#fffbf4]/88 max-w-[620px]">
-              {meta.description}
-            </p>
+          {categories.length > 0 && (
+            <StatPill value={categories.length} label={categories.length === 1 ? "category" : "categories"} />
           )}
-          <div className="flex flex-wrap gap-7 mt-1.5">
-            {categories.length > 0 && (
-              <BandStat value={categories.length} label={categories.length === 1 ? "category" : "categories"} />
-            )}
-            <BandStat value={allTopics.length} label={allTopics.length === 1 ? "topic" : "topics"} />
-            <BandStat value={hasHindi ? "EN · हिन्दी" : "EN"} label={hasHindi ? "both languages" : "English"} />
-          </div>
-        </PageBand>
+          <StatPill value={allTopics.length} label={allTopics.length === 1 ? "topic" : "topics"} />
+          <StatPill value={hindiCount} label="in Hindi" />
+        </PageTitle>
 
-        {/* ── LIGHT: categories (or loose topics) ─────────────────────────── */}
-        <div id={categories.length > 0 ? "categories" : "topics"} className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 pt-12 md:pt-16 pb-12 md:pb-16 flex flex-col gap-6">
+        {/* ── CATEGORIES (or loose topics) ────────────────────────────────── */}
+        <div id={categories.length > 0 ? "categories" : "topics"} className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 pt-14 md:pt-16 flex flex-col gap-6">
           {categories.length > 0 ? (
             <>
-              <div className="flex flex-col gap-1.5">
-                <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em]" style={{ color: colors?.accent ?? "#059669" }}>
-                  {meta.title}
-                </span>
-                <h2 className="m-0 font-heading text-3xl md:text-4xl font-bold text-navy-dark tracking-[-0.015em]">Categories</h2>
+              <div className="flex flex-wrap items-end justify-between gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em]" style={{ color: colors?.accent ?? "#059669" }}>
+                    Browse by category
+                  </span>
+                  <h2 className="m-0 font-heading text-3xl md:text-4xl font-bold text-navy-dark tracking-[-0.015em]">Categories</h2>
+                </div>
+                <span className="font-body text-[13px] text-muted">In reading order</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {categories.map((cat) => {
@@ -522,6 +506,7 @@ export default async function ContentPage({
                       accent={colors?.accent}
                       image={cat.meta.image}
                       ctaLabel="Explore →"
+                      comingSoon={count === 0}
                     />
                   );
                 })}
@@ -559,39 +544,28 @@ export default async function ContentPage({
           )}
         </div>
 
-        {/* ── DARK: recently added (the light/dark alternation) ────────────── */}
-        {recentlyAdded.length > 0 && (
-          <section className="bg-navy-dark text-on-dark">
-            <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12 md:py-14 flex flex-col gap-6">
-              <div className="flex items-end justify-between gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-mint">Recently added</span>
-                  <h2 className="m-0 font-heading text-3xl md:text-4xl font-bold tracking-[-0.015em] text-on-dark">New in {meta.title}</h2>
-                </div>
+        {/* ── START HERE + RECENTLY ADDED — two quiet lists ───────────────── */}
+        {allTopics.length > 0 && (
+          <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 pt-14 md:pt-16 pb-14 md:pb-20 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
+            <section className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em]" style={{ color: colors?.accent ?? "#059669" }}>New to the subject?</span>
+                <h2 className="m-0 font-heading text-2xl md:text-[28px] font-bold text-navy-dark">Start here</h2>
               </div>
-              {/* Numbered rows, two columns on desktop. The mint number is the
-                  one accent; everything else is white at varying opacity. */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12">
-                {recentlyAdded.map((t, i) => {
-                  const hindi = t.hindiHref ? { href: t.hindiHref } : getHindiInfo(t.slug);
-                  return (
-                    <Link
-                      key={t.slug.join("/")}
-                      href={`/${t.slug.join("/")}`}
-                      className="grid grid-cols-[40px_minmax(0,1fr)_auto] gap-3.5 items-baseline py-4 border-b border-on-dark/10 hover:text-mint transition-colors"
-                    >
-                      <span className="font-heading text-xl font-bold text-mint">{String(i + 1).padStart(2, "0")}</span>
-                      <span className="flex flex-col gap-0.5">
-                        <span className="font-heading text-lg font-semibold leading-snug">{t.meta.title}</span>
-                        <span className="font-body text-[13px] text-on-dark/60">{categoryTitle(t)}</span>
-                      </span>
-                      <span className="font-body text-xs text-on-dark/60 whitespace-nowrap">{hindi ? "EN · हिन्दी" : "EN"}</span>
-                    </Link>
-                  );
-                })}
+              <ol className="m-0 p-0 list-none flex flex-col">
+                {startHere.map((t, i) => topicRow(t, i, "signal", categoryTitle(t)))}
+              </ol>
+            </section>
+            <section className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Fresh from the desk</span>
+                <h2 className="m-0 font-heading text-2xl md:text-[28px] font-bold text-navy-dark">Recently added</h2>
               </div>
-            </div>
-          </section>
+              <ol className="m-0 p-0 list-none flex flex-col">
+                {recentlyAdded.map((t, i) => topicRow(t, i, "muted", [categoryTitle(t), formatAddedTime(t.meta.date)].filter(Boolean).join(" · ")))}
+              </ol>
+            </section>
+          </div>
         )}
       </>
     );
@@ -611,34 +585,31 @@ export default async function ContentPage({
     const cmsTopics = await getCMSArticlesInCategory(slug[0], slug.length === 1 ? null : slug[1]);
     const topics = mergeTopics(mdxTopics, cmsTopics);
 
-    // Breadcrumb trail WITHOUT the current page (the band's title is the page)
+    // Breadcrumb trail WITHOUT the current page (the title block IS the page)
     const parentCrumbs = breadcrumbs.slice(0, -1);
 
     return (
       <>
-        <PageBand colors={colors} breadcrumbs={parentCrumbs} coverUrl={meta.image} size="compact">
-          <div className="flex flex-col gap-3.5 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
-            <div className="flex flex-col gap-3">
-              <BandLabel colors={colors}>{[getSubjectInfo(slug[0])?.label ?? breadcrumbs[0]?.label, slug.length > 1 ? "Category" : "Subject"].filter(Boolean).join(" · ")}</BandLabel>
-              <h1 className="m-0 font-heading text-4xl md:text-5xl font-bold leading-[1.05] tracking-[-0.02em] text-[#fffbf4]">
-                {meta.title}
-              </h1>
-              {meta.description && (
-                <p className="m-0 font-heading text-lg leading-[1.5] text-[#fffbf4]/88 max-w-[640px]">{meta.description}</p>
-              )}
-            </div>
-            <span className="font-body text-[13px] text-[#fffbf4]/75 whitespace-nowrap">
-              {topics.length} {topics.length === 1 ? "topic" : "topics"} · reading order
-            </span>
-          </div>
-        </PageBand>
+        {/* QUIET LAYOUT, 17 Sep 2026 (board 11): centred title block, no banner */}
+        <PageTitle
+          colors={colors}
+          breadcrumbs={parentCrumbs}
+          label={[getSubjectInfo(slug[0])?.label ?? breadcrumbs[0]?.label, slug.length > 1 ? "Category" : "Subject"].filter(Boolean).join(" · ")}
+          title={meta.title}
+          description={meta.description}
+        >
+          <span className="font-body text-[13px] text-muted">
+            {topics.length} {topics.length === 1 ? "topic" : "topics"} · in reading order
+            {topics.some((t) => t.hindiHref || getHindiInfo(t.slug)) ? " · English and Hindi" : ""}
+          </span>
+        </PageTitle>
 
         <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12 md:py-16 flex flex-col gap-6">
           {topics.length > 0 ? (
             <>
               <div className="flex items-baseline justify-between gap-4">
                 <h2 className="m-0 font-heading text-2xl md:text-3xl font-bold text-navy-dark">Topics</h2>
-                <span className="font-body text-[13px] text-muted">Sorted by reading order</span>
+                <span className="font-body text-[13px] text-muted">Read them in order — each builds on the last</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {topics.map((topic, i) => {
@@ -804,7 +775,7 @@ export default async function ContentPage({
   };
 
   // REDESIGN 16 Sep 2026: the page is built from the two shared article pieces
-  // (ArticleBand + ArticleLayout) that the CMS topic view and the news page also
+  // (ArticleHeader + ArticleLayout) that the CMS topic view and the news page also
   // use, so every article on the site has one look. The old per-page banner,
   // subject-tinted page background and duplicated column layout are gone.
   return (
@@ -813,51 +784,30 @@ export default async function ContentPage({
       <JsonLd data={articleJsonLd} />
       <JsonLd data={breadcrumbJsonLd} />
 
-      <ArticleBand
-        breadcrumbs={breadcrumbs}
-        label={[subjectLabel, categoryLabel].filter(Boolean).join(" · ")}
-        title={meta.title}
-        summary={meta.description}
-        metaItems={[readingTime, ...(meta.date ? [`Updated ${formatNewsDate(meta.date)}`] : [])]}
-        coverUrl={meta.image}
-        coverAlt={meta.imageCaption ?? meta.title}
-        lang={lang}
-        enHref={enHref}
-        hiHref={hiHref}
-        colors={colors}
-      />
-
       <ArticleLayout
         colors={colors}
-        // The cover, shown clean as the article's one illustration (the band
-        // above shows the same image tinted — a deliberate echo).
-        figure={
-          meta.image && (
-            <figure className="m-0 flex flex-col gap-2.5">
-              <div className="relative aspect-[4/3] md:aspect-[16/10] w-full rounded-card border border-hairline overflow-hidden bg-surface-low">
-                <Image
-                  src={meta.image}
-                  alt={meta.imageCaption ?? meta.title}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 720px"
-                />
-              </div>
-              {meta.imageCaption && (
-                <figcaption className="font-body text-[13px] text-muted">{meta.imageCaption}</figcaption>
-              )}
-            </figure>
-          )
+        header={
+          <ArticleHeader
+            breadcrumbs={breadcrumbs}
+            label={[subjectLabel, categoryLabel].filter(Boolean).join(" · ")}
+            title={meta.title}
+            summary={meta.description}
+            metaItems={[readingTime, ...(meta.date ? [`Published ${formatNewsDate(meta.date)}`] : [])]}
+            coverUrl={meta.image}
+            coverAlt={meta.imageCaption ?? meta.title}
+            coverCaption={meta.imageCaption}
+            lang={lang}
+            enHref={enHref}
+            hiHref={hiHref}
+            colors={colors}
+          />
         }
         // Previous / Next navigation stays inside the reading column
         after={<TopicNav previous={previous} next={next} />}
-        sidebar={
-          <>
-            <TableOfContents headings={headings} />
-            {meta.quickFacts && <QuickFacts facts={meta.quickFacts} />}
-          </>
-        }
-        // Related topics run full-width under both columns
+        // MDX articles carry their Key Takeaways inside the text; the rail
+        // still works from the headings. (Quick facts move into the column.)
+        rail={headings.length >= 2 ? <TableOfContents headings={headings} /> : undefined}
+        // Related topics run full-width under the column
         below={
           relatedTopics.length > 0 && (
             <section className="mt-16">
@@ -885,6 +835,7 @@ export default async function ContentPage({
           )
         }
       >
+        {meta.quickFacts && <QuickFacts facts={meta.quickFacts} />}
         {/* The article content (rendered from MDX, styled via mdx-components.tsx).
             For Hindi, `lang="hi"` + the font-hindi class apply the Devanagari font. */}
         <article lang={lang} className={`prose ${lang === "hi" ? "font-hindi" : ""}`}>

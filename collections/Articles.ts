@@ -84,8 +84,13 @@ export const Articles: CollectionConfig = {
       name: "description",
       type: "textarea",
       localized: true,
+      // Cap at 220 characters (17 Sep 2026): the summary shows in full under the
+      // article title — 2–3 lines — and Google cuts snippets at ~160 anyway.
+      // A paragraph here pushed the whole page down (Smart Border, 22 May).
+      // This is validation only, not a database change.
+      maxLength: 220,
       admin: {
-        description: "A short summary used for SEO and in card previews.",
+        description: "One or two sentences (max 220 characters). Shown under the title and used by Google as the snippet.",
       },
     },
     {

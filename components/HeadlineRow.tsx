@@ -35,7 +35,7 @@ export default function HeadlineRow({ headline, index }: { headline: Headline; i
         rel="noopener noreferrer"
         tabIndex={-1}
         aria-hidden="true"
-        className="relative block w-16 h-16 md:w-[72px] md:h-[72px] rounded-lg overflow-hidden bg-navy-dark"
+        className="relative block w-16 h-16 md:w-[72px] md:h-[72px] rounded-none overflow-hidden bg-navy-dark"
       >
         {/* HeadlineThumb is a client component: publishers sometimes block
             their images on other sites, and only the browser can tell — it

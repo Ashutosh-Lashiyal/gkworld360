@@ -93,6 +93,28 @@ export function slugifyHeading(text: string): string {
 
 // Pull the h2/h3 headings out of the Lexical body to build the Table of Contents.
 // (h1 is the title, so we skip it; h4+ is too deep for a nav list.)
+// Pulls the Key Takeaways block OUT of a CMS body so the page can show it at
+// the top (editorial layout, 17 Sep 2026 — readers revise the summary first)
+// and render the rest of the body without it. Returns the points and a copy
+// of the body minus that block. Bodies without the block come back unchanged.
+export function splitKeyTakeaways(body: unknown): { points: string[]; body: unknown } {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const root = (body as any)?.root;
+  if (!root?.children) return { points: [], body };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const isTakeaways = (n: any) => n?.type === "block" && n?.fields?.blockType === "keyTakeaways";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const block = root.children.find(isTakeaways) as any;
+  if (!block) return { points: [], body };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const points: string[] = (block.fields?.points ?? []).map((p: any) => p?.text ?? "").filter(Boolean);
+  return {
+    points,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    body: { ...(body as any), root: { ...root, children: root.children.filter((n: any) => !isTakeaways(n)) } },
+  };
+}
+
 export function extractHeadingsFromLexical(body: unknown): TocHeading[] {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const root = (body as any)?.root;

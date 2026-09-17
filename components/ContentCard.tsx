@@ -49,6 +49,13 @@ type ContentCardProps = {
   // Turn off the card's own lift/shadow on hover — for a card that already
   // floats on a dark band (the homepage hero), where more lift looks jumpy.
   flat?: boolean;
+  // Small "number + word" stats above the button, e.g. [{ value: 2, label: "topics" }]
+  // (subject cards, 17 Sep 2026). Real numbers only — see lib/site-stats.ts.
+  stats?: { value: number | string; label: string }[];
+  // Nothing to open yet → a greyed "Coming soon" instead of a button that
+  // leads to an empty page. The title still links (the page exists), the
+  // image slot does not.
+  comingSoon?: boolean;
 };
 
 export default function ContentCard({
@@ -64,6 +71,8 @@ export default function ContentCard({
   ctaLabel = "Read →",
   badge,
   flat = false,
+  stats,
+  comingSoon = false,
 }: ContentCardProps) {
   // Fall back to the site's emerald when a card has no subject colour.
   const accentColor = accent ?? "#059669";
@@ -114,7 +123,7 @@ export default function ContentCard({
         )}
         {badge && (
           <span
-            className="absolute left-3.5 top-3.5 px-2 py-1 rounded-md bg-surface font-body text-[11px] font-semibold uppercase tracking-[0.14em]"
+            className="absolute left-3.5 top-3.5 px-2 py-1 rounded-none bg-surface font-body text-[11px] font-semibold uppercase tracking-[0.14em]"
             style={{ color: accentColor }}
           >
             {badge}
@@ -145,11 +154,26 @@ export default function ContentCard({
           </p>
         )}
 
+        {stats && stats.length > 0 && (
+          <div className="flex flex-wrap gap-x-5 gap-y-1 pt-2 font-body text-[13px] text-muted">
+            {stats.map((st) => (
+              <span key={st.label} className="inline-flex items-baseline gap-1.5">
+                <strong className="font-heading text-lg font-bold text-navy-dark leading-none">{st.value}</strong>
+                {st.label}
+              </span>
+            ))}
+          </div>
+        )}
+
         {/* ── BUTTONS ────────────────────────────────────────────────────────
             `mt-auto` pushes this row to the bottom of the card, whatever the
             text height above it. Two buttons when Hindi exists, one if not. */}
         <div className="mt-auto pt-4 flex gap-2">
-          {hindiHref ? (
+          {comingSoon ? (
+            <Button variant="disabled" className="flex-1">
+              Coming soon
+            </Button>
+          ) : hindiHref ? (
             <>
               <Button href={href} className="flex-1">
                 English

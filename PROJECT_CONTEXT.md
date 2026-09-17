@@ -296,6 +296,30 @@ version rows + sets published), then restoring `.env.local` to dev. Verified liv
   dev**, order 10, from `drafts/the-dutch-in-india.json` (facts list inside). Duplicate
   Portuguese draft #4 deleted on dev (#3 is the real one). `publishedDate` now auto-fills on
   first Publish (Articles hook) — Portuguese #3 still has none; set it by hand once in /admin.
+- **17 Sep — friend's review round (owner approved all):** (1) **square corners** —
+  `--radius-card/button/sm` = 0 (pills/avatars/bell stay round); hard-coded radii squared.
+  (2) **Bell** moved to the far-right corner of the header. (3) **Subject cards carry live
+  counts** ("1 category · 2 topics") via `ContentCard stats` + `comingSoon` (greyed button when
+  0 topics); `site-stats` gained `categoriesBySubject`. (4) **Editorial article page (board
+  10b, no banner)**: new `ArticleHeader` (centred title block on the page, signal rule, cover
+  inside the column), `ArticleLayout` rewritten as one centred 680px column in a 3-track grid
+  with a quiet sticky **Contents rail** (xl+), new `ReadingProgress` (mint bar fixed at the top
+  of the screen), **Key Takeaways shown FIRST** — pulled out of CMS bodies by
+  `splitKeyTakeaways()` (`lib/cms.ts`) for topics and news; `.prose` 20px/1.8, 22px lead, centred
+  H2s with centred rule. `ArticleBand.tsx` deleted. Also today: Latest Headlines hint line +
+  bookmark **Toast** (site-wide `components/Toast.tsx`, `gk-toast` event), "Part n" labels
+  replaced, /pulse band tidy. Canvas boards squared to match.
+- **17 Sep, later — banners retired everywhere (board 11):** new `components/PageTitle.tsx`
+  (centred title block: breadcrumb · label · title + Hindi name · signal rule · sentence ·
+  optional row) and `components/StatPill.tsx` (round pills, light/dark tones). Subject page =
+  title block + pills (categories/topics/in Hindi) → Categories grid (counts, Coming soon) →
+  "Start here" + "Recently added" as two quiet numbered lists (no dark band). Category page =
+  title block + numbered topic cards. `/news` and `/pulse` on the same block. `PageBand.tsx`
+  deleted. Article page: description no longer shown under the title (still used for cards +
+  SEO; `maxLength: 220` on Articles/News description — validation only). Header's 3px subject
+  line removed; `ReadingProgress` sits under the header (measured), 6px. Hindi for "The Revolt
+  of 1857" added as a draft on #1 via new `add-hindi` ingest action (`drafts/revolt-of-1857.hi.json`).
+  Site now: dark header · light page · dark footer everywhere; only the homepage keeps a hero.
 - **ALL SIX PHASES BUILT.** Owner to review everything locally, then merge `redesign` → `main`
   (see GIT_NOTES "Using a branch for real"). No schema changes anywhere in the redesign, so no
   prod-schema-first step is needed before deploying.

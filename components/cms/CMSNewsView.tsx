@@ -9,6 +9,7 @@ import {
   type CMSLocale,
   estimateReadingTime,
   extractHeadingsFromLexical,
+  splitKeyTakeaways,
 } from "@/lib/cms";
 import type { ContentMeta } from "@/lib/content";
 
@@ -40,6 +41,9 @@ export default function CMSNewsView({
     imageCaption: news.coverImageCaption ?? undefined,
   } as ContentMeta;
 
+  // Key Takeaways go to the top of the page (editorial layout, 17 Sep 2026)
+  const { points, body } = splitKeyTakeaways(news.body);
+
   return (
     <NewsArticleView
       meta={meta}
@@ -49,10 +53,11 @@ export default function CMSNewsView({
       url={lang === "hi" ? `/hi/news/${news.slug}` : `/news/${news.slug}`}
       readingTime={estimateReadingTime(news.body)}
       recent={[]} // "More News" list — left empty for now (wired up later)
-      headings={extractHeadingsFromLexical(news.body)}
+      headings={extractHeadingsFromLexical(body)}
+      takeaways={points}
     >
       {/* The article body, rendered from the CMS's Lexical JSON */}
-      <CMSRichText data={news.body} />
+      <CMSRichText data={body} />
     </NewsArticleView>
   );
 }

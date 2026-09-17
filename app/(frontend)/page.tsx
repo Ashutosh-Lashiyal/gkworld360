@@ -19,6 +19,7 @@ import Image from "next/image";
 import SearchBox from "@/components/SearchBox";
 import SubjectCard from "@/components/SubjectCard";
 import ContentCard from "@/components/ContentCard";
+import StatPill from "@/components/StatPill";
 import { getPopularTopics, getRecentlyAddedTopics, formatAddedTime } from "@/lib/topics";
 import NewsCard from "@/components/NewsCard";
 import LatestHeadlinesSection from "@/components/LatestHeadlinesSection";
@@ -158,14 +159,8 @@ export default async function HomePage() {
               [stats.categories, stats.categories === 1 ? "Category" : "Categories"],
               ...(stats.users !== undefined ? [[stats.users, stats.users === 1 ? "Reader" : "Readers"]] : []),
             ].map(([value, label]) => (
-              <li
-                key={String(label)}
-                // A translucent white pill on the dark hero: big enough to read
-                // at a glance (48px tall), number in the serif, label in the sans.
-                className="inline-flex items-center gap-2.5 min-h-12 px-6 rounded-full bg-on-dark/10 border border-on-dark/25 backdrop-blur-sm"
-              >
-                <span className="font-heading text-2xl font-bold leading-none text-on-dark">{value}</span>
-                <span className="font-body text-[15px] font-medium text-on-dark/85">{label}</span>
+              <li key={String(label)}>
+                <StatPill value={value} label={String(label)} tone="dark" />
               </li>
             ))}
           </ul>
@@ -179,7 +174,7 @@ export default async function HomePage() {
         <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-14 md:py-[72px] flex flex-col gap-6">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div className="flex flex-col gap-1.5">
-              <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Part one</span>
+              <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Choose a subject to start</span>
               <h2 className="m-0 font-heading text-3xl md:text-[40px] font-bold tracking-[-0.015em] text-navy-dark">
                 Explore Subjects
               </h2>
@@ -214,7 +209,7 @@ export default async function HomePage() {
           <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-14 md:py-[72px] flex flex-col gap-6">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div className="flex flex-col gap-1.5">
-                <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Part three · most read</span>
+                <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Most read</span>
                 <h2 className="m-0 font-heading text-3xl md:text-[40px] font-bold tracking-[-0.015em] text-navy-dark">
                   Popular Topics
                 </h2>
@@ -252,7 +247,7 @@ export default async function HomePage() {
           <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12 md:py-14 flex flex-col gap-6">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div className="flex flex-col gap-1.5">
-                <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-mint">Part four · fresh from the desk</span>
+                <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-mint">Fresh from the desk</span>
                 <h2 className="m-0 font-heading text-3xl md:text-[40px] font-bold tracking-[-0.015em] text-on-dark">
                   Recently Added
                 </h2>
@@ -292,7 +287,7 @@ export default async function HomePage() {
               <div className="flex flex-wrap items-end justify-between gap-4">
                 <div className="flex flex-col gap-1.5">
                   <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em]" style={{ color: SUBJECT_COLORS["current-affairs"].accent }}>
-                    Part five · <span lang="hi" className="font-hindi normal-case tracking-normal">समसामयिकी</span>
+                    Exam-focused write-ups · <span lang="hi" className="font-hindi normal-case tracking-normal">समसामयिकी</span>
                   </span>
                   <h2 className="m-0 font-heading text-3xl md:text-[40px] font-bold tracking-[-0.015em] text-navy-dark">
                     Current Affairs

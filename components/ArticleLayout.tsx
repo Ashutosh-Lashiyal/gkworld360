@@ -1,74 +1,74 @@
-// ArticleLayout — the page shell UNDER the band on every article page:
-// a reading column on the left and a sticky sidebar on the right.
+// ArticleLayout — the page shell for every article: ONE reading column in the
+// centre of the page, with a quiet "Contents" rail to its right on wide
+// screens. Editorial version, 17 Sep 2026 (board 10b), replacing the
+// two-column card-and-sidebar layout.
 //
-// REDESIGN 16 Sep 2026, board 2. Reading comfort is the product, so the column
-// is sized for it: max 720px wide, which at 19px serif is roughly 68 characters
-// per line — the range typographers consider easiest to read. On phones and
-// tablets the sidebar drops away and the column takes the full width.
+// Why 680px: at 20px serif that is ~65 characters a line — the range that is
+// easiest to read. The column is centred; the rail lives OUTSIDE it (absolute,
+// to the right) so the text measure never changes whether or not the rail is
+// there. On screens narrower than 1280px (xl) the rail is hidden — the reader
+// simply scrolls.
 //
-// The column also sets two CSS variables, --signal and --signal-bg, from the
-// page's subject colours. The article styles in globals.css (`.prose`) and the
-// KeyTakeaways card read those variables, so the short rule under every H2 and
-// the top bar on the takeaways card are automatically History-sepia on a
-// History page and Physics-violet on a Physics page — no per-page code.
+// The column sets --signal / --signal-bg from the subject colours; the article
+// styles in globals.css (.prose) and KeyTakeaways read them, so every rule and
+// bar is automatically the right colour for the page's subject.
 //
-// Slots (props that take JSX):
-//   figure   — the cover illustration + caption, shown above the body
-//   children — the article body (the `.prose` block)
-//   after    — things under the body but still in the column (prev/next nav)
-//   sidebar  — contents list, quick facts (desktop only)
-//   below    — full-width sections under both columns (related topics, more news)
+// Slots (JSX props):
+//   header   — the ArticleHeader (title block)
+//   above    — things before the body: the Key Takeaways card (read these first)
+//   children — the article body (the .prose block); given id="article-body"
+//              so the ReadingProgress bar can measure it
+//   after    — under the body, still in the column (prev/next)
+//   rail     — the Contents list (desktop only)
+//   below    — full-width sections under everything (related topics, more news)
 
 import type { ReactNode, CSSProperties } from "react";
+import ReadingProgress from "@/components/ReadingProgress";
 import { FRAME_COLORS, type SubjectColors } from "@/lib/subject-colors";
 
 type ArticleLayoutProps = {
   colors: SubjectColors | null;
-  figure?: ReactNode;
+  header: ReactNode;
+  above?: ReactNode;
   children: ReactNode;
   after?: ReactNode;
-  sidebar?: ReactNode;
+  rail?: ReactNode;
   below?: ReactNode;
 };
 
-export default function ArticleLayout({
-  colors,
-  figure,
-  children,
-  after,
-  sidebar,
-  below,
-}: ArticleLayoutProps) {
+export default function ArticleLayout({ colors, header, above, children, after, rail, below }: ArticleLayoutProps) {
   const c = colors ?? FRAME_COLORS;
-
-  // CSS variables are not in React's CSSProperties type, so we cast once here.
-  const signalVars = {
-    "--signal": c.accent,
-    "--signal-bg": c.bg,
-  } as CSSProperties;
+  const signalVars = { "--signal": c.accent, "--signal-bg": c.bg } as CSSProperties;
 
   return (
-    <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-8 md:py-12">
-      <div className="flex flex-col lg:flex-row gap-10 lg:gap-12">
-        {/* ── READING COLUMN ─────────────────────────────────────────────── */}
-        <div className="min-w-0 flex-1 max-w-[720px] flex flex-col gap-7" style={signalVars}>
-          {figure}
-          {children}
-          {after}
+    <>
+      <ReadingProgress targetId="article-body" />
+
+      <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 pb-14 md:pb-20">
+        {/* On wide screens a 3-track grid: [spare] [680px column] [spare]. The
+            column sits in the middle track — so it is centred — and the rail
+            sits in the right-hand track. Below xl it's a single centred column. */}
+        <div className="xl:grid xl:grid-cols-[1fr_680px_1fr] xl:gap-10">
+          <div className="hidden xl:block" aria-hidden="true" />
+
+          <div className="mx-auto w-full max-w-[680px] flex flex-col gap-8" style={signalVars}>
+            {header}
+            {above}
+            <div id="article-body">{children}</div>
+            {after}
+          </div>
+
+          {rail && (
+            <aside className="hidden xl:block">
+              {/* pt matches the header's top padding so the rail lines up with
+                  the breadcrumb; sticky keeps it in view while reading. */}
+              <div className="sticky top-24 pt-14 pl-6 w-[220px]">{rail}</div>
+            </aside>
+          )}
         </div>
 
-        {/* ── SIDEBAR ────────────────────────────────────────────────────────
-            `sticky top-24` keeps it in view while scrolling; 96px clears the
-            ~75px header with a little breathing room. `self-start` is what
-            makes sticky work inside a flex row. */}
-        {sidebar && (
-          <aside className="hidden lg:block w-[280px] flex-shrink-0 self-start sticky top-24">
-            <div className="flex flex-col gap-5">{sidebar}</div>
-          </aside>
-        )}
+        {below}
       </div>
-
-      {below}
-    </div>
+    </>
   );
 }

@@ -12,9 +12,10 @@
 //   3. Writing to production requires "production": true in the request body —
 //      a deliberate extra step, never the default.
 //
-// Body: { "action": "create-draft", "draft": {…} }  or  { "action": "delete", "id": 4 }
+// Body: { "action": "create-draft", "draft": {…} }  |  { "action": "delete", "id": 4 }
+//       | { "action": "add-hindi", "hindi": { slug, hi: { title, description, map } } }
 
-import { createArticleDraft, deleteArticle, type ArticleDraft } from "@/lib/ingest";
+import { createArticleDraft, deleteArticle, addHindiToArticle, type ArticleDraft, type HindiAddition } from "@/lib/ingest";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,7 @@ export async function POST(req: Request) {
   }
 
   const host = dbHost();
-  let body: { action?: string; draft?: ArticleDraft; id?: number; production?: boolean };
+  let body: { action?: string; draft?: ArticleDraft; hindi?: HindiAddition; id?: number; production?: boolean };
   try {
     body = await req.json();
   } catch {
@@ -43,6 +44,10 @@ export async function POST(req: Request) {
   try {
     if (body.action === "create-draft" && body.draft) {
       const result = await createArticleDraft(body.draft);
+      return Response.json({ ok: true, host, ...result });
+    }
+    if (body.action === "add-hindi" && body.hindi) {
+      const result = await addHindiToArticle(body.hindi);
       return Response.json({ ok: true, host, ...result });
     }
     if (body.action === "delete" && typeof body.id === "number") {

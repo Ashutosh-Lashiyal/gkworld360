@@ -82,9 +82,13 @@
      The shape language is "soft and precise" — never bubbly, never sharp.
      rounded-sm   → tags, badges, checkboxes, small pills
      rounded-card → cards, buttons, inputs — the standard component radius        */
-  --radius-sm:     4px;   /* Small elements  — tags, badges                    */
-  --radius-card:  10px;   /* Cards, buttons, inputs — the owner's 10px rule    */
-  --radius-button: 10px;  /* Same value, named so a button never drifts        */
+  /* 17 Sep 2026: corners are SQUARE (0px) on cards, buttons, inputs and chips —
+     owner's decision after a friend's review ("edgy"). Pills (hero stats),
+     avatars and the bell stay round on purpose: a pill that isn't round isn't
+     a pill. To go back to soft corners, change these three numbers only.     */
+  --radius-sm:     0px;   /* Small elements  — tags, badges                    */
+  --radius-card:   0px;   /* Cards, buttons, inputs                            */
+  --radius-button: 0px;   /* Same value, named so a button never drifts        */
 
   /* ── SHADOWS ─────────────────────────────────────────────────────────────────
      A single, soft, diffused shadow gives cards a "tactile, printed" quality.
@@ -171,9 +175,15 @@ h1, h2, h3, h4, h5, h6 {
    tables render as white cards with a tinted header row (--signal-bg).        */
 .prose {
   font-family: var(--font-heading), Georgia, serif;
-  font-size: 1.1875rem;  /* 19px */
-  line-height: 1.75;
+  font-size: 1.25rem;    /* 20px — editorial, 17 Sep 2026 */
+  line-height: 1.8;
   color: #1a1a1a;
+}
+
+/* The opening paragraph, a touch larger — the editorial "lead" */
+.prose > p:first-child {
+  font-size: 1.375rem;   /* 22px */
+  line-height: 1.7;
 }
 
 .prose p {
@@ -182,12 +192,13 @@ h1, h2, h3, h4, h5, h6 {
 
 .prose h2 {
   font-family: var(--font-heading), Georgia, serif;
-  font-size: 1.625rem;   /* 26px */
+  font-size: 1.75rem;    /* 28px */
   font-weight: 600;
   color: #122a26;
-  margin-top: 2.4rem;
-  margin-bottom: 1rem;
+  margin-top: 2.6em;
+  margin-bottom: 1em;
   line-height: 1.2;
+  text-align: center;    /* editorial: headings centred, body text left-aligned */
 }
 
 /* The short signal rule under each H2 — 56px wide, 3px tall, rounded ends.
@@ -196,10 +207,9 @@ h1, h2, h3, h4, h5, h6 {
 .prose h2::after {
   content: "";
   display: block;
-  width: 56px;
+  width: 48px;
   height: 3px;
-  border-radius: 2px;
-  margin-top: 10px;
+  margin: 14px auto 0;   /* centred under the centred heading */
   background-color: var(--signal, #059669);
 }
 
@@ -291,7 +301,7 @@ h1, h2, h3, h4, h5, h6 {
   background-color: #122a26;
   color: #e2e8f0;
   padding: 1.25rem 1.5rem;
-  border-radius: 10px;
+  border-radius: 0;
   overflow-x: auto;
   margin-bottom: 1.4em;
   font-size: 0.875rem;
@@ -320,7 +330,7 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1.5;
   background-color: #ffffff;
   border: 1px solid #d9d6cf;
-  border-radius: 10px;
+  border-radius: 0;
   overflow: hidden;
   display: table;
 }
@@ -371,7 +381,7 @@ h1, h2, h3, h4, h5, h6 {
 .prose img {
   max-width: 100%;
   height: auto;
-  border-radius: 10px;
+  border-radius: 0;
   border: 1px solid #d9d6cf;
   margin: 1.5em auto;
   display: block;

@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 // Image is Next.js's built-in image component — it automatically optimises
 // images (compresses, resizes, lazy-loads) so the site stays fast.
-import { getSubjectFromPath, getSubjectColors, SUBJECT_COLORS } from "@/lib/subject-colors";
+import { getSubjectFromPath, SUBJECT_COLORS } from "@/lib/subject-colors";
 import { SUBJECTS } from "@/lib/subjects";
 // SUBJECTS is now imported from the shared lib/subjects.ts file instead of
 // being defined here — so the header and the homepage both use the same list.
@@ -78,8 +78,7 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
   const liveCount = liveSubjects ? liveSubjects.length : SUBJECTS.length;
 
   const pathname = usePathname();
-  const subjectSlug = getSubjectFromPath(pathname);
-  const subjectColors = subjectSlug ? getSubjectColors(subjectSlug) : null;
+  const subjectSlug = getSubjectFromPath(pathname); // on a subject page → "Subjects" shows as active
 
   const [subjectsOpen, setSubjectsOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -112,15 +111,9 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
   };
 
   return (
-    // The subject "signal" survives as a thin 3px line under the dark bar —
-    // small, the way the design system wants signal colours used.
-    <header
-      className="sticky top-0 z-50 bg-navy-dark text-on-dark transition-all duration-300"
-      style={subjectColors
-        ? { borderBottom: `3px solid ${subjectColors.border}` }
-        : { borderBottom: "3px solid transparent" }
-      }
-    >
+    // No coloured line under the bar any more (owner, 17 Sep — it clashed with
+    // the reading-progress bar). The subject colour lives on the page itself.
+    <header className="sticky top-0 z-50 bg-navy-dark text-on-dark">
 
       {/* `relative` on the container lets us absolutely-position the nav.
           The nav is pinned to the full width of the container and centres its
@@ -199,7 +192,7 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
                   // The container is centred and 1200px wide, so "left-0 right-0" would
                   // only dim the middle. left-1/2 + -translate-x-1/2 + w-screen centres
                   // a viewport-wide strip on it instead.
-                  className="absolute left-1/2 -translate-x-1/2 w-screen top-full mt-[3px] h-screen bg-navy-dark/35 pointer-events-none"
+                  className="absolute left-1/2 -translate-x-1/2 w-screen top-full h-screen bg-navy-dark/35 pointer-events-none"
                 />
 
                 {/* THE PANEL — a white card dropping from the dark bar, the
@@ -209,7 +202,7 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
                     the reader ever reaches a subject page. Topic counts per
                     subject arrive in Phase 4, when the CMS feeds this list. */}
                 <div
-                  className="absolute top-full left-4 md:left-8 lg:left-16 right-4 md:right-8 lg:right-16 mt-2 bg-surface text-foreground rounded-[12px] shadow-[0_24px_64px_rgba(0,0,0,0.28)] p-7 pb-6 flex flex-col gap-5 z-50"
+                  className="absolute top-full left-4 md:left-8 lg:left-16 right-4 md:right-8 lg:right-16 mt-2 bg-surface text-foreground rounded-none shadow-[0_24px_64px_rgba(0,0,0,0.28)] p-7 pb-6 flex flex-col gap-5 z-50"
                   onMouseEnter={openSubjects}
                   onMouseLeave={scheduleClose}
                 >
@@ -240,7 +233,7 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
                           {/* Hover = the site's mint, same as every button (owner, 16 Sep).
                               The fill sits on the TEXT block only, so the signal bar on
                               the left stays clear of it (owner's note, same day). */}
-                          <span className={`grid grid-cols-[minmax(0,1fr)_auto] gap-3 items-center px-3 py-2.5 rounded-lg transition-colors duration-100 ${live ? "group-hover:bg-mint" : ""}`}>
+                          <span className={`grid grid-cols-[minmax(0,1fr)_auto] gap-3 items-center px-3 py-2.5 rounded-none transition-colors duration-100 ${live ? "group-hover:bg-mint" : ""}`}>
                             <span className="flex flex-col leading-tight">
                               <span className={`font-heading text-base font-semibold ${live ? "text-navy-dark" : "text-muted"}`}>
                                 {subject.label}
@@ -303,9 +296,7 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
         {/* Right side — pushed to the far right with ml-auto.
             Contains the search icon on desktop and the hamburger on mobile.
             Both live here so they always occupy the same right-side position. */}
-        <div className="ml-auto flex items-center">
-          {/* Bell notification — rings to tell users Hindi is available */}
-          <BellNotification />
+        <div className="ml-auto flex items-center gap-1">
 
           {/* Search bar — desktop only.
               This is a <Link> styled to look like a search input field.
@@ -327,6 +318,11 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
               Search subjects, topics, news...
             </span>
           </Link>
+
+          {/* Bell notification — rings to tell users Hindi is available.
+              In the far-right corner (owner's friend, 17 Sep) — after the search
+              on desktop; on phones it sits just before the hamburger. */}
+          <BellNotification />
 
           {/* Hamburger — mobile only */}
           <button

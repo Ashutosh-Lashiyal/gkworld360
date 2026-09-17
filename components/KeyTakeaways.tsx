@@ -16,7 +16,7 @@ type KeyTakeawaysProps = {
   points: string[]; // the list of key takeaway sentences
 };
 
-export default function KeyTakeaways({ points }: KeyTakeawaysProps) {
+export default function KeyTakeaways({ points, first = false }: KeyTakeawaysProps & { first?: boolean }) {
   if (!points || points.length === 0) return null;
 
   return (
@@ -25,7 +25,7 @@ export default function KeyTakeaways({ points }: KeyTakeawaysProps) {
     // subject, so this card is sepia-topped on History, violet on Physics, with
     // no per-page code. The `not-prose` idea: this sits inside the .prose
     // column, so the list resets in globals.css keep our own bullets.
-    <aside className="my-8 flex flex-col bg-surface border border-hairline rounded-card overflow-hidden">
+    <aside className={`${first ? "" : "my-8"} flex flex-col bg-surface border border-hairline rounded-card overflow-hidden`}>
       <span aria-hidden="true" className="h-1 w-full" style={{ backgroundColor: "var(--signal, #059669)" }} />
 
       <div className="px-6 py-5 flex flex-col gap-3">
@@ -34,7 +34,7 @@ export default function KeyTakeaways({ points }: KeyTakeawaysProps) {
           className="font-body text-[11px] font-semibold uppercase tracking-[0.14em]"
           style={{ color: "var(--signal, #059669)" }}
         >
-          Key Takeaways
+          Key Takeaways{first ? " · read these first" : ""}
         </p>
 
         {/* Bulleted list of takeaways — 16px sans so it reads as a summary,

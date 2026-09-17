@@ -63,6 +63,15 @@ export default function ReadLaterButton({
       : [{ ...headline, savedAt: Date.now() }, ...list]; // save (newest first)
     writeSaved(next);
     setSaved(!exists);
+    // Tell the Toast (components/Toast.tsx, mounted in the layout) what happened,
+    // so the reader gets a small confirmation bar instead of a silent click.
+    window.dispatchEvent(
+      new CustomEvent("gk-toast", {
+        detail: exists
+          ? { message: "Removed from Read Later" }
+          : { message: "Saved to Read Later", actionLabel: "View list", actionHref: "/saved" },
+      })
+    );
   };
 
   return (

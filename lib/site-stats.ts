@@ -34,8 +34,10 @@ export type SiteStats = {
   // Registered readers. `undefined` until the login feature exists — pages
   // that show it (the hero pills) simply skip it while it's undefined.
   users?: number;
-  // slug → number of topics, for the Subjects menu ("2 topics")
+  // slug → number of topics, for the Subjects menu and subject cards ("2 topics")
   topicsBySubject: Record<string, number>;
+  // slug → number of categories that contain a topic, for subject cards
+  categoriesBySubject: Record<string, number>;
   // slugs that have a page today — the menu links these, greys out the rest
   liveSubjects: string[];
 };
@@ -50,6 +52,11 @@ async function computeSiteStats(): Promise<SiteStats> {
     topicsBySubject[t.slug[0]] = (topicsBySubject[t.slug[0]] ?? 0) + 1;
     if (t.slug.length > 2) categories.add(`${t.slug[0]}/${t.slug[1]}`);
     if (t.hindiHref) hindi += 1;
+  }
+  const categoriesBySubject: Record<string, number> = {};
+  for (const key of categories) {
+    const subject = key.split("/")[0];
+    categoriesBySubject[subject] = (categoriesBySubject[subject] ?? 0) + 1;
   }
 
   // A subject "exists" when /<slug> renders — i.e. its overview file resolves.
@@ -69,6 +76,7 @@ async function computeSiteStats(): Promise<SiteStats> {
     writeups: newsSlugs.size,
     users: undefined, // ← set this from the users table once login exists
     topicsBySubject,
+    categoriesBySubject,
     liveSubjects,
   };
 }

@@ -12,6 +12,7 @@
 import ContentCard from "@/components/ContentCard";
 import { SUBJECT_COLORS } from "@/lib/subject-colors";
 import { getSubjectInfo } from "@/lib/subjects";
+import { getSiteStats } from "@/lib/site-stats";
 
 type SubjectCardProps = {
   title: string;
@@ -27,10 +28,17 @@ type SubjectCardProps = {
 // 1 → "I", 4 → "IV" … enough for 18 subjects.
 const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII"];
 
-export default function SubjectCard({ title, description, slug, image, index }: SubjectCardProps) {
+export default async function SubjectCard({ title, description, slug, image, index }: SubjectCardProps) {
   const colors = SUBJECT_COLORS[slug];
   const labelHi = getSubjectInfo(slug)?.labelHi;
   const numeral = index !== undefined ? ROMAN[index] : undefined;
+
+  // Real counts (17 Sep 2026, owner's friend's suggestion): categories and
+  // topics for this subject, from the hourly-cached site stats. A subject with
+  // no topics yet shows 0 and a greyed "Coming soon" instead of "Explore →".
+  const stats = await getSiteStats();
+  const topics = stats.topicsBySubject[slug] ?? 0;
+  const categories = stats.categoriesBySubject[slug] ?? 0;
 
   return (
     <ContentCard
@@ -41,6 +49,11 @@ export default function SubjectCard({ title, description, slug, image, index }: 
       label={[numeral, labelHi].filter(Boolean).join(" · ") || undefined}
       hoverBg={colors?.bg}
       accent={colors?.accent}
+      stats={[
+        { value: categories, label: categories === 1 ? "category" : "categories" },
+        { value: topics, label: topics === 1 ? "topic" : "topics" },
+      ]}
+      comingSoon={topics === 0}
       ctaLabel="Explore →"
     />
   );
