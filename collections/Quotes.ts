@@ -12,6 +12,7 @@
 // worse than no quote.
 
 import type { CollectionConfig } from "payload";
+import { revalidateTag } from "next/cache";
 import { portraitPrompt } from "@/lib/image-style";
 
 export const Quotes: CollectionConfig = {
@@ -79,6 +80,22 @@ export const Quotes: CollectionConfig = {
           data.portraitPrompt = portraitPrompt({ author: data.author, authorTitle: data.authorTitle });
         }
         return data;
+      },
+    ],
+    // CACHE REFRESH (18 Sep 2026). The footer's "quote of the day" is looked
+    // up once and the answer kept for an hour (lib/quote.ts, tag "daily-quote"),
+    // so admin edits used to take up to an hour to show. These two hooks run
+    // after a quote is saved or deleted and tell Next.js that saved answer is
+    // out of date; the next page load fetches a fresh one. Same pattern will
+    // go on Articles/News later.
+    afterChange: [
+      () => {
+        revalidateTag("daily-quote", "max");
+      },
+    ],
+    afterDelete: [
+      () => {
+        revalidateTag("daily-quote", "max");
       },
     ],
   },

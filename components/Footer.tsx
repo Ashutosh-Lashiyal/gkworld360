@@ -92,9 +92,9 @@ export default async function Footer() {
               <Image
                 src="/images/logo-dark.png"
                 alt="GKWorld360 — Know More, Grow More"
-                height={64}
-                width={86}
-                className="h-12 w-auto"
+                height={80}
+                width={108}
+                className="h-16 md:h-20 w-auto"
               />
             </Link>
           </div>

@@ -138,9 +138,9 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
             <Image
               src="/images/logo-dark.png"
               alt="GKWorld360 — Know More, Grow More"
-              height={64}
-              width={86}
-              className="h-12 md:h-14 w-auto"
+              height={72}
+              width={97}
+              className="h-14 md:h-[72px] w-auto"
               priority
             />
           </Link>
