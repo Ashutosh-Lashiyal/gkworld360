@@ -16,7 +16,7 @@
 //       | { "action": "add-hindi", "hindi": { slug, hi: { title, description, map } } }
 //       | { "action": "add-images", "images": { slug, cover?, images: [{ file, alt, caption, afterHeading }] } }
 
-import { createArticleDraft, deleteArticle, addHindiToArticle, addImagesToArticle, importArticle, type ArticleDraft, type HindiAddition, type ImageAddition, type ArticleExport } from "@/lib/ingest";
+import { createArticleDraft, deleteArticle, addHindiToArticle, addImagesToArticle, importArticle, createQuote, writeImagePrompts, type ArticleDraft, type HindiAddition, type ImageAddition, type ArticleExport, type QuoteInput } from "@/lib/ingest";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
   }
 
   const host = dbHost();
-  let body: { action?: string; draft?: ArticleDraft; hindi?: HindiAddition; images?: ImageAddition; article?: ArticleExport; id?: number; production?: boolean };
+  let body: { action?: string; draft?: ArticleDraft; hindi?: HindiAddition; images?: ImageAddition; article?: ArticleExport; quote?: QuoteInput; slug?: string; force?: boolean; id?: number; production?: boolean };
   try {
     body = await req.json();
   } catch {
@@ -57,6 +57,14 @@ export async function POST(req: Request) {
     }
     if (body.action === "import-article" && body.article) {
       const result = await importArticle(body.article);
+      return Response.json({ ok: true, host, ...result });
+    }
+    if (body.action === "create-quote" && body.quote) {
+      const result = await createQuote(body.quote);
+      return Response.json({ ok: true, host, ...result });
+    }
+    if (body.action === "write-prompts") {
+      const result = await writeImagePrompts(body.slug, body.force === true);
       return Response.json({ ok: true, host, ...result });
     }
     if (body.action === "delete" && typeof body.id === "number") {

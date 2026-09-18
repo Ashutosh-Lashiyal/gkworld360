@@ -18,6 +18,7 @@ import { Subjects } from "./collections/Subjects";
 import { Categories } from "./collections/Categories";
 import { Articles } from "./collections/Articles";
 import { News } from "./collections/News";
+import { Quotes } from "./collections/Quotes";
 import { Headlines } from "./collections/Headlines";
 import { KeyTakeaways } from "./blocks/KeyTakeaways";
 import { TopicImage } from "./blocks/TopicImage";
@@ -42,7 +43,7 @@ export default buildConfig({
   // ── COLLECTIONS ───────────────────────────────────────────────────────────────
   // Collections are like database tables. Each one is a content type.
   // Users (admin login) + Media (images) + the four content collections.
-  collections: [Users, Media, Subjects, Categories, Articles, News, Headlines],
+  collections: [Users, Media, Subjects, Categories, Articles, News, Headlines, Quotes],
 
   // ── LOCALIZATION (Hindi support) ────────────────────────────────────────────────
   // Turns on per-field English/Hindi versions. Any field marked `localized: true`

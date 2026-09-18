@@ -256,6 +256,28 @@ Tools (all `node scripts/…`): `create-article-draft.mjs <draft.json>` · `add-
 First run, 18 Sep: Portuguese (import), Dutch + English (drafts + images), Revolt Hindi — all
 now drafts on the Vercel site, awaiting the owner's Publish.
 
+## 9d. Image prompts in /admin (18 Sep 2026)
+
+The owner makes pictures in the Gemini app (free); the image models on the API key are behind
+paid billing, so generation is not automated. Instead every item carries READY prompts:
+- **Articles / Current Affairs** → sidebar field `imagePrompts`: a COVER prompt (title + subject
+  + summary) and one SECTION prompt per H2, all in the house style (`lib/image-style.ts`,
+  `HOUSE_STYLE`). Written by a `beforeChange` hook on first save when the box is empty; hand
+  edits kept; pipeline drafts may supply their own via `imagePrompts` in the draft JSON.
+- **Quotes** (new collection, §9e) → sidebar `portraitPrompt` from the author's name.
+Workflow: copy one prompt → Gemini app → save → upload on the item in /admin (or via
+`scripts/add-images.mjs` for articles). If billing is ever enabled, the same builders feed an
+automated step.
+
+## 9e. Quote of the day — CMS (18 Sep 2026)
+
+`collections/Quotes.ts`: quote (EN+HI, ≤300), author, authorTitle (EN+HI), portrait (upload,
+optional — sketch), portraitPrompt (auto), showOn (pin to a date), active. `lib/quote.ts`
+picks today's: pinned-to-today wins → else active quotes rotate by day-of-year (midnight IST)
+→ else the file `data/daily-quote.mdx`. Cached 1 h. Shown in the footer of every page.
+Seed/bulk-add with `node scripts/add-quote.mjs drafts/quotes.json [--production]`.
+**Accuracy rule:** only real, verifiable quotes with correct attribution.
+
 ## 10. Decisions log
 
 | Date | Decision | Reason |

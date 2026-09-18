@@ -1,6 +1,7 @@
 // News collection — current-affairs items. Kept separate from Articles because
 // news is date-driven (sorted by when the event happened) and lives under /news.
 import type { CollectionConfig } from "payload";
+import { articleImagePrompts, headingsOf } from "@/lib/image-style";
 import { slugField } from "@/fields/slug";
 
 export const News: CollectionConfig = {
@@ -58,6 +59,17 @@ export const News: CollectionConfig = {
       admin: { description: "One or two sentences (max 220 characters). Shown under the title and used by Google as the snippet." },
     },
     {
+      // Ready-to-paste Gemini prompts in the house style — see Articles.ts.
+      name: "imagePrompts",
+      type: "textarea",
+      admin: {
+        position: "sidebar",
+        rows: 14,
+        description:
+          "Copy ONE prompt at a time into the Gemini app, then upload the picture as the cover or in the body. Auto-written on save; you can edit.",
+      },
+    },
+    {
       name: "coverImage",
       type: "upload",
       relationTo: "media",
@@ -90,4 +102,21 @@ export const News: CollectionConfig = {
       },
     },
   ],
+
+  hooks: {
+    beforeChange: [
+      // Write the image prompts on first save (only when the box is empty).
+      ({ data }) => {
+        if (data.imagePrompts?.trim() || !data.title) return data;
+        data.imagePrompts = articleImagePrompts({
+          title: data.title,
+          subject: "Current Affairs",
+          category: data.category,
+          description: data.description,
+          headings: headingsOf(data.body),
+        });
+        return data;
+      },
+    ],
+  },
 };

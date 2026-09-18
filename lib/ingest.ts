@@ -20,6 +20,7 @@ import { readFileSync } from "node:fs";
 import { basename } from "node:path";
 import { getPayload } from "payload";
 import configPromise from "@payload-config";
+import { articleImagePrompts, headingsOf } from "@/lib/image-style";
 
 export type DraftLang = {
   title: string;
@@ -35,6 +36,7 @@ export type ArticleDraft = {
   category?: string | null;
   order?: number;
   reviewNotes?: string;
+  imagePrompts?: string; // hand-written Gemini prompts; if absent the CMS hook writes house-style ones
   en: DraftLang;
   hi: DraftLang;
 };
@@ -93,6 +95,7 @@ export async function createArticleDraft(draft: ArticleDraft): Promise<{ id: num
       subject: subject.id,
       ...(categoryId !== undefined ? { category: categoryId } : {}),
       ...(draft.order !== undefined ? { order: draft.order } : {}),
+      ...(draft.imagePrompts ? { imagePrompts: draft.imagePrompts } : {}),
       _status: "draft",
     },
   });
@@ -367,4 +370,98 @@ export async function importArticle(doc: ArticleExport): Promise<{ id: number | 
     });
   }
   return { id: created.id };
+}
+
+// ── Quotes ───────────────────────────────────────────────────────────────────
+// Adds one quote to the Quotes collection (English + optional Hindi). The
+// portrait prompt writes itself (collections/Quotes.ts hook).
+export type QuoteInput = {
+  quote: string;
+  quoteHi?: string;
+  author: string;
+  authorTitle?: string;
+  authorTitleHi?: string;
+  showOn?: string; // "2026-10-02"
+  active?: boolean;
+};
+
+export async function createQuote(q: QuoteInput): Promise<{ id: number | string }> {
+  const payload = await getPayload({ config: configPromise });
+  const created = await payload.create({
+    collection: "quotes",
+    locale: "en",
+    data: {
+      quote: q.quote,
+      author: q.author,
+      ...(q.authorTitle ? { authorTitle: q.authorTitle } : {}),
+      ...(q.showOn ? { showOn: q.showOn } : {}),
+      active: q.active ?? true,
+    },
+  });
+  if (q.quoteHi || q.authorTitleHi) {
+    await payload.update({
+      collection: "quotes",
+      id: created.id,
+      locale: "hi",
+      data: { ...(q.quoteHi ? { quote: q.quoteHi } : {}), ...(q.authorTitleHi ? { authorTitle: q.authorTitleHi } : {}) },
+    });
+  }
+  return { id: created.id };
+}
+
+// ── Writing image prompts for articles that pre-date the field ───────────────
+// The prompts are normally written by the save hook, which only runs on save.
+// Articles written before 18 Sep 2026 have an empty box until touched; this
+// fills it for every article (or one slug) without changing anything else.
+// Saved as a draft version, so a published article stays published as it was.
+export async function writeImagePrompts(slug?: string, force = false): Promise<{ updated: string[] }> {
+  const payload = await getPayload({ config: configPromise });
+  const updated: string[] = [];
+
+  // Articles — subject and category come from their relationships
+  const articles = await payload.find({
+    collection: "articles",
+    ...(slug ? { where: { slug: { equals: slug } } } : {}),
+    locale: "en",
+    depth: 1, // subject + category names
+    limit: 500,
+    draft: true,
+  });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for (const d of articles.docs as any[]) {
+    if (d.imagePrompts?.trim() && !force) continue;
+    const imagePrompts = articleImagePrompts({
+      title: d.title,
+      subject: d.subject?.name ?? null,
+      category: d.category?.name ?? null,
+      description: d.description,
+      headings: headingsOf(d.body),
+    });
+    await payload.update({ collection: "articles", id: d.id, locale: "en", draft: true, data: { imagePrompts } });
+    updated.push(`article ${d.id} ${d.title}`);
+  }
+
+  // Current affairs — the category is a plain text field
+  const news = await payload.find({
+    collection: "news",
+    ...(slug ? { where: { slug: { equals: slug } } } : {}),
+    locale: "en",
+    depth: 0,
+    limit: 500,
+    draft: true,
+  });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for (const d of news.docs as any[]) {
+    if (d.imagePrompts?.trim() && !force) continue;
+    const imagePrompts = articleImagePrompts({
+      title: d.title,
+      subject: "Current Affairs",
+      category: d.category ?? null,
+      description: d.description,
+      headings: headingsOf(d.body),
+    });
+    await payload.update({ collection: "news", id: d.id, locale: "en", draft: true, data: { imagePrompts } });
+    updated.push(`news ${d.id} ${d.title}`);
+  }
+  return { updated };
 }

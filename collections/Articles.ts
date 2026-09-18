@@ -3,6 +3,7 @@
 // rich text field that can contain Key Takeaways and Image blocks.
 import type { CollectionConfig } from "payload";
 import { slugField } from "@/fields/slug";
+import { articleImagePrompts, headingsOf } from "@/lib/image-style";
 
 export const Articles: CollectionConfig = {
   slug: "articles",
@@ -111,6 +112,20 @@ export const Articles: CollectionConfig = {
       // Uses the global editor (with Key Takeaways + Image blocks).
     },
     {
+      // ── IMAGE PROMPTS (18 Sep 2026) ─────────────────────────────────────────
+      // Ready-to-paste prompts for the Gemini app: one for the cover, one per
+      // section, all in the house style (lib/image-style.ts). Filled in
+      // automatically on save when empty; edit freely — your edits are kept.
+      name: "imagePrompts",
+      type: "textarea",
+      admin: {
+        position: "sidebar",
+        rows: 14,
+        description:
+          "Copy ONE prompt at a time into the Gemini app, then upload the picture as the cover or in the body. Auto-written on save; you can edit.",
+      },
+    },
+    {
       name: "publishedDate",
       type: "date",
       admin: {
@@ -142,6 +157,28 @@ export const Articles: CollectionConfig = {
         if (publishingNow && !data.publishedDate) {
           data.publishedDate = new Date().toISOString();
         }
+        return data;
+      },
+      // Write the image prompts on first save (only when the box is empty, so
+      // hand edits and the pipeline's own prompts are never overwritten).
+      async ({ data, req }) => {
+        if (data.imagePrompts?.trim() || !data.title) return data;
+        const nameOf = async (collection: "subjects" | "categories", id: unknown) => {
+          if (!id) return null;
+          try {
+            const doc = await req.payload.findByID({ collection, id: typeof id === "object" && id !== null && "id" in id ? (id as { id: number | string }).id : (id as number | string), depth: 0 });
+            return (doc as { name?: string }).name ?? null;
+          } catch {
+            return null;
+          }
+        };
+        data.imagePrompts = articleImagePrompts({
+          title: data.title,
+          subject: await nameOf("subjects", data.subject),
+          category: await nameOf("categories", data.category),
+          description: data.description,
+          headings: headingsOf(data.body),
+        });
         return data;
       },
     ],

@@ -9,7 +9,7 @@
 //   3. HEADLINES       — DARK band. Numbered list (LatestHeadlinesSection).
 //   4. POPULAR TOPICS  — LIGHT. Four cards → /topics?sort=popular
 //   5. RECENTLY ADDED  — DARK band. Numbered rows → /topics?sort=recent
-//   6. CURRENT AFFAIRS + QUOTE — LIGHT.
+//   6. CURRENT AFFAIRS — LIGHT. (The quote of the day moved into the footer, 18 Sep.)
 //   7. FOOTER          — DARK (in layout.tsx).
 // Strict light/dark alternation. "Popular" is recency until real view counts
 // exist (see lib/topics.ts). The About block is gone; its text lives on /about.
@@ -26,7 +26,6 @@ import LatestHeadlinesSection from "@/components/LatestHeadlinesSection";
 import { getHomepageSubjects, hasTranslation, resolveContentFile, getContentMeta, type ContentMeta } from "@/lib/content";
 import { getRecentNews } from "@/lib/news";
 import { getCMSNewsList, getCMSNewsHindiSlugs } from "@/lib/cms";
-import { getDailyQuote } from "@/lib/quote";
 
 // Re-generate the homepage at most once every 60 seconds so the headline teaser
 // and the latest CMS news stay current (instead of freezing at deploy time),
@@ -100,7 +99,6 @@ export default async function HomePage() {
   // recentNews already carries hindiHref/hindiTitle (built above), so the news
   // section can use it directly.
   const recentNewsWithHindi = recentNews;
-  const dailyQuote = getDailyQuote();
 
   return (
     <>
@@ -279,7 +277,7 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ══ 6. CURRENT AFFAIRS + QUOTE — LIGHT ═══════════════════════════════ */}
+      {/* ══ 6. CURRENT AFFAIRS — LIGHT ══════════════════════════════════════ */}
       <section className="bg-background">
         <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-14 md:py-[72px] flex flex-col gap-14">
           {recentNews.length > 0 && (
@@ -311,28 +309,6 @@ export default async function HomePage() {
             </div>
           )}
 
-          {/* Quote of the day — a white card, quiet. Edit content/daily-quote.mdx. */}
-          <figure className="m-0 flex flex-col items-center gap-4 text-center bg-surface border border-hairline rounded-card px-6 py-10 md:px-14 md:py-12">
-            <span className="font-heading text-[56px] leading-[0.6] text-sapphire select-none" aria-hidden="true">&ldquo;</span>
-            <blockquote className="m-0 font-heading text-xl md:text-[26px] leading-[1.45] italic text-navy-dark max-w-[860px] [text-wrap:balance]">
-              {dailyQuote.quote}
-            </blockquote>
-            <figcaption className="flex items-center gap-3">
-              {dailyQuote.authorImage && (
-                <span className="relative w-10 h-10 rounded-full overflow-hidden border border-hairline flex-shrink-0">
-                  <Image src={dailyQuote.authorImage} alt={dailyQuote.author} fill className="object-cover" sizes="40px" />
-                </span>
-              )}
-              <span className="flex flex-col gap-1 text-left">
-                <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
-                  — {dailyQuote.author} · Quote of the day
-                </span>
-                {dailyQuote.authorTitle && (
-                  <span className="font-body text-xs text-muted leading-snug max-w-[560px]">{dailyQuote.authorTitle}</span>
-                )}
-              </span>
-            </figcaption>
-          </figure>
         </div>
       </section>
     </>

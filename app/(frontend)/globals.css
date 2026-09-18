@@ -126,6 +126,21 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* ── CLICKABLE THINGS GET THE HAND CURSOR ───────────────────────────────────
+     Links have it by default; <button> elements do NOT in Tailwind v4 (v3 set
+     it). Owner's rule, 18 Sep 2026: anything you can click shows the hand.
+     Disabled buttons keep the arrow, as a hint that they do nothing.           */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  summary,
+  label[for],
+  select,
+  input[type="submit"],
+  input[type="checkbox"],
+  input[type="radio"] {
+    cursor: pointer;
+  }
+
   /* ── HEADING BASE STYLES ─────────────────────────────────────────────────────
      Every h1–h6 uses Source Serif 4 and navy by default. Components can override
      the colour with a utility class (e.g. text-on-dark) when needed.            */

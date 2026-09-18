@@ -359,6 +359,14 @@ version rows + sets published), then restoring `.env.local` to dev. Verified liv
   articles (Portuguese #3, Dutch #4 + images, English #5 + images, Revolt #1 Hindi) are **drafts on
   the Vercel site's database** — owner publishes each in `/admin` there. Dev keeps its copies;
   refresh dev from production in Neon when code work needs current data.
+- **18 Sep — SCHEMA CHANGE (push to production BEFORE deploying: run `npm run dev:prod` once):**
+  new `quotes` collection + `imagePrompts` on Articles/News (+ `portraitPrompt` on Quotes). Quote of
+  the day now from the CMS with date pinning and daily rotation (file fallback); house-style
+  Gemini prompts auto-written per article/section/author (`lib/image-style.ts`). Details:
+  pipeline doc §9d–9e. Footer restyled: quote on top, logo + link columns in one row, no tagline.
+  Read Later page rebuilt (red `danger` Button, `ConfirmDialog`, /pulse-style rows,
+  `lib/pulse-sources.ts` for browser-safe icon/colour maps). Global hand cursor on buttons.
+  Loose end noted: /about page still on the old style.
 - **ALL SIX PHASES BUILT.** Owner to review everything locally, then merge `redesign` → `main`
   (see GIT_NOTES "Using a branch for real"). No schema changes anywhere in the redesign, so no
   prod-schema-first step is needed before deploying.
