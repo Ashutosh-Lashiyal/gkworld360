@@ -85,17 +85,16 @@ export default async function Footer() {
         {/* ── LOGO + LINK COLUMNS on one row (18 Sep 2026: the tagline is gone,
             the logo sits as the first column, and the whole footer is shorter) ── */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr] gap-8">
-          {/* Logo — first column. Same trick as the header: the dark-teal PNG
-              becomes a white silhouette via `brightness(0) invert(1)`. */}
+          {/* Logo — first column. The dark-background version of the flat logo
+              (same file as the header). */}
           <div className="col-span-2 sm:col-span-3 lg:col-span-1">
             <Link href="/" className="inline-block">
               <Image
-                src="/images/logo.png"
+                src="/images/logo-dark.png"
                 alt="GKWorld360 — Know More, Grow More"
                 height={64}
-                width={96}
+                width={86}
                 className="h-12 w-auto"
-                style={{ filter: "brightness(0) invert(1)" }}
               />
             </Link>
           </div>

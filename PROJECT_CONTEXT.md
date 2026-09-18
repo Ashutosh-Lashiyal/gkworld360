@@ -543,7 +543,7 @@ All content collections have `access: { read: () => true }` so the public site c
 
 **Design & Navigation**
 - Sage & teal design system (navy `#1e3d38`, sapphire `#2d7a4f`) in `globals.css`
-- Logo in header + footer (`public/images/logo.png` — transparent background PNG)
+- Logo in header + footer (`public/images/logo-dark.png`; `logo-light.png` for light surfaces; `logo-flat.png` is the untouched master from ChatGPT, 18 Sep 2026)
 - Favicon at `app/icon.png`
 - Header: centered nav (absolute positioning), search bar (click → goes to /search), bell notification
 - Subjects dropdown: fixed hover bug (timer-based close), per-subject hover colors
@@ -664,7 +664,9 @@ lib/
   search.ts           — Search index (News tagged as "News" not "Topic")
 
 public/images/
-  logo.png            — Site logo (transparent background)
+  logo-flat.png       — Logo master (flat, teal + mint, transparent; from ChatGPT 18 Sep 2026)
+  logo-light.png      — Trimmed 800px copy for light backgrounds
+  logo-dark.png       — Recoloured for dark backgrounds (teal → off-white); header + footer use this
   vivekananda.png     — Gyaani avatar
   about.png           — About section image
 

@@ -128,19 +128,19 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
       <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-2 relative flex items-center">
 
         {/* Logo — far left, does not participate in centering the nav.
-            The PNG is dark teal on transparent, which would vanish on this dark
-            bar. `brightness(0)` turns every visible pixel black, `invert(1)` then
-            flips black to white — a white silhouette of the logo, no second
-            image file needed. Remove the filter and the coloured logo is back. */}
+            18 Sep 2026: new flat logo. Two files, one per background:
+            logo-dark.png (off-white + mint) for the dark header/footer,
+            logo-light.png (teal + mint) for light surfaces. The old CSS-filter
+            trick that made a white silhouette is gone. width/height match the
+            file's shape (1106×820) so the browser reserves the right space. */}
         <div className="flex items-center flex-shrink-0">
           <Link href="/" className="inline-block">
             <Image
-              src="/images/logo.png"
+              src="/images/logo-dark.png"
               alt="GKWorld360 — Know More, Grow More"
               height={64}
-              width={96}
+              width={86}
               className="h-12 md:h-14 w-auto"
-              style={{ filter: "brightness(0) invert(1)" }}
               priority
             />
           </Link>
