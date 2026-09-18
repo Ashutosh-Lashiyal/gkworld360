@@ -3,6 +3,7 @@
 // migration: items written in the Payload CMS AND the old MDX files, so nothing
 // disappears. (Individual items are rendered by the catch-all route.)
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/og";
 import NewsCard from "@/components/NewsCard";
 import PageTitle from "@/components/PageTitle";
 import { getSubjectColors } from "@/lib/subject-colors";
@@ -19,11 +20,15 @@ import { getCMSNewsList, getCMSNewsHindiSlugs } from "@/lib/cms";
 // Payload admin) appear on the live site within a minute, without a redeploy.
 export const revalidate = 60;
 
-export const metadata: Metadata = {
+// Title only — the root layout appends " | GKWorld360". pageMetadata also
+// gives the page its link-preview card (lib/og.ts).
+export const metadata: Metadata = pageMetadata({
   title: "Current Affairs",
   description:
     "In-depth current affairs for competitive exams — national, international, economy, sports and more, written clearly and concisely.",
-};
+  label: "Explained for exams",
+  path: "/news",
+});
 
 // One item in the listing (compatible with NewsCard's props).
 type NewsListItem = {

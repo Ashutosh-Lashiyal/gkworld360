@@ -5,7 +5,7 @@ import Button from "@/components/Button";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Page Not Found | GKWorld360",
+  title: "Page Not Found", // the layout appends " | GKWorld360"
 };
 
 export default function NotFound() {

@@ -4,13 +4,19 @@
 // which does the live filtering in the browser.
 
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/og";
 import { getSearchIndex } from "@/lib/search";
 import SearchResults from "@/components/SearchResults";
 
-export const metadata: Metadata = {
-  title: "Search | GKWorld360",
-  description: "Search across all subjects and topics on GKWorld360.",
-};
+// Title only — the root layout appends " | GKWorld360". pageMetadata also
+// gives the page its link-preview card (lib/og.ts).
+export const metadata: Metadata = pageMetadata({
+  title: "Search",
+  description:
+    "Search across all subjects and topics on GKWorld360.",
+  label: "Subjects · Topics · Current Affairs",
+  path: "/search",
+});
 
 export default async function SearchPage({
   searchParams,

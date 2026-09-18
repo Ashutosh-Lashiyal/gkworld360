@@ -8,6 +8,7 @@
 // the URL, which causes this server component to re-run with the new sort.
 
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/og";
 import Link from "next/link";
 import { getPopularTopics, getRecentlyAddedTopics } from "@/lib/topics";
 import { SUBJECT_COLORS } from "@/lib/subject-colors";
@@ -15,11 +16,15 @@ import { getSubjectInfo } from "@/lib/subjects";
 import ContentCard from "@/components/ContentCard";
 import SortToggle from "@/components/SortToggle";
 
-export const metadata: Metadata = {
-  title: "All Topics | GKWorld360",
+// Title only — the root layout appends " | GKWorld360". pageMetadata also
+// gives the page its link-preview card (lib/og.ts).
+export const metadata: Metadata = pageMetadata({
+  title: "All Topics",
   description:
     "Browse every topic on GKWorld360 — history, geography, science, polity, and more.",
-};
+  label: "Every topic on the site",
+  path: "/topics",
+});
 
 export default async function TopicsPage({
   searchParams,

@@ -13,6 +13,7 @@
 // URL shape: /pulse?page=2&category=National&source=The%20Hindu
 
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/og";
 import Link from "next/link";
 import Button from "@/components/Button";
 import PageTitle from "@/components/PageTitle";
@@ -23,11 +24,15 @@ import { getHeadlinesPage, HEADLINE_CATEGORIES, HEADLINE_SOURCES } from "@/lib/p
 // The page reads ?page= / ?category= / ?source= so it must render per request.
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Latest Headlines — Current Affairs | GKWorld360",
+// Title only — the root layout appends " | GKWorld360". pageMetadata also
+// gives the page its link-preview card (lib/og.ts).
+export const metadata: Metadata = pageMetadata({
+  title: "Latest Headlines",
   description:
     "Fresh current-affairs headlines from trusted Indian news sources, curated for competitive-exam aspirants and general-knowledge learners.",
-};
+  label: "Current Affairs · from trusted Indian sources",
+  path: "/pulse",
+});
 
 const PER_PAGE = 50;
 

@@ -89,6 +89,8 @@ export default function NewsArticleView({
             enHref={enHref}
             hiHref={hiHref}
             colors={colors}
+            shareUrl={url}
+            shareText={meta.description}
           />
         }
         above={takeaways && takeaways.length > 0 ? <KeyTakeaways points={takeaways} first lang={lang} /> : undefined}

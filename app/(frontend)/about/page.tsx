@@ -3,14 +3,19 @@
 // Built using design tokens — no Stitch design needed, stays consistent with the site.
 
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/og";
 import Button from "@/components/Button";
 import { getSiteStats } from "@/lib/site-stats";
 
-export const metadata: Metadata = {
-  title: "About Us | GKWorld360",
+// Title only — the root layout appends " | GKWorld360". pageMetadata also
+// gives the page its link-preview card (lib/og.ts).
+export const metadata: Metadata = pageMetadata({
+  title: "About Us",
   description:
     "Learn about GKWorld360 — a curated educational platform for students, competitive exam aspirants, and lifelong learners across India.",
-};
+  label: "GKWorld360",
+  path: "/about",
+});
 
 // Key platform facts — LIVE from lib/site-stats.ts (16 Sep 2026). These used
 // to be typed in by hand ("18+", "100+") and drifted from the truth.

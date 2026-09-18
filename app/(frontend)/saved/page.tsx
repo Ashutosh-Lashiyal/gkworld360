@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import SavedList from "@/components/SavedList";
 
 export const metadata: Metadata = {
-  title: "Read Later — Saved Headlines | GKWorld360",
+  title: "Read Later", // the layout appends " | GKWorld360"
   description: "Headlines you've saved to read later.",
   // Personal utility page — no value in search engines indexing it.
   robots: { index: false, follow: false },

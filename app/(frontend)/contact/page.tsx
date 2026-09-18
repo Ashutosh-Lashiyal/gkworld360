@@ -4,13 +4,18 @@
 // For now the form is structural only — submitting does nothing yet.
 
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/og";
 import Button from "@/components/Button";
 
-export const metadata: Metadata = {
-  title: "Contact Us | GKWorld360",
+// Title only — the root layout appends " | GKWorld360". pageMetadata also
+// gives the page its link-preview card (lib/og.ts).
+export const metadata: Metadata = pageMetadata({
+  title: "Contact Us",
   description:
     "Get in touch with the GKWorld360 team — for feedback, content suggestions, corrections, or general enquiries.",
-};
+  label: "GKWorld360",
+  path: "/contact",
+});
 
 // Contact reasons shown as options in the form
 const CONTACT_REASONS = [

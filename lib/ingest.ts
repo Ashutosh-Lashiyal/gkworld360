@@ -191,7 +191,10 @@ function translateNode(node: any, map: Record<string, string>, missing: string[]
   return node;
 }
 
-/** Adds (or replaces) the Hindi locale of an existing article, as a draft. */
+/** Adds (or replaces) the Hindi locale of an existing article, as a draft.
+ *  NOTE: on a PUBLISHED article this makes the latest state a draft, so the
+ *  public site hides the article until the owner presses Publish again. That
+ *  is deliberate here (new Hindi needs review) — tell the owner. */
 export async function addHindiToArticle(input: HindiAddition): Promise<{ id: number | string; missing: string[] }> {
   const payload = await getPayload({ config: configPromise });
   const doc = (await payload.find({ collection: "articles", where: { slug: { equals: input.slug } }, limit: 1, locale: "en", depth: 0, draft: true })).docs[0];
@@ -265,6 +268,8 @@ function insertIndexAfter(body: any, afterHeading?: string): number {
   return next?.type === "paragraph" ? h + 2 : h + 1;
 }
 
+/** NOTE: saves a draft. On a PUBLISHED article the public site hides it until
+ *  the owner presses Publish again (new pictures need review) — tell the owner. */
 export async function addImagesToArticle(input: ImageAddition): Promise<{ id: number | string; uploaded: number }> {
   const payload = await getPayload({ config: configPromise });
   const find = async (locale: "en" | "hi") =>
@@ -425,7 +430,7 @@ export async function writeImagePrompts(slug?: string, force = false): Promise<{
     locale: "en",
     depth: 1, // subject + category names
     limit: 500,
-    draft: true,
+    draft: false, // the CURRENT public state, so `_status` below is the real one
   });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const d of articles.docs as any[]) {
@@ -437,8 +442,13 @@ export async function writeImagePrompts(slug?: string, force = false): Promise<{
       description: d.description,
       headings: headingsOf(d.body),
     });
-    await payload.update({ collection: "articles", id: d.id, locale: "en", draft: true, data: { imagePrompts } });
-    updated.push(`article ${d.id} ${d.title}`);
+    // A PUBLISHED article must stay published: saving "as a draft" on top of
+    // it makes Payload treat the latest state as draft and the public site
+    // stops showing it (this happened on the Vercel site, 18 Sep). So: keep
+    // whatever status the article has. Nothing but the prompt box changes.
+    const published = d._status === "published";
+    await payload.update({ collection: "articles", id: d.id, locale: "en", draft: !published, data: { imagePrompts, ...(published ? { _status: "published" } : {}) } });
+    updated.push(`article ${d.id} ${d.title}${published ? " (kept published)" : " (draft)"}`);
   }
 
   // Current affairs — the category is a plain text field
@@ -448,7 +458,7 @@ export async function writeImagePrompts(slug?: string, force = false): Promise<{
     locale: "en",
     depth: 0,
     limit: 500,
-    draft: true,
+    draft: false,
   });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const d of news.docs as any[]) {
@@ -460,8 +470,19 @@ export async function writeImagePrompts(slug?: string, force = false): Promise<{
       description: d.description,
       headings: headingsOf(d.body),
     });
-    await payload.update({ collection: "news", id: d.id, locale: "en", draft: true, data: { imagePrompts } });
-    updated.push(`news ${d.id} ${d.title}`);
+    const published = d._status === "published";
+    await payload.update({ collection: "news", id: d.id, locale: "en", draft: !published, data: { imagePrompts, ...(published ? { _status: "published" } : {}) } });
+    updated.push(`news ${d.id} ${d.title}${published ? " (kept published)" : " (draft)"}`);
   }
   return { updated };
+}
+
+// ── Publish by id ─────────────────────────────────────────────────────────────
+// Publishes the latest state of an article (used 18 Sep to restore three
+// articles that write-prompts had turned back into drafts). Publishing is
+// normally the owner's click in /admin; this exists for repairs only.
+export async function publishArticle(id: number): Promise<{ id: number; title: string }> {
+  const payload = await getPayload({ config: configPromise });
+  const doc = await payload.update({ collection: "articles", id, locale: "en", draft: false, data: { _status: "published" } });
+  return { id, title: String(doc.title) };
 }

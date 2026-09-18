@@ -26,6 +26,7 @@ import {
 } from "@/lib/content";
 import ArticleHeader from "@/components/ArticleHeader";
 import PageTitle from "@/components/PageTitle";
+import { ogImages as buildOgImages } from "@/lib/og";
 import StatPill from "@/components/StatPill";
 import { formatAddedTime } from "@/lib/topics";
 import Link from "next/link";
@@ -72,10 +73,12 @@ export async function generateStaticParams() {
 function cmsMetadata(
   title: string,
   description: string | null | undefined,
-  imageUrl: string | null | undefined,
-  url: string
+  label: string | undefined,
+  url: string,
+  lang: "en" | "hi" = "en"
 ): Metadata {
-  const images = imageUrl ? [{ url: imageUrl }] : undefined;
+  // The link-preview card: branded, drawn from the title (lib/og.ts)
+  const images = buildOgImages({ title, label, lang });
   return {
     // Just the bare title — do NOT append the site name here. The root layout
     // (app/(frontend)/layout.tsx) sets `template: "%s | GKWorld360"`, which adds
@@ -131,7 +134,7 @@ export async function generateMetadata({
       if (langs[metaLang]) {
         const news = await getCMSNews(contentSlug[1], metaLang);
         if (news) {
-          const meta = cmsMetadata(news.title, news.description, news.coverImage?.url, url);
+          const meta = cmsMetadata(news.title, news.description, ["Current Affairs", news.category].filter(Boolean).join(" · "), url, metaLang);
           if (langs.en && langs.hi) {
             meta.alternates = {
               ...meta.alternates,
@@ -157,7 +160,7 @@ export async function generateMetadata({
       if (langs[metaLang]) {
         const article = await getCMSArticle(contentSlug, metaLang);
         if (article) {
-          const meta = cmsMetadata(article.title, article.description, article.coverImage?.url, url);
+          const meta = cmsMetadata(article.title, article.description, [article.subject?.name, article.category?.name].filter(Boolean).join(" · "), url, metaLang);
           // hreflang: tell Google the two language versions are the same
           // article. Only emitted when both exist — same rule as the MDX path.
           if (langs.en && langs.hi) {
@@ -179,8 +182,14 @@ export async function generateMetadata({
 
   const meta = getContentMeta(filePath);
   const url = absoluteUrl("/" + slug.join("/"));
-  // Use the topic's banner image for the social-media preview, if it has one
-  const ogImages = meta.image ? [{ url: meta.image }] : undefined;
+  // The link-preview card for MDX pages (subjects, categories, any MDX topic).
+  // Label: "Subject" for a subject page, "History · Category" for a category,
+  // "History · Modern India" for a topic.
+  const prettify = (seg: string) => seg.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  const subjectName = getSubjectInfo(contentSlug[0])?.label ?? prettify(contentSlug[0]);
+  const mdxLabel =
+    contentSlug.length === 1 ? "Subject" : contentSlug.length === 2 ? `${subjectName} · Category` : `${subjectName} · ${prettify(contentSlug[1])}`;
+  const cardImages = buildOgImages({ title: meta.title, label: mdxLabel, lang: metaLang });
 
   // Build hreflang links to the other-language version (if it exists), so
   // Google understands they're the same article in two languages.
@@ -207,13 +216,13 @@ export async function generateMetadata({
       description: meta.description ?? undefined,
       url,
       siteName: SITE_NAME,
-      images: ogImages,
+      images: cardImages,
     },
     twitter: {
       card: "summary_large_image",
       title: meta.title,
       description: meta.description ?? undefined,
-      images: ogImages,
+      images: cardImages,
     },
   };
 }
@@ -800,6 +809,8 @@ export default async function ContentPage({
             enHref={enHref}
             hiHref={hiHref}
             colors={colors}
+            shareUrl={"/" + slug.join("/")}
+            shareText={meta.description}
           />
         }
         // Previous / Next navigation stays inside the reading column

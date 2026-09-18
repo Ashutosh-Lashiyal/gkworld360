@@ -71,6 +71,8 @@ export default function CMSTopicView({
           enHref={enHref}
           hiHref={hiHref}
           colors={colors}
+          shareUrl={(lang === "hi" ? hiHref : enHref) ?? enHref}
+          shareText={article.description ?? undefined}
         />
       }
       above={points.length > 0 ? <KeyTakeaways points={points} first lang={lang} /> : undefined}

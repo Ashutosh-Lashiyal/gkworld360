@@ -8,6 +8,7 @@
 > - **`PROJECT_CONTEXT.md`** (this file) = the current-state handoff — what's built/in-progress right now. Updated after every task.
 > - **`docs/GKWORLD360_TECH_FOUNDATION.md`** = tech-stack detail · **`GKWORLD360_PROJECT_STRUCTURE.md`** = folder/file guide · **`SETUP_GUIDE.md`** = how to set up & run · **`GKWORLD360_DESIGN_SYSTEM.md`** = design tokens.
 > - **`docs/GKWORLD360_CONTENT_PIPELINE.md`** = ⭐ how content gets onto the site — the AI-assisted photo → draft → review → publish workflow and every decision behind it (copyright line, image policy, bilingual rule).
+> - **`TODO.md`** = ⭐ THE task list (Now / Next / Later / Done) — read after this block, every session.
 > - **`SERVICES.md`** = third-party services & billing · **`GIT_NOTES.md`** = git learning notes.
 > - **`IDEAS.md`** = parking lot for raw, undecided ideas (they graduate to the Blueprint or here when decided).
 > Each doc has one lane; keep them in it so they don't drift.
@@ -20,11 +21,20 @@
 `dev` branch) · **Vercel site** = `gkworld360.vercel.app` (Neon `production` branch, indexing OFF)
 · **live** = the purchased domain with indexing ON — not bought yet. Never call the Vercel site "live".
 
-**Incident RESOLVED. Content pipeline DESIGNED, draft mode BUILT. Redesign Phases 1–6 (ALL) BUILT
-on branch `redesign` (16 Sep) — check `git branch` and `git status` first.** Owner has chosen
-to review ALL phases at once at the end, committing a snapshot after each phase.
-Next work: owner reviews everything locally →
-merge to `main`. Then back to the content pipeline (`docs/GKWORLD360_CONTENT_PIPELINE.md`).
+**MVP DEPLOYED (18 Sep 2026).** The redesign, four bilingual articles with images, quotes in the
+CMS, image prompts in /admin, Gyaani with guardrails — all on the **Vercel site** (`main` =
+`5e6c7a3`+). Content is created on the Vercel site's database via `npm run dev:prod` (port 3001)
++ `--production` scripts; dev is for code. Schema is in sync on both branches.
+**Sharing (18 Sep, later):** every article/news page has a Share button (`components/ShareButton.tsx`
+— phone share sheet on touch devices, Copy/WhatsApp/Telegram/X/Email menu with a mouse) and every
+page carries a branded **link-preview card** (Open Graph image, `app/api/og/route.tsx`, built via
+`lib/og.ts` → `ogImages` / `pageMetadata`). WhatsApp/Telegram/X read those tags to draw the card.
+**Known repair pending:** articles #3/#4/#5 on the Vercel site were turned back into drafts by an
+early `write-prompts` run (tool since fixed) — `node scripts/publish-article.mjs 3 4 5 --production`.
+The task list itself now lives in `TODO.md` (read it every session).
+Next: the **accounts → highlights → quiz** brainstorm (design first, then a branch with the schema
+pushed via `dev:prod` before deploying). Loose ends: /topics + /about restyle, Hindi subject
+names, Telegram approve-from-phone, more quotes + portraits, Gemini budget alert (owner).
 Design decisions and rollout plan: "16 Sep 2026 (later)" section below.
 
 ### ✅ RECOVERY (4 Sep 2026)

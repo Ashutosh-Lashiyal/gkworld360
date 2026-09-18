@@ -16,7 +16,7 @@
 //       | { "action": "add-hindi", "hindi": { slug, hi: { title, description, map } } }
 //       | { "action": "add-images", "images": { slug, cover?, images: [{ file, alt, caption, afterHeading }] } }
 
-import { createArticleDraft, deleteArticle, addHindiToArticle, addImagesToArticle, importArticle, createQuote, writeImagePrompts, type ArticleDraft, type HindiAddition, type ImageAddition, type ArticleExport, type QuoteInput } from "@/lib/ingest";
+import { createArticleDraft, deleteArticle, addHindiToArticle, addImagesToArticle, importArticle, createQuote, writeImagePrompts, publishArticle, type ArticleDraft, type HindiAddition, type ImageAddition, type ArticleExport, type QuoteInput } from "@/lib/ingest";
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +65,10 @@ export async function POST(req: Request) {
     }
     if (body.action === "write-prompts") {
       const result = await writeImagePrompts(body.slug, body.force === true);
+      return Response.json({ ok: true, host, ...result });
+    }
+    if (body.action === "publish" && typeof body.id === "number") {
+      const result = await publishArticle(body.id);
       return Response.json({ ok: true, host, ...result });
     }
     if (body.action === "delete" && typeof body.id === "number") {

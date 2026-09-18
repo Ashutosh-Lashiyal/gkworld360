@@ -11,6 +11,8 @@
 import Image from "next/image";
 import Breadcrumb from "@/components/Breadcrumb";
 import LanguageToggle from "@/components/LanguageToggle";
+import ShareButton from "@/components/ShareButton";
+import { absoluteUrl } from "@/lib/site";
 import { FRAME_COLORS, type SubjectColors } from "@/lib/subject-colors";
 
 export type ArticleHeaderProps = {
@@ -26,6 +28,8 @@ export type ArticleHeaderProps = {
   enHref?: string;
   hiHref?: string;
   colors: SubjectColors | null;
+  shareUrl?: string;     // the page's own path, e.g. "/history/modern-india/the-dutch-in-india"
+  shareText?: string;    // one line for the share message (the description)
 };
 
 export default function ArticleHeader({
@@ -41,6 +45,8 @@ export default function ArticleHeader({
   enHref,
   hiHref,
   colors,
+  shareUrl,
+  shareText,
 }: ArticleHeaderProps) {
   const c = colors ?? FRAME_COLORS;
   const hindi = lang === "hi";
@@ -83,9 +89,13 @@ export default function ArticleHeader({
         </div>
       )}
 
-      {enHref && hiHref && (
-        <div className="mt-1">
-          <LanguageToggle current={lang} enHref={enHref} hiHref={hiHref} />
+      {/* Language toggle (when both languages exist) and Share, on one row */}
+      {(shareUrl || (enHref && hiHref)) && (
+        <div className="mt-1 flex flex-wrap justify-center items-center gap-2">
+          {enHref && hiHref && <LanguageToggle current={lang} enHref={enHref} hiHref={hiHref} />}
+          {shareUrl && (
+            <ShareButton title={title} url={shareUrl.startsWith("http") ? shareUrl : absoluteUrl(shareUrl)} text={shareText} />
+          )}
         </div>
       )}
 

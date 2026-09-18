@@ -267,5 +267,7 @@ Server-side rules in `lib/gyaani-guard.ts` (the browser counter alone was bypass
 Fixed limits: 5 questions/minute and 10/day per visitor (by IP), 300 characters per
 question, last 6 messages sent to Gemini. Counters are in-memory (reset when Vercel starts a
 fresh function) — good enough against scripts, not a hard guarantee; move to Upstash Redis if
-traffic grows. **Also set a budget alert in the Google AI Studio / Cloud console for the
-Gemini key** — that is the true backstop.
+traffic grows. The Gemini key is on the **Free tier with no billing** (checked 18 Sep 2026) — Google refuses
+requests over the free limits instead of charging, so no budget alert is needed. If billing is
+ever enabled (e.g. for image generation), set a budget alert in Google Cloud → Billing →
+Budgets & alerts in the same step.

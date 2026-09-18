@@ -3,14 +3,19 @@
 // Unlike the homepage which shows only 6, this page shows everything.
 
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/og";
 import SubjectCard from "@/components/SubjectCard";
 import { getAllSubjects } from "@/lib/content";
 
-export const metadata: Metadata = {
-  title: "All Subjects | GKWorld360",
+// Title only — the root layout appends " | GKWorld360". pageMetadata also
+// gives the page its link-preview card (lib/og.ts).
+export const metadata: Metadata = pageMetadata({
+  title: "All Subjects",
   description:
     "Browse all subjects on GKWorld360 — History, Geography, Science, Polity, Economics, Current Affairs, Physics, Chemistry, Biology and more.",
-};
+  label: "Browse by subject",
+  path: "/subjects",
+});
 
 export default function SubjectsPage() {
   // Read every subject that has an overview.mdx in content/

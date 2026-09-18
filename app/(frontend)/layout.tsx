@@ -8,6 +8,7 @@ import Toast from "@/components/Toast";
 import NavigationLoader from "@/components/NavigationLoader";
 import { Suspense } from "react";
 import { getSiteStats } from "@/lib/site-stats";
+import { ogImages } from "@/lib/og";
 import Footer from "@/components/Footer";
 import Gyaani from "@/components/Gyaani";
 
@@ -81,17 +82,21 @@ export const metadata: Metadata = {
   },
 
   // Default social-media preview (Open Graph). Pages override per-page where useful.
+  // The link-preview card (18 Sep 2026): every page inherits this branded
+  // image unless it sets its own — see lib/og.ts and app/api/og/route.tsx.
   openGraph: {
     type: "website",
     siteName: SITE_NAME,
     title: `${SITE_NAME} | ${SITE_TAGLINE}`,
     description: SITE_DESCRIPTION,
     url: SITE_URL,
+    images: ogImages({ title: SITE_NAME, label: "General knowledge · Current affairs · English and Hindi" }),
   },
   twitter: {
     card: "summary_large_image",
     title: `${SITE_NAME} | ${SITE_TAGLINE}`,
     description: SITE_DESCRIPTION,
+    images: ogImages({ title: SITE_NAME, label: "General knowledge · Current affairs · English and Hindi" }),
   },
 };
 
