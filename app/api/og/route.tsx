@@ -14,7 +14,7 @@
 // the letters actually used — and cache it.
 
 import { ImageResponse } from "next/og";
-import { SITE_NAME, SITE_TAGLINE } from "@/lib/site";
+import { SITE_NAME } from "@/lib/site";
 
 export const runtime = "nodejs";
 export const revalidate = 86400; // a card for a given title is stable for a day
@@ -36,14 +36,26 @@ async function loadFont(family: string, weight: number, text: string): Promise<A
   }
 }
 
+// The image renderer draws Devanagari letter by letter, in typing order. In
+// real Hindi the vowel sign ि (U+093F) is TYPED after its consonant but WRITTEN
+// before it — "कि" is typed क+ि but drawn ि+क. Real text engines reorder this
+// automatically; this renderer does not, so "विद्रोह" came out as "वद्रिोह".
+// We move each ि in front of its consonant cluster (consonant, or consonants
+// joined by the virama ्) before handing the text over. Verified 18 Sep 2026
+// with विद्रोह, किताब, स्थिति.
+function fixDevanagari(text: string): string {
+  const cluster = "(?:[\u0915-\u0939\u0958-\u095F]\u094D)*[\u0915-\u0939\u0958-\u095F]";
+  return text.replace(new RegExp(`(${cluster})\u093F`, "g"), "\u093F$1");
+}
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const title = (searchParams.get("title") ?? SITE_NAME).slice(0, 140);
-  const label = (searchParams.get("label") ?? "").slice(0, 80);
+  const title = fixDevanagari((searchParams.get("title") ?? SITE_NAME).slice(0, 140));
+  const label = fixDevanagari((searchParams.get("label") ?? "").slice(0, 80));
   const lang = searchParams.get("lang") === "hi" ? "hi" : "en";
   const hasDevanagari = /[ऀ-ॿ]/.test(title + label);
 
-  const textForFonts = `${title} ${label} ${SITE_NAME} ${SITE_TAGLINE} 0123456789·`;
+  const textForFonts = `${title} ${label} ${SITE_NAME} Know More Grow More English हिन्दी 0123456789·`;
   const [serif, hindi, sans] = await Promise.all([
     loadFont("Source Serif 4", 700, textForFonts),
     hasDevanagari ? loadFont("Noto Sans Devanagari", 700, textForFonts) : Promise.resolve(null),
@@ -56,8 +68,13 @@ export async function GET(req: Request) {
   ];
   const titleFont = hasDevanagari && hindi ? "Hindi, Serif" : "Serif";
   // Long titles get a smaller size so they always fit on the card
-  const titleSize = title.length > 70 ? 54 : title.length > 40 ? 64 : 76;
+  const titleSize = title.length > 70 ? 46 : title.length > 40 ? 54 : 64;
 
+  // LAYOUT (18 Sep 2026, second version): everything CENTRED and kept inside
+  // the middle ~840px. Chat apps don't all show the full 1200×630 picture —
+  // WhatsApp's small preview, iMessage, Telegram and Slack on phones crop it
+  // to a square or 4:3 from the centre — so text in a corner gets cut off.
+  // Centred text survives every crop.
   return new ImageResponse(
     (
       <div
@@ -66,28 +83,35 @@ export async function GET(req: Request) {
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "flex-end",
+          alignItems: "center",
+          justifyContent: "center",
           position: "relative",
           backgroundColor: "#122a26",
           color: "#fffbf4",
           fontFamily: "Sans",
+          textAlign: "center",
         }}
       >
         {/* mint rule along the top */}
         <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 10, backgroundColor: "#6ee7b7" }} />
 
-        {/* wordmark, top-left */}
-        <div style={{ position: "absolute", top: 54, left: 72, display: "flex", alignItems: "baseline", gap: 14 }}>
-          <span style={{ fontFamily: "Serif", fontSize: 38, color: "#ffffff" }}>{SITE_NAME}</span>
-          <span style={{ fontFamily: lang === "hi" && hindi ? "Hindi" : "Sans", fontSize: 18, color: "rgba(255,255,255,0.6)", letterSpacing: lang === "hi" ? 0 : 2, textTransform: "uppercase" }}>{lang === "hi" ? "हिन्दी" : "English"}</span>
+        {/* wordmark, centred near the top */}
+        <div style={{ position: "absolute", top: 52, display: "flex", alignItems: "baseline", gap: 14 }}>
+          <span style={{ fontFamily: "Serif", fontSize: 34, color: "#ffffff" }}>{SITE_NAME}</span>
+          <span style={{ fontFamily: lang === "hi" && hindi ? "Hindi" : "Sans", fontSize: 16, color: "rgba(255,255,255,0.6)", letterSpacing: lang === "hi" ? 0 : 2, textTransform: "uppercase" }}>{lang === "hi" ? fixDevanagari("हिन्दी") : "English"}</span>
         </div>
 
-        {/* label + title, bottom-left */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 22, padding: "0 72px 72px", maxWidth: 1080 }}>
-          {label && <span style={{ fontSize: 22, letterSpacing: 4, textTransform: "uppercase", color: "#6ee7b7" }}>{label}</span>}
-          <span style={{ fontFamily: titleFont, fontSize: titleSize, lineHeight: 1.08, color: "#ffffff", letterSpacing: -1 }}>{title}</span>
-          <span style={{ fontSize: 22, color: "rgba(255,255,255,0.65)" }}>{SITE_TAGLINE}</span>
+        {/* label + title, centred in the safe zone */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 22, maxWidth: 840, padding: "0 40px" }}>
+          {label && (
+            // Letter-spacing suits uppercase English; it pulls Devanagari apart, so it's off for Hindi labels
+            <span style={{ fontFamily: /[ऀ-ॿ]/.test(label) && hindi ? "Hindi, Sans" : "Sans", fontSize: 20, letterSpacing: /[ऀ-ॿ]/.test(label) ? 0 : 4, textTransform: "uppercase", color: "#6ee7b7" }}>{label}</span>
+          )}
+          <span style={{ fontFamily: titleFont, fontSize: titleSize, lineHeight: 1.12, color: "#ffffff", letterSpacing: -0.5 }}>{title}</span>
         </div>
+
+        {/* short brand line, centred near the bottom */}
+        <span style={{ position: "absolute", bottom: 52, fontSize: 20, color: "rgba(255,255,255,0.6)", letterSpacing: 1 }}>Know More · Grow More</span>
       </div>
     ),
     { width: 1200, height: 630, fonts }
