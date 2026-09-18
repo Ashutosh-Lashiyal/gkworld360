@@ -433,3 +433,85 @@ h1, h2, h3, h4, h5, h6 {
 .font-hindi .prose h4 {
   font-family: var(--font-devanagari), system-ui, sans-serif;
 }
+
+/* ── BOOK LOADER ────────────────────────────────────────────────────────────────
+   An open book lying flat, seen from slightly above, a page turning over the
+   spine (components/BookLoader.tsx). The scene gives the 3-D perspective; the
+   book is tilted back so it lies on the ground; the turning leaf rotates about
+   the spine. Colours: teal cover, cream pages, one mint spine.                   */
+.book-scene {
+  width: 160px;
+  height: 120px;
+  perspective: 700px;              /* how "close" the viewer is — the 3-D depth */
+  perspective-origin: 50% 20%;     /* looking down from slightly above */
+}
+.book {
+  position: relative;
+  width: 160px;
+  height: 104px;
+  transform-style: preserve-3d;
+  transform: rotateX(58deg);       /* lay it flat on the ground */
+  margin-top: 16px;
+}
+/* soft shadow on the ground */
+.book__shadow {
+  position: absolute; inset: 6px -8px -10px -8px;
+  background: radial-gradient(ellipse at 50% 60%, rgba(18, 42, 38, 0.35), rgba(18, 42, 38, 0) 70%);
+  transform: translateZ(-2px);
+}
+/* the cover: a little larger than the pages, so a teal rim shows all round */
+.book__cover {
+  position: absolute; inset: -4px -5px -6px -5px;
+  background: #122a26;
+  border-radius: 3px;
+  transform: translateZ(-1px);
+}
+/* the two page blocks. The background paints faint "text" lines; the
+   box-shadows draw the stacked page edges along the outer side and bottom */
+.book__block {
+  position: absolute; top: 0; bottom: 0; width: 50%;
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 14px, rgba(18, 42, 38, 0.10) 14px 16px) 12px 18px / calc(100% - 24px) calc(100% - 30px) no-repeat,
+    #fffbf4;
+  transform-style: preserve-3d;
+}
+.book__block--left  { left: 0;  border-radius: 2px 0 0 2px; box-shadow: -1px 0 0 #e6e3dc, -2px 1px 0 #d9d6cf, -3px 2px 0 #cfccc4, 0 2px 0 #e6e3dc, 0 3px 0 #d9d6cf; }
+.book__block--right { right: 0; border-radius: 0 2px 2px 0; box-shadow:  1px 0 0 #e6e3dc,  2px 1px 0 #d9d6cf,  3px 2px 0 #cfccc4, 0 2px 0 #e6e3dc, 0 3px 0 #d9d6cf; }
+
+/* the turning leaf: sits on the right block, hinged at the spine, and flips
+   over to the left. A gradient darkens it as it lifts, like real paper. */
+.book__leaf {
+  position: absolute; top: 0; bottom: 0; right: 0; width: 50%;
+  transform-origin: left center;
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 14px, rgba(18, 42, 38, 0.10) 14px 16px) 12px 18px / calc(100% - 24px) calc(100% - 30px) no-repeat,
+    linear-gradient(to right, #f3efe6, #fffbf4 30%);
+  border-radius: 0 2px 2px 0;
+  box-shadow: 0 0 0 1px rgba(18, 42, 38, 0.06);
+  animation: book-leaf 1.6s cubic-bezier(0.45, 0.05, 0.35, 1) infinite;
+  backface-visibility: visible;
+}
+.book__leaf--b { animation-delay: 0.8s; }
+.book__spine {
+  position: absolute; top: -2px; bottom: -2px; left: 50%; width: 2px; margin-left: -1px;
+  background: #6ee7b7;
+  transform: translateZ(1px);
+}
+@keyframes book-leaf {
+  0%   { transform: rotateY(0deg);    z-index: 4; box-shadow: 0 0 0 1px rgba(18,42,38,0.06); }
+  35%  { transform: rotateY(-70deg);  z-index: 4; box-shadow: -12px 0 24px rgba(18,42,38,0.25); }
+  65%  { transform: rotateY(-115deg); z-index: 4; box-shadow: -12px 0 24px rgba(18,42,38,0.25); }
+  100% { transform: rotateY(-180deg); z-index: 1; box-shadow: 0 0 0 1px rgba(18,42,38,0.06); }
+}
+
+/* The navigation overlay waits 800 ms before appearing (owner, 18 Sep: a loader
+   on almost every click was too much). Most page changes finish well inside
+   that, so the book only shows for the genuinely slow ones — a filter on
+   /pulse, a page the server hasn't built yet, a slow connection.               */
+.nav-loader { animation: nav-loader-in 250ms ease-out 800ms both; }
+@keyframes nav-loader-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* Respect readers who asked their OS for less motion */
+@media (prefers-reduced-motion: reduce) {
+  .book__leaf { animation: none; }
+}

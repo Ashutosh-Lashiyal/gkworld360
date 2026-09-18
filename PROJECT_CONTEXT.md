@@ -345,6 +345,14 @@ version rows + sets published), then restoring `.env.local` to dev. Verified liv
   the last MDX-only readers are gone. Gyaani daily limit fixed to reset at midnight IST (was a
   rolling 24 h). Next: commit → merge `redesign` → `main` → Vercel site; then re-create the four
   dev-only articles + images on the production database branch (`--production` flag).
+- **18 Sep — loading + tags:** `components/BookLoader.tsx` (CSS 3-D open book lying flat, leaf
+  turning over the spine; keyframes "BOOK LOADER" in globals.css; reduced-motion respected) shown by
+  `components/NavigationLoader.tsx` (site-wide overlay on any internal link click, capture-phase
+  listener, pending = target ≠ current URL, **800 ms delay** so only slow navigations show it,
+  8 s safety). No `loading.tsx` skeletons — owner prefers the current page blurred (18 Sep). /pulse rows +
+  homepage band: category and agency as bordered TAGS with agency favicons
+  (`public/images/sources/`, `SOURCE_ICONS` in lib/pulse.ts). **Gotcha:** Turbopack keeps serving
+  stale CSS even after a restart — `rm -rf .next && npm run dev` when a CSS change won't appear.
 - **ALL SIX PHASES BUILT.** Owner to review everything locally, then merge `redesign` → `main`
   (see GIT_NOTES "Using a branch for real"). No schema changes anywhere in the redesign, so no
   prod-schema-first step is needed before deploying.
