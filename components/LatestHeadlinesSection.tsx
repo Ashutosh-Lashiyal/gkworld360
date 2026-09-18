@@ -12,7 +12,7 @@
 // decides that separately); a Read Later button ends each row.
 
 import Link from "next/link";
-import { getLatestHeadlines } from "@/lib/pulse";
+import { getLatestHeadlines, SOURCE_ICONS } from "@/lib/pulse";
 import ReadLaterButton from "@/components/ReadLaterButton";
 
 export default async function LatestHeadlinesSection() {
@@ -65,8 +65,21 @@ export default async function LatestHeadlinesSection() {
                 className="flex flex-col gap-1 text-on-dark hover:text-mint transition-colors"
               >
                 <span className="font-heading text-lg font-semibold leading-[1.35]">{h.title}</span>
-                <span className="font-body text-[13px] text-on-dark/60">
-                  {h.source} · {h.timeAgo}
+                {/* Source as a tag + time, like the /pulse rows (18 Sep) */}
+                <span className="flex flex-wrap items-center gap-1.5 mt-0.5 font-body text-[11px] text-on-dark/60">
+                  {h.category && (
+                    <span className="inline-flex items-center px-2 py-0.5 border border-mint/40 text-mint font-semibold uppercase tracking-[0.12em]">
+                      {h.category}
+                    </span>
+                  )}
+                  <span className="inline-flex items-center gap-1.5 pl-1.5 pr-2 py-0.5 border border-on-dark/25 text-on-dark/80 font-medium">
+                    {SOURCE_ICONS[h.source] && (
+                      /* eslint-disable-next-line @next/next/no-img-element -- tiny local favicon */
+                      <img src={SOURCE_ICONS[h.source]} alt="" width={14} height={14} className="w-3.5 h-3.5" />
+                    )}
+                    {h.source}
+                  </span>
+                  <span className="ml-0.5">{h.timeAgo}</span>
                 </span>
               </a>
               <ReadLaterButton headline={h} variant="row" />

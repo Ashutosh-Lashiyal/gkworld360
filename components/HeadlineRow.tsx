@@ -12,7 +12,7 @@
 
 import HeadlineThumb from "@/components/HeadlineThumb";
 import ReadLaterButton from "@/components/ReadLaterButton";
-import type { Headline } from "@/lib/pulse";
+import { SOURCE_ICONS, type Headline } from "@/lib/pulse";
 
 // The category colours borrow subject signals: National = rust, International
 // = navy, Sci-Tech = sky, Business = forest, Sports = red.
@@ -52,21 +52,27 @@ export default function HeadlineRow({ headline, index }: { headline: Headline; i
         <span className="font-heading text-[15px] md:text-[17px] font-semibold leading-[1.35] text-navy-dark line-clamp-3 md:line-clamp-2">
           {h.title}
         </span>
-        <span className="flex flex-wrap items-center gap-1.5 font-body text-[11px] md:text-xs text-muted">
+        {/* Category and source as TAGS — small bordered chips, clearly not part
+            of the headline (owner's friend, 18 Sep: plain text under the title
+            read as a continuation of it). Category in its colour, source neutral,
+            then the time as plain text. */}
+        <span className="flex flex-wrap items-center gap-1.5 mt-1 font-body text-[11px] text-muted">
           {h.category && (
-            <>
-              <span
-                className="font-semibold uppercase tracking-[0.14em]"
-                style={{ color: CATEGORY_COLOR[h.category] ?? "#4a6460" }}
-              >
-                {h.category}
-              </span>
-              <span aria-hidden="true">·</span>
-            </>
+            <span
+              className="inline-flex items-center px-2 py-0.5 border font-semibold uppercase tracking-[0.12em] bg-surface"
+              style={{ color: CATEGORY_COLOR[h.category] ?? "#4a6460", borderColor: CATEGORY_COLOR[h.category] ?? "#d9d6cf" }}
+            >
+              {h.category}
+            </span>
           )}
-          <span>{h.source}</span>
-          <span aria-hidden="true">·</span>
-          <span>{h.timeAgo}</span>
+          <span className="inline-flex items-center gap-1.5 pl-1.5 pr-2 py-0.5 border border-hairline bg-surface font-medium text-foreground/80">
+            {SOURCE_ICONS[h.source] && (
+              /* eslint-disable-next-line @next/next/no-img-element -- tiny local favicon, no optimisation needed */
+              <img src={SOURCE_ICONS[h.source]} alt="" width={14} height={14} className="w-3.5 h-3.5" />
+            )}
+            {h.source}
+          </span>
+          <span className="ml-0.5">{h.timeAgo}</span>
         </span>
       </a>
 
