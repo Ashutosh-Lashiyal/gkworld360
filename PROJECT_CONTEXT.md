@@ -14,7 +14,11 @@
 
 ---
 
-# 🟢 START HERE — status as of 16 Sep 2026
+# 🟢 START HERE — status as of 18 Sep 2026
+
+**Three environment names (owner's rule, 18 Sep):** **dev** = the laptop (`localhost:3000`, Neon
+`dev` branch) · **Vercel site** = `gkworld360.vercel.app` (Neon `production` branch, indexing OFF)
+· **live** = the purchased domain with indexing ON — not bought yet. Never call the Vercel site "live".
 
 **Incident RESOLVED. Content pipeline DESIGNED, draft mode BUILT. Redesign Phases 1–6 (ALL) BUILT
 on branch `redesign` (16 Sep) — check `git branch` and `git status` first.** Owner has chosen
@@ -320,6 +324,27 @@ version rows + sets published), then restoring `.env.local` to dev. Verified liv
   line removed; `ReadingProgress` sits under the header (measured), 6px. Hindi for "The Revolt
   of 1857" added as a draft on #1 via new `add-hindi` ingest action (`drafts/revolt-of-1857.hi.json`).
   Site now: dark header · light page · dark footer everywhere; only the homepage keeps a hero.
+- **17 Sep — Gyaani reads the CMS:** `app/api/gyaani/route.ts` knowledge = MDX + published CMS
+  articles/news (`getCMSKnowledge()` + `lexicalToStructuredText()` in `lib/cms.ts`), cached 1 h
+  (`unstable_cache`); source-card lookup over `getAllTopics()` + news. Verified: Dutch question →
+  correct answer + card. **Known limit:** the whole site is sent to Gemini per question — fine
+  for dozens of articles; at hundreds, switch to "search first, send top matches" (we have
+  `rankResults`). Also: `add-images` ingest action (`scripts/add-images.mjs` + placement JSON →
+  Media/R2 upload + `topicImage` blocks in both locales + cover); images added to English (#6)
+  and Dutch (#5) as drafts; Modern India category card image (`public/images/categories/`).
+  Hindi UI labels on article pages (takeaways heading "लेख से प्राप्त मुख्य बिंदु", विषय-सूची, ऊपर जाएँ,
+  मिनट का पाठ, प्रकाशित). Subject/category names still English on Hindi pages (no Hindi names in CMS).
+- **Gyaani guardrails (17 Sep):** `lib/gyaani-guard.ts` + route. Scope = the site's subjects
+  (from `lib/subjects.ts`) + the site itself; outside → fixed redirect line; never advice/politics/
+  instructions. Owner's rule: in-scope questions are answered even if not on the site (marked
+  "isn't covered on GKWorld360 yet"). Server limits: 5/min, 10/day per IP, 300 chars, last 6
+  turns, monthly ceiling (`GYAANI_MONTHLY_CAP`, 3000); `GYAANI_MODE` subjects|site-only|off.
+  In-memory counters (leaky across cold starts). Tested: off-topic EN/HI → redirect; in-scope
+  off-site → general knowledge with marker; on-site → answer + card; 6th quick call → 429.
+- **18 Sep:** `sitemap.ts` + `llms.txt` now include CMS articles (EN+HI URLs) and news, hourly —
+  the last MDX-only readers are gone. Gyaani daily limit fixed to reset at midnight IST (was a
+  rolling 24 h). Next: commit → merge `redesign` → `main` → Vercel site; then re-create the four
+  dev-only articles + images on the production database branch (`--production` flag).
 - **ALL SIX PHASES BUILT.** Owner to review everything locally, then merge `redesign` → `main`
   (see GIT_NOTES "Using a branch for real"). No schema changes anywhere in the redesign, so no
   prod-schema-first step is needed before deploying.

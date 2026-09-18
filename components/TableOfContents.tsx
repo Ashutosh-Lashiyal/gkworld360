@@ -8,9 +8,10 @@ import type { TocHeading } from "@/lib/content";
 
 type TableOfContentsProps = {
   headings: TocHeading[]; // the h2/h3 headings extracted from the article
+  lang?: "en" | "hi";     // labels ("Contents", "Back to top") follow the page's language
 };
 
-export default function TableOfContents({ headings }: TableOfContentsProps) {
+export default function TableOfContents({ headings, lang = "en" }: TableOfContentsProps) {
   // Tracks which heading is currently in view, so we can highlight it
   const [activeId, setActiveId] = useState<string>("");
 
@@ -53,8 +54,8 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
     // screen turns emerald and its rule lights up. There when you look for it,
     // invisible while you read.
     <nav aria-label="Table of contents" className="flex flex-col gap-2.5">
-      <h2 className="font-body text-[11px] font-semibold text-muted/70 uppercase tracking-[0.14em] m-0">
-        Contents
+      <h2 className={`text-[11px] font-semibold text-muted/70 m-0 ${lang === "hi" ? "font-hindi text-[13px]" : "font-body uppercase tracking-[0.14em]"}`} lang={lang}>
+        {lang === "hi" ? "विषय-सूची" : "Contents"}
       </h2>
       <ul className="flex flex-col m-0 p-0 list-none border-l-2 border-border-subtle">
         {headings.map((heading) => {
@@ -64,7 +65,8 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
               <a
                 href={`#${heading.id}`}
                 className={[
-                  "block py-1.5 -ml-0.5 border-l-2 font-body text-[13px] leading-snug transition-colors",
+                  "block py-1.5 -ml-0.5 border-l-2 text-[13px] leading-snug transition-colors",
+                  lang === "hi" ? "font-hindi" : "font-body",
                   heading.depth === 3 ? "pl-6" : "pl-3",
                   active
                     ? "border-sapphire text-sapphire font-semibold"
@@ -78,7 +80,9 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
           );
         })}
       </ul>
-      <a href="#top" className="mt-1 font-body text-xs text-muted/70 hover:text-navy-dark transition-colors">↑ Back to top</a>
+      <a href="#top" lang={lang} className={`mt-1 text-xs text-muted/70 hover:text-navy-dark transition-colors ${lang === "hi" ? "font-hindi" : "font-body"}`}>
+        {lang === "hi" ? "↑ ऊपर जाएँ" : "↑ Back to top"}
+      </a>
     </nav>
   );
 }

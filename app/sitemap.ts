@@ -12,8 +12,13 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
 import { getAllSlugs, slugToFilePath, getContentMeta } from "@/lib/content";
+import { getCMSSearchEntries } from "@/lib/cms";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+// Rebuilt at most once an hour, so an article published in /admin appears in
+// the sitemap without a redeploy (18 Sep 2026 — it used to list MDX files only).
+export const revalidate = 3600;
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
   // ── Fixed pages ─────────────────────────────────────────────────────────────
@@ -45,5 +50,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
     return { url, lastModified, changeFrequency: "weekly" as const, priority };
   });
 
-  return [...staticPages, ...contentPages];
+  // CMS articles and news — one entry per language (English and Hindi URLs are
+  // separate pages, each indexable), deduplicated against any MDX twin.
+  const seen = new Set(contentPages.map((p) => p.url));
+  const cmsPages: MetadataRoute.Sitemap = [];
+  for (const e of await getCMSSearchEntries()) {
+    const url = `${SITE_URL}${e.url}`;
+    if (seen.has(url)) continue;
+    seen.add(url);
+    cmsPages.push({ url, lastModified: now, changeFrequency: "weekly", priority: 0.8 });
+  }
+
+  return [...staticPages, ...contentPages, ...cmsPages];
 }

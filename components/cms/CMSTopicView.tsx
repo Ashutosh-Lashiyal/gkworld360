@@ -44,7 +44,9 @@ export default function CMSTopicView({
 }) {
   const subjectLabel = article.subject?.name ?? "";
   const categoryLabel = article.category?.name ?? "";
-  const readingTime = estimateReadingTime(article.body);
+  // "2 min read" → "2 मिनट का पाठ" on the Hindi page
+  const readingTimeEn = estimateReadingTime(article.body);
+  const readingTime = lang === "hi" ? readingTimeEn.replace(/(\d+) min read/, "$1 मिनट का पाठ") : readingTimeEn;
   // Show the published date if set, otherwise the last-updated date.
   const dateStr = article.publishedDate ?? article.updatedAt ?? null;
   // Key Takeaways come out of the body and go to the top.
@@ -61,7 +63,7 @@ export default function CMSTopicView({
           label={[subjectLabel, categoryLabel].filter(Boolean).join(" · ")}
           title={article.title}
           summary={article.description ?? undefined}
-          metaItems={[readingTime, ...(dateStr ? [`Published ${formatNewsDate(dateStr)}`] : [])]}
+          metaItems={[readingTime, ...(dateStr ? [`${lang === "hi" ? "प्रकाशित" : "Published"} ${formatNewsDate(dateStr)}`] : [])]}
           coverUrl={article.coverImage?.url ?? undefined}
           coverAlt={article.coverImage?.alt ?? article.title}
           coverCaption={article.coverImage?.alt ?? undefined}
@@ -71,8 +73,8 @@ export default function CMSTopicView({
           colors={colors}
         />
       }
-      above={points.length > 0 ? <KeyTakeaways points={points} first /> : undefined}
-      rail={headings.length >= 2 ? <TableOfContents headings={headings} /> : undefined}
+      above={points.length > 0 ? <KeyTakeaways points={points} first lang={lang} /> : undefined}
+      rail={headings.length >= 2 ? <TableOfContents headings={headings} lang={lang} /> : undefined}
     >
       {/* The article body, rendered from the CMS. `prose` gives it the site's
           article typography. For Hindi, `lang="hi"` tells the browser the

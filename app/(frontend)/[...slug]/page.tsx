@@ -806,7 +806,7 @@ export default async function ContentPage({
         after={<TopicNav previous={previous} next={next} />}
         // MDX articles carry their Key Takeaways inside the text; the rail
         // still works from the headings. (Quick facts move into the column.)
-        rail={headings.length >= 2 ? <TableOfContents headings={headings} /> : undefined}
+        rail={headings.length >= 2 ? <TableOfContents headings={headings} lang={lang} /> : undefined}
         // Related topics run full-width under the column
         below={
           relatedTopics.length > 0 && (

@@ -14,8 +14,9 @@
 //
 // Body: { "action": "create-draft", "draft": {…} }  |  { "action": "delete", "id": 4 }
 //       | { "action": "add-hindi", "hindi": { slug, hi: { title, description, map } } }
+//       | { "action": "add-images", "images": { slug, cover?, images: [{ file, alt, caption, afterHeading }] } }
 
-import { createArticleDraft, deleteArticle, addHindiToArticle, type ArticleDraft, type HindiAddition } from "@/lib/ingest";
+import { createArticleDraft, deleteArticle, addHindiToArticle, addImagesToArticle, type ArticleDraft, type HindiAddition, type ImageAddition } from "@/lib/ingest";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +28,7 @@ export async function POST(req: Request) {
   }
 
   const host = dbHost();
-  let body: { action?: string; draft?: ArticleDraft; hindi?: HindiAddition; id?: number; production?: boolean };
+  let body: { action?: string; draft?: ArticleDraft; hindi?: HindiAddition; images?: ImageAddition; id?: number; production?: boolean };
   try {
     body = await req.json();
   } catch {
@@ -48,6 +49,10 @@ export async function POST(req: Request) {
     }
     if (body.action === "add-hindi" && body.hindi) {
       const result = await addHindiToArticle(body.hindi);
+      return Response.json({ ok: true, host, ...result });
+    }
+    if (body.action === "add-images" && body.images) {
+      const result = await addImagesToArticle(body.images);
       return Response.json({ ok: true, host, ...result });
     }
     if (body.action === "delete" && typeof body.id === "number") {

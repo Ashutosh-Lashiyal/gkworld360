@@ -1,0 +1,35 @@
+{
+  "slug": "the-english-in-india",
+  "cover": {
+    "file": "/private/tmp/claude-502/-Users-asherashutosh-Desktop-gkworld360/c40be1fe-8805-47fb-9627-0383ef54903d/scratchpad/images/english-surat-1613.jpg",
+    "alt": "Illustration of the English factory and harbour at Surat, 1613, with an inset of Sir Thomas Roe at the Mughal court",
+    "caption": {
+      "en": "The foothold: the English factory and harbour at Surat, 1613 — illustration",
+      "hi": "पहला पड़ाव: सूरत में अंग्रेज़ी कोठी और बंदरगाह, 1613 — चित्रण"
+    }
+  },
+  "images": [
+    {
+      "file": "/private/tmp/claude-502/-Users-asherashutosh-Desktop-gkworld360/c40be1fe-8805-47fb-9627-0383ef54903d/scratchpad/images/english-calcutta-fort-william-1700.jpg",
+      "alt": "Illustration of Fort William and the early city of Calcutta on the Hooghly, around 1700",
+      "caption": {
+        "en": "The rise of Calcutta: Fort William and the three villages joined into one city, c. 1700 — illustration",
+        "hi": "कलकत्ता का उदय: फ़ोर्ट विलियम और तीन गाँवों से बना एक नगर, लगभग 1700 — चित्रण"
+      },
+      "afterHeading": "A Century of Factories",
+      "size": "medium",
+      "align": "center"
+    },
+    {
+      "file": "/private/tmp/claude-502/-Users-asherashutosh-Desktop-gkworld360/c40be1fe-8805-47fb-9627-0383ef54903d/scratchpad/images/english-farman-1717.jpg",
+      "alt": "Illustration of an English envoy receiving the farman of 1717 from Emperor Farrukhsiyar",
+      "caption": {
+        "en": "The royal farman of 1717: Farrukhsiyar extends the Company's customs exemption to Gujarat and the Deccan — illustration",
+        "hi": "1717 का शाही फ़रमान: फ़र्रुख़सियर ने कंपनी की सीमा-शुल्क छूट गुजरात और दक्कन तक बढ़ाई — चित्रण"
+      },
+      "afterHeading": "The Farmans of 1691 and 1717",
+      "size": "medium",
+      "align": "center"
+    }
+  ]
+}

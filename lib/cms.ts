@@ -115,6 +115,87 @@ export function splitKeyTakeaways(body: unknown): { points: string[]; body: unkn
   };
 }
 
+// Flattens a Lexical body to readable text WITH structure — "## " headings,
+// one paragraph / list item / table cell per line, Key Takeaways as bullets.
+// (lexicalToPlainText above is the simpler word-soup used for reading time.) Used to hand the
+// site's articles to Gyaani (the chatbot) as his knowledge.
+export function lexicalToStructuredText(body: unknown): string {
+  const lines: string[] = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const walk = (node: any) => {
+    if (!node) return;
+    if (node.type === "block") {
+      const f = node.fields ?? {};
+      if (f.blockType === "keyTakeaways") {
+        lines.push("Key takeaways:");
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        for (const p of f.points ?? []) lines.push(`- ${(p as any).text ?? ""}`);
+      }
+      return; // images etc. carry nothing for the chatbot
+    }
+    if (node.type === "heading" || node.type === "paragraph" || node.type === "listitem" || node.type === "tablecell") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const text = (node.children ?? []).map((c: any) => (c?.type === "text" ? c.text ?? "" : "")).join("").trim();
+      if (text) lines.push(node.type === "heading" ? `\n## ${text}` : text);
+      // list items / cells can hold nested paragraphs
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      for (const c of node.children ?? []) if (c?.type !== "text") walk(c);
+      return;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for (const c of node.children ?? []) walk(c);
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  walk((body as any)?.root);
+  return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+// Every PUBLISHED article and news item as { title, url, description, text } —
+// Gyaani's knowledge (added 17 Sep 2026: he only knew MDX files, so once real
+// writing moved to the CMS he knew nothing). English only: he answers in the
+// reader's language himself. Two queries; the caller caches the result.
+export type CMSKnowledgeEntry = { title: string; url: string; description: string; text: string };
+
+export async function getCMSKnowledge(): Promise<CMSKnowledgeEntry[]> {
+  try {
+    const payload = await getClient();
+    const out: CMSKnowledgeEntry[] = [];
+
+    const articles = await payload.find({
+      collection: "articles",
+      where: { _status: { equals: "published" } },
+      locale: "en",
+      depth: 1,
+      limit: 1000,
+      select: { slug: true, title: true, description: true, body: true, subject: true, category: true },
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for (const d of articles.docs as any[]) {
+      const subject = d.subject?.slug;
+      if (!subject) continue;
+      const path = [subject, d.category?.slug, d.slug].filter(Boolean).join("/");
+      out.push({ title: d.title ?? "", url: `/${path}`, description: d.description ?? "", text: lexicalToStructuredText(d.body) });
+    }
+
+    const news = await payload.find({
+      collection: "news",
+      where: { _status: { equals: "published" } },
+      locale: "en",
+      depth: 0,
+      limit: 1000,
+      select: { slug: true, title: true, description: true, body: true },
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for (const d of news.docs as any[]) {
+      out.push({ title: d.title ?? "", url: `/news/${d.slug}`, description: d.description ?? "", text: lexicalToStructuredText(d.body) });
+    }
+    return out;
+  } catch (error) {
+    cmsUnavailable("getCMSKnowledge", "articles+news", error);
+    return [];
+  }
+}
+
 export function extractHeadingsFromLexical(body: unknown): TocHeading[] {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const root = (body as any)?.root;

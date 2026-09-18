@@ -16,7 +16,8 @@ type KeyTakeawaysProps = {
   points: string[]; // the list of key takeaway sentences
 };
 
-export default function KeyTakeaways({ points, first = false }: KeyTakeawaysProps & { first?: boolean }) {
+// lang: "hi" gives the Hindi heading "लेख से प्राप्त मुख्य बिंदु" (owner's wording, 17 Sep).
+export default function KeyTakeaways({ points, first = false, lang = "en" }: KeyTakeawaysProps & { first?: boolean; lang?: "en" | "hi" }) {
   if (!points || points.length === 0) return null;
 
   return (
@@ -34,7 +35,13 @@ export default function KeyTakeaways({ points, first = false }: KeyTakeawaysProp
           className="font-body text-[11px] font-semibold uppercase tracking-[0.14em]"
           style={{ color: "var(--signal, #059669)" }}
         >
-          Key Takeaways{first ? " · read these first" : ""}
+          {lang === "hi" ? (
+            <span lang="hi" className="font-hindi normal-case tracking-normal text-[13px]">
+              लेख से प्राप्त मुख्य बिंदु{first ? " · पहले इन्हें पढ़ें" : ""}
+            </span>
+          ) : (
+            <>Key Takeaways{first ? " · read these first" : ""}</>
+          )}
         </p>
 
         {/* Bulleted list of takeaways — 16px sans so it reads as a summary,

@@ -1,0 +1,35 @@
+{
+  "slug": "the-dutch-in-india",
+  "cover": {
+    "file": "/private/tmp/claude-502/-Users-asherashutosh-Desktop-gkworld360/c40be1fe-8805-47fb-9627-0383ef54903d/scratchpad/images/dutch-first-voyage-voc-1595-1602.jpg",
+    "alt": "Illustration of the first Dutch fleet reaching the Malabar coast in 1595 and the merchants who formed the Dutch East India Company in 1602",
+    "caption": {
+      "en": "The first Dutch voyage to India (1595) and the formation of the Dutch East India Company (1602) — illustration",
+      "hi": "भारत की पहली डच यात्रा (1595) और डच ईस्ट इंडिया कंपनी का गठन (1602) — चित्रण"
+    }
+  },
+  "images": [
+    {
+      "file": "/private/tmp/claude-502/-Users-asherashutosh-Desktop-gkworld360/c40be1fe-8805-47fb-9627-0383ef54903d/scratchpad/images/dutch-factories-1605-1658.jpg",
+      "alt": "Illustration of the Dutch factories at Masulipatnam and Pulicat, with insets for Surat, Karaikal, Chinsura and the Bengal delta",
+      "caption": {
+        "en": "Expansion: Dutch factories from Masulipatnam (1605) and Pulicat (1610) to the Bengal delta (1658) — illustration",
+        "hi": "विस्तार: मसूलीपट्टनम (1605) और पुलिकट (1610) से बंगाल के डेल्टा (1658) तक डच कोठियाँ — चित्रण"
+      },
+      "afterHeading": "A Chain of Factories on Both Coasts",
+      "size": "medium",
+      "align": "center"
+    },
+    {
+      "file": "/private/tmp/claude-502/-Users-asherashutosh-Desktop-gkworld360/c40be1fe-8805-47fb-9627-0383ef54903d/scratchpad/images/dutch-bengal-bedara-1759.jpg",
+      "alt": "Illustration of the Dutch settlement at Chinsura on the Hooghly and the defeat of the Dutch at the Battle of Bedara, 1759",
+      "caption": {
+        "en": "The Dutch advance into Bengal — Chinsura (1653), Kasimbazar, Patna and Balasore (1658) — and the end at Bedara, 1759 — illustration",
+        "hi": "बंगाल में डच विस्तार — चिनसुरा (1653), कासिमबाज़ार, पटना और बालासोर (1658) — और 1759 में बेदरा में अंत — चित्रण"
+      },
+      "afterHeading": "Rivalry with the English and the End at Bedara",
+      "size": "medium",
+      "align": "center"
+    }
+  ]
+}

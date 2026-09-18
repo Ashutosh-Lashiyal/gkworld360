@@ -91,8 +91,8 @@ export default function NewsArticleView({
             colors={colors}
           />
         }
-        above={takeaways && takeaways.length > 0 ? <KeyTakeaways points={takeaways} first /> : undefined}
-        rail={showSidebar ? <TableOfContents headings={headings} /> : undefined}
+        above={takeaways && takeaways.length > 0 ? <KeyTakeaways points={takeaways} first lang={lang} /> : undefined}
+        rail={showSidebar ? <TableOfContents headings={headings} lang={lang} /> : undefined}
         below={
           recent.length > 0 && (
             <section className="mt-16">

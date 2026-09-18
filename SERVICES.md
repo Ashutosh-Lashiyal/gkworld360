@@ -253,3 +253,19 @@ Generate a fresh random secret with:
 ```bash
 node -e "console.log(require('crypto').randomBytes(24).toString('base64url'))"
 ```
+
+
+## Gyaani chatbot — guardrails (17 Sep 2026)
+
+Server-side rules in `lib/gyaani-guard.ts` (the browser counter alone was bypassable):
+
+| Env var (Vercel) | Values | Default |
+|---|---|---|
+| `GYAANI_MODE` | `subjects` (answer within the site's subjects, site content first, general knowledge second) · `site-only` (only the site's articles) · `off` (polite "resting" message) | `subjects` |
+| `GYAANI_MONTHLY_CAP` | total questions per month before he rests until the 1st | `3000` |
+
+Fixed limits: 5 questions/minute and 10/day per visitor (by IP), 300 characters per
+question, last 6 messages sent to Gemini. Counters are in-memory (reset when Vercel starts a
+fresh function) — good enough against scripts, not a hard guarantee; move to Upstash Redis if
+traffic grows. **Also set a budget alert in the Google AI Studio / Cloud console for the
+Gemini key** — that is the true backstop.

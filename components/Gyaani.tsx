@@ -287,20 +287,22 @@ export default function Gyaani() {
                   {msg.sourceArticle && (
                     <Link
                       href={msg.sourceArticle.href}
-                      className="block mt-1.5 border border-sapphire/30 rounded-card p-3 bg-surface hover:border-sapphire hover:bg-surface-low transition-all duration-200 group"
+                      // Hover = the site's mint, like every button and card (owner, 17 Sep):
+                      // border and fill turn mint, text stays dark.
+                      className="block mt-1.5 border border-hairline rounded-card p-3 bg-surface hover:border-mint hover:bg-mint transition-all duration-200 group"
                     >
-                      <p className="font-body text-xs font-semibold text-sapphire uppercase tracking-wider mb-1">
+                      <p className="font-body text-[11px] font-semibold text-sapphire group-hover:text-navy-dark uppercase tracking-[0.14em] mb-1 transition-colors">
                         📖 Read on GKWorld360
                       </p>
-                      <p className="font-heading text-sm font-semibold text-navy group-hover:text-sapphire transition-colors leading-snug">
+                      <p className="font-heading text-sm font-semibold text-navy-dark leading-snug">
                         {msg.sourceArticle.title}
                       </p>
                       {msg.sourceArticle.description && (
-                        <p className="font-body text-xs text-muted mt-1 leading-relaxed line-clamp-2">
+                        <p className="font-body text-xs text-muted group-hover:text-navy-dark/70 mt-1 leading-relaxed line-clamp-2 transition-colors">
                           {msg.sourceArticle.description}
                         </p>
                       )}
-                      <p className="font-body text-xs font-semibold text-sapphire mt-2">
+                      <p className="font-body text-xs font-semibold text-sapphire group-hover:text-navy-dark mt-2 transition-colors">
                         Read full article →
                       </p>
                     </Link>

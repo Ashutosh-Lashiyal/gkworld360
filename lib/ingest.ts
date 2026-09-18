@@ -16,6 +16,8 @@
 //   hi: { …same shape… }
 // }
 
+import { readFileSync } from "node:fs";
+import { basename } from "node:path";
 import { getPayload } from "payload";
 import configPromise from "@payload-config";
 
@@ -208,4 +210,106 @@ export async function addHindiToArticle(input: HindiAddition): Promise<{ id: num
     data: { title: input.hi.title, ...(input.hi.description ? { description: input.hi.description } : {}), body, _status: "draft" },
   });
   return { id: doc.id, missing };
+}
+
+// ── Adding images to an EXISTING article ─────────────────────────────────────
+// Uploads image files into the Media collection (which sends them to R2 and
+// converts them to WebP) and places them in the article: one as the cover, the
+// rest as `topicImage` blocks right after the heading you name. Both locales
+// get the same image blocks — pictures are language-neutral — with the caption
+// in each language. Saved as a draft.
+//
+// Image policy (pipeline doc §6): everything is an illustration; people are
+// sketches. The files come from the owner (or later, from the image step).
+
+export type ImagePlacement = {
+  file: string;                 // absolute path on this machine
+  alt: string;                  // English alt text (required by the Media collection)
+  caption?: { en: string; hi?: string };
+  afterHeading?: string;        // English H2 text to insert after; omit = after the intro
+  size?: "small" | "medium" | "full";
+  align?: "center" | "left" | "right" | "wrap-left" | "wrap-right";
+};
+
+export type ImageAddition = {
+  slug: string;
+  cover?: { file: string; alt: string; caption?: { en: string; hi?: string } };
+  images?: ImagePlacement[];
+};
+
+const imageBlock = (mediaId: number | string, p: ImagePlacement, caption: string) => ({
+  type: "block",
+  format: "",
+  version: 2,
+  fields: { blockType: "topicImage", image: mediaId, caption, size: p.size ?? "medium", align: p.align ?? "center" },
+});
+
+// Inserts `block` into a body copy after the H2 whose text is `afterHeading`
+// (or after the first paragraph when no heading is given). Headings are
+// matched in ENGLISH, so for the Hindi body we pass the index found in English.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function insertIndexAfter(body: any, afterHeading?: string): number {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const children: any[] = body?.root?.children ?? [];
+  if (!afterHeading) {
+    const firstP = children.findIndex((n) => n?.type === "paragraph");
+    return firstP < 0 ? 0 : firstP + 1;
+  }
+  const h = children.findIndex((n) => n?.type === "heading" && textOf(n).trim() === afterHeading.trim());
+  if (h < 0) throw new Error(`Heading not found in the English body: "${afterHeading}"`);
+  // after the heading AND its first paragraph, so the picture follows the words
+  const next = children[h + 1];
+  return next?.type === "paragraph" ? h + 2 : h + 1;
+}
+
+export async function addImagesToArticle(input: ImageAddition): Promise<{ id: number | string; uploaded: number }> {
+  const payload = await getPayload({ config: configPromise });
+  const find = async (locale: "en" | "hi") =>
+    (await payload.find({ collection: "articles", where: { slug: { equals: input.slug } }, limit: 1, locale, depth: 0, draft: true })).docs[0];
+  const en = await find("en");
+  if (!en) throw new Error(`No article with slug "${input.slug}".`);
+  const hi = await find("hi");
+
+  const upload = async (file: string, alt: string) => {
+    const data = readFileSync(file);
+    const media = await payload.create({
+      collection: "media",
+      data: { alt },
+      file: { data, name: basename(file), mimetype: file.toLowerCase().endsWith(".png") ? "image/png" : "image/jpeg", size: data.length },
+    });
+    return media.id;
+  };
+
+  let uploaded = 0;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const enBody = structuredClone((en as any).body);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const hiBody = hi ? structuredClone((hi as any).body) : null;
+
+  for (const p of input.images ?? []) {
+    const mediaId = await upload(p.file, p.alt);
+    uploaded += 1;
+    // Same position in both bodies — they share the structure by design.
+    const at = insertIndexAfter(enBody, p.afterHeading);
+    enBody.root.children.splice(at, 0, imageBlock(mediaId, p, p.caption?.en ?? ""));
+    if (hiBody) hiBody.root.children.splice(at, 0, imageBlock(mediaId, p, p.caption?.hi ?? p.caption?.en ?? ""));
+  }
+
+  let coverId: number | string | undefined;
+  if (input.cover) {
+    coverId = await upload(input.cover.file, input.cover.alt);
+    uploaded += 1;
+  }
+
+  await payload.update({
+    collection: "articles", id: en.id, locale: "en", draft: true,
+    data: { body: enBody, ...(coverId !== undefined ? { coverImage: coverId } : {}), ...(input.cover?.caption?.en ? { coverImageCaption: input.cover.caption.en } : {}), _status: "draft" },
+  });
+  if (hiBody) {
+    await payload.update({
+      collection: "articles", id: en.id, locale: "hi", draft: true,
+      data: { body: hiBody, ...(input.cover?.caption?.hi ? { coverImageCaption: input.cover.caption.hi } : {}), _status: "draft" },
+    });
+  }
+  return { id: en.id, uploaded };
 }
