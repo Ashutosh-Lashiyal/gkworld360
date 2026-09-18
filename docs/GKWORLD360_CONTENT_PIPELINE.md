@@ -237,6 +237,25 @@ when the 18 subjects are seeded.
 Still in the CMS from the June/July tests: article #1 "Revolt of 1857" (English only) and
 news #1 "Smart Border Project". Whether those two also go is the owner's call — see chat.
 
+## 9c. Where content is created (decided 18 Sep 2026)
+
+**Content is created on the Vercel site's database (the Neon `production` branch), as drafts.**
+Drafts are invisible to readers, so there is no risk; the owner reviews in `/admin` on the
+Vercel site and presses Publish. The dev branch is for CODE work only — refresh it from
+production in Neon ("Reset from parent") whenever a code change needs current data.
+
+How, without editing `.env.local`: `npm run dev:prod` starts a SECOND local server on
+**port 3001** pointed at production (`DATABASE_URL_PRODUCTION` in `.env.local`, own build folder
+`.next-prod/`). It prints the host on start. Every ingest script takes `--production` → talks to
+3001; without it → 3000 (dev). The route refuses production writes without the flag.
+
+Tools (all `node scripts/…`): `create-article-draft.mjs <draft.json>` · `add-images.mjs
+<images.json>` · `add-hindi.mjs <hi.json>` · `export-article.mjs <slug>` → `import-article.mjs
+<export.json>` (whole article, images dropped) · `delete-article.mjs <id>`.
+
+First run, 18 Sep: Portuguese (import), Dutch + English (drafts + images), Revolt Hindi — all
+now drafts on the Vercel site, awaiting the owner's Publish.
+
 ## 10. Decisions log
 
 | Date | Decision | Reason |

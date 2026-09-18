@@ -9,7 +9,8 @@
     "lint": "eslint",
     "payload": "payload",
     "generate:types": "payload generate:types",
-    "generate:importmap": "payload generate:importmap"
+    "generate:importmap": "payload generate:importmap",
+    "dev:prod": "node scripts/dev-prod.mjs"
   },
   "dependencies": {
     "@mdx-js/loader": "^3.1.1",

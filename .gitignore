@@ -44,3 +44,6 @@ next-env.d.ts
 public/images/ChatGPT Image*
 public/images/Gemini_Generated_Image_*
 public/images/Screenshot *
+
+# build folder of the production console (npm run dev:prod)
+.next-prod/

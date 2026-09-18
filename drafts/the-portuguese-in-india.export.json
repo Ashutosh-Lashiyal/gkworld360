@@ -1,0 +1,468 @@
+{
+  "slug": "the-portuguese-in-india",
+  "subject": "history",
+  "category": "modern-india",
+  "order": 0,
+  "locales": {
+    "en": {
+      "title": "The Portuguese in India",
+      "description": "How Portuguese sailors opened the first sea-route from Europe to India in 1498 and turned trade into political power along the western coast.",
+      "body": {
+        "root": {
+          "type": "root",
+          "format": "",
+          "indent": 0,
+          "version": 1,
+          "children": [
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "The story of Modern India's contact with Europe begins at sea. In 1498, Portuguese traders became the first Europeans to discover a sea-route to India — a route free from the Turkish threat that had made older paths dangerous. Their arrival opened the door for others: the Dutch followed in 1595, the English in 1600, and finally the French in 1664, all drawn to India by the promise of trade.",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null
+            },
+            {
+              "tag": "h2",
+              "type": "heading",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "The Search for a Sea-Route",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null
+            },
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "Before 1498, European traders had no direct sea passage to India. The routes they relied on were exposed to Turkish threat, which made trade risky and uncertain. Finding a way around that danger was the prize that drove Portuguese exploration.",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null
+            },
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "The Portuguese were the first to succeed. Their achievement in 1498 set the pattern of European involvement in India for centuries: once one nation had shown the way by sea, others followed — the Dutch in 1595, the English in 1600, and the French in 1664.",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null
+            },
+            {
+              "tag": "h2",
+              "type": "heading",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "Vasco da Gama Reaches Calicut",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null
+            },
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "The sailor who discovered the sea-route was Vasco da Gama. He sailed via the Cape of Good Hope, at the southern tip of Africa, and arrived at Calicut on India's south-western coast on 27 May 1498.",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null
+            },
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "This was the moment Europe and India were linked directly by sea for the first time. It is one of the key dates of Modern Indian history and appears regularly in competitive examinations.",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null
+            },
+            {
+              "tag": "h2",
+              "type": "heading",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "From Trade to Political Power",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null
+            },
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "The Portuguese did not remain mere traders for long. They soon established political power along the west coast of India, turning a commercial presence into territorial control.",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null
+            },
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "Vasco da Gama was succeeded by Captain General Alfonso de Albuquerque, who conquered Goa in 1510. With Goa, the Portuguese held a firm base on India's western coast.",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null
+            },
+            {
+              "type": "block",
+              "fields": {
+                "id": "cf9588fbca81f435510ece33",
+                "points": [
+                  {
+                    "id": "f12c14681e5aea77811e558c",
+                    "text": "The Portuguese were the first Europeans to discover a sea-route to India, in 1498."
+                  },
+                  {
+                    "id": "86a3b46d2e650d7bdd61f16e",
+                    "text": "Vasco da Gama reached Calicut on 27 May 1498, sailing via the Cape of Good Hope."
+                  },
+                  {
+                    "id": "8fed16023b593be82c812a3f",
+                    "text": "The Dutch (1595), the English (1600) and the French (1664) followed the Portuguese to India for trade."
+                  },
+                  {
+                    "id": "3da668ab66cbef3b9f5716f0",
+                    "text": "The Portuguese established political power along India's west coast."
+                  },
+                  {
+                    "id": "d94d7f80a51983d2e16e1f7e",
+                    "text": "Captain General Alfonso de Albuquerque succeeded Vasco da Gama and conquered Goa in 1510."
+                  }
+                ],
+                "blockName": "",
+                "blockType": "keyTakeaways"
+              },
+              "format": "",
+              "version": 2
+            }
+          ],
+          "direction": null
+        }
+      }
+    },
+    "hi": {
+      "title": "भारत में पुर्तगाली",
+      "description": "कैसे पुर्तगाली नाविकों ने 1498 में यूरोप से भारत तक का पहला समुद्री मार्ग खोजा और पश्चिमी तट पर व्यापार को राजनीतिक शक्ति में बदल दिया।",
+      "body": {
+        "root": {
+          "type": "root",
+          "format": "",
+          "indent": 0,
+          "version": 1,
+          "children": [
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "आधुनिक भारत के यूरोप से संपर्क की कहानी समुद्र से शुरू होती है। 1498 में पुर्तगाली व्यापारी भारत तक समुद्री मार्ग खोजने वाले पहले यूरोपीय बने — एक ऐसा मार्ग जो उस तुर्की खतरे से मुक्त था जिसने पुराने रास्तों को जोखिम भरा बना दिया था। उनके आगमन ने दूसरों के लिए द्वार खोल दिया: 1595 में डच, 1600 में अंग्रेज़ और अंततः 1664 में फ्रांसीसी, सभी व्यापार की आशा में भारत आए।",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null
+            },
+            {
+              "tag": "h2",
+              "type": "heading",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "समुद्री मार्ग की खोज",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null
+            },
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "1498 से पहले यूरोपीय व्यापारियों के पास भारत तक कोई सीधा समुद्री रास्ता नहीं था। जिन मार्गों पर वे निर्भर थे, वे तुर्की खतरे से ग्रस्त थे, जिससे व्यापार जोखिम भरा और अनिश्चित हो गया था। इस खतरे से बचने का रास्ता खोजना ही पुर्तगाली अन्वेषण की प्रेरणा थी।",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null
+            },
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "पुर्तगाली इसमें सबसे पहले सफल हुए। 1498 की उनकी इस उपलब्धि ने सदियों तक भारत में यूरोपीय उपस्थिति की दिशा तय कर दी: जब एक देश ने समुद्री रास्ता दिखा दिया, तो अन्य उसके पीछे आए — 1595 में डच, 1600 में अंग्रेज़ और 1664 में फ्रांसीसी।",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null
+            },
+            {
+              "tag": "h2",
+              "type": "heading",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "वास्को-डि-गामा का कालीकट पहुँचना",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null
+            },
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "समुद्री मार्ग की खोज करने वाला नाविक था वास्को-डि-गामा। वह अफ्रीका के दक्षिणी छोर पर स्थित केप ऑफ गुड होप से होकर आया और 27 मई 1498 को भारत के दक्षिण-पश्चिमी तट पर स्थित कालीकट पहुँचा।",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null
+            },
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "यह वह क्षण था जब यूरोप और भारत पहली बार समुद्र के रास्ते सीधे जुड़े। यह आधुनिक भारतीय इतिहास की प्रमुख तिथियों में से एक है और प्रतियोगी परीक्षाओं में नियमित रूप से पूछी जाती है।",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null
+            },
+            {
+              "tag": "h2",
+              "type": "heading",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "व्यापार से राजनीतिक शक्ति तक",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null
+            },
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "पुर्तगाली अधिक समय तक केवल व्यापारी नहीं रहे। उन्होंने शीघ्र ही भारत के पश्चिमी तट पर राजनीतिक शक्ति स्थापित कर ली और अपनी व्यापारिक उपस्थिति को क्षेत्रीय नियंत्रण में बदल दिया।",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null
+            },
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "वास्को-डि-गामा के उत्तराधिकारी बने कैप्टन जनरल अल्फांसो डि अल्बुकर्क, जिन्होंने 1510 में गोवा पर विजय प्राप्त की। गोवा के साथ पुर्तगालियों को भारत के पश्चिमी तट पर एक मज़बूत आधार मिल गया।",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null
+            },
+            {
+              "type": "block",
+              "fields": {
+                "id": "c423742ecfc8b5452857c5f4",
+                "points": [
+                  {
+                    "id": "77f56f8a4f7b6cb50194a7c2",
+                    "text": "पुर्तगाली 1498 में भारत तक समुद्री मार्ग खोजने वाले पहले यूरोपीय थे।"
+                  },
+                  {
+                    "id": "4afb425315735f3ed10999f7",
+                    "text": "वास्को-डि-गामा केप ऑफ गुड होप से होते हुए 27 मई 1498 को कालीकट पहुँचा।"
+                  },
+                  {
+                    "id": "e52064e67d99106895cc3746",
+                    "text": "डच (1595), अंग्रेज़ (1600) और फ्रांसीसी (1664) पुर्तगालियों के बाद व्यापार के लिए भारत आए।"
+                  },
+                  {
+                    "id": "68b9372019b7d530f378634a",
+                    "text": "पुर्तगालियों ने भारत के पश्चिमी तट पर राजनीतिक शक्ति स्थापित की।"
+                  },
+                  {
+                    "id": "98230f57ecfd46ab28e5c39f",
+                    "text": "कैप्टन जनरल अल्फांसो डि अल्बुकर्क ने वास्को-डि-गामा का स्थान लिया और 1510 में गोवा जीता।"
+                  }
+                ],
+                "blockName": "",
+                "blockType": "keyTakeaways"
+              },
+              "format": "",
+              "version": 2
+            }
+          ],
+          "direction": null
+        }
+      }
+    }
+  }
+}

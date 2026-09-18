@@ -353,6 +353,12 @@ version rows + sets published), then restoring `.env.local` to dev. Verified liv
   homepage band: category and agency as bordered TAGS with agency favicons
   (`public/images/sources/`, `SOURCE_ICONS` in lib/pulse.ts). **Gotcha:** Turbopack keeps serving
   stale CSS even after a restart — `rm -rf .next && npm run dev` when a CSS change won't appear.
+- **18 Sep — content now lives on the Vercel site (pipeline doc §9c):** `npm run dev:prod` =
+  production console on port 3001 (`scripts/dev-prod.mjs`, `DATABASE_URL_PRODUCTION`, `distDir`
+  via `NEXT_DIST_DIR`); ingest scripts `--production` → 3001. Export/import pair added. The four
+  articles (Portuguese #3, Dutch #4 + images, English #5 + images, Revolt #1 Hindi) are **drafts on
+  the Vercel site's database** — owner publishes each in `/admin` there. Dev keeps its copies;
+  refresh dev from production in Neon when code work needs current data.
 - **ALL SIX PHASES BUILT.** Owner to review everything locally, then merge `redesign` → `main`
   (see GIT_NOTES "Using a branch for real"). No schema changes anywhere in the redesign, so no
   prod-schema-first step is needed before deploying.

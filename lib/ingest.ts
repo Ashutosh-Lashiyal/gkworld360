@@ -313,3 +313,58 @@ export async function addImagesToArticle(input: ImageAddition): Promise<{ id: nu
   }
   return { id: en.id, uploaded };
 }
+
+// ── Importing a whole article (both locales) from an exported file ───────────
+// For articles that were written before the draft-file workflow existed (e.g.
+// "The Portuguese in India", hand-made 15 Sep). scripts/export-article.mjs
+// reads an article from one server into a file; scripts/import-article.mjs
+// sends that file here. Image blocks are NOT carried over (their media ids
+// belong to the other database) — add images afterwards with add-images.
+
+export type ArticleExport = {
+  slug: string;
+  subject: string;
+  category?: string | null;
+  order?: number;
+  locales: Record<"en" | "hi", { title: string; description?: string; body: unknown } | undefined>;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const withoutImageBlocks = (body: any) =>
+  body?.root
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ? { ...body, root: { ...body.root, children: body.root.children.filter((n: any) => !(n?.type === "block" && n?.fields?.blockType === "topicImage")) } }
+    : body;
+
+export async function importArticle(doc: ArticleExport): Promise<{ id: number | string }> {
+  const payload = await getPayload({ config: configPromise });
+  const subject = (await payload.find({ collection: "subjects", where: { slug: { equals: doc.subject } }, limit: 1 })).docs[0];
+  if (!subject) throw new Error(`Subject "${doc.subject}" not found in the CMS.`);
+  let categoryId: number | string | undefined;
+  if (doc.category) {
+    const category = (await payload.find({ collection: "categories", where: { slug: { equals: doc.category } }, limit: 1 })).docs[0];
+    if (!category) throw new Error(`Category "${doc.category}" not found in the CMS.`);
+    categoryId = category.id;
+  }
+  const existing = await payload.find({ collection: "articles", where: { slug: { equals: doc.slug } }, limit: 1, draft: true });
+  if (existing.docs[0]) throw new Error(`An article with slug "${doc.slug}" already exists (id ${existing.docs[0].id}).`);
+
+  const en = doc.locales.en;
+  if (!en) throw new Error("The export has no English locale.");
+  const created = await payload.create({
+    collection: "articles", locale: "en", draft: true,
+    data: {
+      title: en.title, slug: doc.slug, description: en.description ?? "", body: withoutImageBlocks(en.body),
+      subject: subject.id, ...(categoryId !== undefined ? { category: categoryId } : {}),
+      ...(doc.order !== undefined ? { order: doc.order } : {}), _status: "draft",
+    },
+  });
+  const hi = doc.locales.hi;
+  if (hi?.title) {
+    await payload.update({
+      collection: "articles", id: created.id, locale: "hi", draft: true,
+      data: { title: hi.title, description: hi.description ?? "", body: withoutImageBlocks(hi.body), _status: "draft" },
+    });
+  }
+  return { id: created.id };
+}

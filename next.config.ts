@@ -5,6 +5,12 @@ import createMDX from "@next/mdx";
 import { withPayload } from "@payloadcms/next/withPayload";
 
 const nextConfig: NextConfig = {
+  // Where Next writes its build output. Normally ".next". The production
+  // console (`npm run dev:prod`, scripts/dev-prod.mjs) sets NEXT_DIST_DIR to
+  // ".next-prod" so it can run at the same time as `npm run dev` — Next
+  // refuses two dev servers sharing one build folder. (18 Sep 2026)
+  distDir: process.env.NEXT_DIST_DIR || ".next",
+
   // Tell Next.js to treat .md and .mdx files as pages and importable modules.
   // Without this, Next.js would ignore MDX files entirely.
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
