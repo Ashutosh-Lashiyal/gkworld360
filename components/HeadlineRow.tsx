@@ -12,17 +12,9 @@
 
 import HeadlineThumb from "@/components/HeadlineThumb";
 import ReadLaterButton from "@/components/ReadLaterButton";
-import { SOURCE_ICONS, type Headline } from "@/lib/pulse";
+import type { Headline } from "@/lib/pulse";
+import { SOURCE_ICONS, CATEGORY_COLOR } from "@/lib/pulse-sources";
 
-// The category colours borrow subject signals: National = rust, International
-// = navy, Sci-Tech = sky, Business = forest, Sports = red.
-const CATEGORY_COLOR: Record<string, string> = {
-  National: "#7c2d12",
-  International: "#1e3a8a",
-  "Sci-Tech": "#0c4a6e",
-  Business: "#064e3b",
-  Sports: "#991b1b",
-};
 
 export default function HeadlineRow({ headline, index }: { headline: Headline; index: number }) {
   const h = headline;

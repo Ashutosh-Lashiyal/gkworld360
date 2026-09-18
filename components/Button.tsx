@@ -25,6 +25,7 @@
 //   ghost        — the same idea on a LIGHT surface: transparent, dark outline.
 //   disabled     — grey, no hover, no pointer. Renders as a <span>, not a
 //                  link, because there is nowhere to go.
+//   danger       — red, for destructive actions only (Clear all, Remove).
 //
 // HOW TO USE
 //   <Button href="/history">Explore →</Button>              → renders a <Link>
@@ -42,7 +43,7 @@ import Link from 'next/link';
 import type { ReactNode, MouseEventHandler } from 'react';
 
 export type ButtonVariant =
-  'primary' | 'onDark' | 'ghostOnDark' | 'ghost' | 'disabled';
+  'primary' | 'onDark' | 'ghostOnDark' | 'ghost' | 'disabled' | 'danger';
 
 // Everything every variant shares: shape, size, font, centring, and the
 // transition that makes hover feel smooth instead of snapping.
@@ -83,6 +84,14 @@ const VARIANTS: Record<ButtonVariant, string> = {
 
   disabled:
     'bg-surface-mid text-muted/70 border-surface-mid cursor-default select-none',
+
+  // The one destructive button (Clear all, Remove): same shape and lift as the
+  // primary, but RED, and it hovers to a darker red rather than mint — a
+  // destructive action should never look inviting. (18 Sep 2026)
+  danger:
+    'bg-[#b91c1c] text-on-dark border-[#b91c1c] ' +
+    'hover:bg-[#991b1b] hover:border-[#991b1b] hover:-translate-y-px hover:shadow-button ' +
+    'active:translate-y-0 active:shadow-none',
 };
 
 /** The full class string for a variant, plus anything extra (e.g. "flex-1"). */

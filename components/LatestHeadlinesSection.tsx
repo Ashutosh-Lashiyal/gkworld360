@@ -12,7 +12,8 @@
 // decides that separately); a Read Later button ends each row.
 
 import Link from "next/link";
-import { getLatestHeadlines, SOURCE_ICONS } from "@/lib/pulse";
+import { getLatestHeadlines } from "@/lib/pulse";
+import { SOURCE_ICONS } from "@/lib/pulse-sources";
 import ReadLaterButton from "@/components/ReadLaterButton";
 
 export default async function LatestHeadlinesSection() {

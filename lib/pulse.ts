@@ -48,15 +48,8 @@ const FEEDS: { source: string; category: string; url: string }[] = [
   { source: "Indian Express", category: "Sports", url: "https://indianexpress.com/section/sports/feed/" },
 ];
 
-// Small marks for the news agencies, shown beside their name on each headline
-// (owner's friend, 18 Sep 2026). These are the sites' own favicons, saved once
-// into public/images/sources/ so we never hot-link their servers. Attribution
-// only: shown next to the agency's name where its headline appears, nowhere else.
-export const SOURCE_ICONS: Record<string, string> = {
-  "The Hindu": "/images/sources/the-hindu.png",
-  "Indian Express": "/images/sources/indian-express.png",
-  LiveMint: "/images/sources/livemint.png",
-};
+// The agencies' small marks live in lib/pulse-sources.ts (browser-safe); re-exported here.
+export { SOURCE_ICONS } from "@/lib/pulse-sources";
 
 // The filter chips on /pulse are built from the feed list above, so adding a
 // feed automatically adds its chip. (Redesign, 16 Sep 2026.)
