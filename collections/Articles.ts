@@ -2,6 +2,7 @@
 // An article belongs to a Subject and, optionally, a Category. Its body is a
 // rich text field that can contain Key Takeaways and Image blocks.
 import type { CollectionConfig } from "payload";
+import { refreshHooks } from "@/lib/refresh";
 import { slugField } from "@/fields/slug";
 import { articleImagePrompts, headingsOf } from "@/lib/image-style";
 
@@ -182,5 +183,7 @@ export const Articles: CollectionConfig = {
         return data;
       },
     ],
+    // Content changed → refresh the cached pages (lib/refresh.ts)
+    ...refreshHooks,
   },
 };

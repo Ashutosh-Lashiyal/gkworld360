@@ -16,9 +16,11 @@ import {
 } from "@/lib/content";
 import { getCMSNewsList, getCMSNewsHindiSlugs } from "@/lib/cms";
 
-// Re-generate every 60 seconds so newly-published Current Affairs (from the
-// Payload admin) appear on the live site within a minute, without a redeploy.
-export const revalidate = 60;
+// Re-generate at most once an HOUR. Was 60 s until 21 Sep 2026 — every crawler
+// visit after a minute re-asked the database, which never got to sleep and
+// used up Neon's monthly compute. Owner edits still show at once: the CMS
+// collections call refreshContent() (lib/refresh.ts) on every save.
+export const revalidate = 3600;
 
 // Title only — the root layout appends " | GKWorld360". pageMetadata also
 // gives the page its link-preview card (lib/og.ts).

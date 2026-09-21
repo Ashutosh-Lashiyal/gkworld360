@@ -58,7 +58,9 @@ import CMSNewsView from "@/components/cms/CMSNewsView";
 // published articles/news from the Payload admin appear on the live site within
 // a minute instead of only after a redeploy. (New slugs not in the pre-built
 // list are rendered on first request, then cached — Next's default behaviour.)
-export const revalidate = 60;
+// 21 Sep 2026: 60 s → 1 hour to let the Neon database sleep (see lib/refresh.ts);
+// saves in /admin refresh the page immediately via the collection hooks.
+export const revalidate = 3600;
 
 // ── GENERATE STATIC PARAMS ────────────────────────────────────────────────────
 // Tells Next.js every URL that exists so pages are pre-built at deploy time.

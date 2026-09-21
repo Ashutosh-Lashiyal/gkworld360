@@ -3,6 +3,7 @@
 // like /history/modern-india, so a category needs its own name, slug and
 // overview text — hence it's a proper collection, not just a text label.
 import type { CollectionConfig } from "payload";
+import { refreshHooks } from "@/lib/refresh";
 import { slugField } from "@/fields/slug";
 
 export const Categories: CollectionConfig = {
@@ -44,4 +45,6 @@ export const Categories: CollectionConfig = {
       // Uses the global editor (with Key Takeaways + Image blocks) set in payload.config.ts.
     },
   ],
+  // Content changed → refresh the cached pages (lib/refresh.ts)
+  hooks: refreshHooks,
 };

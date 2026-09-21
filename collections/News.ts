@@ -1,6 +1,7 @@
 // News collection — current-affairs items. Kept separate from Articles because
 // news is date-driven (sorted by when the event happened) and lives under /news.
 import type { CollectionConfig } from "payload";
+import { refreshHooks } from "@/lib/refresh";
 import { articleImagePrompts, headingsOf } from "@/lib/image-style";
 import { slugField } from "@/fields/slug";
 
@@ -118,5 +119,7 @@ export const News: CollectionConfig = {
         return data;
       },
     ],
+    // Content changed → refresh the cached pages (lib/refresh.ts)
+    ...refreshHooks,
   },
 };

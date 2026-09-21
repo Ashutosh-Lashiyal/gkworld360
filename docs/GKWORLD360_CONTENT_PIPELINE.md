@@ -256,6 +256,17 @@ Tools (all `node scripts/…`): `create-article-draft.mjs <draft.json>` · `add-
 First run, 18 Sep: Portuguese (import), Dutch + English (drafts + images), Revolt Hindi — all
 now drafts on the Vercel site, awaiting the owner's Publish.
 
+**Images and the shared R2 bucket (18 Sep 2026).** Every upload is two things: the FILE (goes
+to Cloudflare R2 — ONE bucket shared by dev and the Vercel site) and a RECORD about it (goes
+to whichever database the admin you used belongs to). So an image uploaded in dev's `/admin`
+is in R2 but unknown to the Vercel site, and vice versa. Rules:
+- Upload images in the **Vercel site's admin only**, with a clear filename (`kofi-annan.webp`,
+  never `ChatGPT Image Sep 18….webp`). Same filename = same R2 file = no duplicate.
+- Never delete a media record in **dev's** admin unless you are sure the Vercel site does not
+  use that file — deleting the record deletes the file from the shared bucket.
+- Space is not a concern: 18 Sep audit = 13 files, 3 MB, of a 10 GB free tier (~30,000 images).
+- A dev-only bucket is on the Later list in TODO.md; until then the rules above are the guard.
+
 ## 9d. Image prompts in /admin (18 Sep 2026)
 
 The owner makes pictures in the Gemini app (free); the image models on the API key are behind

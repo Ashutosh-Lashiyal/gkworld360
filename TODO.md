@@ -14,6 +14,12 @@
 
 ## 🔴 Now
 
+- [ ] **1 October — after Neon's compute allowance resets:** (1) open `/api/health` on the Vercel
+      site → expect `"database":"reachable"`; (2) cron-job.org → confirm the headlines job is still
+      ENABLED (it auto-disables after repeated failures — it failed all of 20–30 Sep); (3) Neon
+      console → Usage → note the CU-hours a week later; target ≤ 30/month. *(21 Sep)*
+- [ ] **Until 1 Oct the database is suspended** — no /admin, no CMS content on the Vercel site or
+      dev, no content scripts. Code-only work; owner decided not to pay for Launch. *(21 Sep)*
 - [ ] **Republish #3, #4, #5 on the Vercel site** — turned back into drafts by `write-prompts`
       (tool fixed); `node scripts/publish-article.mjs 3 4 5 --production` or Publish in /admin. *(18 Sep)*
 - [ ] **Brainstorm: accounts → highlights → quiz** — design conversation first (who logs in,
@@ -66,6 +72,10 @@
 
 ## ✅ Done (newest first)
 
+- 21 Sep — Neon compute fix: pages cached 1 hour (was 60 s), refresh-on-save hooks on Articles/
+  News/Subjects/Categories/Quotes (`lib/refresh.ts`), cron 30 min → 2 h (owner), SERVICES.md
+  corrected (100 CU-hrs, not 191). New flat logo + favicons; OG card safe-zone + Devanagari fix;
+  share-menu icons; R2 audit (13 files, 3 MB, one dead record).
 - 18 Sep — Share button on articles + current affairs (phone share sheet on touch devices; Copy /
   WhatsApp / Telegram / X / Email menu with a mouse); branded link-preview cards (`/api/og`) on every
   page incl. Hindi; doubled " | GKWorld360" titles fixed.

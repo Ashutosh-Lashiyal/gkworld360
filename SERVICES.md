@@ -48,8 +48,19 @@
 | Limit | Allowance | Where we were on 28 Aug 2026 |
 |---|---|---|
 | Storage | 0.5 GB | **42 MB** — never a concern |
-| Compute | ~191 CU-hours/month | 68 CU-hrs — fine |
+| **Compute** | **100 CU-hours/month** (was ~191 on the older free plan — corrected 21 Sep 2026) | 68 CU-hrs on 28 Aug; **102+ on 18 Sep → suspended 20 Sep** |
 | **Network transfer** | **5 GB/month** | **5.53 GB — EXCEEDED → total outage** |
+
+**Compute (CU-hours) is the OTHER number to watch — it suspended us on 20 Sep 2026.**
+A CU-hour is *size × time the database is switched on*. Ours is the smallest size (0.25 CU),
+so 100 CU-hours = ~400 hours awake per month, counted across BOTH branches. The database
+wakes when anything queries it and sleeps 5 minutes after the last query — so one tiny query
+costs the same as a heavy one: a ~5-minute awake window. **Frequency is what costs, not
+size.** What ate September: pages re-querying every 60 s whenever a crawler visited (bots
+crawl even with indexing off), the headlines cron every 30 min (~36 CU-hrs/month alone), and
+dev/script sessions. Fixes on 21 Sep: pages cached 1 hour + refresh-on-save hooks
+(`lib/refresh.ts`), cron every 2 hours, dev servers off when not working. Target: ≤30/month.
+**Check this meter monthly** (Neon console → project → Usage), not just network transfer.
 
 **Network transfer is the number to watch.** It counts every byte the database sends to
 the website. It has nothing to do with how much content we store — a tiny database can
@@ -129,7 +140,7 @@ the live database.
   would only update when somebody happened to visit the site.
 - **Free tier:** Free for this usage
 - **Card added:** No
-- **Schedule:** every 30 minutes (was every 15 — halved on 28 Aug 2026 to cut database usage)
+- **Schedule:** every 2 hours (15 min → 30 min on 28 Aug 2026 → 2 hours on 21 Sep 2026, to let the database sleep — see the compute note above)
 - **Authentication:** sends header `Authorization: Bearer <CRON_SECRET>`. Without a valid
   secret the endpoint returns `401 {"error":"unauthorized"}`.
 - **Where to see run history:** log in → **Cronjobs** → click the job → **History** tab.

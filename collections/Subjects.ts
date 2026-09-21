@@ -3,6 +3,7 @@
 // icon, cover photo, colours and homepage order all live in one editable place
 // instead of being hard-coded in lib/subjects.ts + lib/subject-colors.ts.
 import type { CollectionConfig } from "payload";
+import { refreshHooks } from "@/lib/refresh";
 import { slugField } from "@/fields/slug";
 
 export const Subjects: CollectionConfig = {
@@ -63,4 +64,6 @@ export const Subjects: CollectionConfig = {
       ],
     },
   ],
+  // Content changed → refresh the cached pages (lib/refresh.ts)
+  hooks: refreshHooks,
 };
