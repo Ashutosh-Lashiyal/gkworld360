@@ -18,7 +18,10 @@
 // Only headline + snippet + source + link are kept — clicking sends the reader to
 // the ORIGINAL source (copyright-safe aggregation, the "Zerodha Pulse" model).
 import Parser from "rss-parser";
-import { after } from "next/server"; // Next 16: run work reliably AFTER the response is sent
+// unstable_cache: keep ONE copy of a database answer and reuse it for every
+// request, instead of asking Postgres again each time. See the block comment
+// above getLatestHeadlines for why this exists (5 Oct 2026).
+import { unstable_cache } from "next/cache";
 import { getPayload } from "payload";
 import { configPromise } from "@/app/(payload)/config";
 
@@ -59,7 +62,6 @@ export const HEADLINE_SOURCES: { source: string; feeds: number }[] = Array.from(
 ).map(([source, feeds]) => ({ source, feeds }));
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
-const SYNC_INTERVAL_MS = 15 * 60 * 1000; // re-sync at most every 15 min
 
 const parser: Parser = new Parser({
   customFields: {
@@ -116,7 +118,12 @@ async function fetchLiveFeed(source: string, category: string, url: string): Pro
   try {
     const res = await fetch(url, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; GKWorld360/1.0)" },
-      cache: "no-store", // the store (below) controls freshness, not per-request cache
+      // 5 Oct 2026: was `cache: "no-store"`. A no-store fetch inside a render makes
+      // Next treat the WHOLE page as dynamic ("Route / couldn't be rendered
+      // statically because it used no-store fetch"), which is what stopped the
+      // homepage from ever being cached — and kept the database awake 24/7.
+      // 5 minutes is far fresher than the 2-hour sync needs, and it is cacheable.
+      next: { revalidate: 300 },
       signal: controller.signal,
     });
     if (!res.ok) {
@@ -319,7 +326,7 @@ async function syncHeadlines(): Promise<SyncResult> {
 }
 
 // Force a full sync and return its report — used by the /api/pulse/sync route
-// (manual refresh + the scheduled cron). Unlike ensureFresh(), it ignores the
+// (manual refresh + the scheduled cron). It ignores the
 // 30-minute guard because the cron decides the schedule.
 export async function runSync(): Promise<SyncResult> {
   return startSync(); // reuse an in-flight sync; never stack a second one
@@ -338,21 +345,6 @@ function startSync(): Promise<SyncResult> {
   return syncing; // callers reuse the one running sync instead of starting another
 }
 
-async function ensureFresh(): Promise<void> {
-  try {
-    const payload = await getClient();
-    const latest = await payload.find({ collection: "headlines", limit: 1, sort: "-createdAt", depth: 0 });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const newest = latest.docs[0] ? new Date((latest.docs[0] as any).createdAt).getTime() : 0;
-    if (Date.now() - newest < SYNC_INTERVAL_MS) return; // synced recently — skip
-    // AWAIT the shared sync. Awaiting matters: this runs inside after(), and
-    // after() keeps the server alive until this promise settles — so the sync
-    // now finishes fully instead of being cut off midway.
-    await startSync();
-  } catch {
-    /* ignore — the caller falls back to live data */
-  }
-}
 
 // Read the stored headlines (newest-first).
 //
@@ -404,23 +396,40 @@ async function getStoredHeadlines(limit = 300): Promise<Headline[]> {
   }));
 }
 
+// ── THE CACHE THAT LETS THE DATABASE SLEEP (5 Oct 2026) ──────────────────────
+// Before this, every visit to the homepage or /pulse — including the thousands
+// of bot hits a public URL gets — ran a database query, so Neon's compute never
+// got the 5 idle minutes it needs to suspend. It stayed awake 24/7 and burned
+// the whole monthly compute allowance by the 5th.
+//
+// Now the database answer is kept and reused. Freshness does NOT come from a
+// short timer any more; it comes from whoever actually changes the data:
+//   • the headlines cron calls revalidateTag(HEADLINES_TAG) after each sync
+//   • `revalidate` below is only a safety net, in case the cron ever stops
+export const HEADLINES_TAG = "headlines";
+const SAFETY_WINDOW_SECONDS = 6 * 60 * 60; // 6 hours
+
+const cachedStoredHeadlines = unstable_cache(
+  (limit: number) => getStoredHeadlines(limit),
+  ["stored-headlines"], // arguments are part of the key, so each `limit` is cached separately
+  { revalidate: SAFETY_WINDOW_SECONDS, tags: [HEADLINES_TAG] }
+);
+
 // THE HOMEPAGE TEASER: read the freshest headlines from the store, refresh it in
 // the background, and return the top `limit` in STRICT newest-first order.
 export async function getLatestHeadlines(limit = 30): Promise<Headline[]> {
   // Ask the database for exactly as many as we're going to show. The database
   // already sorts by publishedAt (newest first), so the newest `limit` rows are
   // precisely the ones we want — no need to over-fetch and slice in JavaScript.
-  let items = await getStoredHeadlines(limit);
+  let items = await cachedStoredHeadlines(limit);
 
-  if (items.length) {
-    // We have data — refresh AFTER the response is sent so the page stays fast.
-    // after() (Next 16) is the key fix: unlike a bare `void promise`, Next keeps
-    // the server alive until this finishes, so the sync completes every time.
-    after(() => ensureFresh().catch(() => {}));
-  } else {
-    // Cold start (store empty) — serve live data now, populate the store after
-    // the response so the next visit reads from it.
-    after(() => ensureFresh().catch(() => {}));
+  // 5 Oct 2026: page renders NO LONGER trigger a sync. They used to call
+  // ensureFresh() after the response, which woke the database on every visit.
+  // The cron (/api/pulse/sync, every 2 hours) is now the only thing that syncs.
+  if (!items.length) {
+    // Cold start or an outage: the store is empty, so show live feeds rather
+    // than an empty section. These fetches are cacheable (see fetchLiveFeed),
+    // so this path no longer forces the page to be rendered per request.
     items = await fetchAllLive();
   }
 
@@ -444,7 +453,11 @@ export type HeadlinePage = {
 // are accepted (checked by the page), so these go straight into the query.
 export type HeadlineFilters = { category?: string; source?: string };
 
-export async function getHeadlinesPage(
+// /pulse asks for a page of headlines. Same story as the teaser above: the
+// answer is cached and the cron clears it, so browsing /pulse (or a bot doing
+// it) costs no database query. `uncachedHeadlinesPage` is the real work;
+// `getHeadlinesPage` below is the cached door everyone uses.
+async function uncachedHeadlinesPage(
   page = 1,
   perPage = 50,
   filters: HeadlineFilters = {}
@@ -542,9 +555,6 @@ export async function getHeadlinesPage(
     }
   }
 
-  // Refresh the store in the background after the response, same as the teaser.
-  after(() => ensureFresh().catch(() => {}));
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const items: Headline[] = res.docs.map((d: any) => ({
     title: d.title,
@@ -564,3 +574,9 @@ export async function getHeadlinesPage(
     totalDocs: res.totalDocs ?? 0,
   };
 }
+
+export const getHeadlinesPage = unstable_cache(
+  uncachedHeadlinesPage,
+  ["headlines-page"], // page, perPage and the filters all form part of the key
+  { revalidate: SAFETY_WINDOW_SECONDS, tags: [HEADLINES_TAG] }
+);

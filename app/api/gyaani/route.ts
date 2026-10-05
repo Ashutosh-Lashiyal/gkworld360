@@ -119,7 +119,12 @@ async function computeSiteContext(): Promise<string> {
     ? sections.join("\n\n---\n\n")
     : "GKWorld360 content is being added. More articles coming soon.";
 }
-const getSiteContext = unstable_cache(computeSiteContext, ["gyaani-site-context"], { revalidate: 3600 });
+// `tags` was missing until 5 Oct 2026, so lib/refresh.ts could never clear this.
+// 6-hour safety net; an /admin save clears it immediately.
+const getSiteContext = unstable_cache(computeSiteContext, ["gyaani-site-context"], {
+  revalidate: 21600,
+  tags: ["gyaani-site-context", "cms-content"],
+});
 
 // The pages Gyaani can point to with a card: every topic (MDX + CMS) and every
 // CMS news item. Cached alongside the context.
@@ -134,7 +139,10 @@ async function computeSourceIndex(): Promise<{ title: string; href: string; desc
     .map((e) => ({ title: e.title, href: e.url, description: e.description }));
   return [...topics, ...news];
 }
-const getSourceIndex = unstable_cache(computeSourceIndex, ["gyaani-source-index"], { revalidate: 3600 });
+const getSourceIndex = unstable_cache(computeSourceIndex, ["gyaani-source-index"], {
+  revalidate: 21600,
+  tags: ["gyaani-source-index", "cms-content"],
+});
 
 function buildSystemPrompt(siteContext: string, mode: "subjects" | "site-only"): string {
   // What Gyaani may talk about — the site's subjects, from lib/subjects.ts.

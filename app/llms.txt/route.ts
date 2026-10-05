@@ -12,7 +12,9 @@ import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from "@/lib/site";
 
 // Regenerated hourly so newly published CMS articles reach AI engines without
 // a redeploy (18 Sep 2026 — used to be built once per deploy from MDX only).
-export const revalidate = 3600;
+// 5 Oct 2026: 1 hour → 6 hours. Freshness comes from the /admin save hooks
+// (lib/refresh.ts), not from this timer — it is only a safety net.
+export const revalidate = 21600;
 
 export async function GET() {
   const subjects = getAllSubjects();

@@ -62,6 +62,26 @@ dev/script sessions. Fixes on 21 Sep: pages cached 1 hour + refresh-on-save hook
 (`lib/refresh.ts`), cron every 2 hours, dev servers off when not working. Target: ≤30/month.
 **Check this meter monthly** (Neon console → project → Usage), not just network transfer.
 
+**5 Oct 2026 — the 21 Sep fix was not enough; here is what was actually wrong.**
+By 5 Oct the project had used 25.52 CU-hrs in four days = 6.06/day = 24.2 hours awake
+per day at 0.25 CU: the production compute simply never slept. Diagnosis (worth repeating
+if it happens again):
+- The **dev** branch WAS sleeping (its compute had 0.25 s uptime when queried), so Neon's
+  scale-to-zero works; the setting was never the problem.
+- The **production** compute had been up 2 days 8 hours straight — because a public Vercel
+  URL is crawled constantly by bots that ignore `robots.txt`, and four pages queried the
+  database on **every** request: `/` (a `no-store` RSS fetch in `getLatestHeadlines` forced
+  Next to render it per request — the build log says so), `/pulse` (`force-dynamic`), and
+  `/topics` + `/search` (they read the URL, so they are always dynamic).
+- A page being dynamic is fine; a page **querying the database** per request is not.
+Fixes: no sync during page renders (the cron is the only refresher, and it calls
+`revalidateTag` + `revalidatePath` after each sync); every database read cached behind a
+tag (`headlines`, `cms-content`); safety timers 1 h → 6 h. **Also found: `unstable_cache`
+ignores tags unless you pass `tags:` — the key parts are identity only. Four caches had no
+tags, so the "refresh on Save" hooks added on 18–21 Sep were doing nothing.**
+Verify after a deploy: `curl -sI <site>/ | grep x-vercel-cache` should say HIT or STALE,
+never MISS with `no-store`.
+
 **Network transfer is the number to watch.** It counts every byte the database sends to
 the website. It has nothing to do with how much content we store — a tiny database can
 blow through it easily if queries ask for more columns/rows than they need. This is what

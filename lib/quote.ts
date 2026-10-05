@@ -95,4 +95,23 @@ async function computeDailyQuote(): Promise<DailyQuote> {
 }
 
 /** Today's quote — CMS first, file fallback. Cached for an hour. */
-export const getDailyQuote = unstable_cache(computeDailyQuote, ["daily-quote"], { revalidate: 3600 });
+// 5 Oct 2026 — two fixes in one line of thinking:
+//  (a) `tags` was missing, so the "refresh when a quote is saved" hook in
+//      collections/Quotes.ts was silently doing nothing (unstable_cache only
+//      honours tags passed here; the key parts above are identity, not tags).
+//  (b) the hour-long timer meant the footer — which is on EVERY page — asked
+//      the database again every hour, waking Neon's compute round the clock.
+//      Passing today's IST date as the ARGUMENT makes it part of the cache key,
+//      so the database is read once per day and the quote still changes exactly
+//      at midnight IST. Saving in /admin clears the tag and shows it at once.
+const cachedQuoteForDay = unstable_cache(
+  // The date is only here to key the cache; the pick itself re-derives it.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- the date is the cache key
+  async (istDate: string) => computeDailyQuote(),
+  ["daily-quote"],
+  { revalidate: 86400, tags: ["daily-quote"] }
+);
+
+export async function getDailyQuote(): Promise<DailyQuote> {
+  return cachedQuoteForDay(todayIST());
+}

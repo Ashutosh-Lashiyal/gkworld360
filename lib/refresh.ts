@@ -19,7 +19,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 
 // Every saved answer that reads CMS content. Add a tag here when a new
 // unstable_cache(...) is created that reads articles/news/subjects/categories.
-const CONTENT_TAGS = ["site-stats", "gyaani-site-context", "gyaani-source-index"];
+const CONTENT_TAGS = ["site-stats", "gyaani-site-context", "gyaani-source-index", "cms-content"];
 
 /** Call after any article / news / subject / category save or delete. */
 export function refreshContent(paths: string[] = []) {
@@ -33,6 +33,8 @@ export function refreshContent(paths: string[] = []) {
     revalidatePath("/sitemap.xml");
     revalidatePath("/llms.txt");
     revalidatePath("/api/search-index");
+    // Every article / news page at once (route pattern + "page", per the Next docs)
+    revalidatePath("/(frontend)/[...slug]", "page");
     for (const p of paths) revalidatePath(p);
   } catch (error) {
     // Runs inside Payload hooks — a failed refresh must never block a save.

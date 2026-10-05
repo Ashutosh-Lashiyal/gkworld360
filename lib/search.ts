@@ -8,6 +8,7 @@
 // Algolia/Meilisearch) — the search UI would stay the same.
 
 import { getAllSlugs, slugToFilePath, getContentMeta, getPageType } from "@/lib/content";
+import { unstable_cache } from "next/cache";
 import { getCMSSearchEntries } from "@/lib/cms";
 
 // One searchable item shown in results
@@ -29,7 +30,7 @@ const TYPE_LABEL: Record<string, string> = {
 // deleted and real writing moved to the CMS, the search could not find any of
 // it. If the same URL exists in both places the CMS entry wins, matching how
 // the pages themselves resolve (Payload-first, MDX-fallback).
-export async function getSearchIndex(): Promise<SearchItem[]> {
+async function computeSearchIndex(): Promise<SearchItem[]> {
   const byUrl = new Map<string, SearchItem>();
 
   // 1. MDX pages (subject overviews, categories, any remaining MDX topics)
@@ -61,3 +62,11 @@ export async function getSearchIndex(): Promise<SearchItem[]> {
 
   return Array.from(byUrl.values());
 }
+
+// Cached for the same reason as getAllTopics: /search renders per request, so an
+// uncached index meant a database query on every hit (5 Oct 2026). The tag is
+// cleared by lib/refresh.ts whenever content is saved in /admin.
+export const getSearchIndex = unstable_cache(computeSearchIndex, ["search-index"], {
+  revalidate: 6 * 60 * 60,
+  tags: ["cms-content"],
+});

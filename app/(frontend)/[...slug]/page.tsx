@@ -60,7 +60,9 @@ import CMSNewsView from "@/components/cms/CMSNewsView";
 // list are rendered on first request, then cached — Next's default behaviour.)
 // 21 Sep 2026: 60 s → 1 hour to let the Neon database sleep (see lib/refresh.ts);
 // saves in /admin refresh the page immediately via the collection hooks.
-export const revalidate = 3600;
+// 5 Oct 2026: 1 hour → 6 hours. Freshness comes from the /admin save hooks
+// (lib/refresh.ts), not from this timer — it is only a safety net.
+export const revalidate = 21600;
 
 // ── GENERATE STATIC PARAMS ────────────────────────────────────────────────────
 // Tells Next.js every URL that exists so pages are pre-built at deploy time.

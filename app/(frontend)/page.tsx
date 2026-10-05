@@ -27,11 +27,13 @@ import { getHomepageSubjects, hasTranslation, resolveContentFile, getContentMeta
 import { getRecentNews } from "@/lib/news";
 import { getCMSNewsList, getCMSNewsHindiSlugs } from "@/lib/cms";
 
-// Re-generate at most once an HOUR. Was 60 s until 21 Sep 2026 — every crawler
-// visit after a minute re-asked the database, which never got to sleep and
-// used up Neon's monthly compute. Owner edits still show at once: the CMS
-// collections call refreshContent() (lib/refresh.ts) on every save.
-export const revalidate = 3600;
+// 5 Oct 2026: 1 hour → 6 hours, because the timer is no longer what keeps this
+// page fresh. The headlines cron calls revalidatePath("/") after every sync, and
+// saving in /admin does the same via lib/refresh.ts — so the page updates when
+// the DATA changes, not on a clock. The 6 hours is only a safety net in case the
+// cron ever stops. (Sep 2026: 60 s → 1 h; before that every crawler hit re-asked
+// the database, which is why Neon's compute never slept.)
+export const revalidate = 21600;
 import { SUBJECT_COLORS } from "@/lib/subject-colors";
 // getSubjectInfo maps a subject slug like "history" to its display label
 // ("History") and emoji icon ("🏛️") so TopicCards show the right category.

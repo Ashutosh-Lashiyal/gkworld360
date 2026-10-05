@@ -14,6 +14,9 @@
 
 ## 🔴 Now
 
+- [ ] **Verify the 5 Oct compute fix after deploy:** `curl -sI https://gkworld360.vercel.app/ | grep x-vercel-cache`
+      → expect HIT/STALE (was MISS + no-store); then check Neon → Monitoring a day later for grey
+      "ENDPOINT INACTIVE" gaps, and the meter ~a week later (target ≤ 30 CU-hrs/month). *(5 Oct)*
 - [ ] **1 October — after Neon's compute allowance resets:** (1) open `/api/health` on the Vercel
       site → expect `"database":"reachable"`; (2) cron-job.org → confirm the headlines job is still
       ENABLED (it auto-disables after repeated failures — it failed all of 20–30 Sep); (3) Neon
@@ -72,6 +75,11 @@
 
 ## ✅ Done (newest first)
 
+- 5 Oct — Real cause of the compute burn found and fixed: `/`, `/pulse`, `/topics`, `/search`
+  queried the database on every request (bot traffic kept the compute awake 24/7). Headlines no
+  longer sync during page renders; the cron revalidates instead; all DB reads cached behind tags;
+  safety timers 1 h → 6 h; **missing `tags:` on four `unstable_cache` calls fixed — the Sep
+  refresh-on-save hooks had been doing nothing**.
 - 21 Sep — Neon compute fix: pages cached 1 hour (was 60 s), refresh-on-save hooks on Articles/
   News/Subjects/Categories/Quotes (`lib/refresh.ts`), cron 30 min → 2 h (owner), SERVICES.md
   corrected (100 CU-hrs, not 191). New flat logo + favicons; OG card safe-zone + Devanagari fix;

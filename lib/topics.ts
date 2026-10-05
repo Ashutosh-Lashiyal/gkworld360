@@ -18,12 +18,18 @@ import {
   resolveContentFile,
   getContentMeta,
 } from "@/lib/content";
+import { unstable_cache } from "next/cache";
 import { getCMSLatestArticles, type CMSListedTopic } from "@/lib/cms";
 
 export type SiteTopic = CMSListedTopic; // { slug, meta, hindiHref?, hindiTitle? }
 
 /** Every English topic, newest first (by date; undated ones last). */
-export async function getAllTopics(): Promise<SiteTopic[]> {
+// 5 Oct 2026: /topics and /search are rendered per request (they read the URL),
+// so this used to run a database query on every hit — including every bot hit,
+// which is what kept Neon's compute awake 24/7. The answer is now cached behind
+// the "cms-content" tag, which lib/refresh.ts clears whenever anything is saved
+// in /admin, so published articles still appear at once.
+async function computeAllTopics(): Promise<SiteTopic[]> {
   const byUrl = new Map<string, SiteTopic>();
 
   // 1. MDX topics — add the Hindi link the way the pages do (a .hi.mdx file)
@@ -48,6 +54,11 @@ export async function getAllTopics(): Promise<SiteTopic[]> {
     return bd - ad; // newest first
   });
 }
+
+export const getAllTopics = unstable_cache(computeAllTopics, ["all-topics"], {
+  revalidate: 6 * 60 * 60, // safety net only — /admin saves clear the tag immediately
+  tags: ["cms-content"],
+});
 
 /** Newest topics. */
 export async function getRecentlyAddedTopics(limit: number): Promise<SiteTopic[]> {

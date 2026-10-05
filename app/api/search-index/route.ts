@@ -11,7 +11,9 @@
 
 import { getSearchIndex } from "@/lib/search";
 
-export const revalidate = 3600;
+// 5 Oct 2026: 1 hour → 6 hours. Freshness comes from the /admin save hooks
+// (lib/refresh.ts), not from this timer — it is only a safety net.
+export const revalidate = 21600;
 
 export async function GET() {
   const index = await getSearchIndex();

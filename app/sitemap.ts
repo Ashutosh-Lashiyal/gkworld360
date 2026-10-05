@@ -16,7 +16,9 @@ import { getCMSSearchEntries } from "@/lib/cms";
 
 // Rebuilt at most once an hour, so an article published in /admin appears in
 // the sitemap without a redeploy (18 Sep 2026 — it used to list MDX files only).
-export const revalidate = 3600;
+// 5 Oct 2026: 1 hour → 6 hours. Freshness comes from the /admin save hooks
+// (lib/refresh.ts), not from this timer — it is only a safety net.
+export const revalidate = 21600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();

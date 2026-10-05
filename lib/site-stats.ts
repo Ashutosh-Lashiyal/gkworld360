@@ -82,7 +82,11 @@ async function computeSiteStats(): Promise<SiteStats> {
 }
 
 /** The site's live counts — cached for one hour. */
+// 5 Oct 2026: 1 hour → 6 hours. The header and the homepage hero use this on
+// every page, so an hourly timer meant the database was woken every hour of
+// every day. The numbers only change when content changes, and lib/refresh.ts
+// clears these tags on every /admin save — so the timer is just a safety net.
 export const getSiteStats = unstable_cache(computeSiteStats, ["site-stats"], {
-  revalidate: 3600,
-  tags: ["site-stats"],
+  revalidate: 21600,
+  tags: ["site-stats", "cms-content"],
 });

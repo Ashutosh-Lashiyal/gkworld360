@@ -5,7 +5,8 @@
 //  2. Scheduled refresh — once deployed, a cron (see vercel.json) calls this
 //     every 30 min so the feed stays fresh even when nobody is visiting the site
 //     (this is what fixes the "everything is 12 hours old in the morning" gap).
-import { runSync } from "@/lib/pulse";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { runSync, HEADLINES_TAG } from "@/lib/pulse";
 
 // Always run fresh — never cache this route's response.
 export const dynamic = "force-dynamic";
@@ -30,6 +31,16 @@ export async function GET(request: Request) {
 
   const started = Date.now();
   const result = await runSync();
+
+  // 5 Oct 2026 — THE CRON IS NOW WHAT MAKES PAGES FRESH.
+  // Page renders no longer sync (that kept the database awake round the clock).
+  // Instead, the moment this sync finishes we throw away the cached headline
+  // answers and the cached copies of the two pages that show them, so the next
+  // visitor gets the new headlines. Between syncs, nothing touches the database.
+  revalidateTag(HEADLINES_TAG, "max");
+  revalidatePath("/");
+  revalidatePath("/pulse");
+
   return Response.json({
     ok: true,
     ms: Date.now() - started, // how long the sync took

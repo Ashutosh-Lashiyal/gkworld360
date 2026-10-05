@@ -20,7 +20,9 @@ import { getCMSNewsList, getCMSNewsHindiSlugs } from "@/lib/cms";
 // visit after a minute re-asked the database, which never got to sleep and
 // used up Neon's monthly compute. Owner edits still show at once: the CMS
 // collections call refreshContent() (lib/refresh.ts) on every save.
-export const revalidate = 3600;
+// 5 Oct 2026: 1 hour → 6 hours. Freshness comes from the /admin save hooks
+// (lib/refresh.ts), not from this timer — it is only a safety net.
+export const revalidate = 21600;
 
 // Title only — the root layout appends " | GKWorld360". pageMetadata also
 // gives the page its link-preview card (lib/og.ts).
