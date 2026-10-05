@@ -14,6 +14,11 @@
 
 ## 🔴 Now
 
+- [ ] **☀️ 6 Oct, FIRST THING — read the Neon compute graph.** Neon → Monitoring → set the range
+      to **Last day** → CPU (or RAM) chart: grey **ENDPOINT INACTIVE** bands = the database is
+      sleeping = the fix works; an unbroken line = it is not. Also note the CU-hrs figure:
+      **baseline 26.07 at 12:46 IST on 5 Oct**; ≤ ~27 next morning is on model (~0.75/day),
+      ≥ ~30 means dig again. Claude surfaces this unprompted at the start of the session. *(5 Oct)*
 - [ ] **Verify the 5 Oct compute fix after deploy:** `curl -sI https://gkworld360.vercel.app/ | grep x-vercel-cache`
       → expect HIT/STALE (was MISS + no-store); then check Neon → Monitoring a day later for grey
       "ENDPOINT INACTIVE" gaps, and the meter ~a week later (target ≤ 30 CU-hrs/month). *(5 Oct)*
