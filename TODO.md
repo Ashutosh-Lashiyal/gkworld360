@@ -14,6 +14,12 @@
 
 ## 🔴 Now
 
+- [ ] **Measure the 6 Oct fix:** baseline noted below; tomorrow's reading should be **+0.5**, not +6.
+      ≥ +2 → look at bot probes to `/admin` and `/api/*` (Payload talks to the database directly and
+      cannot be cached). *(6 Oct)*
+- [ ] **Before launch — make `/api/health` cheap** (real database query at most every 6 hours,
+      last known result in between) so UptimeRobot can go back to 5-minute checks without
+      pinning the compute awake. Blocks re-enabling fast alerting. *(6 Oct)*
 - [ ] **☀️ 6 Oct, FIRST THING — read the Neon compute graph.** Neon → Monitoring → set the range
       to **Last day** → CPU (or RAM) chart: grey **ENDPOINT INACTIVE** bands = the database is
       sleeping = the fix works; an unbroken line = it is not. Also note the CU-hrs figure:
@@ -80,6 +86,9 @@
 
 ## ✅ Done (newest first)
 
+- 6 Oct — **Found the real cause of the compute burn: UptimeRobot was hitting `/api/health`
+  (which queries the database) every 5 minutes, against Neon's 5-minute sleep timer — the compute
+  never slept, ~180 CU-hrs/month.** Monitor moved to 24 hours. Lesson written into SERVICES.md.
 - 5 Oct — Real cause of the compute burn found and fixed: `/`, `/pulse`, `/topics`, `/search`
   queried the database on every request (bot traffic kept the compute awake 24/7). Headlines no
   longer sync during page renders; the cron revalidates instead; all DB reads cached behind tags;

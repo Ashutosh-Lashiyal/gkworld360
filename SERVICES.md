@@ -203,9 +203,23 @@ Fixing the thing that broke does not automatically restart the robots that gave 
 ---
 
 ### UptimeRobot — Site & Database Monitoring
-- **What it does:** Checks `https://gkworld360.vercel.app/api/health` every 5 minutes and
-  emails you when the result changes. That URL queries the database on every request, so
-  this is effectively a live database alarm, not just a "is the website up" check.
+- **What it does:** Checks `https://gkworld360.vercel.app/api/health` and emails you when the
+  result changes. That URL queries the database on every request, so this is effectively a
+  live database alarm, not just a "is the website up" check.
+- **Interval: 24 HOURS (changed 6 Oct 2026 — was 5 minutes).**
+
+> ### ⚠️ THE 6 OCT 2026 LESSON — a 5-minute health check costs 180 CU-hrs/month
+> Neon suspends a compute after **5 minutes** with no connections. This monitor queried the
+> database every **5 minutes**, so production was woken moments before it was ever allowed to
+> sleep — **awake 24/7, ~6 CU-hrs/day, ~180/month against a 100 allowance.** It is what
+> exhausted September's quota (the monitor was added 28 Aug) and what kept the meter climbing
+> even after the 5 Oct page-caching fix. Proof at the time: production's compute had been up
+> **3 days 7 hours continuously**, while the dev branch — which nothing monitors — was asleep.
+> **Rule: never point a frequent monitor at an endpoint that queries a scale-to-zero database.**
+> Before re-enabling frequent checks (at launch, when fast alerting genuinely matters), make
+> `/api/health` cache its database check — real query at most every 6 hours, last known result
+> in between. Until then the headlines cron is the fallback alarm: if the database dies, that
+> job fails and cron-job.org emails you.
 - **Free tier:** 50 monitors, 5-minute checks, email alerts
 - **Card added:** No
 - **Added:** 28 Aug 2026
