@@ -86,6 +86,12 @@
 
 ## ✅ Done (newest first)
 
+- 7 Oct — **Compute fix confirmed working: 32 → 32.46 in 24 h (+0.46/day vs ~6 before).**
+  Separately found the headlines cron had been switched OFF since the September suspension
+  (news only refreshed once a day by Vercel's cron); owner re-enabled it. `/api/pulse/sync` now
+  replies immediately and syncs afterwards (cron-job.org's 30 s timeout was recording every
+  successful run as a failure → auto-disable); `/api/health` now reports the newest headline's
+  age and returns 503 when syncing stalls for over a day.
 - 6 Oct — **Found the real cause of the compute burn: UptimeRobot was hitting `/api/health`
   (which queries the database) every 5 minutes, against Neon's 5-minute sleep timer — the compute
   never slept, ~180 CU-hrs/month.** Monitor moved to 24 hours. Lesson written into SERVICES.md.

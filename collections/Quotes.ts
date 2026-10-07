@@ -90,12 +90,12 @@ export const Quotes: CollectionConfig = {
     // go on Articles/News later.
     afterChange: [
       () => {
-        revalidateTag("daily-quote", "max");
+        revalidateTag("daily-quote", "seconds"); // shortest stale window: the next page load shows the saved quote
       },
     ],
     afterDelete: [
       () => {
-        revalidateTag("daily-quote", "max");
+        revalidateTag("daily-quote", "seconds"); // shortest stale window: the next page load shows the saved quote
       },
     ],
   },

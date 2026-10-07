@@ -161,6 +161,24 @@ the live database.
 - **Free tier:** Free for this usage
 - **Card added:** No
 - **Schedule:** every 2 hours (15 min → 30 min on 28 Aug 2026 → 2 hours on 21 Sep 2026, to let the database sleep — see the compute note above)
+
+> ### ⚠️ 7 OCT 2026 — the job had been OFF since the September suspension
+> Headlines were only being written once a day, by Vercel's own daily cron. The cron-job.org
+> job's **"Enable job" toggle was off** — switched off automatically after every run failed
+> during the 20 Sep – 1 Oct database suspension, exactly as warned below. **A disabled job
+> sends no failure emails, so nothing told us**; the news just got older every day. It stayed
+> hidden until 5 Oct because, until then, every page visit quietly triggered a top-up sync —
+> the same mechanism that was keeping the database awake 24/7 and had to be removed.
+> **Two fixes shipped the same day:**
+> 1. `/api/pulse/sync` now **answers immediately and syncs after the response** (Next's
+>    `after()`). cron-job.org's free plan stops waiting at **30 seconds** (not raisable) and a
+>    full sync — 10 feeds, de-duplication, database writes, plus waking a sleeping database —
+>    regularly took longer, so every successful run was being recorded as a timeout *failure*,
+>    which is what triggers the auto-disable. The trade-off: the HTTP status now only proves
+>    the request arrived, not that the sync succeeded — hence fix 2.
+> 2. `/api/health` now reports `headlines.newestAgeHours` and returns **503 when no headline
+>    has been written for over 24 hours**, so the daily UptimeRobot check raises the alarm.
+>    This is the signal that was missing entirely.
 - **Authentication:** sends header `Authorization: Bearer <CRON_SECRET>`. Without a valid
   secret the endpoint returns `401 {"error":"unauthorized"}`.
 - **Where to see run history:** log in → **Cronjobs** → click the job → **History** tab.

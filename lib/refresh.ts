@@ -24,7 +24,9 @@ const CONTENT_TAGS = ["site-stats", "gyaani-site-context", "gyaani-source-index"
 /** Call after any article / news / subject / category save or delete. */
 export function refreshContent(paths: string[] = []) {
   try {
-    for (const tag of CONTENT_TAGS) revalidateTag(tag, "max");
+    // "seconds" = the shortest stale window (see the note in the pulse sync route).
+    // With "max" a save in /admin would not show on the very next page load.
+    for (const tag of CONTENT_TAGS) revalidateTag(tag, "seconds");
     // The pages that list content — cheap to mark, rebuilt on the next visit
     revalidatePath("/");
     revalidatePath("/topics");

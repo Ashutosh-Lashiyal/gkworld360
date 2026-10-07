@@ -12,6 +12,23 @@
 // This route removes that blind spot: it talks to the database on EVERY request and
 // reports the truth. Point a free uptime monitor at it and you get told within
 // minutes instead of finding out a fortnight later.
+//
+// ── 7 Oct 2026: IT ALSO REPORTS WHETHER THE NEWS IS STILL BEING SYNCED ───────
+// A second blind spot, found the hard way: the headlines cron (cron-job.org) had
+// been switched off automatically during the Sep–Oct database suspension, and
+// NOTHING said so. The news simply got older every day. A disabled job sends no
+// failure emails, so there was no signal at all.
+// Now the answer carries `headlines.newestAgeHours`. If syncing has stopped, that
+// number climbs, and beyond a day the route returns 503 so the daily UptimeRobot
+// check emails you. Reading one extra column costs nothing.
+//
+// ── NOTE ON COST (6 Oct 2026) ────────────────────────────────────────────────
+// This route queries the database on EVERY call, and Neon's compute sleeps after
+// 5 idle minutes. UptimeRobot was calling it every 5 minutes, so the database was
+// woken just before it could ever sleep — awake 24/7, ~180 CU-hrs/month against a
+// 100 allowance. The monitor is now on a DAILY interval. Before ever returning to
+// frequent checks, make this route cache its database answer (a real query at most
+// every 6 hours, the last known result in between). See SERVICES.md.
 import { getPayload } from "payload";
 // Same import the rest of the app uses (see lib/pulse.ts and lib/cms.ts) so there
 // is only one way to reach the Payload config in this codebase.
@@ -28,23 +45,49 @@ export async function GET() {
     const payload = await getPayload({ config: configPromise });
 
     // The cheapest question we can ask that still proves a real round-trip to the
-    // database: fetch a single row, and only its `id` column. `select` keeps the
-    // response to a few bytes, so monitoring this every few minutes costs us
-    // practically nothing in data transfer — which matters, since blowing that
-    // budget is the exact problem we're guarding against.
-    await payload.find({
+    // database: ONE row, and only the two columns we need. `select` keeps the
+    // response to a few bytes, which matters because blowing the data-transfer
+    // budget is one of the things we are guarding against.
+    // `createdAt` is the addition of 7 Oct 2026: it tells us when the cron last
+    // wrote a headline, i.e. whether syncing is still alive.
+    const res = await payload.find({
       collection: "headlines",
       limit: 1,
       depth: 0,
-      select: { id: true },
+      sort: "-createdAt", // newest first
+      select: { id: true, createdAt: true },
     });
 
-    return Response.json({
-      status: "ok",
-      database: "reachable",
-      ms: Date.now() - started, // slow responses are an early warning too
-      checkedAt: new Date().toISOString(),
-    });
+    // How long ago was the last headline written? (null = the store is empty)
+    const newest = res.docs[0] as { createdAt?: string } | undefined;
+    const newestAt = newest?.createdAt ? new Date(newest.createdAt) : null;
+    const newestAgeHours = newestAt
+      ? Math.round(((Date.now() - newestAt.getTime()) / 3_600_000) * 10) / 10
+      : null;
+
+    // The cron runs every 2 hours. More than 24 hours without a new headline
+    // means several runs in a row have failed (or the job is switched off again),
+    // so say so loudly rather than returning a cheerful 200 while the news rots.
+    const syncStalled = newestAgeHours === null || newestAgeHours > 24;
+
+    return Response.json(
+      {
+        status: syncStalled ? "degraded" : "ok",
+        database: "reachable",
+        headlines: {
+          newestAt: newestAt ? newestAt.toISOString() : null,
+          newestAgeHours,
+          // Plain English, because this is read by a human in a hurry
+          sync: syncStalled
+            ? "STALLED — no new headline for over a day. Check the cron-job.org job is still ENABLED."
+            : "ok",
+        },
+        ms: Date.now() - started, // slow responses are an early warning too
+        checkedAt: new Date().toISOString(),
+      },
+      // 503 so an uptime monitor notices on its own, without anyone reading the body
+      { status: syncStalled ? 503 : 200 }
+    );
   } catch (error) {
     // Something is genuinely wrong — most likely the database is unreachable,
     // out of quota, or the connection details are missing/incorrect.
