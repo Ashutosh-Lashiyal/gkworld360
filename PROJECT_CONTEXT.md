@@ -15,26 +15,75 @@
 
 ---
 
-# 🟢 START HERE — status as of 18 Sep 2026
+# 🟢 START HERE — status as of 7 Oct 2026
 
 **Three environment names (owner's rule, 18 Sep):** **dev** = the laptop (`localhost:3000`, Neon
 `dev` branch) · **Vercel site** = `gkworld360.vercel.app` (Neon `production` branch, indexing OFF)
 · **live** = the purchased domain with indexing ON — not bought yet. Never call the Vercel site "live".
 
-**MVP DEPLOYED (18 Sep 2026).** The redesign, four bilingual articles with images, quotes in the
-CMS, image prompts in /admin, Gyaani with guardrails — all on the **Vercel site** (`main` =
-`5e6c7a3`+). Content is created on the Vercel site's database via `npm run dev:prod` (port 3001)
-+ `--production` scripts; dev is for code. Schema is in sync on both branches.
-**Sharing (18 Sep, later):** every article/news page has a Share button (`components/ShareButton.tsx`
-— phone share sheet on touch devices, Copy/WhatsApp/Telegram/X/Email menu with a mouse) and every
-page carries a branded **link-preview card** (Open Graph image, `app/api/og/route.tsx`, built via
-`lib/og.ts` → `ogImages` / `pageMetadata`). WhatsApp/Telegram/X read those tags to draw the card.
-**Known repair pending:** articles #3/#4/#5 on the Vercel site were turned back into drafts by an
-early `write-prompts` run (tool since fixed) — `node scripts/publish-article.mjs 3 4 5 --production`.
-The task list itself now lives in `TODO.md` (read it every session).
-Next: the **accounts → highlights → quiz** brainstorm (design first, then a branch with the schema
-pushed via `dev:prod` before deploying). Loose ends: /topics + /about restyle, Hindi subject
-names, Telegram approve-from-phone, more quotes + portraits, Gemini budget alert (owner).
+**The task list is `TODO.md`** — read it every session and surface the 🔴 Now section before
+starting anything new. This file is the *status*; TODO.md is the *work*.
+
+## Where the product is
+**MVP deployed on the Vercel site.** The redesign, four bilingual articles with images, quotes in
+the CMS, image prompts in /admin, Gyaani with guardrails, Read Later, the daily quote in the footer.
+Content is created on the **Vercel site's** database via `npm run dev:prod` (port 3001) +
+`--production` scripts; dev is for code. Schema is in sync on both branches.
+
+- **Sharing (18 Sep):** every article/news page has a Share button (`components/ShareButton.tsx` —
+  the phone's own share sheet on touch devices, a Copy/WhatsApp/Telegram/X/Email menu with a mouse),
+  and every page carries a branded **link-preview card** (`app/api/og/route.tsx`, built via
+  `lib/og.ts` → `ogImages` / `pageMetadata`). WhatsApp/Telegram/X/Slack read those tags.
+- **Logo (18 Sep):** flat two-tone mark. `public/images/logo-flat.png` is the master;
+  `logo-dark.png` (teal → off-white) is what the header and footer use; `logo-light.png` for light
+  surfaces; `app/icon.png` + `app/apple-icon.png` are generated from the symbol. The old
+  white-silhouette CSS filter is gone. The owner may replace these with designer artwork later.
+- **Known repair still pending:** articles #3/#4/#5 on the Vercel site are drafts, turned back by an
+  early `write-prompts` run (tool since fixed) — `node scripts/publish-article.mjs 3 4 5 --production`.
+
+## ⚠️ The Sep–Oct 2026 compute saga — read this before touching caching or monitoring
+Neon's free plan allows **100 compute-hours a month** (a CU-hour = compute size × time the database
+is *switched on*; ours is 0.25 CU, so 100 CU-hrs ≈ 400 hours awake). The database sleeps after
+**5 idle minutes**. Frequency of access, not volume, is what costs.
+
+The allowance was exhausted on **20 Sep** and the project was **suspended until 1 Oct** (no /admin,
+no CMS content on either environment). It then kept burning ~6 CU-hrs/day until 6 Oct. Two causes,
+found in this order:
+
+1. **(5 Oct — real, but the smaller half)** `/`, `/pulse`, `/topics` and `/search` queried the
+   database on *every* request. A public URL is crawled constantly by bots that ignore robots.txt.
+   Fixed: headlines no longer sync during page renders (the cron revalidates instead), every
+   database read is cached behind a tag (`headlines`, `cms-content`), safety timers 1 h → 6 h.
+   Also fixed: four `unstable_cache` calls had no `tags:`, so the "refresh on Save" hooks added in
+   September had been doing **nothing** (key parts are identity, not tags).
+2. **(6 Oct — the dominant cause)** **UptimeRobot was checking `/api/health` every 5 minutes, and
+   that endpoint queries the database on every call.** Against a 5-minute sleep timer, the compute
+   was woken moments before it could ever sleep: awake 24/7, ~180 CU-hrs/month. Monitor moved to
+   **24 hours**. Proof at the time: production's compute had been up 3 days 7 hours continuously
+   while the dev branch — monitored by nothing — was asleep.
+
+**Result: 6 CU-hrs/day → ~0.5.** With the 2-hourly headlines cron running again, expect ~0.7/day.
+**Rule: never point a frequent monitor at an endpoint that queries a scale-to-zero database.**
+Full write-up and the pre-launch fix for `/api/health` are in `SERVICES.md`.
+
+## ⚠️ Three lessons from 7 Oct, worth carrying anywhere
+- **A disabled cron makes no noise.** The headlines job had been auto-switched-off by cron-job.org
+  during the suspension (every run failed), so news refreshed only once a day via Vercel's own cron
+  — and nothing said so. It stayed hidden because, until 5 Oct, every page visit quietly triggered a
+  top-up sync. `/api/health` now reports `headlines.newestAgeHours` and returns 503 after 24 hours.
+- **Don't make a cron wait for the work.** cron-job.org's free plan gives up at **30 seconds**
+  (not raisable); a full sync takes longer, so every *successful* run was logged as a timeout
+  failure — which is what triggers the auto-disable. `/api/pulse/sync` now replies in ~1 second and
+  finishes the work afterwards via Next's `after()`.
+- **Never cache anything derived from the current time.** "28m ago" was computed at fetch time and
+  cached, so the homepage and /pulse showed different ages for the same headline and neither aged.
+  `components/TimeAgo.tsx` now works it out in the visitor's browser (`useSyncExternalStore`, so
+  hydration stays clean).
+
+## Next
+The **accounts → highlights → quiz** brainstorm (design conversation first, then a branch with the
+schema pushed via `dev:prod` before deploying). Loose ends in TODO.md: /topics + /about restyle,
+Hindi subject names, Telegram approve-from-phone, more quotes + portraits.
 Design decisions and rollout plan: "16 Sep 2026 (later)" section below.
 
 ### ✅ RECOVERY (4 Sep 2026)

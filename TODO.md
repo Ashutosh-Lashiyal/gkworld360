@@ -14,28 +14,13 @@
 
 ## 🔴 Now
 
-- [ ] **Measure the 6 Oct fix:** baseline noted below; tomorrow's reading should be **+0.5**, not +6.
-      ≥ +2 → look at bot probes to `/admin` and `/api/*` (Payload talks to the database directly and
-      cannot be cached). *(6 Oct)*
-- [ ] **Before launch — make `/api/health` cheap** (real database query at most every 6 hours,
-      last known result in between) so UptimeRobot can go back to 5-minute checks without
-      pinning the compute awake. Blocks re-enabling fast alerting. *(6 Oct)*
-- [ ] **☀️ 6 Oct, FIRST THING — read the Neon compute graph.** Neon → Monitoring → set the range
-      to **Last day** → CPU (or RAM) chart: grey **ENDPOINT INACTIVE** bands = the database is
-      sleeping = the fix works; an unbroken line = it is not. Also note the CU-hrs figure:
-      **baseline 26.07 at 12:46 IST on 5 Oct**; ≤ ~27 next morning is on model (~0.75/day),
-      ≥ ~30 means dig again. Claude surfaces this unprompted at the start of the session. *(5 Oct)*
-- [ ] **Verify the 5 Oct compute fix after deploy:** `curl -sI https://gkworld360.vercel.app/ | grep x-vercel-cache`
-      → expect HIT/STALE (was MISS + no-store); then check Neon → Monitoring a day later for grey
-      "ENDPOINT INACTIVE" gaps, and the meter ~a week later (target ≤ 30 CU-hrs/month). *(5 Oct)*
-- [ ] **1 October — after Neon's compute allowance resets:** (1) open `/api/health` on the Vercel
-      site → expect `"database":"reachable"`; (2) cron-job.org → confirm the headlines job is still
-      ENABLED (it auto-disables after repeated failures — it failed all of 20–30 Sep); (3) Neon
-      console → Usage → note the CU-hours a week later; target ≤ 30/month. *(21 Sep)*
-- [ ] **Until 1 Oct the database is suspended** — no /admin, no CMS content on the Vercel site or
-      dev, no content scripts. Code-only work; owner decided not to pay for Launch. *(21 Sep)*
+- [ ] **Watch the compute meter for a few days.** 32.46 CU-hrs at 10:11 IST on 7 Oct. With the
+      2-hourly cron running, expect **~0.7/day** → ~50 of 100 by 31 Oct. Much above that, dig again
+      (first suspects: bot probes to `/admin` and `/api/*`, which talk to the database directly and
+      cannot be cached). Neon → Usage; the Monitoring chart on **Last day** should now show grey
+      "ENDPOINT INACTIVE" gaps. *(7 Oct)*
 - [ ] **Republish #3, #4, #5 on the Vercel site** — turned back into drafts by `write-prompts`
-      (tool fixed); `node scripts/publish-article.mjs 3 4 5 --production` or Publish in /admin. *(18 Sep)*
+      (tool since fixed); `node scripts/publish-article.mjs 3 4 5 --production` or Publish in /admin. *(18 Sep)*
 - [ ] **Brainstorm: accounts → highlights → quiz** — design conversation first (who logs in,
       what a highlight is, where quiz questions come from, email vs Google), then a branch with
       the schema pushed via `npm run dev:prod` before deploying. *(agreed 18 Sep)*
@@ -43,6 +28,9 @@
       (`@Gkworld360_bot`) via a webhook on Vercel; creates drafts on the Vercel site's database;
       both guards (facts list in the message + confirmation tap). Removes the laptop from the
       content loop. *(agreed 14 Sep — slipped three times; do not let it slip again)*
+- [ ] **Before launch — make `/api/health` cheap** (a real database query at most every 6 hours,
+      the last known result in between) so UptimeRobot can go back to frequent checks without
+      pinning the compute awake. Blocks re-enabling fast alerting. *(6 Oct)*
 
 ## 🟠 Next (in order)
 
@@ -86,6 +74,10 @@
 
 ## ✅ Done (newest first)
 
+- 7 Oct (later) — Homepage and /pulse disagreed: the cron's "refresh the pages" step was being
+  killed by the 30 s timeout, and tag revalidation used the longest stale window ("max" → "seconds").
+  Headline times ("28m ago") were being cached too, so they froze and differed between pages — now
+  computed in the browser (`components/TimeAgo.tsx`).
 - 7 Oct — **Compute fix confirmed working: 32 → 32.46 in 24 h (+0.46/day vs ~6 before).**
   Separately found the headlines cron had been switched OFF since the September suspension
   (news only refreshed once a day by Vercel's cron); owner re-enabled it. `/api/pulse/sync` now
