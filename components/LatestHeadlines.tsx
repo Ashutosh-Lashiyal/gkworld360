@@ -13,6 +13,7 @@
 import type { Headline } from "@/lib/pulse";
 import ReadLaterButton from "@/components/ReadLaterButton";
 import HeadlineThumb from "@/components/HeadlineThumb";
+import TimeAgo from "@/components/TimeAgo";
 
 export default function LatestHeadlines({ items }: { items: Headline[] }) {
   if (!items.length) {
@@ -64,7 +65,7 @@ export default function LatestHeadlines({ items }: { items: Headline[] }) {
               </p>
             )}
             <div className="mt-auto pt-2 flex items-center gap-2 font-body text-xs text-muted">
-              <span>{h.timeAgo}</span>
+              <TimeAgo iso={h.isoDate} fallback={h.timeAgo} />
               <span className="opacity-40">·</span>
               <span className="font-semibold text-sapphire group-hover:text-sapphire-dark transition-colors">
                 Read at {h.source} ↗

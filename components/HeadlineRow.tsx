@@ -14,6 +14,7 @@ import HeadlineThumb from "@/components/HeadlineThumb";
 import ReadLaterButton from "@/components/ReadLaterButton";
 import type { Headline } from "@/lib/pulse";
 import { SOURCE_ICONS, CATEGORY_COLOR } from "@/lib/pulse-sources";
+import TimeAgo from "@/components/TimeAgo";
 
 
 export default function HeadlineRow({ headline, index }: { headline: Headline; index: number }) {
@@ -64,7 +65,7 @@ export default function HeadlineRow({ headline, index }: { headline: Headline; i
             )}
             {h.source}
           </span>
-          <span className="ml-0.5">{h.timeAgo}</span>
+          <TimeAgo iso={h.isoDate} fallback={h.timeAgo} className="ml-0.5" />
         </span>
       </a>
 

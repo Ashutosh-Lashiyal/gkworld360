@@ -15,6 +15,7 @@ import Link from "next/link";
 import { getLatestHeadlines } from "@/lib/pulse";
 import { SOURCE_ICONS } from "@/lib/pulse-sources";
 import ReadLaterButton from "@/components/ReadLaterButton";
+import TimeAgo from "@/components/TimeAgo";
 
 export default async function LatestHeadlinesSection() {
   const items = await getLatestHeadlines(6);
@@ -80,7 +81,7 @@ export default async function LatestHeadlinesSection() {
                     )}
                     {h.source}
                   </span>
-                  <span className="ml-0.5">{h.timeAgo}</span>
+                  <TimeAgo iso={h.isoDate} fallback={h.timeAgo} className="ml-0.5" />
                 </span>
               </a>
               <ReadLaterButton headline={h} variant="row" />
