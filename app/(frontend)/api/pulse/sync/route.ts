@@ -2,12 +2,14 @@
 //
 // Two jobs:
 //  1. Manual refresh — hit this URL any time to pull fresh news right now.
-//  2. Scheduled refresh — once deployed, a cron (see vercel.json) calls this
-//     every 30 min so the feed stays fresh even when nobody is visiting the site
-//     (this is what fixes the "everything is 12 hours old in the morning" gap).
+//  2. Scheduled refresh — a cron (cron-job.org, every 2 hours) calls this so the
+//     feed stays fresh even when nobody is visiting the site. Since 5 Oct 2026
+//     this is the ONLY thing that syncs: page visits no longer do, because that
+//     kept the database awake round the clock.
 import { after } from "next/server"; // Next 16: run work AFTER the response is sent
 import { revalidatePath, revalidateTag } from "next/cache";
 import { runSync, HEADLINES_TAG } from "@/lib/pulse";
+import { absoluteUrl } from "@/lib/site";
 
 // Always run fresh — never cache this route's response.
 export const dynamic = "force-dynamic";
@@ -66,6 +68,24 @@ export async function GET(request: Request) {
       revalidateTag(HEADLINES_TAG, "seconds");
       revalidatePath("/");
       revalidatePath("/pulse");
+
+      // ── WARM THE PAGES (8 Oct 2026) ─────────────────────────────────────
+      // Marking a page "out of date" above does NOT rebuild it. Next rebuilds it
+      // the next time somebody asks for it — and that visitor is still handed the
+      // OLD copy while the new one is built behind them ("stale-while-revalidate").
+      // On a busy site the unlucky visitor is one in thousands. On a quiet site
+      // it is the owner, every morning: old news, refresh, new news.
+      //
+      // So we ask for the pages ourselves, right here, with nobody watching. That
+      // request takes the stale copy and triggers the rebuild, so the fresh page
+      // is already waiting by the time a real person arrives.
+      await Promise.allSettled(
+        ["/", "/pulse"].map((path) =>
+          // no-store so we always reach the origin instead of being handed an
+          // edge-cached copy (which would not trigger the rebuild).
+          fetch(absoluteUrl(path), { cache: "no-store" })
+        )
+      );
 
       console.log(`[pulse] sync finished in ${Date.now() - started}ms:`, JSON.stringify(result));
     } catch (error) {
