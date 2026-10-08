@@ -60,12 +60,16 @@ export async function GET(request: Request) {
       // this sync finishes we throw away the cached headline answers and the
       // cached copies of the two pages that show them, so the next visitor sees
       // the new headlines. Between syncs, nothing touches the database.
-      // The second argument is how long the OLD answer may still be served while a new
-      // one is built. "max" (used until 7 Oct 2026) means the longest possible window —
-      // which is how the homepage came to show different headlines from /pulse. "seconds"
-      // is the shortest built-in profile: visitors get the new headlines right away.
-      // On a site this quiet, correctness beats shaving a few hundred milliseconds.
-      revalidateTag(HEADLINES_TAG, "seconds");
+      // The second argument is how long the OLD answer may still be served while
+      // a fresh one is fetched in the background. Every BUILT-IN profile allows
+      // some: "max" allows 5 minutes, and even "seconds" allows 30 — and on
+      // 8 Oct 2026 those 30 seconds bit us. The warming fetch below runs
+      // immediately, landed inside the stale window, rebuilt the homepage from
+      // the OLD headlines and then cached that page for six hours: the homepage
+      // showed 5-hour-old news while /pulse (rendered per request) showed 1-hour.
+      // `{ expire: 0 }` sets that window to zero: the next read waits for fresh
+      // data instead of being handed the old answer.
+      revalidateTag(HEADLINES_TAG, { expire: 0 });
       revalidatePath("/");
       revalidatePath("/pulse");
 
@@ -79,13 +83,27 @@ export async function GET(request: Request) {
       // So we ask for the pages ourselves, right here, with nobody watching. That
       // request takes the stale copy and triggers the rebuild, so the fresh page
       // is already waiting by the time a real person arrives.
-      await Promise.allSettled(
-        ["/", "/pulse"].map((path) =>
-          // no-store so we always reach the origin instead of being handed an
-          // edge-cached copy (which would not trigger the rebuild).
-          fetch(absoluteUrl(path), { cache: "no-store" })
-        )
-      );
+      const warm = () =>
+        Promise.allSettled(
+          ["/", "/pulse"].map((path) =>
+            // no-store so we always reach the origin instead of being handed an
+            // edge-cached copy (which would not trigger the rebuild).
+            fetch(absoluteUrl(path), { cache: "no-store" })
+          )
+        );
+
+      await warm();
+
+      // BELT AND BRACES: warm a second time a few seconds later. If the first
+      // pass still managed to read a stale answer (cache behaviour here is
+      // subtle, and getting it wrong is what caused the 8 Oct 2026 bug), the
+      // second pass rebuilds the pages from data that is certainly fresh. Two
+      // extra requests every two hours is a cheap price for not having to be
+      // right about the nuance.
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      revalidatePath("/");
+      revalidatePath("/pulse");
+      await warm();
 
       console.log(`[pulse] sync finished in ${Date.now() - started}ms:`, JSON.stringify(result));
     } catch (error) {
