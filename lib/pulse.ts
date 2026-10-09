@@ -18,10 +18,6 @@
 // Only headline + snippet + source + link are kept — clicking sends the reader to
 // the ORIGINAL source (copyright-safe aggregation, the "Zerodha Pulse" model).
 import Parser from "rss-parser";
-// unstable_cache: keep ONE copy of a database answer and reuse it for every
-// request, instead of asking Postgres again each time. See the block comment
-// above getLatestHeadlines for why this exists (5 Oct 2026).
-import { unstable_cache } from "next/cache";
 import { getPayload } from "payload";
 import { configPromise } from "@/app/(payload)/config";
 
@@ -396,24 +392,23 @@ async function getStoredHeadlines(limit = 300): Promise<Headline[]> {
   }));
 }
 
-// ── THE CACHE THAT LETS THE DATABASE SLEEP (5 Oct 2026) ──────────────────────
-// Before this, every visit to the homepage or /pulse — including the thousands
-// of bot hits a public URL gets — ran a database query, so Neon's compute never
-// got the 5 idle minutes it needs to suspend. It stayed awake 24/7 and burned
-// the whole monthly compute allowance by the 5th.
+// ── WHY THERE IS NO DATA CACHE HERE (8 Oct 2026) ─────────────────────────────
+// Between 5 and 8 Oct these reads were wrapped in `unstable_cache` so that bot
+// traffic could not wake the database on every request. It worked for cost, but
+// the cache would not let go: the cron is supposed to say "throw that copy away,
+// there is new data", and that instruction never landed — tried three ways
+// ("max", "seconds", { expire: 0 }), all identical. The symptom the owner saw was
+// a homepage stuck on hours-old news while /pulse moved on.
 //
-// Now the database answer is kept and reused. Freshness does NOT come from a
-// short timer any more; it comes from whoever actually changes the data:
-//   • the headlines cron calls revalidateTag(HEADLINES_TAG) after each sync
-//   • `revalidate` below is only a safety net, in case the cron ever stops
-export const HEADLINES_TAG = "headlines";
-const SAFETY_WINDOW_SECONDS = 6 * 60 * 60; // 6 hours
-
-const cachedStoredHeadlines = unstable_cache(
-  (limit: number) => getStoredHeadlines(limit),
-  ["stored-headlines"], // arguments are part of the key, so each `limit` is cached separately
-  { revalidate: SAFETY_WINDOW_SECONDS, tags: [HEADLINES_TAG] }
-);
+// So the data cache is gone and the PAGE cache does the job instead — which is
+// what actually cut the compute from ~6 CU-hrs/day to ~0.7:
+//   • the homepage is a cached static page; it reads the database only when it is
+//     rebuilt (~12 times a day, driven by the cron), and each rebuild reads live
+//     data, so it cannot show a frozen copy;
+//   • /pulse reads the database per request — always correct. Watch the compute
+//     meter: if /pulse's traffic proves expensive, the fix is to make it a static
+//     page too, with filtering and paging done in the browser.
+// Fewer moving parts, and the two pages cannot disagree.
 
 // THE HOMEPAGE TEASER: read the freshest headlines from the store, refresh it in
 // the background, and return the top `limit` in STRICT newest-first order.
@@ -421,7 +416,7 @@ export async function getLatestHeadlines(limit = 30): Promise<Headline[]> {
   // Ask the database for exactly as many as we're going to show. The database
   // already sorts by publishedAt (newest first), so the newest `limit` rows are
   // precisely the ones we want — no need to over-fetch and slice in JavaScript.
-  let items = await cachedStoredHeadlines(limit);
+  let items = await getStoredHeadlines(limit);
 
   // 5 Oct 2026: page renders NO LONGER trigger a sync. They used to call
   // ensureFresh() after the response, which woke the database on every visit.
@@ -453,11 +448,9 @@ export type HeadlinePage = {
 // are accepted (checked by the page), so these go straight into the query.
 export type HeadlineFilters = { category?: string; source?: string };
 
-// /pulse asks for a page of headlines. Same story as the teaser above: the
-// answer is cached and the cron clears it, so browsing /pulse (or a bot doing
-// it) costs no database query. `uncachedHeadlinesPage` is the real work;
-// `getHeadlinesPage` below is the cached door everyone uses.
-async function uncachedHeadlinesPage(
+// /pulse asks for a page of headlines — read live, for the reasons in the block
+// above getLatestHeadlines.
+export async function getHeadlinesPage(
   page = 1,
   perPage = 50,
   filters: HeadlineFilters = {}
@@ -574,9 +567,3 @@ async function uncachedHeadlinesPage(
     totalDocs: res.totalDocs ?? 0,
   };
 }
-
-export const getHeadlinesPage = unstable_cache(
-  uncachedHeadlinesPage,
-  ["headlines-page"], // page, perPage and the filters all form part of the key
-  { revalidate: SAFETY_WINDOW_SECONDS, tags: [HEADLINES_TAG] }
-);

@@ -7,8 +7,8 @@
 //     this is the ONLY thing that syncs: page visits no longer do, because that
 //     kept the database awake round the clock.
 import { after } from "next/server"; // Next 16: run work AFTER the response is sent
-import { revalidatePath, revalidateTag } from "next/cache";
-import { runSync, HEADLINES_TAG } from "@/lib/pulse";
+import { revalidatePath } from "next/cache";
+import { runSync } from "@/lib/pulse";
 import { absoluteUrl } from "@/lib/site";
 
 // Always run fresh — never cache this route's response.
@@ -60,16 +60,9 @@ export async function GET(request: Request) {
       // this sync finishes we throw away the cached headline answers and the
       // cached copies of the two pages that show them, so the next visitor sees
       // the new headlines. Between syncs, nothing touches the database.
-      // The second argument is how long the OLD answer may still be served while
-      // a fresh one is fetched in the background. Every BUILT-IN profile allows
-      // some: "max" allows 5 minutes, and even "seconds" allows 30 — and on
-      // 8 Oct 2026 those 30 seconds bit us. The warming fetch below runs
-      // immediately, landed inside the stale window, rebuilt the homepage from
-      // the OLD headlines and then cached that page for six hours: the homepage
-      // showed 5-hour-old news while /pulse (rendered per request) showed 1-hour.
-      // `{ expire: 0 }` sets that window to zero: the next read waits for fresh
-      // data instead of being handed the old answer.
-      revalidateTag(HEADLINES_TAG, { expire: 0 });
+      // 8 Oct 2026: there is no headline data cache any more (see lib/pulse.ts).
+      // All we do here is tell the two pages that show headlines to rebuild; the
+      // rebuild reads the database directly, so it cannot pick up a stale copy.
       revalidatePath("/");
       revalidatePath("/pulse");
 
