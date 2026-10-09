@@ -14,6 +14,20 @@
 
 ## 🔴 Now
 
+- [ ] **Homepage not rebuilt after a sync — fix the "rebuild" step.** Found 9 Oct: the homepage
+      was built at 01:33 UTC, the 02:00 and 04:00 UTC syncs both saved new headlines, and the
+      homepage was rebuilt by NEITHER. It only rebuilds on its 6-hour timer or a deploy, so it drifts
+      up to ~6 h behind `/pulse` (which is built per visit). Likely cause: since 7 Oct the
+      `revalidatePath` calls run inside `after()` — after the reply to cron-job.org — and Next does
+      not act on them that late (before 7 Oct they were never reached: the 30 s timeout killed the
+      function first). So the cron's rebuild step has probably **never** worked in production.
+      Also means the 8 Oct "unstable_cache tags don't work" diagnosis was the wrong layer.
+      **Plan:** a tiny URL that only calls `revalidatePath` inline (<1 s, fits the 30 s limit),
+      called by cron-job.org a few minutes after each sync. **Test that the homepage's `age` resets
+      before calling it done.** Correct PROJECT_CONTEXT.md / SERVICES.md in the same change. *(9 Oct)*
+- [ ] **Compute after removing the headline data cache (9 Oct):** `/pulse` now reads the database
+      on every visit. Check Neon tomorrow — if well above ~0.7 CU-hrs/day, `/pulse` needs to become a
+      static page with filtering/paging in the browser. *(9 Oct)*
 - [ ] **Watch the compute meter for a few days.** 32.46 CU-hrs at 10:11 IST on 7 Oct. With the
       2-hourly cron running, expect **~0.7/day** → ~50 of 100 by 31 Oct. Much above that, dig again
       (first suspects: bot probes to `/admin` and `/api/*`, which talk to the database directly and
