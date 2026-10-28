@@ -25,14 +25,6 @@
       **Plan:** a tiny URL that only calls `revalidatePath` inline (<1 s, fits the 30 s limit),
       called by cron-job.org a few minutes after each sync. **Test that the homepage's `age` resets
       before calling it done.** Correct PROJECT_CONTEXT.md / SERVICES.md in the same change. *(9 Oct)*
-- [ ] **Compute after removing the headline data cache (9 Oct):** `/pulse` now reads the database
-      on every visit. Check Neon tomorrow — if well above ~0.7 CU-hrs/day, `/pulse` needs to become a
-      static page with filtering/paging in the browser. *(9 Oct)*
-- [ ] **Watch the compute meter for a few days.** 32.46 CU-hrs at 10:11 IST on 7 Oct. With the
-      2-hourly cron running, expect **~0.7/day** → ~50 of 100 by 31 Oct. Much above that, dig again
-      (first suspects: bot probes to `/admin` and `/api/*`, which talk to the database directly and
-      cannot be cached). Neon → Usage; the Monitoring chart on **Last day** should now show grey
-      "ENDPOINT INACTIVE" gaps. *(7 Oct)*
 - [ ] **Republish #3, #4, #5 on the Vercel site** — turned back into drafts by `write-prompts`
       (tool since fixed); `node scripts/publish-article.mjs 3 4 5 --production` or Publish in /admin. *(18 Sep)*
 - [ ] **Brainstorm: accounts → highlights → quiz** — design conversation first (who logs in,
@@ -48,6 +40,29 @@
 
 ## 🟠 Next (in order)
 
+- [ ] **Animations — APPROVED 28 Oct, ready to build.** Owner approved every effect in the motion
+      prototype EXCEPT the hero globe: scroll reveal, count-up, eased menus, page transitions (title
+      morphs into the article), share menu, bookmark pop + toast, confirm dialog, Gyaani panel.
+      Build on a branch in small steps. Prototype (28 Oct):
+      https://claude.ai/artifact/URXiy1rnB7Gy6yU5sWDLnc — working copy of the homepage + one
+      article with every planned effect behind a switch, and a "Copy my picks" button. Libraries:
+      **d3-geo 3.1.1 + topojson-client 3.1.0 + Natural Earth land map (1:110m)** for the hero globe
+      (~40 KB, homepage only, after first paint) — cobe was tried first and dropped on 28 Oct: its dotted
+      continents made India unrecognisable and it can't tell where its dots are, so they can't be tapped.
+      Globe v3 (28 Oct): DOTTED map by default (owner prefers it) drawn from the same coastline data,
+      so India reads; "Solid" kept as an option; tilts past the poles to reach Arctic/Antarctic places
+      (demo: Himadri, Maitri, Bharati); article illustrations as pictures in the boxes.
+      **Decided 28 Oct: NO globe in the homepage hero** — a first-time visitor can't tell what it's
+      for. The hero stays as today; the globe moves to the History Atlas page (see Later) with a
+      teaser section on the homepage — and the Atlas now covers every subject (see World360 Atlas in Later).
+      Globe v2 (28 Oct, owner's idea): full turn that slows over India; tap a dot → thin line + square box
+      (date, fact, article link); one box at a time; nearby places merge into a numbered dot; "List all
+      places" for keyboards/screen readers. Everything else
+      is browser-native (CSS transitions, IntersectionObserver, View Transitions API); **Motion**
+      only if the React Gyaani needs it. Not three.js (too heavy for mid-range phones), not
+      21st.dev components as-is (their look clashes with ours). Owner to check on laptop AND phone
+      and send picks; then build on a branch in small steps, mobile page-speed score checked before
+      and after. Nothing inside an article's reading column animates. *(28 Oct)*
 - [ ] `/topics` page restyle to board 9 (approved 16 Sep; data already fixed, look still old). *(16 Sep)*
 - [ ] `/about` page onto the page system (still white/rounded/emoji cards). *(18 Sep)*
 - [ ] Hindi names for Subjects and Categories in the CMS — labels on Hindi pages read English. *(17 Sep)*
@@ -62,6 +77,60 @@
 
 ## 🟡 Later (agreed, no date)
 
+- [ ] **World360 Atlas** (`/atlas` + `/hi/atlas`) — agreed 28 Oct. Was "History Atlas"; widened the same
+      day to EVERY subject (owner's idea: a chemistry discovery has a place and a date too). **No globe
+      in the homepage hero** (hero stays as today).
+      - Page: subject filter buttons (All · History · Physics · …) + a timeline (title + date) beside a
+        globe that turns by itself at ONE steady speed (a turn every two minutes, 3° a second — not faster away from India,
+        which looked like it was speeding up); dots and timeline bars in the site's subject colours. Click an
+        entry or a dot → globe turns there → full card (picture, subject, date, title, place, key
+        points, "Read the article", Earlier/Later). "Play through time". Phone: globe on top,
+        timeline below, card slides up.
+      - Zoom (owner's ask, 28 Oct): mouse wheel / trackpad, pinch on phones, + / − / reset buttons.
+        Numbered dots split into their real spots as you zoom in. Tapping a numbered dot opens a short
+        list of its entries (pick one → its card) with "Zoom in here"; places at the same spot (Delhi
+        1857 & 1947) say so instead. The real site needs a MORE DETAILED land map for close zoom (the
+        1:110m map looks blocky past ~6×) — load it only when someone zooms in.
+      - Time sections: neutral for every subject (Ancient world · Middle ages · Early modern · The
+        1800s · Early 1900s · Since Independence); History's own eras when filtered to History.
+      - Homepage: "Knowledge on the map" section after Headlines (subjects + periods + small globe),
+        "Atlas" in the menu, "See this on the Atlas" link on articles, a shareable web address per card.
+      - **Data:** a new "Atlas entries" collection in /admin, each entry linked to ONE article
+        (subject comes from the article). Fields: title, place + region, lat/lng, **year as a number
+        (negative = BC)** + a display date ("c. 2500 BC"), 2–3 key points, optional picture from the
+        article, status draft/approved — text fields in English AND Hindi. Shows on the site only
+        when approved AND its article is published.
+      - **Pipeline:** Claude drafts an article's entries with the article (coordinates looked up,
+        dates checked); owner reviews both in /admin; publishing puts them on the Atlas. Rules: only
+        real events at real places; never guessed; "c." for approximate; NCERT date where sources
+        differ; articles about ideas with no place get no entries. Catch-up: 13 entries for the 4
+        existing articles.
+      - **Cost/speed:** one cached query (6 h + refresh on save) → almost no Neon compute; globe
+        code only on /atlas and the homepage section when scrolled to; pictures load when a card
+        opens; the timeline is real text in the page (search engines and AI can read it).
+      - **India-compliant boundary data before drawing ANY country borders** — land only until then.
+      - Build order: 0 prototype ✅ → 1 approved animations → 2 Atlas entries in /admin + catch-up →
+        3 /atlas page (EN + HI) → 4 homepage section, menu, article link, share cards → 5 pipeline doc.
+      - Prototype: https://claude.ai/artifact/DdztX491xSWnCWW7cqcLgp (v4, 28 Oct) — 28 entries:
+        13 from the 4 articles + 15 marked examples across all six subjects. Owner reviews. *(28 Oct)*
+- [ ] **Automated testing — START ONLY WHEN THE OWNER SAYS SO.** *(agreed 28 Oct)* Today there is
+      none: no test packages, no test files; the only check is `eslint`.
+      - **Site → Playwright** end-to-end tests: pages load, navigation, search, language toggle,
+        Read Later, Share menu, homepage headlines match `/pulse`, `/api/health` returns ok.
+      - **Gyaani → DeepEval** (a Python LLM-evaluation framework): does it answer on-topic, stay
+        inside the guardrails, refuse off-topic questions, point to the right site card, avoid
+        making things up.
+      - Plan for before starting: (1) Gyaani's rate limits (5/min, 10/day per IP, monthly cap) will
+        block a test run — tests need a local/test mode that bypasses them; (2) DeepEval uses an
+        LLM as the *judge*, which needs its own model and key and costs per run — Gemini can be
+        configured as the judge to stay on one provider; (3) DeepEval is Python, the site is
+        TypeScript — it would live in its own folder and call `/api/gyaani` over HTTP; (4) decide
+        what runs where: on the laptop, or automatically on every push (GitHub Actions).
+      - Ties into the learning track (module 12, testing) — the owner's QA background is the asset.
+- [ ] **Developer learning track** — owner learns the whole codebase from scratch, module by module
+      (big picture → folders → pages → styling → content → database → images → caching → cron →
+      Gyaani → deployment → monitoring → testing), recorded in a living doc in the repo. Long-running,
+      learn mode, Odin Project order. *(28 Oct)*
 - [ ] **Going live:** buy domain → point at Vercel → `NEXT_PUBLIC_SITE_URL` →
       `SITE_INDEXING_ENABLED=true` → Search Console. Owner decides "enough content" first. *(Jul; env names 18 Sep)*
 - [ ] Dev's own R2 bucket (dev and the Vercel site share one; same filename = same picture). *(17 Sep)*
@@ -88,6 +157,9 @@
 
 ## ✅ Done (newest first)
 
+- 28 Oct — **Compute settled: 42.82 CU-hrs on 28 Oct = 0.48/day since 8 Oct** (October ends ~45 of
+  100; network 0.16 GB of 5). Removing the headline data cache on 9 Oct did NOT raise it — `/pulse`
+  reading the database per visit is affordable. Headline sync ran unattended all month.
 - 7 Oct (later) — Homepage and /pulse disagreed: the cron's "refresh the pages" step was being
   killed by the 30 s timeout, and tag revalidation used the longest stale window ("max" → "seconds").
   Headline times ("28m ago") were being cached too, so they froze and differed between pages — now
