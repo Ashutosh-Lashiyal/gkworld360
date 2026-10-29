@@ -40,7 +40,10 @@
 
 ## 🟠 Next (in order)
 
-- [ ] **Animations — APPROVED 28 Oct, ready to build.** Owner approved every effect in the motion
+- [ ] **Animations — BUILT on branch `feature/animations` (28 Oct), owner to review.** Next: the owner
+      checks them on laptop + phone (localhost:3000); pushes the branch; mobile PageSpeed of the
+      branch's Vercel preview vs the Vercel site; then merge into `main`. Details: PROJECT_CONTEXT.md.
+      Owner approved every effect in the motion
       prototype EXCEPT the hero globe: scroll reveal, count-up, eased menus, page transitions (title
       morphs into the article), share menu, bookmark pop + toast, confirm dialog, Gyaani panel.
       Build on a branch in small steps. Prototype (28 Oct):
@@ -109,6 +112,20 @@
         code only on /atlas and the homepage section when scrolled to; pictures load when a card
         opens; the timeline is real text in the page (search engines and AI can read it).
       - **India-compliant boundary data before drawing ANY country borders** — land only until then.
+      - **Placement (discussed 29 Oct):** its own page /atlas · "Atlas" in the main menu next to
+        Subjects (Read Later → bookmark icon by the bell, Contact → footer — to confirm) · homepage
+        section straight after Explore Subjects · "On the map" box on articles (two-way with the
+        cards' "Read the article") · "… on the map" strip on subject pages · Atlas entries in search
+        · footer link.
+      - **Every card gets its own address (owner agreed, 29 Oct):** /atlas/battle-of-plassey-1757
+        (and /hi/atlas/…) opens the Atlas with the globe turned there and that card open — for
+        sharing (WhatsApp preview card + the Share button on cards) and so Google can find each
+        card. The slug is made automatically from the title when the entry is published and is
+        PERMANENT afterwards (same rule as article slugs). Needs a `slug` field on Atlas entries.
+      - **Goes public from day one (owner, 29 Oct):** "I want to see it develop — we can't find
+        issues later when there's too much data." Show ONLY real, article-backed entries (13 at
+        start); the pink examples stay in the prototype. Subject buttons appear only for subjects
+        that have entries.
       - Build order: 0 prototype ✅ → 1 approved animations → 2 Atlas entries in /admin + catch-up →
         3 /atlas page (EN + HI) → 4 homepage section, menu, article link, share cards → 5 pipeline doc.
       - Prototype: https://claude.ai/artifact/DdztX491xSWnCWW7cqcLgp (v4, 28 Oct) — 28 entries:
