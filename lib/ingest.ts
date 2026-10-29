@@ -487,6 +487,102 @@ export async function publishArticle(id: number): Promise<{ id: number; title: s
   return { id, title: String(doc.title) };
 }
 
+// ── Fixing text in EXISTING articles (29 Oct 2026) ───────────────────────────
+// Swaps exact sentences for corrected ones — first used for the NCERT date
+// fixes in drafts/ncert-fixes-2026-10-29.json. It searches all the text of one
+// article in one language: title, description, cover caption and the whole
+// body (paragraphs, headings, Key Takeaways, image captions).
+//
+// SAFETY: every "find" must appear EXACTLY ONCE in that article + language.
+// Missing (someone edited the sentence in /admin since) or twice (we can't
+// tell which one is meant) → that whole group is skipped and reported, so an
+// article is never left half-fixed. Nothing is guessed.
+//
+// The article KEEPS its status: published stays published (saving "as a
+// draft" on a published article hides it from the site — see writeImagePrompts).
+
+export type TextFix = { find: string; replace: string };
+export type TextFixFile = {
+  articles?: { slug: string; locale: "en" | "hi"; fixes: TextFix[] }[];
+  media?: TextFix[]; // fixes to image alt text (Media collection, one language)
+};
+
+/** Returns a copy of `value` with fn applied to every string inside it, however deeply nested. */
+function mapStrings(value: unknown, fn: (s: string) => string): unknown {
+  if (typeof value === "string") return fn(value);
+  if (Array.isArray(value)) return value.map((v) => mapStrings(v, fn));
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, mapStrings(v, fn)]));
+  }
+  return value; // numbers, true/false, null — left alone
+}
+
+/** How many times `find` appears across all the strings inside `value`. */
+function countIn(value: unknown, find: string): number {
+  let n = 0;
+  mapStrings(value, (s) => {
+    n += s.split(find).length - 1;
+    return s;
+  });
+  return n;
+}
+
+// Only these fields are searched — never the slug, the image prompts or ids.
+const FIXABLE_FIELDS = ["title", "description", "coverImageCaption", "body"] as const;
+
+export async function fixArticleText(file: TextFixFile): Promise<{ changed: string[]; skipped: string[] }> {
+  const payload = await getPayload({ config: configPromise });
+  const changed: string[] = [];
+  const skipped: string[] = [];
+
+  for (const g of file.articles ?? []) {
+    const label = `${g.slug} (${g.locale})`;
+    // draft: true → the LATEST version, so we never overwrite unpublished edits with older text.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const doc = (await payload.find({ collection: "articles", where: { slug: { equals: g.slug } }, limit: 1, locale: g.locale, depth: 0, draft: true })).docs[0] as any;
+    if (!doc) {
+      skipped.push(`${label}: no article with this slug in this database`);
+      continue;
+    }
+    const fields = Object.fromEntries(FIXABLE_FIELDS.filter((k) => doc[k] != null).map((k) => [k, doc[k]]));
+
+    // 1. Check EVERY find before changing anything…
+    const problems = g.fixes
+      .map((f) => ({ f, n: countIn(fields, f.find) }))
+      .filter(({ n }) => n !== 1)
+      .map(({ f, n }) => `found ${n} times: "${f.find.slice(0, 70)}…"`);
+    if (problems.length > 0) {
+      skipped.push(`${label}: NOTHING changed —\n    ${problems.join("\n    ")}`);
+      continue;
+    }
+
+    // 2. …then swap them all. (A function as the replacement, so a "$" in the
+    //    new text is taken literally, not as a regex code.)
+    const data = mapStrings(fields, (s) => g.fixes.reduce((t, f) => t.replace(f.find, () => f.replace), s)) as Record<string, unknown>;
+    const published = doc._status === "published";
+    await payload.update({
+      collection: "articles",
+      id: doc.id,
+      locale: g.locale,
+      draft: !published,
+      data: { ...data, ...(published ? { _status: "published" } : {}) },
+    });
+    changed.push(`${label}: ${g.fixes.length} fix(es) — ${published ? "kept PUBLISHED (live now)" : "still a DRAFT (publish in /admin to show it)"}`);
+  }
+
+  for (const f of file.media ?? []) {
+    const found = await payload.find({ collection: "media", where: { alt: { contains: f.find } }, limit: 2, depth: 0 });
+    if (found.docs.length !== 1) {
+      skipped.push(`media alt: found ${found.docs.length} images with "${f.find.slice(0, 70)}…" — NOTHING changed`);
+      continue;
+    }
+    const m = found.docs[0];
+    await payload.update({ collection: "media", id: m.id, data: { alt: String(m.alt).replace(f.find, () => f.replace) } });
+    changed.push(`media ${m.id}: alt text fixed`);
+  }
+  return { changed, skipped };
+}
+
 // ── World360 Atlas entries (29 Oct 2026) ──────────────────────────────────────
 // Saves Atlas entries as DRAFTS, English + Hindi on one document — the same
 // two-step pattern as createArticleDraft above. The owner reviews and
@@ -519,12 +615,17 @@ const atlasLangData = (l: AtlasLang) => ({
   hook: l.hook,
 });
 
+// replace = true (29 Oct): an entry that already exists as a DRAFT is deleted
+// and made again from the file — how a corrected file reaches the database.
+// A PUBLISHED entry is never deleted (its web address may have been shared).
 export async function createAtlasEntries(
-  entries: AtlasEntryInput[]
-): Promise<{ created: { id: number | string; title: string; slug: string }[]; skipped: string[] }> {
+  entries: AtlasEntryInput[],
+  replace = false
+): Promise<{ created: { id: number | string; title: string; slug: string }[]; skipped: string[]; replaced: string[] }> {
   const payload = await getPayload({ config: configPromise });
   const created: { id: number | string; title: string; slug: string }[] = [];
   const skipped: string[] = [];
+  const replaced: string[] = [];
 
   for (const e of entries) {
     // Find the article (draft: true → also finds an article that is still a draft).
@@ -542,8 +643,17 @@ export async function createAtlasEntries(
       draft: true,
     });
     if (existing.docs[0]) {
-      skipped.push(e.en.title);
-      continue;
+      if (!replace) {
+        skipped.push(e.en.title);
+        continue;
+      }
+      if (existing.docs[0]._status === "published") {
+        skipped.push(`${e.en.title} (PUBLISHED — not replaced; fix it in /admin)`);
+        continue;
+      }
+      // A draft: delete it, then fall through and create it again from the file.
+      await payload.delete({ collection: "atlas-entries", id: existing.docs[0].id });
+      replaced.push(e.en.title);
     }
 
     // English first, as a draft. The slug is left empty on purpose — the
@@ -576,5 +686,5 @@ export async function createAtlasEntries(
 
     created.push({ id: doc.id, title: e.en.title, slug: String(doc.slug) });
   }
-  return { created, skipped };
+  return { created, skipped, replaced };
 }

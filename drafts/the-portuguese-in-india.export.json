@@ -114,7 +114,7 @@
               "children": [
                 {
                   "mode": "normal",
-                  "text": "The sailor who discovered the sea-route was Vasco da Gama. He sailed via the Cape of Good Hope, at the southern tip of Africa, and arrived at Calicut on India's south-western coast on 27 May 1498.",
+                  "text": "The sailor who discovered the sea-route was Vasco da Gama. He sailed via the Cape of Good Hope, at the southern tip of Africa, and arrived at Calicut on India's south-western coast in May 1498.",
                   "type": "text",
                   "style": "",
                   "detail": 0,
@@ -208,7 +208,7 @@
                   },
                   {
                     "id": "86a3b46d2e650d7bdd61f16e",
-                    "text": "Vasco da Gama reached Calicut on 27 May 1498, sailing via the Cape of Good Hope."
+                    "text": "Vasco da Gama reached Calicut in May 1498, sailing via the Cape of Good Hope."
                   },
                   {
                     "id": "8fed16023b593be82c812a3f",
@@ -344,7 +344,7 @@
               "children": [
                 {
                   "mode": "normal",
-                  "text": "समुद्री मार्ग की खोज करने वाला नाविक था वास्को-डि-गामा। वह अफ्रीका के दक्षिणी छोर पर स्थित केप ऑफ गुड होप से होकर आया और 27 मई 1498 को भारत के दक्षिण-पश्चिमी तट पर स्थित कालीकट पहुँचा।",
+                  "text": "समुद्री मार्ग की खोज करने वाला नाविक था वास्को-डि-गामा। वह अफ्रीका के दक्षिणी छोर पर स्थित केप ऑफ गुड होप से होकर आया और मई 1498 में भारत के दक्षिण-पश्चिमी तट पर स्थित कालीकट पहुँचा।",
                   "type": "text",
                   "style": "",
                   "detail": 0,
@@ -438,7 +438,7 @@
                   },
                   {
                     "id": "4afb425315735f3ed10999f7",
-                    "text": "वास्को-डि-गामा केप ऑफ गुड होप से होते हुए 27 मई 1498 को कालीकट पहुँचा।"
+                    "text": "वास्को-डि-गामा केप ऑफ गुड होप से होते हुए मई 1498 में कालीकट पहुँचा।"
                   },
                   {
                     "id": "e52064e67d99106895cc3746",

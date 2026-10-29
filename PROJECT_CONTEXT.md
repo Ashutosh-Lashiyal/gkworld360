@@ -30,6 +30,13 @@ the CMS, image prompts in /admin, Gyaani with guardrails, Read Later, the daily 
 Content is created on the **Vercel site's** database via `npm run dev:prod` (port 3001) +
 `--production` scripts; dev is for code. Schema is in sync on both branches.
 
+- **NCERT date fixes (29 Oct):** the owner's rule — where NCERT states a fact, NCERT wins; where
+  NCERT is silent, the book's fact stays. Applied: Calicut "May 1498" (no day), Surat 1612, Calcutta
+  fort "begun 1696, named Fort William 1700". New `scripts/fix-text.mjs` swaps exact sentences in
+  existing articles (each must match exactly once, published stays published);
+  `create-atlas-entries.mjs --replace` remakes DRAFT Atlas cards from a corrected file. Done on
+  **dev**; production waits for the owner's go (see TODO.md).
+
 - **Sharing (18 Sep):** every article/news page has a Share button (`components/ShareButton.tsx` —
   the phone's own share sheet on touch devices, a Copy/WhatsApp/Telegram/X/Email menu with a mouse),
   and every page carries a branded **link-preview card** (`app/api/og/route.tsx`, built via

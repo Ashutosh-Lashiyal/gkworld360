@@ -7,20 +7,18 @@
       "lng": 75.78,
       "year": 1498,
       "month": 5,
-      "day": 27,
       "en": {
         "title": "Vasco da Gama reaches Calicut",
         "place": "Calicut",
         "region": "Kozhikode, Kerala",
-        "hook": "Sailing round the Cape of Good Hope, Vasco da Gama arrived here on 27 May 1498 — and for the first time, Europe and India were linked directly by sea. Within twelve years, the Portuguese held Goa."
+        "hook": "Sailing round the Cape of Good Hope, Vasco da Gama arrived here in May 1498 — and for the first time, Europe and India were linked directly by sea. Within twelve years, the Portuguese held Goa."
       },
       "hi": {
         "title": "वास्को-डि-गामा कालीकट पहुँचता है",
         "place": "कालीकट",
         "region": "कोझिकोड, केरल",
-        "hook": "केप ऑफ गुड होप से होकर वास्को-डि-गामा 27 मई 1498 को यहाँ पहुँचा — और पहली बार यूरोप और भारत समुद्र के रास्ते सीधे जुड़ गए। बारह वर्षों के भीतर गोवा पुर्तगालियों के हाथ में था।"
-      },
-      "reviewNotes": "Date as in your article (27 May 1498). Many sources say 20 May — confirm which you want; the article and the card should match."
+        "hook": "केप ऑफ गुड होप से होकर वास्को-डि-गामा मई 1498 में यहाँ पहुँचा — और पहली बार यूरोप और भारत समुद्र के रास्ते सीधे जुड़ गए। बारह वर्षों के भीतर गोवा पुर्तगालियों के हाथ में था।"
+      }
     },
     {
       "article": "the-portuguese-in-india",
@@ -117,18 +115,18 @@
       "article": "the-english-in-india",
       "lat": 21.17,
       "lng": 72.83,
-      "year": 1613,
+      "year": 1612,
       "en": {
         "title": "The English open a factory at Surat",
         "place": "Surat",
         "region": "Gujarat",
-        "hook": "Captain Hawkins had failed at Emperor Jahangir's court in 1608. Five years later the English were allowed their first factory at Surat, the great port of Gujarat — the start of a long climb to power."
+        "hook": "Captain Hawkins had failed at Emperor Jahangir's court in 1608. Four years later the English were allowed their first factory at Surat, the great port of Gujarat — the start of a long climb to power."
       },
       "hi": {
         "title": "अंग्रेज़ सूरत में कोठी खोलते हैं",
         "place": "सूरत",
         "region": "गुजरात",
-        "hook": "1608 में कैप्टन हॉकिन्स सम्राट जहाँगीर के दरबार में असफल रहे थे। पाँच वर्ष बाद अंग्रेज़ों को गुजरात के महान बंदरगाह सूरत में पहली कोठी की अनुमति मिली — सत्ता की ओर लंबी चढ़ाई की शुरुआत।"
+        "hook": "1608 में कैप्टन हॉकिन्स सम्राट जहाँगीर के दरबार में असफल रहे थे। चार वर्ष बाद अंग्रेज़ों को गुजरात के महान बंदरगाह सूरत में पहली कोठी की अनुमति मिली — सत्ता की ओर लंबी चढ़ाई की शुरुआत।"
       }
     },
     {
@@ -176,13 +174,13 @@
         "title": "Fort William, the English stronghold in Bengal",
         "place": "Calcutta",
         "region": "Kolkata, West Bengal",
-        "hook": "Three villages — Sutanuti, Kalikata and Govindpur — became one new city, Calcutta. In 1700 its factory was fortified as Fort William, barely a decade after the English had lost every settlement to Aurangzeb."
+        "hook": "Three villages — Sutanuti, Kalikata and Govindpur — became one new city, Calcutta. Its fort, begun in 1696, was named Fort William in 1700 — barely a decade after the English had lost every settlement to Aurangzeb."
       },
       "hi": {
         "title": "फ़ोर्ट विलियम, बंगाल में अंग्रेज़ों का गढ़",
         "place": "कलकत्ता",
         "region": "कोलकाता, पश्चिम बंगाल",
-        "hook": "तीन गाँव — सुतानुती, कालिकाता और गोविंदपुर — मिलकर एक नया नगर, कलकत्ता, बने। 1700 में इसकी कोठी किलेबंद होकर फ़ोर्ट विलियम बनी — औरंगज़ेब से हर बस्ती हारने के मुश्किल से एक दशक बाद।"
+        "hook": "तीन गाँव — सुतानुती, कालिकाता और गोविंदपुर — मिलकर एक नया नगर, कलकत्ता, बने। 1696 में शुरू हुए इसके किले को 1700 में फ़ोर्ट विलियम नाम मिला — औरंगज़ेब से हर बस्ती हारने के मुश्किल से एक दशक बाद।"
       }
     },
     {

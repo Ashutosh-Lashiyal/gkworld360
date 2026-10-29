@@ -1,0 +1,91 @@
+{
+  "_about": "NCERT date fixes agreed by the owner on 29 Oct 2026 (\"go with NCERT only\"): Calicut — NCERT gives \"May 1498\", no day; Surat — NCERT Class 8 timeline \"1612–1690\"; Calcutta — NCERT \"By 1696, it began building a fort\". Run: node scripts/fix-text.mjs drafts/ncert-fixes-2026-10-29.json [--production]",
+  "articles": [
+    {
+      "slug": "the-portuguese-in-india",
+      "locale": "en",
+      "fixes": [
+        {
+          "find": "on India's south-western coast on 27 May 1498.",
+          "replace": "on India's south-western coast in May 1498."
+        },
+        {
+          "find": "Vasco da Gama reached Calicut on 27 May 1498,",
+          "replace": "Vasco da Gama reached Calicut in May 1498,"
+        }
+      ]
+    },
+    {
+      "slug": "the-portuguese-in-india",
+      "locale": "hi",
+      "fixes": [
+        {
+          "find": "होकर आया और 27 मई 1498 को भारत",
+          "replace": "होकर आया और मई 1498 में भारत"
+        },
+        {
+          "find": "होते हुए 27 मई 1498 को कालीकट",
+          "replace": "होते हुए मई 1498 में कालीकट"
+        }
+      ]
+    },
+    {
+      "slug": "the-english-in-india",
+      "locale": "en",
+      "fixes": [
+        {
+          "find": "The breakthrough came in 1613,",
+          "replace": "The breakthrough came in 1612,"
+        },
+        {
+          "find": "the first factory was permitted at Surat in 1613.",
+          "replace": "the first factory was permitted at Surat in 1612."
+        },
+        {
+          "find": "single new city — Calcutta — and in 1700 the factory at Sutanuti was fortified and named Fort William.",
+          "replace": "single new city — Calcutta. The fort the Company had begun building there in 1696 was named Fort William in 1700."
+        },
+        {
+          "find": "became Calcutta; Fort William was built at Sutanuti in 1700.",
+          "replace": "became Calcutta; the fort begun in 1696 was named Fort William in 1700."
+        },
+        {
+          "find": "harbour at Surat, 1613 — illustration",
+          "replace": "harbour at Surat, 1612 — illustration"
+        }
+      ]
+    },
+    {
+      "slug": "the-english-in-india",
+      "locale": "hi",
+      "fixes": [
+        {
+          "find": "सफलता 1613 में मिली",
+          "replace": "सफलता 1612 में मिली"
+        },
+        {
+          "find": "पहली कोठी की अनुमति 1613 में सूरत में मिली।",
+          "replace": "पहली कोठी की अनुमति 1612 में सूरत में मिली।"
+        },
+        {
+          "find": "एक नया नगर — कलकत्ता — बनाया गया, और 1700 में सुतानुती की कोठी को किलेबंद कर 'फ़ोर्ट विलियम' नाम दिया गया।",
+          "replace": "एक नया नगर — कलकत्ता — बनाया गया। कंपनी ने 1696 में वहाँ जो किला बनाना शुरू किया था, उसे 1700 में 'फ़ोर्ट विलियम' नाम दिया गया।"
+        },
+        {
+          "find": "मिलकर कलकत्ता बने; 1700 में सुतानुती में फ़ोर्ट विलियम बना।",
+          "replace": "मिलकर कलकत्ता बने; 1696 में शुरू हुए किले को 1700 में फ़ोर्ट विलियम नाम मिला।"
+        },
+        {
+          "find": "बंदरगाह, 1613 — चित्रण",
+          "replace": "बंदरगाह, 1612 — चित्रण"
+        }
+      ]
+    }
+  ],
+  "media": [
+    {
+      "find": "harbour at Surat, 1613, with",
+      "replace": "harbour at Surat, 1612, with"
+    }
+  ]
+}

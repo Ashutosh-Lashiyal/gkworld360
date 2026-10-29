@@ -29,8 +29,24 @@
       - [x] **Owner approved the teaser cards as they work now (29 Oct).**
       - [x] A card link (/atlas/<slug>) now opens ON the globe with the card open, not at the page
         top; the selected timeline entry is dark with "On the globe now" (approved from a preview, 29 Oct).
-      - [ ] **Owner:** answer the 3 notes in the JSON (Calicut 27 vs 20 May; Amsterdam as the
-        company's dot; Delhi 11 May) — needed before the entries go to production.
+      - [x] **Owner answered (29 Oct): "go with NCERT only".** Checked against NCERT Class 7, 8
+        (new 2025 + old) and 11 books. Changed in the drafts files (cards + articles, EN + HI):
+        Calicut "27 May 1498" → "May 1498" (NCERT gives no day); Surat 1613 → 1612 (NCERT
+        timeline "1612–1690"); Calcutta fort "begun in 1696, named Fort William in 1700" (NCERT:
+        "By 1696, it began building a fort"). Delhi 11 May 1857 confirmed by NCERT — kept.
+        Amsterdam: NCERT names no city or year for the Dutch company — still open (see below).
+      - [x] **NCERT fixes copied into DEV (29 Oct)** with the new `scripts/fix-text.mjs` +
+        `drafts/ncert-fixes-2026-10-29.json` (both articles, EN + HI, + the Surat image's alt
+        text) and `create-atlas-entries.mjs --replace` (12 dev cards remade; Surat card is now
+        /atlas/the-english-open-a-factory-at-surat-1612). Checked on the rendered pages.
+      - [ ] **Owner:** look at the fixed pages on dev, then say go → run the same fix on
+        PRODUCTION: `npm run dev:prod`, then `node scripts/fix-text.mjs
+        drafts/ncert-fixes-2026-10-29.json --production`. (Atlas cards aren't on production yet —
+        they go there later from the corrected file.)
+      - [x] **Owner decided (29 Oct): KEEP cards whose facts aren't in NCERT at all** (Dutch 1602 /
+        Amsterdam, Masulipatnam 1605, Pulicat 1610, Chinsura 1653, Cochin 1663, Albuquerque).
+        The rule is: where NCERT states a fact, NCERT wins; where NCERT is silent, the book's
+        fact stays.
       - [ ] Write the Atlas step into docs/GKWORLD360_CONTENT_PIPELINE.md (Atlas build step 5).
       - [ ] Check: the Hindi page of "The Revolt of 1857" seems to have no Hindi BODY in the CMS
         (only the title is Hindi) — its card's section list falls back to English.
@@ -44,6 +60,27 @@
       "Contact Support") and Privacy Policy / Terms of Service lead to pages that don't exist (404).
 - [x] **Contact form dropdown to match the site's look (owner, 29 Oct) — DONE:** new
       `components/Select.tsx` (white list, mint highlight, full keyboard support).
+- [ ] **Automated images — test in progress (29 Oct).** Cloudflare Workers AI works with the
+      existing account (token `CLOUDFLARE_AI_TOKEN` in .env.local). Round 1 (sepia, same prompts as
+      /admin): best scenes = FLUX.2 klein-4b, best portraits = Lucid Origin (klein REFUSES real people;
+      schnell drew modern trucks). Free allowance = only ~10–15 good pictures/day (not 170 — that was
+      the cheapest model); paid plan ~$5/month. Prompt flaws found: section prompts know only the
+      heading ("factories" → smoking chimneys) and quoted titles get written into the picture.
+      - **DECIDED (29 Oct, owner asked Claude to decide):** automated via Cloudflare Workers AI,
+        FREE plan · FLUX.2 klein-4b for covers/scenes, Lucid Origin for real-people portraits, NOT
+        schnell (drew modern trucks) · house style → ink + soft WATERCOLOUR wash (owner's worry:
+        sepia-only may bore users) · ONE picture per slot + regenerate on request · a queue when the
+        daily allowance runs out, never blocking an article · prompt fixes (section content in the
+        prompt, no quoted titles, "period-accurate, no modern objects") · regenerate the ~13
+        existing pictures · upgrade to the ~$5/month plan only if the queue lags > a week (owner's
+        call). Only the colour test can change the style part (bad colour → keep sepia).
+        Order: colour test → owner's yes → image-style.ts → pipeline piece 7 → regenerate → docs.
+      - [ ] **Run the COLOUR test after 05:30 IST 30 Oct** (allowance resets then) — script ready in
+        the scratchpad (`cf-image-test-colour.mjs`, only the style sentence changed). Owner compares
+        sepia vs colour, ideally shows both to 4–5 real users.
+      - [ ] **Owner rule: do NOT change `lib/image-style.ts` until the owner picks a style.**
+      - [ ] The live Surat cover has "SURAT, 1613" printed IN the picture (now contradicts NCERT
+        1612) — replace it once the style is chosen.
 - [ ] **Owner to decide:** the contact form's name box shows "Ashutosh Lashiyal" as its example
       text — your real name on a public page. Suggest a generic example.
 - [ ] **Merge order:** `feature/animations` has a bug fixed only on `feature/atlas` (menus/Gyaani

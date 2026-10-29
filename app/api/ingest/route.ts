@@ -15,9 +15,10 @@
 // Body: { "action": "create-draft", "draft": {…} }  |  { "action": "delete", "id": 4 }
 //       | { "action": "add-hindi", "hindi": { slug, hi: { title, description, map } } }
 //       | { "action": "add-images", "images": { slug, cover?, images: [{ file, alt, caption, afterHeading }] } }
-//       | { "action": "create-atlas-entries", "entries": [ …see drafts/atlas-catch-up.json… ] }
+//       | { "action": "create-atlas-entries", "entries": [ …see drafts/atlas-catch-up.json… ], "replace"?: true }
+//       | { "action": "fix-text", "fixes": { articles: [{ slug, locale, fixes: [{ find, replace }] }], media?: […] } }
 
-import { createArticleDraft, deleteArticle, addHindiToArticle, addImagesToArticle, importArticle, createQuote, writeImagePrompts, publishArticle, createAtlasEntries, type AtlasEntryInput, type ArticleDraft, type HindiAddition, type ImageAddition, type ArticleExport, type QuoteInput } from "@/lib/ingest";
+import { createArticleDraft, deleteArticle, addHindiToArticle, addImagesToArticle, importArticle, createQuote, writeImagePrompts, publishArticle, createAtlasEntries, fixArticleText, type AtlasEntryInput, type TextFixFile, type ArticleDraft, type HindiAddition, type ImageAddition, type ArticleExport, type QuoteInput } from "@/lib/ingest";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,7 @@ export async function POST(req: Request) {
   }
 
   const host = dbHost();
-  let body: { action?: string; draft?: ArticleDraft; hindi?: HindiAddition; images?: ImageAddition; article?: ArticleExport; quote?: QuoteInput; entries?: AtlasEntryInput[]; slug?: string; force?: boolean; id?: number; production?: boolean };
+  let body: { action?: string; draft?: ArticleDraft; hindi?: HindiAddition; images?: ImageAddition; article?: ArticleExport; quote?: QuoteInput; entries?: AtlasEntryInput[]; replace?: boolean; fixes?: TextFixFile; slug?: string; force?: boolean; id?: number; production?: boolean };
   try {
     body = await req.json();
   } catch {
@@ -65,7 +66,11 @@ export async function POST(req: Request) {
       return Response.json({ ok: true, host, ...result });
     }
     if (body.action === "create-atlas-entries" && Array.isArray(body.entries)) {
-      const result = await createAtlasEntries(body.entries);
+      const result = await createAtlasEntries(body.entries, body.replace === true);
+      return Response.json({ ok: true, host, ...result });
+    }
+    if (body.action === "fix-text" && body.fixes) {
+      const result = await fixArticleText(body.fixes);
       return Response.json({ ok: true, host, ...result });
     }
     if (body.action === "write-prompts") {
