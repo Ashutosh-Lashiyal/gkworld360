@@ -65,7 +65,8 @@ export async function atlasMetadata(lang: AtlasLang, slug?: string): Promise<Met
     const entry = (await getAtlasEntries(lang)).find((e) => e.slug === slug);
     if (entry) {
       title = `${entry.title} (${entry.date})`;
-      description = [entry.region ? `${entry.place}, ${entry.region}` : entry.place, ...entry.keyPoints].join(" · ");
+      // The hook is written to make people click — ideal for a link preview.
+      description = entry.hook || (entry.region ? `${entry.place}, ${entry.region}` : entry.place);
       label = `${t.title} · ${entry.date}`;
     }
   }

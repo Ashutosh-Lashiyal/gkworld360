@@ -17,6 +17,11 @@ import { unstable_cache } from "next/cache";
 import { getPayload } from "payload";
 import { configPromise } from "@/app/(payload)/config";
 import { formatAtlasDate, sortKey, type AtlasEntry, type AtlasLang } from "@/lib/atlas-shared";
+import { estimateReadingTime, extractHeadingsFromLexical } from "@/lib/cms";
+
+// How many of the article's section headings the card lists (the rest are
+// one click away — that's the point).
+const MAX_SECTIONS = 4;
 
 // `npm run dev` sets NODE_ENV to "development"; the Vercel site is "production".
 const PREVIEW_DRAFTS = process.env.NODE_ENV === "development";
@@ -35,7 +40,7 @@ type RawEntry = {
   day?: number | null;
   approximate?: boolean | null;
   dateText?: string | null;
-  keyPoints?: { text?: string | null }[] | null;
+  hook?: string | null;
   article?: number | { id: number } | null;
   image?: { url?: string | null; alt?: string | null } | number | null;
   _status?: string | null;
@@ -44,6 +49,7 @@ type RawArticle = {
   id: number;
   slug: string;
   title?: Partial<Record<AtlasLang, string | null>> | null; // locale "all" → one value per language
+  body?: Partial<Record<AtlasLang, unknown>> | null; //        the article text, for headings + reading time
   subject?: { slug?: string } | number | null;
   category?: { slug?: string } | number | null;
   coverImage?: { url?: string | null; alt?: string | null } | number | null;
@@ -79,7 +85,9 @@ async function loadAtlasEntries(lang: AtlasLang): Promise<AtlasEntry[]> {
       limit: ids.length,
       draft: PREVIEW_DRAFTS,
       where: PREVIEW_DRAFTS ? { id: { in: ids } } : { and: [{ id: { in: ids } }, { _status: { equals: "published" } }] },
-      select: { slug: true, title: true, subject: true, category: true, coverImage: true, _status: true },
+      // `body` too — for the card's section list and reading time. Saved in the
+      // same 6-hour cache as everything else, so it costs nothing per visit.
+      select: { slug: true, title: true, body: true, subject: true, category: true, coverImage: true, _status: true },
     });
     const byId = new Map((articles.docs as unknown as RawArticle[]).map((a) => [a.id, a]));
 
@@ -98,6 +106,20 @@ async function loadAtlasEntries(lang: AtlasLang): Promise<AtlasEntry[]> {
       const hasHindi = Boolean(a.title?.hi?.trim());
       const useHindi = lang === "hi" && hasHindi;
 
+      // "In the full article": the h2 headings of the version the card links
+      // to (Hindi when it exists), each linking straight to its section. The
+      // ids match the article page's own (extractHeadingsFromLexical uses the
+      // same slugifyHeading as the page). A heading that just repeats the
+      // article's title is skipped.
+      const body = (useHindi ? a.body?.hi : null) ?? a.body?.en;
+      const articleHref = useHindi ? "/hi" + path : path;
+      const articleTitle = ((useHindi ? a.title?.hi : a.title?.en) ?? a.title?.en ?? "").trim();
+      const sections = extractHeadingsFromLexical(body)
+        .filter((h) => h.depth === 2 && h.text.trim().toLowerCase() !== articleTitle.toLowerCase())
+        .slice(0, MAX_SECTIONS)
+        .map((h) => ({ text: h.text, href: `${articleHref}#${h.id}` }));
+      const minutes = parseInt(estimateReadingTime(body), 10) || 1; // "4 min read" → 4
+
       // The card's picture: the entry's own, else the article's cover.
       const pic = typeof e.image === "object" && e.image?.url ? e.image : typeof a.coverImage === "object" && a.coverImage?.url ? a.coverImage : null;
 
@@ -112,12 +134,9 @@ async function loadAtlasEntries(lang: AtlasLang): Promise<AtlasEntry[]> {
         date: formatAtlasDate(e as { year: number }, lang),
         sort: sortKey(e.year, e.month, e.day),
         year: e.year,
-        keyPoints: (e.keyPoints ?? []).map((k) => k.text ?? "").filter(Boolean),
+        hook: e.hook ?? "",
         subject,
-        article: {
-          title: (useHindi ? a.title?.hi : a.title?.en) ?? a.title?.en ?? "",
-          href: useHindi ? "/hi" + path : path,
-        },
+        article: { title: articleTitle, href: articleHref, minutes, sections },
         image: pic?.url ? { url: pic.url, alt: pic.alt ?? "" } : null,
         draft: e._status !== "published" || a._status !== "published",
       });

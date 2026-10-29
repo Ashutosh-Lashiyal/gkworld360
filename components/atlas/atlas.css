@@ -83,9 +83,34 @@
 .atlas-app .tl-item::before { content: ""; position: absolute; left: -25px; top: 17px; width: 10px; height: 10px; border-radius: 50%; background: var(--page); border: 2px solid var(--sig, #b5b0a5);
   transition: transform .2s var(--ease), background-color .2s; }
 .atlas-app .tl-item:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(18, 42, 38, 0.10); border-color: #c9c5bc; border-left-color: var(--sig, var(--hairline)); }
-/* the selected entry (its card is open): dark outline + a light mint fill */
-.atlas-app .tl-item[aria-current="true"] { background: #effaf5; border-color: var(--frame); border-left-color: var(--sig, var(--frame)); box-shadow: 0 6px 18px rgba(18, 42, 38, 0.12); }
-.atlas-app .tl-item[aria-current="true"]::before { background: var(--sig, var(--mint)); border-color: var(--frame); transform: scale(1.35); }
+/* THE SELECTED ENTRY (its card is open). Owner, 29 Oct 2026: "make it more
+   distinguished so the user easily knows this has been selected" — approved
+   from a preview. It turns DARK, the same Deep Teal as the globe panel beside
+   it, so it reads as "this is what the globe is showing":
+   - white title, mint date, a thicker subject-colour stripe (subject still clear)
+   - a small notch on its right edge, pointing at the globe
+   - a bigger spine dot with a soft ring in the subject's colour
+   - an "On the globe now" line with a gently pulsing dot (still for reduced motion)
+   It comes after :hover in this file, so hovering it doesn't undo any of this. */
+.atlas-app .tl-item[aria-current="true"] { background: var(--frame); border-color: var(--frame); border-left: 6px solid var(--sig, var(--mint)); padding-left: 14px;
+  box-shadow: 0 10px 24px rgba(18, 42, 38, 0.28); transform: none; }
+.atlas-app .tl-item[aria-current="true"]::before { background: var(--sig, var(--mint)); border-color: var(--frame); transform: scale(1.45);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--sig, var(--mint)) 25%, transparent); }
+/* the notch: a small triangle sticking out of the right edge (into the column's 16px padding) */
+.atlas-app .tl-item[aria-current="true"]::after { content: ""; position: absolute; right: -9px; top: 18px; width: 0; height: 0;
+  border-top: 9px solid transparent; border-bottom: 9px solid transparent; border-left: 9px solid var(--frame); }
+.atlas-app .tl-item[aria-current="true"] .tl-date { color: var(--mint); }
+.atlas-app .tl-item[aria-current="true"] .tl-title { color: #fff; }
+.atlas-app .tl-item[aria-current="true"] .tl-place { color: rgba(255, 255, 255, .78); }
+.atlas-app .tl-item[aria-current="true"] .tl-place svg { color: var(--mint); }
+/* the subject tag: the subject's colour mixed with white, so it stays readable on dark */
+.atlas-app .tl-item[aria-current="true"] .tl-subj { color: color-mix(in srgb, var(--sig, #b5b0a5) 45%, #fff); background: rgba(255, 255, 255, .10); }
+.atlas-app .tl-item[aria-current="true"] .atlas-draft { color: #fdba74; } /* the laptop-only Draft tag, readable on dark */
+.atlas-app .tl-live { display: inline-flex; align-items: center; gap: 7px; margin-top: 4px; font: 600 11px/1 var(--sans);
+  text-transform: uppercase; letter-spacing: .1em; color: var(--mint); }
+.atlas-app .tl-live i { width: 7px; height: 7px; border-radius: 50%; background: var(--mint); animation: atlas-live 1.8s ease-in-out infinite; }
+@keyframes atlas-live { 0%, 100% { box-shadow: 0 0 0 0 rgba(110, 231, 183, .6); } 50% { box-shadow: 0 0 0 5px rgba(110, 231, 183, 0); } }
+@media (prefers-reduced-motion: reduce) { .atlas-app .tl-live i { animation: none; } }
 .atlas-app .tl-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 10px; }
 .atlas-app .tl-date { font: 700 15px/1.2 var(--serif); color: var(--acc, var(--amber-dark)); font-variant-numeric: tabular-nums; }
 /* the subject as a small tinted tag on the right of the date line */
@@ -147,12 +172,22 @@
 .atlas-app .ac-place { margin: 0; display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); }
 .atlas-app .ac-place svg { flex: 0 0 auto; color: var(--emerald); }
 .atlas-app .ac-kt { margin: 6px 0 0; font: 600 12px/1.3 var(--sans); text-transform: uppercase; letter-spacing: .14em; color: var(--amber-dark); }
-.atlas-app .ac-points { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 7px; font-size: 15px; line-height: 1.55; list-style: disc; }
-.atlas-app .ac-points li::marker { color: #d97706; }
+/* THE HOOK (29 Oct 2026): a short story opening, set a little larger in the
+   serif so it reads like the start of the article — not like a list of facts */
+.atlas-app .ac-hook { margin: 2px 0 0; font: 400 16px/1.55 var(--serif); color: var(--ink); text-wrap: pretty; }
+/* "In the full article · 4 min read" — the article's own sections, each a link */
+.atlas-app .ac-inside { margin-top: 4px; padding: 12px 14px; background: var(--surface-low); border-left: 3px solid var(--mint); }
+.atlas-app .ac-inside .ac-kt { margin: 0 0 6px; }
+.atlas-app .ac-mins { text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--muted); }
+.atlas-app .ac-sections { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.atlas-app .ac-sections a { display: flex; gap: 8px; padding: 4px 0; font: 500 14px/1.4 var(--sans); color: var(--frame); text-decoration: none; }
+.atlas-app .ac-sections a::before { content: "→"; color: var(--emerald); flex: 0 0 auto; }
+.atlas-app .ac-sections a:hover { color: var(--emerald); text-decoration: underline; text-underline-offset: 3px; }
 .atlas-app .ac-near { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); padding-top: 4px; }
 .atlas-app .ac-near button { text-align: left; padding: 5px 9px; border: 1px solid var(--hairline); background: var(--surface-low); font: 500 13px/1.2 var(--sans); color: var(--frame); }
 .atlas-app .ac-near button:hover { background: var(--mint); border-color: var(--mint); }
-.atlas-app .ac-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 4px; }
+/* Read + Share: a fixed strip at the bottom of the card (above Earlier / Later) */
+.atlas-app .ac-actions { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--hairline); background: var(--surface); }
 /* The Share menu on a card opens UPWARDS (owner, 29 Oct 2026): the Share
    button sits at the very end of the card, so a menu opening downwards had no
    room and was cut off. Above it are the key points — always enough room.
@@ -190,3 +225,9 @@
      AtlasExplorer.tsx and removed when you leave the page.) */
   body.atlas-card-open [data-gyaani-launcher] { display: none; }
 }
+
+/* Hindi: no letter-spacing on the small labels. Spacing suits English capitals
+   but pulls Devanagari letters apart ("आ रं भि क"), and Hindi has no capitals
+   to space out anyway. */
+.atlas-app:lang(hi) .ac-subj, .atlas-app:lang(hi) .ac-era, .atlas-app:lang(hi) .ac-kt,
+.atlas-app:lang(hi) .tl-subj, .atlas-app:lang(hi) .tl-era-range, .atlas-app:lang(hi) .atlas-draft, .atlas-app:lang(hi) .tl-live { letter-spacing: 0; }

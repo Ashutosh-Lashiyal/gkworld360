@@ -18,6 +18,22 @@
       "Atlas" in the main menu · Read Later → bookmark icon by the bell · Contact → footer only ·
       homepage "Knowledge on the map" section after Explore Subjects · "On the map" box on articles ·
       Atlas pages in the sitemap.
+- [x] **Atlas cards are now "teasers" (owner, 29 Oct: "make the user interested in reading the full
+      article") — BUILT on feature/atlas.** The 2–3 key points became one HOOK (2–3 sentences,
+      max 250 characters, EN + HI): what happened, ending on something the article answers. Below
+      it, "In the full article · N min read" lists the article's own section headings (automatic,
+      each links to that section). "Read the full story →" + Share are pinned to the card's bottom.
+      RULE: every fact in a hook is IN the article; dates and map positions are looked up/checked.
+      The 13 dev entries were deleted and recreated as 12 (Lisbon 1497 dropped — not in the
+      article). `drafts/atlas-catch-up.json` is the master copy.
+      - [x] **Owner approved the teaser cards as they work now (29 Oct).**
+      - [x] A card link (/atlas/<slug>) now opens ON the globe with the card open, not at the page
+        top; the selected timeline entry is dark with "On the globe now" (approved from a preview, 29 Oct).
+      - [ ] **Owner:** answer the 3 notes in the JSON (Calicut 27 vs 20 May; Amsterdam as the
+        company's dot; Delhi 11 May) — needed before the entries go to production.
+      - [ ] Write the Atlas step into docs/GKWORLD360_CONTENT_PIPELINE.md (Atlas build step 5).
+      - [ ] Check: the Hindi page of "The Revolt of 1857" seems to have no Hindi BODY in the CMS
+        (only the title is Hindi) — its card's section list falls back to English.
 - [x] **Atlas fixes from the owner's review (29 Oct) — DONE:** (1) a plain mouse-wheel scroll over
       the globe no longer zooms (it trapped page scrolling) — only pinch (phone or trackpad) and
       the + / − buttons zoom; (2) the Share menu scrolls itself into view, flips left when there's

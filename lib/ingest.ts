@@ -495,7 +495,7 @@ export async function publishArticle(id: number): Promise<{ id: number; title: s
 // Each entry names its article by SLUG, not id: ids differ between the dev and
 // production databases, slugs don't — so the same file works for both.
 
-type AtlasLang = { title: string; place: string; region?: string; keyPoints: string[]; dateText?: string };
+type AtlasLang = { title: string; place: string; region?: string; hook: string; dateText?: string };
 
 export type AtlasEntryInput = {
   article: string; // the article's slug
@@ -516,7 +516,7 @@ const atlasLangData = (l: AtlasLang) => ({
   place: l.place,
   ...(l.region ? { region: l.region } : {}),
   ...(l.dateText ? { dateText: l.dateText } : {}),
-  keyPoints: l.keyPoints.map((text) => ({ text })),
+  hook: l.hook,
 });
 
 export async function createAtlasEntries(

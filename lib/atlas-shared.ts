@@ -22,9 +22,16 @@ export type AtlasEntry = {
   date: string; //           written out in the page's language, e.g. "11 May 1857"
   sort: number; //           year/month/day squeezed into one number, for ordering
   year: number; //           negative = BC — decides the time section
-  keyPoints: string[];
+  hook: string; //           2–3 sentences that make readers want the full article
   subject: string; //        the article's subject slug, e.g. "history"
-  article: { title: string; href: string };
+  article: {
+    title: string;
+    href: string;
+    minutes: number; //      reading time, e.g. 4
+    // The article's own section headings, each a link straight to that
+    // section — the card's "In the full article" list (filled in automatically).
+    sections: { text: string; href: string }[];
+  };
   image: { url: string; alt: string } | null;
   draft: boolean; //         only ever true on the laptop (preview of unpublished entries)
 };
@@ -101,8 +108,9 @@ export const T = {
     count: (places: number, eras: number) => `${places} ${places === 1 ? "place" : "places"} · ${eras} ${eras === 1 ? "time period" : "time periods"}`,
     play: "▶ Play through time",
     pause: "❚❚ Pause",
-    keyPoints: "Key points",
-    readArticle: (title: string) => `Read “${title}” →`,
+    inArticle: "In the full article",
+    minutes: (n: number) => `${n} min read`,
+    readArticle: "Read the full story →",
     earlier: "← Earlier",
     later: "Later →",
     start: "Start of the timeline",
@@ -124,6 +132,8 @@ export const T = {
     globe: "Globe",
     india: "INDIA",
     draft: "Draft · only on your laptop",
+    // The line under the selected timeline entry (its card is open beside it).
+    onGlobe: "On the globe now",
   },
   hi: {
     title: "वर्ल्ड360 एटलस",
@@ -135,8 +145,9 @@ export const T = {
     count: (places: number, eras: number) => `${places} स्थान · ${eras} कालखंड`,
     play: "▶ समय के साथ चलाएँ",
     pause: "❚❚ रोकें",
-    keyPoints: "मुख्य बिंदु",
-    readArticle: (title: string) => `“${title}” पढ़ें →`,
+    inArticle: "पूरे लेख में",
+    minutes: (n: number) => `${n} मिनट का पाठ`,
+    readArticle: "पूरी कहानी पढ़ें →",
     earlier: "← पहले",
     later: "बाद में →",
     start: "समयरेखा की शुरुआत",
@@ -158,6 +169,7 @@ export const T = {
     globe: "ग्लोब",
     india: "भारत",
     draft: "ड्राफ़्ट · केवल आपके लैपटॉप पर",
+    onGlobe: "ग्लोब पर अभी",
   },
 } as const;
 

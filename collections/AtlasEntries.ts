@@ -16,6 +16,9 @@
 // /admin, the EN / हिन्दी switch at the top flips which language you edit.
 // One Publish publishes both. /atlas shows the English text, /hi/atlas the Hindi.
 //
+// THE CARD'S TEXT = a short "hook" (see the field below), not a list of facts:
+// its job is to make readers open the full article.
+//
 // DRAFT → PUBLISH, like Articles: new entries (including the ones Claude drafts
 // with an article) start as drafts, and only the owner's Publish click puts
 // them on the Atlas. The site also hides an entry whose ARTICLE is not
@@ -237,26 +240,26 @@ export const AtlasEntries: CollectionConfig = {
 
     // ── WHAT ───────────────────────────────────────────────────────────────────
     {
-      // The card's body: 2 or 3 short facts. The whole LIST is localized, so
-      // English and Hindi each have their own list (switch the language at the
-      // top of the page to edit the Hindi one).
-      name: "keyPoints",
-      type: "array",
+      // THE HOOK (29 Oct 2026 — replaced the 2–3 "key points"). The card's job
+      // is to make readers want the FULL article (owner's aim), not to teach
+      // the whole topic: a card that gives every fact away gives no reason to
+      // click. So the card carries 2–3 sentences: what happened, then ending on
+      // something unresolved that the article answers. Below it, the card lists
+      // the article's own section headings automatically ("In the full
+      // article"), so nobody writes those twice.
+      //
+      // RULE: every fact here must be IN the article — the card and the article
+      // can never disagree, and facts are checked once, in the article.
+      name: "hook",
+      type: "textarea",
+      required: true,
       localized: true,
-      minRows: 2,
-      maxRows: 3,
-      labels: { singular: "Key point", plural: "Key points" },
+      maxLength: 250,
       admin: {
-        description: "2 or 3 short facts, one sentence each. Facts only — checked against the article.",
+        rows: 4,
+        description:
+          "2–3 sentences (max 250 characters): what happened, ending on something the article explains — make readers want to read on. Only facts that are in the article. Fill in English, then switch to हिन्दी.",
       },
-      fields: [
-        {
-          name: "text",
-          type: "textarea",
-          required: true,
-          maxLength: 200,
-        },
-      ],
     },
     {
       // Optional. Empty → the card uses the article's cover picture.

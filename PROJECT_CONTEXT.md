@@ -79,6 +79,18 @@ Content is created on the **Vercel site's** database via `npm run dev:prod` (por
   **BUG FIXED in `lib/use-presence.ts`:** the first open after a page load was lost (Gyaani panel,
   menus, the new dropdown) — the hook started a pointless "hide" timer on mount. This fix is ONLY
   on feature/atlas; don't merge feature/animations alone.
+  **Teaser cards (29 Oct, later):** `keyPoints` (localized array) REPLACED by `hook` (localized
+  textarea, max 250) in collections/AtlasEntries.ts; lib/atlas.ts also reads each article's `body`
+  (locale all) to give the card `article.sections` (h2 headings, max 4, linking to #ids via
+  extractHeadingsFromLexical/slugifyHeading) and `article.minutes`. Dev entries were emptied first
+  (so the schema push dropped empty tables without a data-loss prompt) and recreated (ids 14–25).
+  **Card links land on the globe (29 Oct):** opening /atlas/<slug> (shared link or an article's
+  "On the map" box) scrolls straight to the globe area with no glide (AtlasExplorer effect 2c,
+  one requestAnimationFrame after mount so the header is measured and Next.js's own scroll is
+  done); the timeline column puts the entry near its top. Plain /atlas still opens at the top.
+  **Selected timeline entry is dark (29 Oct, owner approved from a preview):** Deep Teal fill
+  like the globe panel, white title, mint date, 6px subject stripe, a notch pointing at the
+  globe, and an "On the globe now" line (T.onGlobe) with a pulsing dot (still under reduced motion).
 - **Animations — branch `feature/animations` (28 Oct; committed + pushed 29 Oct, NOT merged):** the effects the owner approved
   from the motion prototype (everything except the hero globe). All shared animation CSS is one
   "MOTION" block at the end of `app/(frontend)/globals.css`, and ALL of it switches off under

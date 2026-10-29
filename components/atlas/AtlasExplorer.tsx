@@ -21,6 +21,7 @@
 
 import "./atlas.css";
 import Image from "next/image";
+import Link from "next/link";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Button from "@/components/Button";
 import ShareButton from "@/components/ShareButton";
@@ -184,9 +185,10 @@ export default function AtlasExplorer({ entries, lang, initialSlug, siteUrl }: P
 
   // On wide screens the timeline scrolls inside its own column, so we scroll
   // just that column. On phones the page itself scrolls.
-  const revealInTimeline = (el: HTMLElement | null | undefined, align: "start" | "nearest") => {
+  // `instant` = jump without the smooth glide (used when the page first opens).
+  const revealInTimeline = (el: HTMLElement | null | undefined, align: "start" | "nearest", instant = false) => {
     if (!el) return;
-    const behavior: ScrollBehavior = reducedMotion() ? "auto" : "smooth";
+    const behavior: ScrollBehavior = instant || reducedMotion() ? "auto" : "smooth";
     if (!isWide()) { el.scrollIntoView({ block: align, behavior }); return; }
     const sc = scrollRef.current;
     if (!sc) return;
@@ -284,6 +286,36 @@ export default function AtlasExplorer({ entries, lang, initialSlug, siteUrl }: P
     });
     return () => cancelAnimationFrame(frame);
     // Only on arrival — later filter changes are the reader's own.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 2c. Opened from a card's own link (/atlas/<slug> — shared on WhatsApp, or
+  //     the "On the map" box under an article): skip the page title and land
+  //     straight on the globe with the card open (owner, 29 Oct 2026). Browsers
+  //     always open a page at the top, so we move it ourselves, once, with no
+  //     glide. Plain /atlas (no card in the link) still opens at the top, so
+  //     first-time visitors see the title and introduction.
+  //     Waits one frame (requestAnimationFrame) so the header has been measured
+  //     (effect 1) and Next.js has finished its own scroll-to-top.
+  useEffect(() => {
+    if (start === null) return;
+    const frame = requestAnimationFrame(() => {
+      const item = rootRef.current?.querySelector<HTMLElement>(`.tl-item[data-i="${start}"]`);
+      if (isWide()) {
+        // Wide screens: the timeline + globe area fills the screen just below
+        // the menu bar; then scroll the timeline column so the selected entry
+        // sits near its top (72px = room for the sticky era heading above it).
+        gridRef.current?.scrollIntoView({ block: "start", behavior: "auto" });
+        const sc = scrollRef.current;
+        if (sc && item) sc.scrollTop += item.getBoundingClientRect().top - sc.getBoundingClientRect().top - 72;
+      } else {
+        // Phones: scrolling to the entry brings the globe up too — it sticks
+        // to the top of the screen once the page has scrolled past it.
+        revealInTimeline(item, "start", true);
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+    // Only on arrival — after that, scrolling is the reader's own.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -453,6 +485,14 @@ export default function AtlasExplorer({ entries, lang, initialSlug, siteUrl }: P
                             {where(e)}
                           </span>
                           {e.draft && <span className="atlas-draft">{t.draft}</span>}
+                          {/* Only on the selected entry: says plainly that this
+                              is the one the globe and the card are showing. */}
+                          {i === current && (
+                            <span className="tl-live">
+                              <i aria-hidden="true" />
+                              {t.onGlobe}
+                            </span>
+                          )}
                         </a>
                       </li>
                     );
@@ -521,13 +561,23 @@ export default function AtlasExplorer({ entries, lang, initialSlug, siteUrl }: P
                     <div className="ac-date">{card.date}</div>
                     <h2 className="ac-title" id="ac-title" tabIndex={-1} ref={titleRef}>{card.title}</h2>
                     <p className="ac-place">{PIN}{where(card)}</p>
-                    {card.keyPoints.length > 0 && (
-                      <>
-                        <h3 className="ac-kt">{t.keyPoints}</h3>
-                        <ul className="ac-points">
-                          {card.keyPoints.map((k, n) => <li key={n}>{k}</li>)}
+                    {/* THE HOOK — what happened, ending on something the
+                        article answers (makes readers want the full story) */}
+                    {card.hook && <p className="ac-hook">{card.hook}</p>}
+
+                    {/* What the article covers — its own section headings,
+                        each a link straight to that section */}
+                    {card.article.sections.length > 0 && (
+                      <div className="ac-inside">
+                        <h3 className="ac-kt">
+                          {t.inArticle} <span className="ac-mins">· {t.minutes(card.article.minutes)}</span>
+                        </h3>
+                        <ul className="ac-sections">
+                          {card.article.sections.map((sec) => (
+                            <li key={sec.href}><Link href={sec.href}>{sec.text}</Link></li>
+                          ))}
                         </ul>
-                      </>
+                      </div>
                     )}
                     {near[shown!].filter(isShown).length > 0 && (
                       <div className="ac-near">
@@ -537,11 +587,14 @@ export default function AtlasExplorer({ entries, lang, initialSlug, siteUrl }: P
                         ))}
                       </div>
                     )}
-                    <div className="ac-actions">
-                      <Button href={card.article.href}>{t.readArticle(card.article.title)}</Button>
-                      <ShareButton title={card.title} url={`${siteUrl}${base}/${card.slug}`} text={`${card.date} · ${where(card)}`} />
-                    </div>
                   </div>
+                </div>
+                {/* PINNED to the bottom of the card, outside the scrolling part,
+                    so "Read the full story" is always in sight — it's the
+                    whole point of the card (owner, 29 Oct 2026). */}
+                <div className="ac-actions">
+                  <Button href={card.article.href} title={card.article.title} className="flex-1">{t.readArticle}</Button>
+                  <ShareButton title={card.title} url={`${siteUrl}${base}/${card.slug}`} text={card.hook || `${card.date} · ${where(card)}`} />
                 </div>
                 <div className="ac-nav">
                   {navButton(prev, -1, t.earlier)}
