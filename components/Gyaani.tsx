@@ -241,6 +241,9 @@ export default function Gyaani() {
           Fixed to the bottom-right corner — stays in place as the user scrolls */}
       <button
         onClick={() => setOpen(o => !o)}
+        // A name other code can find it by: the Atlas hides this button on
+        // phones while one of its cards is open (components/atlas/atlas.css)
+        data-gyaani-launcher
         aria-label={open ? "Close Gyaani" : "Ask Gyaani — your knowledge companion"}
         className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-navy-dark text-on-dark pl-2 pr-4 py-2 rounded-full shadow-card-hover hover:shadow-xl transition-all duration-200"
       >

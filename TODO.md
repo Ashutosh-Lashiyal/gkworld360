@@ -14,6 +14,30 @@
 
 ## 🔴 Now
 
+- [x] **Atlas step 4 + menu tidy-up — BUILT 29 Oct on `feature/atlas`, owner to review.**
+      "Atlas" in the main menu · Read Later → bookmark icon by the bell · Contact → footer only ·
+      homepage "Knowledge on the map" section after Explore Subjects · "On the map" box on articles ·
+      Atlas pages in the sitemap.
+- [x] **Atlas fixes from the owner's review (29 Oct) — DONE:** (1) a plain mouse-wheel scroll over
+      the globe no longer zooms (it trapped page scrolling) — only pinch (phone or trackpad) and
+      the + / − buttons zoom; (2) the Share menu scrolls itself into view, flips left when there's
+      no room on the right, and opens UPWARDS on an Atlas card; (3) timeline entries are now
+      separate white cards with a subject-colour stripe, subject tag, map pin and hover lift.
+- [x] **Footer tidy (owner, 29 Oct) — DONE:** now Explore (Subjects, World360 Atlas, Current
+      Affairs, Headlines) · For you (Search, Read Later) · GKWorld360 (About Us, Contact). Before: three links all went to /contact ("Contact", "Help Center",
+      "Contact Support") and Privacy Policy / Terms of Service lead to pages that don't exist (404).
+- [x] **Contact form dropdown to match the site's look (owner, 29 Oct) — DONE:** new
+      `components/Select.tsx` (white list, mint highlight, full keyboard support).
+- [ ] **Owner to decide:** the contact form's name box shows "Ashutosh Lashiyal" as its example
+      text — your real name on a public page. Suggest a generic example.
+- [ ] **Merge order:** `feature/animations` has a bug fixed only on `feature/atlas` (menus/Gyaani
+      did not open on the FIRST click after a page load — `lib/use-presence.ts`). Do NOT merge
+      feature/animations on its own; merge feature/atlas (it contains the animations too).
+- [ ] **DISCUSS FIRST — rename Contact → "Give Feedback"? (owner, 29 Oct: "the whole purpose of the
+      section is to get feedbacks").** Do NOT change until discussed: affects the page title, the
+      /contact address, the footer link and the form's wording.
+- [ ] **Privacy Policy + Terms of Service pages** don't exist yet — needed before launch (the site
+      uses analytics, Gyaani and saves Read Later in the browser). Owner to decide the wording.
 - [ ] **Homepage not rebuilt after a sync — fix the "rebuild" step.** Found 9 Oct: the homepage
       was built at 01:33 UTC, the 02:00 and 04:00 UTC syncs both saved new headlines, and the
       homepage was rebuilt by NEITHER. It only rebuilds on its 6-hour timer or a deploy, so it drifts
@@ -113,7 +137,7 @@
         opens; the timeline is real text in the page (search engines and AI can read it).
       - **India-compliant boundary data before drawing ANY country borders** — land only until then.
       - **Placement (discussed 29 Oct):** its own page /atlas · "Atlas" in the main menu next to
-        Subjects (Read Later → bookmark icon by the bell, Contact → footer — to confirm) · homepage
+        Subjects (Read Later → bookmark icon by the bell, Contact → footer — CONFIRMED 29 Oct) · homepage
         section straight after Explore Subjects · "On the map" box on articles (two-way with the
         cards' "Read the article") · "… on the map" strip on subject pages · Atlas entries in search
         · footer link.
@@ -140,6 +164,16 @@
           ask to drop). Calicut: the article says 27 May 1498, many sources say 20 May — confirm.
         - [ ] **Before pushing `feature/atlas`:** new tables on production (the 15 Sep rule — schema
           push via `npm run dev:prod`), then the same script with `--production` to add the entries.
+      - **Step 3 done on `feature/atlas` (29 Oct): the /atlas page, EN + HI** — /atlas, /atlas/<slug>,
+        /hi/atlas, /hi/atlas/<slug>. Timeline is real text in the page (search engines can read it);
+        globe + land map load after the page appears. Opening a card changes the address to
+        /atlas/<slug> (no reload); that address opens the card directly, with its own title and
+        WhatsApp preview. Card has Share. On the laptop, drafts show with a "Draft" tag; on the
+        Vercel site only published entries with published articles. Tested on laptop + phone sizes.
+        - [ ] **Owner:** try http://localhost:3000/atlas (and /hi/atlas) on laptop and phone.
+        - [ ] Later: a more detailed land map when zoomed in close (the coast looks blocky past ~6×).
+        - [ ] Next: step 4 — homepage section, "Atlas" in the menu, "On the map" box on articles,
+          sitemap entries.
       - Prototype: https://claude.ai/artifact/DdztX491xSWnCWW7cqcLgp (v4, 28 Oct) — 28 entries:
         13 from the 4 articles + 15 marked examples across all six subjects. Owner reviews. *(28 Oct)*
 - [ ] **Automated testing — START ONLY WHEN THE OWNER SAYS SO.** *(agreed 28 Oct)* Today there is

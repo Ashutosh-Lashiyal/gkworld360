@@ -22,6 +22,7 @@ import {
 } from "@/lib/cms";
 import type { SubjectColors } from "@/lib/subject-colors";
 import { formatNewsDate } from "@/lib/date-utils";
+import OnTheMap from "@/components/atlas/OnTheMap";
 
 export default function CMSTopicView({
   article,
@@ -85,6 +86,10 @@ export default function CMSTopicView({
       <article lang={lang} className={`prose ${lang === "hi" ? "font-hindi" : ""}`}>
         <CMSRichText data={body} />
       </article>
+
+      {/* "On the map" — this article's places on the World360 Atlas, if it has
+          any (29 Oct 2026). Draws nothing for articles with no Atlas entries. */}
+      {enHref && <OnTheMap articlePath={enHref} lang={lang} />}
     </ArticleLayout>
   );
 }

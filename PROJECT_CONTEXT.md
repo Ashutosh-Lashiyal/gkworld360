@@ -51,6 +51,34 @@ Content is created on the **Vercel site's** database via `npm run dev:prod` (por
   (skips duplicates; articles matched by slug so the same file works on production).
   `npm run generate:types` fails under Node 26 (known); nothing uses payload-types.ts.
   BEFORE PUSHING: production schema push + `--production` run of the script (15 Sep rule).
+  **Step 3 (29 Oct): the page.** Routes `app/(frontend)/atlas/page.tsx`, `atlas/[slug]/page.tsx`,
+  `hi/atlas/page.tsx`, `hi/atlas/[slug]/page.tsx` (two-line wrappers; the `hi/atlas` folder is more
+  specific than the `[...slug]` catch-all, other /hi/… pages unaffected) → `components/atlas/AtlasPage.tsx`
+  (server: data, PageTitle, LanguageToggle, `atlasMetadata()` with canonical + hreflang + OG card)
+  → `components/atlas/AtlasExplorer.tsx` (client: filters, timeline as `<a href=/atlas/slug>` links,
+  card, "N entries here" list, Play, keyboard; `history.replaceState` keeps the address = open card)
+  + `components/atlas/atlas.css` (prototype CSS, every rule under `.atlas-app`).
+  Globe = `lib/atlas-globe.ts` (canvas class from the prototype; d3-geo + topojson-client +
+  world-atlas land-110m, all dynamically imported after paint). Data = `lib/atlas.ts`
+  (`getAtlasEntries(lang)`, unstable_cache 6 h, tag cms-content; drafts shown only when
+  NODE_ENV=development). Shared types/eras/date wording/EN+HI labels = `lib/atlas-shared.ts`.
+  Small changes elsewhere: NavigationLoader skips links with `data-no-nav-loader` (the timeline
+  links — otherwise the "Turning the page…" overlay waited for a page that never comes);
+  Gyaani's button has `data-gyaani-launcher` and is hidden on phones while an Atlas card is open
+  (`body.atlas-card-open`); lib/refresh.ts also revalidates the four Atlas routes.
+  New packages: d3-geo, topojson-client, world-atlas (+ their @types).
+  **Step 4 + tidy-up (29 Oct):** header = Home · Subjects · Atlas (mint "New" tag; /hi/atlas on
+  Hindi pages) · Current Affairs · Headlines; Read Later → bookmark icon by the bell (still a row
+  in the phone menu); Contact → footer only. Footer rebuilt: Explore / For you / GKWorld360 (the
+  three duplicate /contact links and the 404 Privacy/Terms links removed — those pages don't exist).
+  Homepage `components/atlas/AtlasTeaser.tsx` after Explore Subjects (light section, dark panel,
+  subject + period chips → /atlas?subject= / ?era=, small display-only globe
+  `components/atlas/TeaserGlobe.tsx` loaded on scroll; hidden when no published entries).
+  `components/atlas/OnTheMap.tsx` at the end of CMS articles (via CMSTopicView). Sitemap lists
+  /atlas, /hi/atlas and every published card. Contact form dropdown = new `components/Select.tsx`.
+  **BUG FIXED in `lib/use-presence.ts`:** the first open after a page load was lost (Gyaani panel,
+  menus, the new dropdown) — the hook started a pointless "hide" timer on mount. This fix is ONLY
+  on feature/atlas; don't merge feature/animations alone.
 - **Animations — branch `feature/animations` (28 Oct; committed + pushed 29 Oct, NOT merged):** the effects the owner approved
   from the motion prototype (everything except the hero globe). All shared animation CSS is one
   "MOTION" block at the end of `app/(frontend)/globals.css`, and ALL of it switches off under

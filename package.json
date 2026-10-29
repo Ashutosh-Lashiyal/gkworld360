@@ -23,6 +23,7 @@
     "@types/mdx": "^2.0.14",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
+    "d3-geo": "^3.1.1",
     "github-slugger": "^2.0.0",
     "gray-matter": "^4.0.3",
     "next": "16.2.9",
@@ -33,13 +34,18 @@
     "remark-frontmatter": "^5.0.0",
     "remark-gfm": "^4.0.1",
     "rss-parser": "^3.13.0",
-    "sharp": "^0.35.3"
+    "sharp": "^0.35.3",
+    "topojson-client": "^3.1.0",
+    "world-atlas": "^2.0.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/d3-geo": "^3.1.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/topojson-client": "^3.1.5",
+    "@types/topojson-specification": "^1.0.5",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "tailwindcss": "^4",

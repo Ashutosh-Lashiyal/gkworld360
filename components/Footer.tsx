@@ -7,34 +7,35 @@ import { getDailyQuote } from "@/lib/quote";
 
 // ── FOOTER COLUMNS ────────────────────────────────────────────────────────────
 // Defined as data so the layout below stays clean and readable.
-// Pages that don't exist yet will be built and linked up in later steps.
+//
+// TIDIED 29 Oct 2026 (owner: "why do we have so many Contacts?"). Before, three
+// links ("Contact", "Help Center", "Contact Support") all went to /contact, and
+// "Privacy Policy" / "Terms of Service" went to pages that don't exist (404).
+// Now every link goes somewhere different and real. Contact appears ONCE — and
+// the footer is now its home, since it left the top menu to make room for the
+// Atlas. Privacy + Terms come back when those pages are written (TODO.md).
 const footerColumns = [
-  {
-    heading: "Company",
-    links: [
-      { label: "About Us",  href: "/about" },
-      { label: "Contact",   href: "/contact" },
-    ],
-  },
   {
     heading: "Explore",
     links: [
-      { label: "Subjects",  href: "/subjects" },
+      { label: "Subjects",        href: "/subjects" },
+      { label: "World360 Atlas",  href: "/atlas" },
       { label: "Current Affairs", href: "/news" },
+      { label: "Headlines",       href: "/pulse" },
     ],
   },
   {
-    heading: "Support",
+    heading: "For you",
     links: [
-      { label: "Help Center",       href: "/contact" },
-      { label: "Contact Support",   href: "/contact" },
+      { label: "Search",     href: "/search" },
+      { label: "Read Later", href: "/saved" },
     ],
   },
   {
-    heading: "Legal",
+    heading: "GKWorld360",
     links: [
-      { label: "Privacy Policy",  href: "/privacy" },
-      { label: "Terms of Service", href: "/terms" },
+      { label: "About Us", href: "/about" },
+      { label: "Contact",  href: "/contact" },
     ],
   },
 ];
@@ -84,7 +85,9 @@ export default async function Footer() {
 
         {/* ── LOGO + LINK COLUMNS on one row (18 Sep 2026: the tagline is gone,
             the logo sits as the first column, and the whole footer is shorter) ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr] gap-8">
+        {/* Logo + three columns (was four; the duplicate "Support" and the
+            broken "Legal" column are gone). */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[1.6fr_1fr_1fr_1fr] gap-8">
           {/* Logo — first column. The dark-background version of the flat logo
               (same file as the header). */}
           <div className="col-span-2 sm:col-span-3 lg:col-span-1">

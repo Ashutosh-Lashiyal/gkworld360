@@ -40,11 +40,20 @@ export function usePresence(open: boolean, ms = 150) {
 
   // Closing → wait for the closing animation to finish, THEN remove it.
   // If it reopens before the time is up, the cleanup cancels the timer.
+  //
+  // BUG FIX (29 Oct 2026): this used to start the timer even when the menu had
+  // never been open (on every page load, `open` starts false). That pointless
+  // "hide it" call confused React, and the FIRST open after a page load was
+  // lost: the button said "open" but nothing appeared — found with the new
+  // contact-form dropdown, and the Gyaani panel had the same fault. Now the
+  // timer only runs when there is actually something on the page to remove.
   useEffect(() => {
-    if (open) return;
+    if (open || !present) return;
     const timer = setTimeout(() => setPresent(false), ms);
     return () => clearTimeout(timer);
-  }, [open, ms]);
+  }, [open, present, ms]);
 
-  return { present, closing: present && !open };
+  // `open ||` is a safety net: whatever happens above, an open menu is always
+  // on the page.
+  return { present: open || present, closing: present && !open };
 }

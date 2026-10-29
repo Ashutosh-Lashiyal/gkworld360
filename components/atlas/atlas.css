@@ -1,0 +1,192 @@
+/* ═══ WORLD360 ATLAS (29 Oct 2026) ═══════════════════════════════════════════
+   Styles for /atlas and /hi/atlas, moved from the approved prototype (v5).
+
+   WHY A SEPARATE FILE and not Tailwind classes: the Atlas has many small,
+   related parts (timeline spine, era markers, the card, the globe controls)
+   and the prototype's CSS was already reviewed. Keeping it as one file reads
+   better than hundreds of utility classes. It is imported only by
+   AtlasExplorer.tsx, so the rest of the site never downloads it.
+
+   Every rule starts with `.atlas-app` so nothing here can leak onto other
+   parts of the site. The colours are the site's own tokens (globals.css),
+   repeated here as short local names. */
+
+.atlas-app {
+  --frame: #122a26;       /* Deep Teal — globe panel, dark buttons (= navy-dark)   */
+  --mint: #6ee7b7;        /* the accent on dark (= mint)                           */
+  --surface: #ffffff;
+  --surface-low: #f0ede6;
+  --page: #f7f6f2;        /* the page background (= background)                    */
+  --hairline: #d9d6cf;
+  --muted: #4a6460;
+  --ink: #1a1a1a;
+  --emerald: #059669;
+  --amber-dark: #92400e;  /* era ranges and the "Key points" label                 */
+  --sans: var(--font-inter), system-ui, sans-serif;
+  --serif: var(--font-source-serif), Georgia, serif;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  /* the height of the site header, measured by the page — the globe sticks below it on phones */
+  --atlas-top: 72px;
+  font-family: var(--sans);
+  color: var(--ink);
+}
+/* Hindi page: Devanagari first, the Latin fonts for numbers and English names */
+.atlas-app:lang(hi) {
+  --sans: var(--font-devanagari), var(--font-inter), system-ui, sans-serif;
+  --serif: var(--font-devanagari), var(--font-source-serif), Georgia, serif;
+}
+.atlas-app button { cursor: pointer; font-family: inherit; }
+.atlas-app [hidden] { display: none !important; }
+
+/* ── The two columns: timeline | globe ── */
+.atlas-app .atlas-grid {
+  display: grid; grid-template-columns: minmax(300px, 400px) minmax(0, 1fr);
+  height: calc(100svh - var(--atlas-top)); border-top: 1px solid var(--hairline);
+  scroll-margin-top: var(--atlas-top);
+}
+
+/* ── Timeline column ── */
+.atlas-app .tl-col { display: flex; flex-direction: column; min-height: 0; min-width: 0; border-right: 1px solid var(--hairline); background: var(--page); }
+.atlas-app .tl-tools { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px 12px; border-bottom: 1px solid var(--hairline); background: var(--page); }
+.atlas-app .tl-eras, .atlas-app .tl-subjects { display: flex; flex-wrap: wrap; gap: 6px; }
+.atlas-app .tl-eras button { flex: 0 0 auto; padding: 7px 10px; border: 1px solid var(--hairline); background: var(--surface); font: 600 12px/1.1 var(--sans); color: var(--muted);
+  transition: background-color .15s, color .15s, border-color .15s; }
+.atlas-app .tl-eras button:hover { background: var(--mint); border-color: var(--mint); color: var(--frame); }
+.atlas-app .tl-eras button.on { background: var(--frame); border-color: var(--frame); color: #fff; }
+.atlas-app .tl-subjects button { display: inline-flex; align-items: center; gap: 7px; padding: 7px 11px; border: 1px solid var(--hairline); background: var(--surface);
+  font: 600 13px/1.1 var(--sans); color: var(--ink); transition: background-color .15s, color .15s, border-color .15s; }
+/* the little colour square; "All" gets a four-colour square */
+.atlas-app .tl-subjects button::before { content: ""; width: 9px; height: 9px; flex: 0 0 auto; background: var(--sig, conic-gradient(#d97706 0 25%, #7c3aed 0 50%, #059669 0 75%, #0284c7 0)); }
+.atlas-app .tl-subjects button:hover { background: var(--mint); border-color: var(--mint); color: var(--frame); }
+.atlas-app .tl-subjects button[aria-pressed="true"] { background: var(--frame); border-color: var(--frame); color: #fff; }
+.atlas-app .tl-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.atlas-app .tl-count { font-size: 13px; color: var(--muted); }
+.atlas-app .tl-play { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border: 1px solid var(--frame); background: var(--frame); color: #fff; font: 600 13px/1 var(--sans);
+  transition: background-color .15s, color .15s; }
+.atlas-app .tl-play:hover, .atlas-app .tl-play[aria-pressed="true"] { background: var(--mint); border-color: var(--mint); color: var(--frame); }
+.atlas-app .tl-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 0 16px 48px; scrollbar-width: thin; }
+.atlas-app .tl { list-style: none; margin: 0; padding: 0 0 0 24px; position: relative; }
+.atlas-app .tl::before { content: ""; position: absolute; left: 7px; top: 0; bottom: 0; width: 2px; background: var(--hairline); } /* the spine */
+.atlas-app .tl-era { position: sticky; top: 0; z-index: 1; margin-left: -24px; padding: 18px 0 8px 24px; background: var(--page); display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; scroll-margin-top: 0; }
+.atlas-app .tl-era::before { content: ""; position: absolute; left: 1px; top: 22px; width: 14px; height: 14px; background: var(--frame); } /* a square marker per era */
+.atlas-app .tl-era-name { font: 700 19px/1.2 var(--serif); color: var(--frame); }
+.atlas-app .tl-era-range { font: 600 11px/1 var(--sans); text-transform: uppercase; letter-spacing: .1em; color: var(--amber-dark); }
+/* Each entry is its own small card (owner, 29 Oct 2026: "make it more
+   attractive, each card distinguished from one another"): white, a hairline
+   border, a 4px stripe in the subject's colour down the left edge, a soft
+   shadow, a gap between cards, and a small lift on hover. */
+.atlas-app .tl-item { position: relative; display: flex; flex-direction: column; gap: 4px; width: 100%; margin: 10px 0; padding: 12px 14px 12px 16px; text-align: left;
+  background: var(--surface); border: 1px solid var(--hairline); border-left: 4px solid var(--sig, var(--hairline));
+  box-shadow: 0 1px 2px rgba(18, 42, 38, 0.05); text-decoration: none; color: inherit;
+  transition: transform .18s var(--ease), box-shadow .18s var(--ease), border-color .18s, background-color .18s; scroll-margin-top: 64px; }
+/* the dot on the timeline's spine, level with the card's date line */
+.atlas-app .tl-item::before { content: ""; position: absolute; left: -25px; top: 17px; width: 10px; height: 10px; border-radius: 50%; background: var(--page); border: 2px solid var(--sig, #b5b0a5);
+  transition: transform .2s var(--ease), background-color .2s; }
+.atlas-app .tl-item:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(18, 42, 38, 0.10); border-color: #c9c5bc; border-left-color: var(--sig, var(--hairline)); }
+/* the selected entry (its card is open): dark outline + a light mint fill */
+.atlas-app .tl-item[aria-current="true"] { background: #effaf5; border-color: var(--frame); border-left-color: var(--sig, var(--frame)); box-shadow: 0 6px 18px rgba(18, 42, 38, 0.12); }
+.atlas-app .tl-item[aria-current="true"]::before { background: var(--sig, var(--mint)); border-color: var(--frame); transform: scale(1.35); }
+.atlas-app .tl-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 10px; }
+.atlas-app .tl-date { font: 700 15px/1.2 var(--serif); color: var(--acc, var(--amber-dark)); font-variant-numeric: tabular-nums; }
+/* the subject as a small tinted tag on the right of the date line */
+.atlas-app .tl-subj { font: 600 10px/1 var(--sans); text-transform: uppercase; letter-spacing: .1em; color: var(--acc); padding: 4px 6px;
+  background: color-mix(in srgb, var(--sig, #b5b0a5) 12%, transparent); }
+.atlas-app .tl-title { font: 600 15px/1.35 var(--sans); color: var(--ink); }
+.atlas-app .tl-place { display: flex; align-items: center; gap: 5px; font-size: 13px; line-height: 1.4; color: var(--muted); }
+.atlas-app .tl-place svg { flex: 0 0 auto; color: var(--emerald); }
+/* "Draft" tag — only ever seen on the laptop */
+.atlas-app .atlas-draft { align-self: flex-start; margin-top: 2px; font: 600 9px/1.2 var(--sans); text-transform: uppercase; letter-spacing: .06em; color: #9a3412; border: 1px dashed currentColor; padding: 2px 5px; }
+.atlas-app .tl-empty { padding: 32px 0; font-size: 15px; color: var(--muted); }
+
+/* ── Globe panel ── */
+.atlas-app .gp { position: relative; min-width: 0; background: var(--frame); overflow: hidden; isolation: isolate; }
+.atlas-app .gp::before { content: ""; position: absolute; inset: 0; z-index: 0; background: radial-gradient(55% 60% at 50% 50%, rgba(110,231,183,.08), transparent 70%); pointer-events: none; }
+.atlas-app .gp canvas { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; display: block; cursor: grab; touch-action: pan-y; }
+.atlas-app .gp canvas:active { cursor: grabbing; }
+.atlas-app .gp-zoom { position: absolute; left: 16px; bottom: 48px; z-index: 2; display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,.18); background: rgba(18,42,38,.85); }
+.atlas-app .gp-zoom button { width: 40px; height: 40px; border: 0; background: none; color: #fff; font: 500 20px/1 var(--sans); transition: background-color .15s, color .15s; }
+.atlas-app .gp-zoom button + button { border-top: 1px solid rgba(255,255,255,.14); }
+.atlas-app .gp-zoom button:hover { background: var(--mint); color: var(--frame); }
+.atlas-app .gp-hint { position: absolute; left: 16px; bottom: 14px; z-index: 2; margin: 0; padding: 2px 6px; background: rgba(18,42,38,.8); font: 500 12px/1.4 var(--sans); color: rgba(255,255,255,.6); pointer-events: none; }
+.atlas-app .gp-status { position: absolute; inset: 40% 10% auto; z-index: 2; margin: 0; text-align: center; font: 500 14px/1.5 var(--sans); color: rgba(255,255,255,.7); }
+
+/* the "N entries here" list beside a numbered dot */
+.atlas-app .gp-pop { position: absolute; left: 0; top: 0; z-index: 4; width: min(290px, calc(100% - 16px)); max-height: calc(100% - 16px); overflow-y: auto; background: var(--surface); color: var(--ink); box-shadow: 0 16px 40px rgba(0,0,0,.4); padding: 4px 0 6px; }
+.atlas-app .gp-pop h3 { margin: 0; padding: 10px 14px 6px; font: 600 11px/1.3 var(--sans); text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
+.atlas-app .pop-it { display: grid; grid-template-columns: 10px minmax(0, 1fr); gap: 10px; width: 100%; padding: 8px 14px; border: 0; background: none; text-align: left; font: 500 14px/1.35 var(--sans); color: var(--ink); transition: background-color .15s; }
+.atlas-app .pop-it::before { content: ""; width: 10px; height: 10px; margin-top: 4px; background: var(--sig); }
+.atlas-app .pop-it b { display: block; font: 700 13px/1.3 var(--serif); color: var(--acc); }
+.atlas-app .pop-it:hover { background: var(--mint); }
+.atlas-app .pop-zoom { display: block; margin: 2px 14px 6px; padding: 9px 12px; width: calc(100% - 28px); border: 1px solid var(--frame); background: var(--frame); color: #fff; font: 600 13px/1 var(--sans); }
+.atlas-app .pop-zoom:hover { background: var(--mint); border-color: var(--mint); color: var(--frame); }
+.atlas-app .pop-same { margin: 0 14px 4px; font-size: 13px; color: var(--muted); }
+
+/* ── The full card: opens in front of the globe ── */
+/* max-height leaves ~110px free at the bottom so the "Ask Gyaani" button
+   (fixed bottom-right on every page) never covers the Earlier / Later row */
+.atlas-app .acard { position: absolute; top: 20px; right: 20px; z-index: 3; width: min(400px, calc(100% - 40px)); max-height: calc(100% - 130px); display: flex; flex-direction: column;
+  background: var(--surface); color: var(--ink); box-shadow: 0 24px 60px rgba(0,0,0,.4);
+  opacity: 0; visibility: hidden; transform: translateX(28px);
+  transition: opacity .3s var(--ease), transform .3s var(--ease), visibility 0s linear .3s; }
+.atlas-app .acard.open { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; }
+/* overflow-x: hidden — the card scrolls up/down only, never sideways */
+.atlas-app .ac-scroll { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+.atlas-app .ac-img { position: relative; display: block; width: 100%; height: 156px; background: var(--surface-low); }
+.atlas-app .ac-handle { display: none; }
+.atlas-app .ac-x { position: absolute; top: 8px; right: 8px; z-index: 2; width: 36px; height: 36px; border: 0; background: rgba(18,42,38,.78); color: #fff; font-size: 22px; line-height: 1; }
+.atlas-app .ac-x:hover { background: var(--mint); color: var(--frame); }
+.atlas-app .ac-body { padding: 18px 22px 20px; display: flex; flex-direction: column; gap: 10px; }
+.atlas-app .acard:not(.has-img) .ac-body { padding-top: 22px; padding-right: 56px; }
+.atlas-app .ac-meta { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.atlas-app .ac-subj { display: inline-flex; align-items: center; gap: 6px; font: 700 11px/1.3 var(--sans); text-transform: uppercase; letter-spacing: .12em; color: var(--acc); }
+.atlas-app .ac-subj::before { content: ""; width: 10px; height: 10px; background: var(--sig); }
+.atlas-app .ac-era { font: 600 11px/1.3 var(--sans); text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
+.atlas-app .ac-date { font: 700 40px/1.05 var(--serif); color: var(--frame); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.atlas-app .ac-title { margin: 0; font: 700 23px/1.25 var(--serif); color: var(--frame); text-wrap: balance; }
+.atlas-app .ac-title:focus { outline: none; }
+.atlas-app .ac-place { margin: 0; display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); }
+.atlas-app .ac-place svg { flex: 0 0 auto; color: var(--emerald); }
+.atlas-app .ac-kt { margin: 6px 0 0; font: 600 12px/1.3 var(--sans); text-transform: uppercase; letter-spacing: .14em; color: var(--amber-dark); }
+.atlas-app .ac-points { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 7px; font-size: 15px; line-height: 1.55; list-style: disc; }
+.atlas-app .ac-points li::marker { color: #d97706; }
+.atlas-app .ac-near { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); padding-top: 4px; }
+.atlas-app .ac-near button { text-align: left; padding: 5px 9px; border: 1px solid var(--hairline); background: var(--surface-low); font: 500 13px/1.2 var(--sans); color: var(--frame); }
+.atlas-app .ac-near button:hover { background: var(--mint); border-color: var(--mint); }
+.atlas-app .ac-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 4px; }
+/* The Share menu on a card opens UPWARDS (owner, 29 Oct 2026): the Share
+   button sits at the very end of the card, so a menu opening downwards had no
+   room and was cut off. Above it are the key points — always enough room.
+   (This file isn't in a CSS "layer", so it wins over the button's own
+   top-full / mt-2 classes.) */
+.atlas-app .acard .ac-actions [role="menu"] { top: auto; bottom: 100%; margin-top: 0; margin-bottom: 8px; }
+.atlas-app .ac-nav { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--hairline); }
+.atlas-app .ac-nav button { display: flex; flex-direction: column; gap: 2px; padding: 11px 16px; border: 0; background: var(--surface); text-align: left; font: 600 13px/1.3 var(--sans); color: var(--frame); min-width: 0; }
+.atlas-app .ac-nav button + button { border-left: 1px solid var(--hairline); text-align: right; align-items: flex-end; }
+.atlas-app .ac-nav button small { font: 500 12px/1.3 var(--sans); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.atlas-app .ac-nav button:hover:not(:disabled) { background: var(--mint); }
+.atlas-app .ac-nav button:hover:not(:disabled) small { color: var(--frame); }
+.atlas-app .ac-nav button:disabled { color: #b5b0a5; cursor: default; }
+
+/* ── Phones and small tablets: globe on top (stays in view), timeline below,
+      the card slides up from the bottom ── */
+@media (max-width: 899px) {
+  .atlas-app .atlas-grid { display: flex; flex-direction: column; height: auto; }
+  .atlas-app .gp { order: -1; position: sticky; top: var(--atlas-top); height: 42svh; z-index: 5; }
+  .atlas-app .tl-col { border-right: 0; }
+  /* one swipeable row each */
+  .atlas-app .tl-eras, .atlas-app .tl-subjects { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -16px; padding: 0 16px; }
+  .atlas-app .tl-subjects button, .atlas-app .tl-eras button { flex: 0 0 auto; }
+  .atlas-app .tl-scroll { overflow: visible; }
+  .atlas-app .tl-era { position: relative; }
+  .atlas-app .tl-era, .atlas-app .tl-item { scroll-margin-top: calc(var(--atlas-top) + 42svh + 12px); }
+  .atlas-app .acard { position: fixed; top: auto; right: 0; left: 0; bottom: 0; width: auto; max-height: 56svh; z-index: 60; transform: translateY(40px);
+    border-top: 3px solid var(--mint); box-shadow: 0 -16px 40px rgba(0,0,0,.3); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .atlas-app .ac-handle { display: block; width: 40px; height: 4px; border-radius: 2px; background: var(--hairline); margin: 8px auto 0; }
+  .atlas-app .ac-img { height: 120px; }
+  .atlas-app .ac-date { font-size: 32px; }
+  /* While a card is open, the floating "Ask Gyaani" button would sit on top of
+     the card's Earlier / Later row — hide it until the card closes. (The one
+     rule here that reaches outside .atlas-app; the class is set on <body> by
+     AtlasExplorer.tsx and removed when you leave the page.) */
+  body.atlas-card-open [data-gyaani-launcher] { display: none; }
+}

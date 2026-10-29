@@ -57,6 +57,10 @@ const Icons = {
 export default function ShareButton({ title, url, text }: ShareButtonProps) {
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  // Open towards the left instead, when there's no room on the right (an
+  // Atlas card, a narrow phone). Worked out each time the menu opens.
+  const [alignRight, setAlignRight] = useState(false);
   // EASED MENU (28 Oct 2026): fades in on open, out on close
   const menu = usePresence(open, 150);
 
@@ -68,6 +72,32 @@ export default function ShareButton({ title, url, text }: ShareButtonProps) {
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
     return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
+  }, [open]);
+
+  // Make sure the whole menu can be SEEN once it opens (owner, 29 Oct 2026):
+  // on an Atlas card — or near the bottom of the screen — it used to open
+  // below the visible area, and the click seemed to do nothing. scrollIntoView
+  // with block "nearest" scrolls only as much as needed (the card's own
+  // scroll area and/or the page), and not at all if it's already in view.
+  // Waits one frame so the menu exists and has its size first.
+  //
+  // Two frames: first check whether the menu fits to the right of the button
+  // inside whatever box contains it (the Atlas card, or the screen) and flip
+  // it to the left if not; then scroll it into view, up/down only.
+  useEffect(() => {
+    if (!open) return;
+    let second = 0;
+    const first = requestAnimationFrame(() => {
+      const m = menuRef.current, w = wrap.current;
+      if (!m || !w) return;
+      const box = (m.closest(".ac-scroll") ?? document.documentElement).getBoundingClientRect();
+      setAlignRight(w.getBoundingClientRect().left + m.offsetWidth > box.right - 8);
+      second = requestAnimationFrame(() => {
+        const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        menuRef.current?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: smooth ? "smooth" : "auto" });
+      });
+    });
+    return () => { cancelAnimationFrame(first); cancelAnimationFrame(second); };
   }, [open]);
 
   const message = text ? `${title} — ${text}` : title;
@@ -120,8 +150,9 @@ export default function ShareButton({ title, url, text }: ShareButtonProps) {
 
       {menu.present && (
         <div
+          ref={menuRef}
           role="menu"
-          className={`absolute left-0 top-full mt-2 z-40 min-w-[200px] bg-surface border border-hairline shadow-[0_12px_32px_rgba(0,0,0,0.18)] py-1 ${
+          className={`absolute ${alignRight ? "right-0" : "left-0"} scroll-mb-4 top-full mt-2 z-40 min-w-[200px] bg-surface border border-hairline shadow-[0_12px_32px_rgba(0,0,0,0.18)] py-1 ${
             menu.closing ? "anim-menu-out" : "anim-menu-in"
           }`}
         >

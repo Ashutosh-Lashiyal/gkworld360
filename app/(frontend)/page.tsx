@@ -6,6 +6,9 @@
 //                        search as a white box, four stats. No card (it looked
 //                        cluttered — removed on review).
 //   2. SUBJECTS        — LIGHT. Six white cards; signal colours only as bars/labels.
+//   2b. ATLAS TEASER   — LIGHT section, DARK panel inside: "Knowledge on the map"
+//                        (components/atlas/AtlasTeaser.tsx, 29 Oct 2026). Hidden
+//                        while the Atlas has no published entries.
 //   3. HEADLINES       — DARK band. Numbered list (LatestHeadlinesSection).
 //   4. POPULAR TOPICS  — LIGHT. Four cards → /topics?sort=popular
 //   5. RECENTLY ADDED  — DARK band. Numbered rows → /topics?sort=recent
@@ -25,6 +28,7 @@ import ScrollReveal from "@/components/ScrollReveal";
 import { getPopularTopics, getRecentlyAddedTopics, formatAddedTime } from "@/lib/topics";
 import NewsCard from "@/components/NewsCard";
 import LatestHeadlinesSection from "@/components/LatestHeadlinesSection";
+import AtlasTeaser from "@/components/atlas/AtlasTeaser";
 import { getHomepageSubjects, hasTranslation, resolveContentFile, getContentMeta, type ContentMeta } from "@/lib/content";
 import { getRecentNews } from "@/lib/news";
 import { getCMSNewsList, getCMSNewsHindiSlugs } from "@/lib/cms";
@@ -207,6 +211,10 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ══ 2b. WORLD360 ATLAS — the "Knowledge on the map" panel ═════════════
+          Straight after Explore Subjects (placement agreed 29 Oct 2026). */}
+      <AtlasTeaser />
 
       {/* ══ 3. LATEST HEADLINES — DARK band ══════════════════════════════════ */}
       <LatestHeadlinesSection />

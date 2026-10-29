@@ -17,12 +17,27 @@ import Button from "@/components/Button";
 import { usePresence } from "@/lib/use-presence";
 
 
+// The links after "Subjects". MENU TIDY-UP (owner, 29 Oct 2026): the bar was
+// full, so to make room for the new World360 Atlas:
+//   - "Read Later" became the bookmark icon next to the bell (right side)
+//   - "Contact" moved to the footer
+// The Atlas link itself is drawn separately (it has a "New" tag and points to
+// /hi/atlas on Hindi pages).
 const OTHER_LINKS = [
   { label: "Current Affairs", href: "/news" },
   { label: "Headlines", href: "/pulse" },
-  { label: "Read Later", href: "/saved" },
-  { label: "Contact", href: "/contact" },
 ];
+
+// The bookmark shape — the same one the "Read later" buttons on articles use,
+// so readers connect the two.
+function BookmarkIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}
 
 function SearchIcon() {
   return (
@@ -82,6 +97,11 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
 
   const pathname = usePathname();
   const subjectSlug = getSubjectFromPath(pathname); // on a subject page → "Subjects" shows as active
+  // The Atlas in the reader's language: on a Hindi page, the Hindi Atlas.
+  const hindiPage = pathname === "/hi" || pathname.startsWith("/hi/");
+  const atlasHref = hindiPage ? "/hi/atlas" : "/atlas";
+  // Any Atlas address (/atlas, /atlas/<card>, /hi/atlas…) marks "Atlas" as active.
+  const onAtlas = /^\/(hi\/)?atlas(\/|$)/.test(pathname);
 
   const [subjectsOpen, setSubjectsOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -300,6 +320,20 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
             )}
           </div>
 
+          {/* World360 Atlas (29 Oct 2026) — with a small mint "New" tag for now */}
+          <Link
+            href={atlasHref}
+            className={[
+              "font-body text-[15px] font-medium whitespace-nowrap px-2.5 py-1.5 border-b-2 transition-colors duration-200 flex items-center gap-1.5",
+              onAtlas ? "text-on-dark border-mint" : "text-on-dark/80 border-transparent hover:text-mint",
+            ].join(" ")}
+          >
+            Atlas
+            <span className="font-body text-[9px] font-semibold uppercase tracking-[0.1em] leading-none text-navy-dark bg-mint px-1.5 py-[3px]">
+              New
+            </span>
+          </Link>
+
           {OTHER_LINKS.map((link) => (
             <Link key={link.href} href={link.href} className={linkClass(link.href)}>
               {link.label}
@@ -332,6 +366,19 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
             <span className="hidden xl:inline font-body text-sm truncate">
               Search subjects, topics, news...
             </span>
+          </Link>
+
+          {/* Read Later — the bookmark icon (moved out of the menu, 29 Oct 2026).
+              Same size and colour as the bell beside it; a 44px tap target. */}
+          <Link
+            href="/saved"
+            aria-label="Read Later — your saved topics"
+            title="Read Later"
+            className={`flex items-center justify-center w-11 h-11 rounded-full transition-colors hover:bg-on-dark/10 ${
+              pathname === "/saved" ? "text-on-dark" : "text-mint"
+            }`}
+          >
+            <BookmarkIcon />
           </Link>
 
           {/* Bell notification — rings to tell users Hindi is available.
@@ -424,7 +471,18 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
               )}
             </div>
 
-            {OTHER_LINKS.map((link) => (
+            <Link
+              href={atlasHref}
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-2 min-h-12 font-body text-base font-medium text-on-dark/85 hover:text-mint transition-colors border-b border-on-dark/10"
+            >
+              Atlas
+              <span className="font-body text-[10px] font-semibold uppercase tracking-[0.1em] leading-none text-navy-dark bg-mint px-1.5 py-[3px]">New</span>
+            </Link>
+
+            {/* Read Later stays in the phone menu too (as words), since a lone
+                icon is easy to miss on a small screen */}
+            {[...OTHER_LINKS, { label: "Read Later", href: "/saved" }].map((link) => (
               <Link
                 key={link.href}
                 href={link.href}

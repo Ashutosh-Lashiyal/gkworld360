@@ -37,6 +37,11 @@ export function refreshContent(paths: string[] = []) {
     revalidatePath("/sitemap.xml");
     revalidatePath("/llms.txt");
     revalidatePath("/api/search-index");
+    // The World360 Atlas, and every card's own page, in both languages
+    revalidatePath("/atlas");
+    revalidatePath("/hi/atlas");
+    revalidatePath("/(frontend)/atlas/[slug]", "page");
+    revalidatePath("/(frontend)/hi/atlas/[slug]", "page");
     // Every article / news page at once (route pattern + "page", per the Next docs)
     revalidatePath("/(frontend)/[...slug]", "page");
     for (const p of paths) revalidatePath(p);

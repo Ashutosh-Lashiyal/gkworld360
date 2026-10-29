@@ -13,6 +13,7 @@ import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
 import { getAllSlugs, slugToFilePath, getContentMeta } from "@/lib/content";
 import { getCMSSearchEntries } from "@/lib/cms";
+import { getAtlasEntries } from "@/lib/atlas";
 
 // Rebuilt at most once an hour, so an article published in /admin appears in
 // the sitemap without a redeploy (18 Sep 2026 — it used to list MDX files only).
@@ -63,5 +64,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     cmsPages.push({ url, lastModified: now, changeFrequency: "weekly", priority: 0.8 });
   }
 
-  return [...staticPages, ...contentPages, ...cmsPages];
+  // The World360 Atlas (29 Oct 2026): the page in both languages, and every
+  // card's own address — so Google can find and list each card. Only what the
+  // public sees (published entries of published articles; lib/atlas.ts).
+  const atlasPages: MetadataRoute.Sitemap = [
+    { url: `${SITE_URL}/atlas`,    lastModified: now, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${SITE_URL}/hi/atlas`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
+  ];
+  for (const lang of ["en", "hi"] as const) {
+    for (const e of await getAtlasEntries(lang)) {
+      if (e.draft) continue; // laptop previews never go in the sitemap
+      atlasPages.push({ url: `${SITE_URL}${lang === "hi" ? "/hi" : ""}/atlas/${e.slug}`, lastModified: now, changeFrequency: "monthly", priority: 0.6 });
+    }
+  }
+
+  return [...staticPages, ...contentPages, ...cmsPages, ...atlasPages];
 }

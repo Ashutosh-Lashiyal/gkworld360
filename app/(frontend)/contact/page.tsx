@@ -6,6 +6,7 @@
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/og";
 import Button from "@/components/Button";
+import Select from "@/components/Select";
 
 // Title only — the root layout appends " | GKWorld360". pageMetadata also
 // gives the page its link-preview card (lib/og.ts).
@@ -112,23 +113,10 @@ export default function ContactPage() {
                   >
                     Reason for contact
                   </label>
-                  <select
-                    id="reason"
-                    className={[
-                      "font-body text-base text-foreground",
-                      "bg-background border border-hairline rounded-card",
-                      "px-4 py-3",
-                      "outline-none focus:border-sapphire focus:ring-2 focus:ring-sapphire/20",
-                      "transition-colors",
-                    ].join(" ")}
-                  >
-                    <option value="">Select a reason...</option>
-                    {CONTACT_REASONS.map((reason) => (
-                      <option key={reason} value={reason}>
-                        {reason}
-                      </option>
-                    ))}
-                  </select>
+                  {/* The site's own dropdown (components/Select.tsx, 29 Oct 2026):
+                      the browser's <select> opened in grey and blue, which didn't
+                      match the site. Same choices, same keyboard behaviour. */}
+                  <Select id="reason" name="reason" options={CONTACT_REASONS} placeholder="Select a reason..." />
                 </div>
 
                 {/* Message */}
