@@ -25,7 +25,7 @@ export default async function LatestHeadlinesSection() {
     <section className="bg-navy-dark text-on-dark">
       <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-14 md:py-16 flex flex-col gap-6">
         {/* Header row: label + title on the left, two mint links on the right */}
-        <div className="flex flex-wrap items-end justify-between gap-4">
+        <div data-reveal className="flex flex-wrap items-end justify-between gap-4">
           <div className="flex flex-col gap-1.5">
             <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-mint">
               Updated through the day
@@ -53,7 +53,10 @@ export default async function LatestHeadlinesSection() {
         </p>
 
         {/* Two columns on desktop, one on phones. Each row: number · text · bookmark */}
-        <ol className="grid grid-cols-1 md:grid-cols-2 gap-x-14 list-none m-0 p-0">
+        {/* data-reveal / data-reveal-group: the heading and then each headline row
+            settle in as the reader scrolls down (components/ScrollReveal.tsx, 28 Oct
+            2026). They only take effect on pages that include <ScrollReveal />. */}
+        <ol data-reveal-group className="grid grid-cols-1 md:grid-cols-2 gap-x-14 list-none m-0 p-0">
           {items.map((h, i) => (
             <li
               key={h.link}

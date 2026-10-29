@@ -16,7 +16,9 @@ import Link from "next/link";
 type ToastDetail = { message: string; actionLabel?: string; actionHref?: string };
 
 export default function Toast() {
-  const [toast, setToast] = useState<ToastDetail | null>(null);
+  // `id` changes with every new message. It's the bar's `key`, so a new message
+  // gets a fresh bar and the slide-up plays again (28 Oct 2026).
+  const [toast, setToast] = useState<(ToastDetail & { id: number }) | null>(null);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -28,7 +30,7 @@ export default function Toast() {
       if (!detail?.message) return;
       clearTimeout(hideTimer);
       clearTimeout(clearTimer);
-      setToast(detail);
+      setToast({ ...detail, id: Date.now() });
       setVisible(true);
       hideTimer = setTimeout(() => setVisible(false), 3000); // slide out after 3 s
       clearTimer = setTimeout(() => setToast(null), 3400);   // then unmount
@@ -48,10 +50,13 @@ export default function Toast() {
     // role="status" + aria-live: screen readers announce it without stealing focus.
     // Bottom-centre so it never covers the Gyaani button (bottom-right).
     <div
+      key={toast.id}
       role="status"
       aria-live="polite"
       className={[
-        "fixed left-1/2 bottom-6 z-[60] -translate-x-1/2 max-w-[calc(100vw-2rem)]",
+        // anim-toast-in: slides up into place when it appears (globals.css → MOTION).
+        // Leaving still uses the opacity/translate transition below.
+        "anim-toast-in fixed left-1/2 bottom-6 z-[60] -translate-x-1/2 max-w-[calc(100vw-2rem)]",
         "flex items-center gap-4 min-h-12 px-5 rounded-button bg-navy-dark text-on-dark border border-mint/40 shadow-[0_12px_32px_rgba(0,0,0,0.3)]",
         "font-body text-sm font-medium transition-all duration-300",
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3",

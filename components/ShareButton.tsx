@@ -11,6 +11,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Button from "@/components/Button";
+// Lets the menu fade out when it closes (lib/use-presence.ts, 28 Oct 2026)
+import { usePresence } from "@/lib/use-presence";
 
 type ShareButtonProps = {
   title: string;
@@ -55,6 +57,8 @@ const Icons = {
 export default function ShareButton({ title, url, text }: ShareButtonProps) {
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
+  // EASED MENU (28 Oct 2026): fades in on open, out on close
+  const menu = usePresence(open, 150);
 
   // Close the menu on outside click / Escape
   useEffect(() => {
@@ -114,10 +118,12 @@ export default function ShareButton({ title, url, text }: ShareButtonProps) {
         Share
       </Button>
 
-      {open && (
+      {menu.present && (
         <div
           role="menu"
-          className="absolute left-0 top-full mt-2 z-40 min-w-[200px] bg-surface border border-hairline shadow-[0_12px_32px_rgba(0,0,0,0.18)] py-1"
+          className={`absolute left-0 top-full mt-2 z-40 min-w-[200px] bg-surface border border-hairline shadow-[0_12px_32px_rgba(0,0,0,0.18)] py-1 ${
+            menu.closing ? "anim-menu-out" : "anim-menu-in"
+          }`}
         >
           <button type="button" role="menuitem" onClick={copy} className="w-full flex items-center gap-3 text-left px-4 py-2.5 font-body text-sm text-foreground hover:bg-mint transition-colors">
             <span className="text-muted">{Icons.link}</span>

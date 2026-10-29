@@ -40,6 +40,24 @@ Content is created on the **Vercel site's** database via `npm run dev:prod` (por
   white-silhouette CSS filter is gone. The owner may replace these with designer artwork later.
 - **Known repair still pending:** articles #3/#4/#5 on the Vercel site are drafts, turned back by an
   early `write-prompts` run (tool since fixed) — `node scripts/publish-article.mjs 3 4 5 --production`.
+- **In progress — branch `feature/animations` (28 Oct, NOT merged):** the effects the owner approved
+  from the motion prototype (everything except the hero globe). All shared animation CSS is one
+  "MOTION" block at the end of `app/(frontend)/globals.css`, and ALL of it switches off under
+  `prefers-reduced-motion`. Pieces:
+  - eased menus — Subjects, phone menu, search results, Share, Gyaani panel. They use
+    `lib/use-presence.ts`, which keeps a closing menu on the page ~150 ms so it can fade out.
+  - bookmark pop and toast slide-up (`ReadLaterButton`, `Toast`); the dialog rises in (`ConfirmDialog`).
+  - homepage scroll reveal: `components/ScrollReveal.tsx` + `data-reveal` / `data-reveal-group`
+    attributes. Only content below the first screen is hidden, and only by the script.
+  - hero count-up: `components/CountUp.tsx`, used inside `StatPill`.
+  - **page transitions:** `experimental.viewTransition` in `next.config.ts`. `ContentCard`'s title
+    and `ArticleHeader`'s h1 share a name from `lib/view-transition.ts`, so the card title glides
+    into the heading. `types/react-canary.d.ts` lets TypeScript know `<ViewTransition>`. Next.js
+    marks it experimental: set the flag to `false` to switch it off.
+  - Still to do before merging: the owner's review on laptop and phone, and the mobile PageSpeed
+    score of the branch's Vercel preview vs the Vercel site.
+  - Known, unrelated: `npm run lint` flags `Gyaani.tsx` (setState inside an effect). It predates
+    the branch and is still on `main`.
 
 ## ⚠️ The Sep–Oct 2026 compute saga — read this before touching caching or monitoring
 Neon's free plan allows **100 compute-hours a month** (a CU-hour = compute size × time the database

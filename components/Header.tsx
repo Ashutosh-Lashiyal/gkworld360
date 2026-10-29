@@ -12,6 +12,9 @@ import { SUBJECTS } from "@/lib/subjects";
 // being defined here — so the header and the homepage both use the same list.
 import BellNotification from "@/components/BellNotification";
 import Button from "@/components/Button";
+// usePresence keeps a menu on the page for a moment after it closes, so it can
+// fade out instead of vanishing (lib/use-presence.ts, 28 Oct 2026).
+import { usePresence } from "@/lib/use-presence";
 
 
 const OTHER_LINKS = [
@@ -84,6 +87,12 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSubjectsOpen, setMobileSubjectsOpen] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // EASED MENUS (28 Oct 2026): both menus fade/slide in when they open and
+  // out when they close. `present` decides whether they're on the page at all;
+  // `closing` switches to the closing animation (classes in globals.css).
+  const subjectsMenu = usePresence(subjectsOpen, 150);
+  const mobileMenu = usePresence(mobileMenuOpen, 150);
 
   const openSubjects = () => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
@@ -182,17 +191,20 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
               <ChevronDownIcon open={subjectsOpen} />
             </button>
 
-            {subjectsOpen && (
+            {subjectsMenu.present && (
               <>
                 {/* Dim the page behind the open menu (board 8). It sits below
                     the bar, ignores the mouse (pointer-events-none) so hover
-                    in/out of the panel still works, and is purely visual. */}
+                    in/out of the panel still works, and is purely visual.
+                    It fades in and out with the menu (anim-fade-in/out). */}
                 <div
                   aria-hidden="true"
                   // The container is centred and 1200px wide, so "left-0 right-0" would
                   // only dim the middle. left-1/2 + -translate-x-1/2 + w-screen centres
                   // a viewport-wide strip on it instead.
-                  className="absolute left-1/2 -translate-x-1/2 w-screen top-full h-screen bg-navy-dark/35 pointer-events-none"
+                  className={`absolute left-1/2 -translate-x-1/2 w-screen top-full h-screen bg-navy-dark/35 pointer-events-none ${
+                    subjectsMenu.closing ? "anim-fade-out" : "anim-fade-in"
+                  }`}
                 />
 
                 {/* THE PANEL — a white card dropping from the dark bar, the
@@ -202,7 +214,10 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
                     the reader ever reaches a subject page. Topic counts per
                     subject arrive in Phase 4, when the CMS feeds this list. */}
                 <div
-                  className="absolute top-full left-4 md:left-8 lg:left-16 right-4 md:right-8 lg:right-16 mt-2 bg-surface text-foreground rounded-none shadow-[0_24px_64px_rgba(0,0,0,0.28)] p-7 pb-6 flex flex-col gap-5 z-50"
+                  // anim-menu-in / anim-menu-out: fade + an 8px drop (globals.css → MOTION)
+                  className={`absolute top-full left-4 md:left-8 lg:left-16 right-4 md:right-8 lg:right-16 mt-2 bg-surface text-foreground rounded-none shadow-[0_24px_64px_rgba(0,0,0,0.28)] p-7 pb-6 flex flex-col gap-5 z-50 ${
+                    subjectsMenu.closing ? "anim-menu-out" : "anim-menu-in"
+                  }`}
                   onMouseEnter={openSubjects}
                   onMouseLeave={scheduleClose}
                 >
@@ -341,8 +356,9 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
       {/* Mobile menu — a dark sheet continuing the bar. Every row is at least
           48px tall (py-3 + text) so it's comfortable under a thumb. Rows are
           divided by faint white lines (white at 10% opacity) instead of grey. */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden bg-navy-dark border-t border-on-dark/10">
+      {/* It eases open and closed like the desktop Subjects menu (28 Oct 2026). */}
+      {mobileMenu.present && (
+        <div className={`lg:hidden bg-navy-dark border-t border-on-dark/10 ${mobileMenu.closing ? "anim-menu-out" : "anim-menu-in"}`}>
           <nav className="max-w-[1200px] mx-auto px-4 py-2" aria-label="Mobile navigation">
 
             <Link

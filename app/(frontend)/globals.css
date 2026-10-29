@@ -526,7 +526,93 @@ h1, h2, h3, h4, h5, h6 {
 .nav-loader { animation: nav-loader-in 250ms ease-out 800ms both; }
 @keyframes nav-loader-in { from { opacity: 0; } to { opacity: 1; } }
 
-/* Respect readers who asked their OS for less motion */
+/* ── MOTION (28 Oct 2026, branch feature/animations) ──────────────────────────
+   The small set of animations approved from the motion prototype. They live
+   here, in one place, so every menu and panel on the site moves the same way.
+   Rules we follow:
+     - quick: things open in 200 ms and close in 150 ms — never in the way;
+     - small: a fade plus a few pixels of movement, nothing that bounces around;
+     - nothing inside an article's reading column animates;
+     - ALL of it switches off for readers who asked for less motion (the
+       prefers-reduced-motion block at the very end of this file).
+
+   A "keyframe" animation (@keyframes) describes how something changes from a
+   start state ("from") to an end state ("to"). A class like .anim-menu-in then
+   plays it once. "both" keeps the start state before it begins and the end
+   state after it finishes, so nothing flashes.                                  */
+:root {
+  /* An "easing" is the speed curve of a movement. This one starts fast and
+     settles gently — it feels responsive without being abrupt. */
+  --ease-out-soft: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* Menus and dropdowns (Subjects, search results, Share, the phone menu):
+   fade in while dropping 8px into place… */
+@keyframes menu-in  { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+/* …and the reverse when they close. lib/use-presence.ts keeps the menu on the
+   page for those 150 ms so the closing animation has time to play. */
+@keyframes menu-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-8px); } }
+.anim-menu-in  { animation: menu-in 200ms var(--ease-out-soft) both; }
+/* pointer-events: none — a menu that is on its way out can't be clicked by accident */
+.anim-menu-out { animation: menu-out 150ms ease-in both; pointer-events: none; }
+
+/* Plain fades: the dim layer behind the Subjects menu, the toast's backdrop */
+@keyframes fade-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fade-out { from { opacity: 1; } to { opacity: 0; } }
+.anim-fade-in  { animation: fade-in 200ms ease-out both; }
+.anim-fade-out { animation: fade-out 150ms ease-in both; }
+
+/* Panels that rise from the bottom-right corner (the Gyaani chat window):
+   they grow out of the button that opened them, so the eye follows. */
+@keyframes panel-in  { from { opacity: 0; transform: translateY(12px) scale(0.98); } to { opacity: 1; transform: none; } }
+@keyframes panel-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(12px) scale(0.98); } }
+.anim-panel-in  { transform-origin: bottom right; animation: panel-in 220ms var(--ease-out-soft) both; }
+.anim-panel-out { transform-origin: bottom right; animation: panel-out 160ms ease-in both; pointer-events: none; }
+
+/* The toast at the bottom of the screen slides up when it appears. (It already
+   slid DOWN when leaving; until now it just popped in.) It animates `transform`
+   while Tailwind's centring uses the separate `translate` property, so the two
+   don't fight. */
+@keyframes toast-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+/* "backwards" (not "both"): once the slide-up has finished, the animation lets
+   go of opacity, so the existing fade-out transition can still play. */
+.anim-toast-in { animation: toast-in 240ms var(--ease-out-soft) backwards; }
+
+/* The "Are you sure?" dialog (a native <dialog>): it rises slightly into the
+   middle of the screen while the dimmed page behind it fades in. */
+@keyframes dialog-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+dialog[open].anim-dialog { animation: dialog-in 200ms var(--ease-out-soft) both; }
+dialog[open].anim-dialog::backdrop { animation: fade-in 200ms ease-out both; }
+
+/* The Read Later bookmark gives a small "pop" when tapped — a quick swell and
+   settle that says "done" without words. */
+@keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.35); } 100% { transform: scale(1); } }
+.anim-pop { animation: pop 320ms var(--ease-out-soft); }
+
+/* Scroll reveal (components/ScrollReveal.tsx): homepage sections below the
+   first screen start slightly lower and see-through, then settle into place
+   the first time they scroll into view. Only the SCRIPT adds .reveal-pending,
+   so if JavaScript fails nothing is ever hidden. --reveal-delay staggers the
+   cards in a row (60 ms apart) so they arrive one after another. */
+.reveal-pending { opacity: 0; transform: translateY(14px); }
+.reveal-in {
+  opacity: 1;
+  transform: none;
+  transition: opacity 560ms var(--ease-out-soft), transform 560ms var(--ease-out-soft);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+/* Respect readers who asked their phone or computer for less motion
+   ("Reduce motion" on iPhone/Mac, "Remove animations" on Android/Windows).
+   Instead of removing every animation one by one, we make all of them finish
+   instantly: things still open and close, they just don't move. */
 @media (prefers-reduced-motion: reduce) {
   .book__leaf { animation: none; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
 }

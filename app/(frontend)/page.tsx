@@ -20,6 +20,8 @@ import SearchBox from "@/components/SearchBox";
 import SubjectCard from "@/components/SubjectCard";
 import ContentCard from "@/components/ContentCard";
 import StatPill from "@/components/StatPill";
+// ScrollReveal: sections below the first screen settle in as you scroll (28 Oct 2026)
+import ScrollReveal from "@/components/ScrollReveal";
 import { getPopularTopics, getRecentlyAddedTopics, formatAddedTime } from "@/lib/topics";
 import NewsCard from "@/components/NewsCard";
 import LatestHeadlinesSection from "@/components/LatestHeadlinesSection";
@@ -105,6 +107,12 @@ export default async function HomePage() {
 
   return (
     <>
+      {/* SCROLL REVEAL (28 Oct 2026): one small browser-side helper for the
+          whole page. It animates every element marked data-reveal (a section
+          heading) and the children of every data-reveal-group (a row of cards),
+          the first time each scrolls into view. See components/ScrollReveal.tsx. */}
+      <ScrollReveal />
+
       {/* ══ 1. HERO — DARK ═══════════════════════════════════════════════════
           The photo is tinted with the FRAME teal (#122a26) at 66%, plus a
           gradient that darkens toward the bottom where the text sits. Same
@@ -173,7 +181,7 @@ export default async function HomePage() {
           subject's overview.mdx to swap which six appear here.               */}
       <section className="bg-background">
         <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-14 md:py-[72px] flex flex-col gap-6">
-          <div className="flex flex-wrap items-end justify-between gap-4">
+          <div data-reveal className="flex flex-wrap items-end justify-between gap-4">
             <div className="flex flex-col gap-1.5">
               <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Choose a subject to start</span>
               <h2 className="m-0 font-heading text-3xl md:text-[40px] font-bold tracking-[-0.015em] text-navy-dark">
@@ -185,7 +193,7 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div data-reveal-group className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {homepageSubjects.map((subject, i) => (
               <SubjectCard
                 key={subject.slug}
@@ -208,7 +216,7 @@ export default async function HomePage() {
       {popularTopics.length > 0 && (
         <section className="bg-background">
           <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-14 md:py-[72px] flex flex-col gap-6">
-            <div className="flex flex-wrap items-end justify-between gap-4">
+            <div data-reveal className="flex flex-wrap items-end justify-between gap-4">
               <div className="flex flex-col gap-1.5">
                 <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Most read</span>
                 <h2 className="m-0 font-heading text-3xl md:text-[40px] font-bold tracking-[-0.015em] text-navy-dark">
@@ -220,7 +228,7 @@ export default async function HomePage() {
               </Link>
             </div>
             {/* 4 across on desktop, 2 on tablet, 1 on phones */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div data-reveal-group className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {popularTopics.map((t) => (
                 <ContentCard
                   key={t.slug.join("/")}
@@ -246,7 +254,7 @@ export default async function HomePage() {
       {recentlyAdded.length > 0 && (
         <section className="bg-navy-dark text-on-dark">
           <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12 md:py-14 flex flex-col gap-6">
-            <div className="flex flex-wrap items-end justify-between gap-4">
+            <div data-reveal className="flex flex-wrap items-end justify-between gap-4">
               <div className="flex flex-col gap-1.5">
                 <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-mint">Fresh from the desk</span>
                 <h2 className="m-0 font-heading text-3xl md:text-[40px] font-bold tracking-[-0.015em] text-on-dark">
@@ -257,7 +265,7 @@ export default async function HomePage() {
                 View all →
               </Link>
             </div>
-            <ol className="grid grid-cols-1 md:grid-cols-2 gap-x-12 list-none m-0 p-0">
+            <ol data-reveal-group className="grid grid-cols-1 md:grid-cols-2 gap-x-12 list-none m-0 p-0">
               {recentlyAdded.map((t, i) => (
                 <li key={t.slug.join("/")}>
                   <Link
@@ -285,7 +293,7 @@ export default async function HomePage() {
         <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-14 md:py-[72px] flex flex-col gap-14">
           {recentNews.length > 0 && (
             <div className="flex flex-col gap-6">
-              <div className="flex flex-wrap items-end justify-between gap-4">
+              <div data-reveal className="flex flex-wrap items-end justify-between gap-4">
                 <div className="flex flex-col gap-1.5">
                   <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em]" style={{ color: SUBJECT_COLORS["current-affairs"].accent }}>
                     Exam-focused write-ups · <span lang="hi" className="font-hindi normal-case tracking-normal">समसामयिकी</span>
@@ -298,7 +306,7 @@ export default async function HomePage() {
                   All write-ups →
                 </Link>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div data-reveal-group className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {recentNewsWithHindi.map((item) => (
                   <NewsCard
                     key={item.url}

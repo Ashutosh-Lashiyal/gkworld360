@@ -9,6 +9,8 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+// Lets the chat window animate out when it closes (lib/use-presence.ts, 28 Oct 2026)
+import { usePresence } from "@/lib/use-presence";
 
 // ── TYPES ─────────────────────────────────────────────────────────────────────
 type SourceArticle = {
@@ -140,6 +142,9 @@ function getWarning(questionsUsed: number): string | null {
 // ── MAIN COMPONENT ────────────────────────────────────────────────────────────
 export default function Gyaani() {
   const [open,         setOpen]         = useState(false);
+  // EASED PANEL (28 Oct 2026): the chat window grows out of the button when it
+  // opens and shrinks back into it when it closes. 160 ms = the closing animation.
+  const panel = usePresence(open, 160);
   const [messages,     setMessages]     = useState<Message[]>([WELCOME_MESSAGE]);
   const [input,        setInput]        = useState("");
   const [loading,      setLoading]      = useState(false);
@@ -247,9 +252,13 @@ export default function Gyaani() {
 
       {/* ── CHAT WINDOW ───────────────────────────────────────────────────────
           Slides up from above the floating button when open is true           */}
-      {open && (
+      {panel.present && (
         <div
-          className="fixed bottom-20 right-6 z-50 w-[340px] md:w-[380px] flex flex-col rounded-card overflow-hidden shadow-card-hover border border-hairline"
+          // anim-panel-in/out: rises and grows from the bottom-right corner, where
+          // the button is (globals.css → MOTION)
+          className={`fixed bottom-20 right-6 z-50 w-[340px] md:w-[380px] flex flex-col rounded-card overflow-hidden shadow-card-hover border border-hairline ${
+            panel.closing ? "anim-panel-out" : "anim-panel-in"
+          }`}
           style={{ height: "480px" }}
         >
           {/* Header */}

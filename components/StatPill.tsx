@@ -4,6 +4,11 @@
 // round isn't a pill.
 //   tone="dark"  → translucent white on a dark hero
 //   tone="light" → white with a hairline border, on the page
+//
+// Numbers count up from 0 when the page opens (CountUp, 28 Oct 2026). Text
+// values like "—" are shown as they are.
+
+import CountUp from "@/components/CountUp";
 
 export default function StatPill({
   value,
@@ -23,7 +28,9 @@ export default function StatPill({
           : "bg-surface border border-hairline text-muted",
       ].join(" ")}
     >
-      <span className={`font-heading text-2xl font-bold leading-none ${tone === "dark" ? "text-on-dark" : "text-navy-dark"}`}>{value}</span>
+      <span className={`font-heading text-2xl font-bold leading-none ${tone === "dark" ? "text-on-dark" : "text-navy-dark"}`}>
+        {typeof value === "number" ? <CountUp value={value} /> : value}
+      </span>
       <span className={`font-body text-[15px] font-medium ${tone === "dark" ? "text-on-dark/85" : ""}`}>{label}</span>
     </span>
   );

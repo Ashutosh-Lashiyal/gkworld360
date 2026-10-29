@@ -9,6 +9,10 @@
 // Server component.
 
 import Image from "next/image";
+// ViewTransition (React) + the shared name: the topic card's title glides into
+// this heading when a reader opens an article (28 Oct 2026)
+import { ViewTransition } from "react";
+import { titleTransitionName } from "@/lib/view-transition";
 import Breadcrumb from "@/components/Breadcrumb";
 import LanguageToggle from "@/components/LanguageToggle";
 import ShareButton from "@/components/ShareButton";
@@ -51,6 +55,19 @@ export default function ArticleHeader({
   const c = colors ?? FRAME_COLORS;
   const hindi = lang === "hi";
 
+  // The big heading, kept in a variable so it can be wrapped in a
+  // <ViewTransition> below only when we know this page's path.
+  const heading = (
+    <h1
+      lang={lang}
+      className={`m-0 text-4xl md:text-5xl lg:text-[56px] font-bold leading-[1.05] tracking-[-0.02em] text-navy-dark [text-wrap:balance] ${
+        hindi ? "font-hindi" : "font-heading"
+      }`}
+    >
+      {title}
+    </h1>
+  );
+
   return (
     <header className="flex flex-col items-center text-center gap-4 pt-10 md:pt-14">
       <Breadcrumb items={breadcrumbs} />
@@ -61,14 +78,15 @@ export default function ArticleHeader({
         </span>
       )}
 
-      <h1
-        lang={lang}
-        className={`m-0 text-4xl md:text-5xl lg:text-[56px] font-bold leading-[1.05] tracking-[-0.02em] text-navy-dark [text-wrap:balance] ${
-          hindi ? "font-hindi" : "font-heading"
-        }`}
-      >
-        {title}
-      </h1>
+      {/* PAGE TRANSITION (28 Oct 2026): named after this page's own path, the
+          same name the topic card gives its title — so the card title glides
+          into this heading. Without a path (shouldn't happen) the heading is
+          left un-named and simply appears as before. */}
+      {shareUrl ? (
+        <ViewTransition name={titleTransitionName(shareUrl)}>{heading}</ViewTransition>
+      ) : (
+        heading
+      )}
 
       {/* The signal rule — the one bit of subject colour on the page */}
       <span aria-hidden="true" className="block w-14 h-[3px] rounded-none" style={{ backgroundColor: c.accent }} />

@@ -42,6 +42,10 @@ export default function ReadLaterButton({
   variant?: "overlay" | "row" | "light";
 }) {
   const [saved, setSaved] = useState(false);
+  // BOOKMARK POP (28 Oct 2026): counts taps. It's used as the icon's `key`
+  // below — when a key changes, React draws a fresh icon, which replays the
+  // "pop" animation. 0 = never tapped, so nothing pops when the page loads.
+  const [pops, setPops] = useState(0);
 
   // On mount (and whenever the list changes anywhere), check if THIS headline is saved.
   useEffect(() => {
@@ -63,6 +67,7 @@ export default function ReadLaterButton({
       : [{ ...headline, savedAt: Date.now() }, ...list]; // save (newest first)
     writeSaved(next);
     setSaved(!exists);
+    setPops((n) => n + 1); // replay the pop on every tap, save or remove
     // Tell the Toast (components/Toast.tsx, mounted in the layout) what happened,
     // so the reader gets a small confirmation bar instead of a silent click.
     window.dispatchEvent(
@@ -100,8 +105,11 @@ export default function ReadLaterButton({
             }`,
       ].join(" ")}
     >
-      {/* Bookmark icon — filled when saved, outline when not */}
+      {/* Bookmark icon — filled when saved, outline when not. It swells and
+          settles after a tap (anim-pop in globals.css). */}
       <svg
+        key={pops}
+        className={pops ? "anim-pop" : undefined}
         width="16"
         height="16"
         viewBox="0 0 24 24"

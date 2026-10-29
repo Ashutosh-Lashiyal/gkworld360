@@ -73,6 +73,18 @@ const nextConfig: NextConfig = {
       { pathname: "/api/media/**", search: "?prefix=media" },
     ],
   },
+
+  // ── PAGE TRANSITIONS (28 Oct 2026, branch feature/animations) ───────────────
+  // Lets React's <ViewTransition> animate between pages using the browser's
+  // own View Transitions feature: when you tap a topic card, its title glides
+  // and grows into the article's big heading. Next.js marks this setting
+  // EXPERIMENTAL (docs: node_modules/next/dist/docs/01-app/02-guides/
+  // view-transitions.md). Browsers without support just change page as before.
+  // If it ever misbehaves, setting this to false switches the effect off
+  // everywhere without touching any other file.
+  experimental: {
+    viewTransition: true,
+  },
 };
 
 const withMDX = createMDX({

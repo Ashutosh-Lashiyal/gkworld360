@@ -26,7 +26,11 @@
 // server component. Less JavaScript shipped to the reader.
 import Link from "next/link";
 import Image from "next/image";
+// ViewTransition comes from React itself (no extra library). It names the
+// title so it can glide into the article's heading on the next page.
+import { ViewTransition } from "react";
 import Button from "@/components/Button";
+import { titleTransitionName } from "@/lib/view-transition";
 
 type ContentCardProps = {
   title: string;
@@ -142,11 +146,17 @@ export default function ContentCard({
           </span>
         )}
 
-        <h3 className="font-heading text-lg font-semibold text-navy leading-snug">
-          <Link href={href} className="group-hover:text-sapphire transition-colors">
-            {title}
-          </Link>
-        </h3>
+        {/* PAGE TRANSITION (28 Oct 2026): the title carries the same name as
+            the article page's heading (lib/view-transition.ts), so when the
+            reader opens the card, this title glides and grows into the big
+            heading. <ViewTransition> passes the name to the <h3> inside it. */}
+        <ViewTransition name={titleTransitionName(href)}>
+          <h3 className="font-heading text-lg font-semibold text-navy leading-snug">
+            <Link href={href} className="group-hover:text-sapphire transition-colors">
+              {title}
+            </Link>
+          </h3>
+        </ViewTransition>
 
         {description && (
           <p className="font-body text-sm text-muted leading-relaxed line-clamp-2">

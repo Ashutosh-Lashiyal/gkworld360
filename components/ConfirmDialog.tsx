@@ -36,7 +36,10 @@ export default function ConfirmDialog({ open, title, message, confirmLabel = "Ye
       ref={ref}
       onCancel={(e) => { e.preventDefault(); onCancel(); }} // Escape key
       onClick={(e) => { if (e.target === ref.current) onCancel(); }} // click on the backdrop
-      className="m-auto w-[min(92vw,420px)] bg-surface border border-hairline p-0 shadow-[0_24px_64px_rgba(0,0,0,0.28)] backdrop:bg-navy-dark/50 backdrop:backdrop-blur-[2px]"
+      // anim-dialog (28 Oct 2026): the box rises gently into place and the dimmed
+      // page fades in behind it (globals.css → MOTION). Closing stays instant —
+      // the browser removes a native dialog in one step.
+      className="anim-dialog m-auto w-[min(92vw,420px)] bg-surface border border-hairline p-0 shadow-[0_24px_64px_rgba(0,0,0,0.28)] backdrop:bg-navy-dark/50 backdrop:backdrop-blur-[2px]"
     >
       <div className="p-6 flex flex-col gap-4">
         <h2 className="m-0 font-heading text-xl font-bold text-navy-dark">{title}</h2>

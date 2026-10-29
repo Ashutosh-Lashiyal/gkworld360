@@ -15,6 +15,8 @@ import Button from "@/components/Button";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { rankResults, type SearchItem } from "@/lib/search-rank";
+// Lets the results list fade out when it closes (lib/use-presence.ts, 28 Oct 2026)
+import { usePresence } from "@/lib/use-presence";
 
 // How many results to show inside the hero dropdown
 const MAX_DROPDOWN_RESULTS = 10;
@@ -108,6 +110,11 @@ export default function SearchBox({
 
   const trimmed = value.trim();
 
+  // EASED DROPDOWN (28 Oct 2026): the list fades in when it opens and out when
+  // it closes (click outside, Escape, picking a result). If the reader deletes
+  // everything they typed, it simply goes — there's nothing left to show.
+  const dropdown = usePresence(open && trimmed !== "", 150);
+
   return (
     <div ref={wrapperRef} className={boxed ? "relative" : "relative max-w-xl mx-auto"}>
       <form
@@ -154,13 +161,15 @@ export default function SearchBox({
 
       {/* ── INSTANT RESULTS DROPDOWN ──────────────────────────────────────────
           Shown only when the field is open AND the user has typed something.    */}
-      {open && trimmed && (
+      {dropdown.present && trimmed && (
         <div
           className={[
             // z-30: ABOVE the page content that follows, but BELOW the sticky
             // header (z-50) — otherwise the open list slid over the menu when
             // the page was scrolled. (Fixed 16 Sep 2026.)
             "absolute z-30 left-0 right-0 mt-2",
+            // fade + 8px drop in, the reverse on the way out (globals.css → MOTION)
+            dropdown.closing ? "anim-menu-out" : "anim-menu-in",
             "bg-surface border border-hairline rounded-card shadow-card-hover",
             "overflow-hidden text-left",
             // On wide screens the input row may include the button; keep the
