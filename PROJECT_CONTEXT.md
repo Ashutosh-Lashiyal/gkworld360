@@ -40,7 +40,18 @@ Content is created on the **Vercel site's** database via `npm run dev:prod` (por
   white-silhouette CSS filter is gone. The owner may replace these with designer artwork later.
 - **Known repair still pending:** articles #3/#4/#5 on the Vercel site are drafts, turned back by an
   early `write-prompts` run (tool since fixed) — `node scripts/publish-article.mjs 3 4 5 --production`.
-- **In progress — branch `feature/animations` (28 Oct, NOT merged):** the effects the owner approved
+- **In progress — branch `feature/atlas` (29 Oct, from feature/animations):** World360 Atlas step 2.
+  New collection `collections/AtlasEntries.ts` ("Atlas entries" in /admin): one event at one place,
+  linked to ONE article (subject/colour come from it); EN+HI text; Draft/Publish; `slug` auto from
+  English title + year and locked after first publish (hidden `slugLocked`); public API sees only
+  published entries; date stored as numbers (year, minus = BC; optional month/day; `approximate`) with
+  an optional localized `dateText`; `keyPoints` is a LOCALIZED array (each language has its own 2–3).
+  Tables exist in DEV only. 13 catch-up drafts saved in dev via `scripts/create-atlas-entries.mjs`
+  → `/api/ingest` action `create-atlas-entries` → `createAtlasEntries()` in `lib/ingest.ts`
+  (skips duplicates; articles matched by slug so the same file works on production).
+  `npm run generate:types` fails under Node 26 (known); nothing uses payload-types.ts.
+  BEFORE PUSHING: production schema push + `--production` run of the script (15 Sep rule).
+- **Animations — branch `feature/animations` (28 Oct; committed + pushed 29 Oct, NOT merged):** the effects the owner approved
   from the motion prototype (everything except the hero globe). All shared animation CSS is one
   "MOTION" block at the end of `app/(frontend)/globals.css`, and ALL of it switches off under
   `prefers-reduced-motion`. Pieces:

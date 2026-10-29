@@ -486,3 +486,95 @@ export async function publishArticle(id: number): Promise<{ id: number; title: s
   const doc = await payload.update({ collection: "articles", id, locale: "en", draft: false, data: { _status: "published" } });
   return { id, title: String(doc.title) };
 }
+
+// ── World360 Atlas entries (29 Oct 2026) ──────────────────────────────────────
+// Saves Atlas entries as DRAFTS, English + Hindi on one document — the same
+// two-step pattern as createArticleDraft above. The owner reviews and
+// publishes them in /admin → Atlas entries. Input file: drafts/atlas-catch-up.json.
+//
+// Each entry names its article by SLUG, not id: ids differ between the dev and
+// production databases, slugs don't — so the same file works for both.
+
+type AtlasLang = { title: string; place: string; region?: string; keyPoints: string[]; dateText?: string };
+
+export type AtlasEntryInput = {
+  article: string; // the article's slug
+  lat: number;
+  lng: number;
+  year: number; // negative = BC
+  month?: number;
+  day?: number;
+  approximate?: boolean;
+  en: AtlasLang;
+  hi: AtlasLang;
+  reviewNotes?: string; // for the owner; stays in the file, not saved to the CMS
+};
+
+/** The localized fields of one language, in the shape Payload stores them. */
+const atlasLangData = (l: AtlasLang) => ({
+  title: l.title,
+  place: l.place,
+  ...(l.region ? { region: l.region } : {}),
+  ...(l.dateText ? { dateText: l.dateText } : {}),
+  keyPoints: l.keyPoints.map((text) => ({ text })),
+});
+
+export async function createAtlasEntries(
+  entries: AtlasEntryInput[]
+): Promise<{ created: { id: number | string; title: string; slug: string }[]; skipped: string[] }> {
+  const payload = await getPayload({ config: configPromise });
+  const created: { id: number | string; title: string; slug: string }[] = [];
+  const skipped: string[] = [];
+
+  for (const e of entries) {
+    // Find the article (draft: true → also finds an article that is still a draft).
+    const article = (await payload.find({ collection: "articles", where: { slug: { equals: e.article } }, limit: 1, depth: 0, draft: true })).docs[0];
+    if (!article) throw new Error(`Article "${e.article}" not found — needed by the entry “${e.en.title}”.`);
+
+    // Safe to run twice: an entry with the same English title for the same
+    // article is already there → skip it instead of making a duplicate dot.
+    const existing = await payload.find({
+      collection: "atlas-entries",
+      where: { and: [{ title: { equals: e.en.title } }, { article: { equals: article.id } }] },
+      locale: "en",
+      limit: 1,
+      depth: 0,
+      draft: true,
+    });
+    if (existing.docs[0]) {
+      skipped.push(e.en.title);
+      continue;
+    }
+
+    // English first, as a draft. The slug is left empty on purpose — the
+    // collection's hook makes it from the English title + year.
+    const doc = await payload.create({
+      collection: "atlas-entries",
+      locale: "en",
+      draft: true,
+      data: {
+        ...atlasLangData(e.en),
+        article: article.id,
+        lat: e.lat,
+        lng: e.lng,
+        year: e.year,
+        ...(e.month ? { month: e.month } : {}),
+        ...(e.day ? { day: e.day } : {}),
+        approximate: e.approximate ?? false,
+        _status: "draft",
+      },
+    });
+
+    // …then the Hindi text on the SAME entry.
+    await payload.update({
+      collection: "atlas-entries",
+      id: doc.id,
+      locale: "hi",
+      draft: true,
+      data: { ...atlasLangData(e.hi), _status: "draft" },
+    });
+
+    created.push({ id: doc.id, title: e.en.title, slug: String(doc.slug) });
+  }
+  return { created, skipped };
+}

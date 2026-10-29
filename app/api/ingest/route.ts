@@ -15,8 +15,9 @@
 // Body: { "action": "create-draft", "draft": {…} }  |  { "action": "delete", "id": 4 }
 //       | { "action": "add-hindi", "hindi": { slug, hi: { title, description, map } } }
 //       | { "action": "add-images", "images": { slug, cover?, images: [{ file, alt, caption, afterHeading }] } }
+//       | { "action": "create-atlas-entries", "entries": [ …see drafts/atlas-catch-up.json… ] }
 
-import { createArticleDraft, deleteArticle, addHindiToArticle, addImagesToArticle, importArticle, createQuote, writeImagePrompts, publishArticle, type ArticleDraft, type HindiAddition, type ImageAddition, type ArticleExport, type QuoteInput } from "@/lib/ingest";
+import { createArticleDraft, deleteArticle, addHindiToArticle, addImagesToArticle, importArticle, createQuote, writeImagePrompts, publishArticle, createAtlasEntries, type AtlasEntryInput, type ArticleDraft, type HindiAddition, type ImageAddition, type ArticleExport, type QuoteInput } from "@/lib/ingest";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,7 @@ export async function POST(req: Request) {
   }
 
   const host = dbHost();
-  let body: { action?: string; draft?: ArticleDraft; hindi?: HindiAddition; images?: ImageAddition; article?: ArticleExport; quote?: QuoteInput; slug?: string; force?: boolean; id?: number; production?: boolean };
+  let body: { action?: string; draft?: ArticleDraft; hindi?: HindiAddition; images?: ImageAddition; article?: ArticleExport; quote?: QuoteInput; entries?: AtlasEntryInput[]; slug?: string; force?: boolean; id?: number; production?: boolean };
   try {
     body = await req.json();
   } catch {
@@ -61,6 +62,10 @@ export async function POST(req: Request) {
     }
     if (body.action === "create-quote" && body.quote) {
       const result = await createQuote(body.quote);
+      return Response.json({ ok: true, host, ...result });
+    }
+    if (body.action === "create-atlas-entries" && Array.isArray(body.entries)) {
+      const result = await createAtlasEntries(body.entries);
       return Response.json({ ok: true, host, ...result });
     }
     if (body.action === "write-prompts") {

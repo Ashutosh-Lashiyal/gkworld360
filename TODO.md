@@ -126,8 +126,20 @@
         issues later when there's too much data." Show ONLY real, article-backed entries (13 at
         start); the pink examples stay in the prototype. Subject buttons appear only for subjects
         that have entries.
-      - Build order: 0 prototype ✅ → 1 approved animations → 2 Atlas entries in /admin + catch-up →
-        3 /atlas page (EN + HI) → 4 homepage section, menu, article link, share cards → 5 pipeline doc.
+      - Build order: 0 prototype ✅ → 1 approved animations ✅ (committed + pushed 29 Oct, not merged) →
+        2 Atlas entries in /admin + catch-up ✅ (dev, 29 Oct) → 3 /atlas page (EN + HI) → 4 homepage
+        section, menu, article link, share cards → 5 pipeline doc.
+      - **Step 2 done on branch `feature/atlas` (29 Oct):** `collections/AtlasEntries.ts` (Draft/Publish
+        like Articles; slug made from English title + year, locked after first publish; drafts hidden
+        from the public API). The date is stored as NUMBERS — year (minus = BC) + optional month/day +
+        an "approximate" tick — and the site writes it out in each language; a free-text date only for
+        things like "5th century CE". 13 catch-up entries saved as DRAFTS in dev
+        (`drafts/atlas-catch-up.json`, `node scripts/create-atlas-entries.mjs`).
+        - [ ] **Owner:** review the 13 drafts in dev /admin → Atlas entries. 11 have a note in
+          `drafts/atlas-catch-up.json` listing facts that go beyond the article (true, but check or
+          ask to drop). Calicut: the article says 27 May 1498, many sources say 20 May — confirm.
+        - [ ] **Before pushing `feature/atlas`:** new tables on production (the 15 Sep rule — schema
+          push via `npm run dev:prod`), then the same script with `--production` to add the entries.
       - Prototype: https://claude.ai/artifact/DdztX491xSWnCWW7cqcLgp (v4, 28 Oct) — 28 entries:
         13 from the 4 articles + 15 marked examples across all six subjects. Owner reviews. *(28 Oct)*
 - [ ] **Automated testing — START ONLY WHEN THE OWNER SAYS SO.** *(agreed 28 Oct)* Today there is

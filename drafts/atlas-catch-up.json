@@ -1,0 +1,353 @@
+{
+  "_about": "The 13 World360 Atlas entries for the 4 articles that existed on 29 Oct 2026. Sent to Payload as DRAFTS by scripts/create-atlas-entries.mjs; the owner reviews and publishes them in /admin. `article` is the article's slug (the same on dev and production, unlike ids). Dates are numbers; the site writes them out in each language. `reviewNotes` are for the owner and are NOT saved to the CMS. Facts marked “not in the article” are well-established, but the owner checks them (or asks for them to be dropped) before publishing.",
+  "entries": [
+    {
+      "article": "the-portuguese-in-india",
+      "lat": 38.72,
+      "lng": -9.14,
+      "year": 1497,
+      "month": 7,
+      "day": 8,
+      "en": {
+        "title": "Vasco da Gama sets sail for India",
+        "place": "Lisbon",
+        "region": "Portugal",
+        "keyPoints": [
+          "On 8 July 1497 Vasco da Gama’s fleet leaves Lisbon.",
+          "He sails round the Cape of Good Hope, at the southern tip of Africa.",
+          "The voyage is backed by King Manuel I of Portugal."
+        ]
+      },
+      "hi": {
+        "title": "वास्को-डि-गामा भारत के लिए रवाना होता है",
+        "place": "लिस्बन",
+        "region": "पुर्तगाल",
+        "keyPoints": [
+          "8 जुलाई 1497 को वास्को-डि-गामा का बेड़ा लिस्बन से रवाना होता है।",
+          "वह अफ्रीका के दक्षिणी छोर पर स्थित केप ऑफ गुड होप का चक्कर लगाकर आगे बढ़ता है।",
+          "इस यात्रा को पुर्तगाल के राजा मैनुअल प्रथम का समर्थन प्राप्त है।"
+        ]
+      },
+      "reviewNotes": "Not in the article: the 8 July 1497 departure from Lisbon and King Manuel I."
+    },
+    {
+      "article": "the-portuguese-in-india",
+      "lat": 11.26,
+      "lng": 75.78,
+      "year": 1498,
+      "month": 5,
+      "en": {
+        "title": "Vasco da Gama reaches Calicut",
+        "place": "Calicut",
+        "region": "Kozhikode, Kerala",
+        "keyPoints": [
+          "Da Gama lands near Calicut in May 1498.",
+          "Calicut is a busy spice port ruled by the Zamorin.",
+          "This opens the first sea route from Europe to India."
+        ]
+      },
+      "hi": {
+        "title": "वास्को-डि-गामा कालीकट पहुँचता है",
+        "place": "कालीकट",
+        "region": "कोझिकोड, केरल",
+        "keyPoints": [
+          "मई 1498 में वास्को-डि-गामा कालीकट के पास उतरता है।",
+          "कालीकट मसालों का एक व्यस्त बंदरगाह है, जिस पर ज़मोरिन का शासन है।",
+          "इससे यूरोप से भारत तक का पहला समुद्री मार्ग खुलता है।"
+        ]
+      },
+      "reviewNotes": "The article says 27 May 1498; many sources say 20 May — so the entry shows only “May 1498” until you confirm the day. Not in the article: the Zamorin, “spice port”, “first sea route”."
+    },
+    {
+      "article": "the-portuguese-in-india",
+      "lat": 15.5,
+      "lng": 73.83,
+      "year": 1510,
+      "en": {
+        "title": "Albuquerque captures Goa",
+        "place": "Goa",
+        "region": "Goa",
+        "keyPoints": [
+          "Afonso de Albuquerque takes Goa from the Bijapur Sultanate in 1510.",
+          "Goa becomes the centre of Portuguese power in the East.",
+          "It stays under Portuguese rule until 1961."
+        ]
+      },
+      "hi": {
+        "title": "अल्बुकर्क ने गोवा जीता",
+        "place": "गोवा",
+        "region": "गोवा",
+        "keyPoints": [
+          "1510 में अल्फांसो डि अल्बुकर्क बीजापुर सल्तनत से गोवा छीन लेता है।",
+          "गोवा पूर्व में पुर्तगाली शक्ति का केंद्र बन जाता है।",
+          "1961 तक यह पुर्तगाली शासन में रहता है।"
+        ]
+      },
+      "reviewNotes": "Not in the article: Goa was taken from the Bijapur Sultanate; Portuguese rule until 1961."
+    },
+    {
+      "article": "the-english-in-india",
+      "lat": 51.51,
+      "lng": -0.13,
+      "year": 1600,
+      "month": 12,
+      "day": 31,
+      "en": {
+        "title": "A charter for the English East India Company",
+        "place": "London",
+        "region": "England",
+        "keyPoints": [
+          "On 31 December 1600 Queen Elizabeth I grants the Company its charter.",
+          "It gets the sole right to English trade east of the Cape of Good Hope."
+        ]
+      },
+      "hi": {
+        "title": "इंग्लिश ईस्ट इंडिया कंपनी को चार्टर मिलता है",
+        "place": "लंदन",
+        "region": "इंग्लैंड",
+        "keyPoints": [
+          "31 दिसंबर 1600 को महारानी एलिज़ाबेथ प्रथम कंपनी को चार्टर देती हैं।",
+          "केप ऑफ गुड होप के पूर्व में अंग्रेज़ी व्यापार का एकमात्र अधिकार इसी कंपनी को मिलता है।"
+        ]
+      },
+      "reviewNotes": "Not in the article: the exact date (31 December 1600) and the sole right to trade east of the Cape."
+    },
+    {
+      "article": "the-dutch-in-india",
+      "lat": 52.37,
+      "lng": 4.9,
+      "year": 1602,
+      "en": {
+        "title": "The Dutch East India Company is formed",
+        "place": "Amsterdam",
+        "region": "Netherlands",
+        "keyPoints": [
+          "Rival Dutch trading companies join to form one company, the VOC.",
+          "The first Dutch fleet to the East had set out in 1595."
+        ]
+      },
+      "hi": {
+        "title": "डच ईस्ट इंडिया कंपनी बनती है",
+        "place": "एम्सटर्डम",
+        "region": "नीदरलैंड",
+        "keyPoints": [
+          "आपस में होड़ करने वाली डच व्यापारिक कंपनियाँ मिलकर एक कंपनी, VOC, बनाती हैं।",
+          "पूर्व की ओर पहला डच बेड़ा 1595 में रवाना हो चुका था।"
+        ]
+      },
+      "reviewNotes": "Not in the article: that the VOC was formed by merging rival Dutch companies."
+    },
+    {
+      "article": "the-dutch-in-india",
+      "lat": 16.19,
+      "lng": 81.14,
+      "year": 1605,
+      "en": {
+        "title": "The first Dutch factory in India",
+        "place": "Masulipatnam",
+        "region": "Andhra Pradesh",
+        "keyPoints": [
+          "The Dutch open their first factory in India at Masulipatnam.",
+          "A “factory” was a trading post — warehouses and offices — not a place where things were made."
+        ]
+      },
+      "hi": {
+        "title": "भारत में पहली डच कोठी",
+        "place": "मसूलीपट्टनम",
+        "region": "आंध्र प्रदेश",
+        "keyPoints": [
+          "डच भारत में अपनी पहली कोठी मसूलीपट्टनम में खोलते हैं।",
+          "“कोठी” (फ़ैक्टरी) एक व्यापारिक चौकी थी — गोदाम और दफ़्तर — कोई कारख़ाना नहीं जहाँ चीज़ें बनती हों।"
+        ]
+      }
+    },
+    {
+      "article": "the-dutch-in-india",
+      "lat": 13.42,
+      "lng": 80.32,
+      "year": 1610,
+      "en": {
+        "title": "A Dutch base at Pulicat",
+        "place": "Pulicat",
+        "region": "Tamil Nadu",
+        "keyPoints": [
+          "Set up in 1610, north of today’s Chennai.",
+          "The chief Dutch centre on the Coromandel coast until 1690, when Negapatnam took over."
+        ]
+      },
+      "hi": {
+        "title": "पुलिकट में डचों का अड्डा",
+        "place": "पुलिकट",
+        "region": "तमिलनाडु",
+        "keyPoints": [
+          "1610 में आज के चेन्नई के उत्तर में स्थापित।",
+          "1690 तक कोरोमंडल तट पर डचों का प्रमुख केंद्र, जिसके बाद नागपट्टनम ने यह जगह ली।"
+        ]
+      }
+    },
+    {
+      "article": "the-english-in-india",
+      "lat": 21.17,
+      "lng": 72.83,
+      "year": 1613,
+      "en": {
+        "title": "The English open a factory at Surat",
+        "place": "Surat",
+        "region": "Gujarat",
+        "keyPoints": [
+          "In 1613 the Mughal emperor Jahangir allows the English to trade at Surat.",
+          "Surat is the main port of the Mughal Empire.",
+          "It becomes the English Company’s first permanent factory in India."
+        ]
+      },
+      "hi": {
+        "title": "अंग्रेज़ सूरत में कोठी खोलते हैं",
+        "place": "सूरत",
+        "region": "गुजरात",
+        "keyPoints": [
+          "1613 में मुग़ल बादशाह जहाँगीर अंग्रेज़ों को सूरत में व्यापार की अनुमति देता है।",
+          "सूरत मुग़ल साम्राज्य का मुख्य बंदरगाह है।",
+          "यह भारत में अंग्रेज़ कंपनी की पहली स्थायी कोठी बनती है।"
+        ]
+      },
+      "reviewNotes": "Not in the article: “main port of the Mughal Empire”, “first permanent factory”."
+    },
+    {
+      "article": "the-dutch-in-india",
+      "lat": 22.9,
+      "lng": 88.39,
+      "year": 1653,
+      "en": {
+        "title": "The Dutch settle in Bengal",
+        "place": "Chinsura",
+        "region": "West Bengal",
+        "keyPoints": [
+          "A Dutch base on the Hooghly river.",
+          "Bengal’s silk, saltpetre and rice are traded through it.",
+          "Handed over to the British in 1825."
+        ]
+      },
+      "hi": {
+        "title": "डच बंगाल में बसते हैं",
+        "place": "चिनसुरा",
+        "region": "पश्चिम बंगाल",
+        "keyPoints": [
+          "हुगली नदी के किनारे डचों का एक अड्डा।",
+          "बंगाल का रेशम, शोरा और चावल यहीं से होकर व्यापार में जाता है।",
+          "1825 में इसे अंग्रेज़ों को सौंप दिया गया।"
+        ]
+      },
+      "reviewNotes": "Not in the article: the Hooghly river, silk/saltpetre/rice, and the 1825 handover to the British."
+    },
+    {
+      "article": "the-dutch-in-india",
+      "lat": 9.93,
+      "lng": 76.27,
+      "year": 1663,
+      "en": {
+        "title": "Cochin passes to the Dutch",
+        "place": "Cochin",
+        "region": "Kochi, Kerala",
+        "keyPoints": [
+          "The Dutch take Cochin from the Portuguese in 1663.",
+          "It gives them a strong base on the Malabar coast, home of the pepper trade."
+        ]
+      },
+      "hi": {
+        "title": "कोचीन डचों के हाथ में आता है",
+        "place": "कोचीन",
+        "region": "कोच्चि, केरल",
+        "keyPoints": [
+          "1663 में डच पुर्तगालियों से कोचीन छीन लेते हैं।",
+          "इससे उन्हें काली मिर्च के व्यापार के गढ़, मालाबार तट पर एक मज़बूत आधार मिलता है।"
+        ]
+      },
+      "reviewNotes": "Not in the article: “the pepper trade”."
+    },
+    {
+      "article": "the-english-in-india",
+      "lat": 22.57,
+      "lng": 88.36,
+      "year": 1700,
+      "en": {
+        "title": "Fort William, the English stronghold in Bengal",
+        "place": "Calcutta",
+        "region": "Kolkata, West Bengal",
+        "keyPoints": [
+          "Job Charnock sets up an English post here in 1690.",
+          "In 1698 the Company gets the rights to three villages: Sutanuti, Gobindapur and Kalikata.",
+          "The fort is named after King William III."
+        ]
+      },
+      "hi": {
+        "title": "फ़ोर्ट विलियम, बंगाल में अंग्रेज़ों का गढ़",
+        "place": "कलकत्ता",
+        "region": "कोलकाता, पश्चिम बंगाल",
+        "keyPoints": [
+          "1690 में जॉब चार्नोक यहाँ एक अंग्रेज़ी चौकी स्थापित करता है।",
+          "1698 में कंपनी को तीन गाँवों — सुतानुती, गोविंदपुर और कालिकाता — के अधिकार मिलते हैं।",
+          "किले का नाम राजा विलियम तृतीय के नाम पर रखा गया है।"
+        ]
+      },
+      "reviewNotes": "Not in the article: Job Charnock and King William III."
+    },
+    {
+      "article": "revolt-of-1857",
+      "lat": 28.98,
+      "lng": 77.71,
+      "year": 1857,
+      "month": 5,
+      "day": 10,
+      "en": {
+        "title": "The Revolt of 1857 begins",
+        "place": "Meerut",
+        "region": "Uttar Pradesh",
+        "keyPoints": [
+          "The sepoys at Meerut rise against their officers.",
+          "One cause: rumours that new rifle cartridges were greased with cow and pig fat.",
+          "The next day they march to Delhi."
+        ]
+      },
+      "hi": {
+        "title": "1857 का विद्रोह शुरू होता है",
+        "place": "मेरठ",
+        "region": "उत्तर प्रदेश",
+        "keyPoints": [
+          "मेरठ के सिपाही अपने अफ़सरों के विरुद्ध उठ खड़े होते हैं।",
+          "एक कारण: अफ़वाह कि नई राइफ़ल के कारतूसों पर गाय और सूअर की चर्बी लगी है।",
+          "अगले दिन वे दिल्ली की ओर कूच करते हैं।"
+        ]
+      },
+      "reviewNotes": "Not in the article: “the next day they march to Delhi”."
+    },
+    {
+      "article": "revolt-of-1857",
+      "lat": 28.65,
+      "lng": 77.24,
+      "year": 1857,
+      "month": 5,
+      "day": 11,
+      "en": {
+        "title": "The rebels rally round Bahadur Shah Zafar",
+        "place": "Delhi",
+        "region": "Delhi",
+        "keyPoints": [
+          "The rebels reach Delhi and proclaim the last Mughal emperor, Bahadur Shah Zafar, their leader.",
+          "The British retake Delhi in September 1857.",
+          "Zafar is exiled to Rangoon, where he dies in 1862."
+        ]
+      },
+      "hi": {
+        "title": "विद्रोही बहादुर शाह ज़फ़र को अपना नेता बनाते हैं",
+        "place": "दिल्ली",
+        "region": "दिल्ली",
+        "keyPoints": [
+          "विद्रोही दिल्ली पहुँचकर अंतिम मुग़ल बादशाह बहादुर शाह ज़फ़र को अपना नेता घोषित करते हैं।",
+          "सितंबर 1857 में अंग्रेज़ दिल्ली पर फिर से क़ब्ज़ा कर लेते हैं।",
+          "ज़फ़र को रंगून निर्वासित कर दिया जाता है, जहाँ 1862 में उनकी मृत्यु होती है।"
+        ]
+      },
+      "reviewNotes": "Not in the article: the 11 May date, the British retaking Delhi in September 1857, and Zafar's death in 1862."
+    }
+  ]
+}
