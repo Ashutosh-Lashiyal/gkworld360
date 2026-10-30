@@ -1,83 +1,83 @@
 "use client";
 
-import { useState, useRef } from "react";
+// ── THE SITE HEADER ──────────────────────────────────────────────────────────
+// REDESIGN 30 Oct 2026 (phase 1): a floating, see-through PILL near the top of
+// the page (the "Playful + Cinematic" look), instead of the full-width dark bar.
+//
+//   [GK WORLD360]   Home  Subjects▾  Atlas NEW  Current Affairs  Headlines   [Search] [🔖] [🔔] [☀] [☰]
+//
+// What's kept from the old header (owner's features, unchanged):
+//   - the Subjects menu with every subject, its Hindi name and live topic counts
+//     (subjects without a page yet are greyed and not links);
+//   - Atlas with its "New" tag (the Hindi Atlas on Hindi pages);
+//   - Current Affairs, Headlines, search, Read Later (bookmark) and the bell.
+// What's new:
+//   - the animated Day & Night logo (components/Logo.tsx);
+//   - the sun/moon button for Light / Dark (components/ThemeToggle.tsx);
+//   - phones and tablets get a FULL-SCREEN menu with big links, and phones also
+//     get the tab bar at the bottom (components/PhoneTabBar.tsx);
+//   - the header slides away while you scroll down to read, and comes back the
+//     moment you scroll up.
+// The colours come from globals.css (classes starting with gk-), so the header
+// follows Light / Dark / Reading automatically.
+
+import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
-// Image is Next.js's built-in image component — it automatically optimises
-// images (compresses, resizes, lazy-loads) so the site stays fast.
 import { getSubjectFromPath, SUBJECT_COLORS } from "@/lib/subject-colors";
 import { SUBJECTS } from "@/lib/subjects";
-// SUBJECTS is now imported from the shared lib/subjects.ts file instead of
-// being defined here — so the header and the homepage both use the same list.
 import BellNotification from "@/components/BellNotification";
 import Button from "@/components/Button";
+import Logo from "@/components/Logo";
+import ThemeToggle from "@/components/ThemeToggle";
+import { currentMode, setMode } from "@/lib/mode";
 // usePresence keeps a menu on the page for a moment after it closes, so it can
 // fade out instead of vanishing (lib/use-presence.ts, 28 Oct 2026).
 import { usePresence } from "@/lib/use-presence";
 
-
-// The links after "Subjects". MENU TIDY-UP (owner, 29 Oct 2026): the bar was
-// full, so to make room for the new World360 Atlas:
-//   - "Read Later" became the bookmark icon next to the bell (right side)
-//   - "Contact" moved to the footer
-// The Atlas link itself is drawn separately (it has a "New" tag and points to
-// /hi/atlas on Hindi pages).
+// The links after "Subjects" and "Atlas" (menu tidy-up, 29 Oct 2026)
 const OTHER_LINKS = [
   { label: "Current Affairs", href: "/news" },
   { label: "Headlines", href: "/pulse" },
 ];
 
-// The bookmark shape — the same one the "Read later" buttons on articles use,
-// so readers connect the two.
+// ── small icons ──
 function BookmarkIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-      fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" aria-hidden="true">
+      <path d="M6 3h12v18l-6-4-6 4z" />
     </svg>
   );
 }
-
 function SearchIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-      fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="11" cy="11" r="8" />
-      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
     </svg>
   );
 }
-
-function MenuIcon() {
+function MenuIcon({ open }: { open: boolean }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-      fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <line x1="3" y1="6"  x2="21" y2="6"  />
-      <line x1="3" y1="12" x2="21" y2="12" />
-      <line x1="3" y1="18" x2="21" y2="18" />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
+      {open ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
     </svg>
   );
 }
-
-function CloseIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-      fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <line x1="18" y1="6"  x2="6"  y2="18" />
-      <line x1="6"  y1="6"  x2="18" y2="18" />
-    </svg>
-  );
-}
-
 function ChevronDownIcon({ open }: { open: boolean }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-      fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-      aria-hidden="true"
-      className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`}>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+      aria-hidden="true" className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`}>
       <polyline points="6 9 12 15 18 9" />
     </svg>
+  );
+}
+// The small "New" tag next to Atlas
+function NewTag() {
+  return (
+    <span className="font-body text-[10px] font-extrabold uppercase tracking-[0.08em] leading-none text-[#04241b] bg-mint rounded-[5px] px-1.5 py-[3px]">
+      New
+    </span>
   );
 }
 
@@ -100,17 +100,15 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
   // The Atlas in the reader's language: on a Hindi page, the Hindi Atlas.
   const hindiPage = pathname === "/hi" || pathname.startsWith("/hi/");
   const atlasHref = hindiPage ? "/hi/atlas" : "/atlas";
-  // Any Atlas address (/atlas, /atlas/<card>, /hi/atlas…) marks "Atlas" as active.
   const onAtlas = /^\/(hi\/)?atlas(\/|$)/.test(pathname);
 
   const [subjectsOpen, setSubjectsOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSubjectsOpen, setMobileSubjectsOpen] = useState(false);
+  const [away, setAway] = useState(false);            // header slid out of view?
+  const [mode, setModeState] = useState<"light" | "dark">("light"); // for the menu's Look switch
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // EASED MENUS (28 Oct 2026): both menus fade/slide in when they open and
-  // out when they close. `present` decides whether they're on the page at all;
-  // `closing` switches to the closing animation (classes in globals.css).
   const subjectsMenu = usePresence(subjectsOpen, 150);
   const mobileMenu = usePresence(mobileMenuOpen, 150);
 
@@ -122,88 +120,72 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
     closeTimer.current = setTimeout(() => setSubjectsOpen(false), 150);
   };
 
-  // REDESIGN 16 Sep 2026 — the header is now part of the dark "frame" that is
-  // identical on every page (deep teal #122a26, white text, one mint accent).
-  // Nav links: white at 82% opacity, full white on hover. The ACTIVE link gets
-  // a 2px mint underline instead of a filled pill — the mint accent is reserved
-  // for "where am I / what can I do" cues, nowhere else.
-  const linkClass = (href: string) => {
-    const active = pathname === href;
-    return [
-      // whitespace-nowrap keeps each label on ONE line (no more "Current
-      // Affairs" breaking in two); px-2.5 tightens spacing so all 7 items fit.
-      "font-body text-[15px] font-medium whitespace-nowrap px-2.5 py-1.5 border-b-2 transition-colors duration-200",
-      active
-        ? "text-on-dark border-mint"
-        : "text-on-dark/80 border-transparent hover:text-mint",
-    ].join(" ");
-  };
+  // Moving to another page closes every menu (the new page should start clean).
+  // React's recommended way to "reset state when something changes": remember
+  // the last address, and when it differs, update the state right here while
+  // drawing (no effect needed, so no extra round of drawing).
+  const [lastPath, setLastPath] = useState(pathname);
+  if (pathname !== lastPath) {
+    setLastPath(pathname);
+    setMobileMenuOpen(false);
+    setSubjectsOpen(false);
+    setAway(false);
+  }
+
+  // While the phone menu is open the page behind it must not scroll
+  useEffect(() => {
+    document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileMenuOpen]);
+
+  // HIDE ON SCROLL: going down past the top → slide away; any scroll up → back.
+  // "passive: true" tells the browser we never block scrolling, so it stays smooth.
+  useEffect(() => {
+    let last = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (y > 260 && y > last + 4) setAway(true);
+      else if (y < last - 4 || y < 260) setAway(false);
+      last = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // aria-current="page" marks the link for the page you're on; globals.css
+  // (.gk-nav-link) gives it the soft green pill.
+  const current = (on: boolean) => (on ? ("page" as const) : undefined);
+  const navLink = "gk-nav-link inline-flex items-center gap-1.5 h-10 px-3.5 rounded-full font-body text-[15px] font-extrabold whitespace-nowrap transition-colors";
 
   return (
-    // No coloured line under the bar any more (owner, 17 Sep — it clashed with
-    // the reading-progress bar). The subject colour lives on the page itself.
-    <header className="sticky top-0 z-50 bg-navy-dark text-on-dark">
+    <header
+      // sticky + top: the pill stays near the top of the screen as you scroll.
+      // The extra env(...) keeps it below an iPhone's notch.
+      className={`gk-head sticky z-50 mx-3 md:mx-4 mt-2.5 ${away && !mobileMenuOpen ? "is-away" : ""}`}
+      style={{ top: "calc(10px + env(safe-area-inset-top, 0px))" }}
+    >
+      <div className="gk-head__pill relative max-w-[1280px] mx-auto h-[58px] md:h-16 rounded-full flex items-center gap-3 lg:gap-4 pl-4 pr-2 md:pl-5 md:pr-2.5">
 
-      {/* `relative` on the container lets us absolutely-position the nav.
-          The nav is pinned to the full width of the container and centres its
-          links inside — so it always sits in the true middle of the header,
-          regardless of how wide the logo or the search icon is.
-          Logo stays at the far left, search stays at the far right. */}
-      {/* py-2 + a 56px logo ≈ a 72px bar (was ~120px). A slimmer header leaves
-          more of the screen for the article, which is what readers came for. */}
-      {/* `relative` here (not on the Subjects button) is what lets the menu
-          panel stretch across the whole header width, edge to edge with the
-          logo and the search box, instead of hanging under one word. */}
-      <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-2 relative flex items-center">
+        {/* Logo — the GK letters with the turning Earth, and the name */}
+        <Link href="/" aria-label="GKWorld360 — home" className="flex-none">
+          <Logo size={38} />
+        </Link>
 
-        {/* Logo — far left, does not participate in centering the nav.
-            18 Sep 2026: new flat logo. Two files, one per background:
-            logo-dark.png (off-white + mint) for the dark header/footer,
-            logo-light.png (teal + mint) for light surfaces. The old CSS-filter
-            trick that made a white silhouette is gone. width/height match the
-            file's shape (1106×820) so the browser reserves the right space. */}
-        <div className="flex items-center flex-shrink-0">
-          <Link href="/" className="inline-block">
-            <Image
-              src="/images/logo-dark.png"
-              alt="GKWorld360 — Know More, Grow More"
-              height={72}
-              width={97}
-              className="h-14 md:h-[72px] w-auto"
-              priority
-            />
-          </Link>
-        </div>
+        {/* Desktop nav (large screens) — centred in the middle space */}
+        <nav className="hidden lg:flex flex-1 justify-center items-center gap-0.5" aria-label="Main navigation">
+          <Link href="/" className={navLink} aria-current={current(pathname === "/")}>Home</Link>
 
-        {/* Desktop nav — takes the middle space and centres its links there.
-            Using flex-1 (instead of absolute positioning) means the nav, logo,
-            and right-side controls each get their own space and never overlap,
-            no matter how many nav items there are.                             */}
-        <nav
-          className="hidden lg:flex flex-1 justify-center items-center px-2"
-          aria-label="Main navigation"
-        >
-        <div className="flex items-center gap-1">
-
-          <Link href="/" className={linkClass("/")}>Home</Link>
-
-          {/* Subjects dropdown — wrapping div handles hover open/close.
-              Clicking the button also toggles it (touch laptops, keyboards),
-              and Escape closes it. */}
+          {/* Subjects — hover or click to open; Escape closes */}
           <div
             onMouseEnter={openSubjects}
             onMouseLeave={scheduleClose}
             onKeyDown={(e) => { if (e.key === "Escape") setSubjectsOpen(false); }}
           >
             <button
+              type="button"
               onClick={() => setSubjectsOpen(!subjectsOpen)}
-              className={[
-                "font-body text-[15px] font-medium whitespace-nowrap px-2.5 py-1.5 border-b-2 transition-colors duration-200 flex items-center gap-1",
-                // Open, or on a subject page → treated as the active link
-                subjectsOpen || subjectSlug
-                  ? "text-on-dark border-mint"
-                  : "text-on-dark/80 border-transparent hover:text-mint",
-              ].join(" ")}
+              className={navLink}
+              aria-current={current(!!subjectSlug)}
               aria-expanded={subjectsOpen}
               aria-haspopup="true"
             >
@@ -213,48 +195,31 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
 
             {subjectsMenu.present && (
               <>
-                {/* Dim the page behind the open menu (board 8). It sits below
-                    the bar, ignores the mouse (pointer-events-none) so hover
-                    in/out of the panel still works, and is purely visual.
-                    It fades in and out with the menu (anim-fade-in/out). */}
+                {/* Dim the page behind the open menu. pointer-events-none: purely
+                    visual, so moving the mouse out of the panel still closes it. */}
                 <div
                   aria-hidden="true"
-                  // The container is centred and 1200px wide, so "left-0 right-0" would
-                  // only dim the middle. left-1/2 + -translate-x-1/2 + w-screen centres
-                  // a viewport-wide strip on it instead.
-                  className={`absolute left-1/2 -translate-x-1/2 w-screen top-full h-screen bg-navy-dark/35 pointer-events-none ${
-                    subjectsMenu.closing ? "anim-fade-out" : "anim-fade-in"
-                  }`}
+                  className={`fixed inset-0 top-[92px] bg-[rgba(5,7,13,0.35)] pointer-events-none ${subjectsMenu.closing ? "anim-fade-out" : "anim-fade-in"}`}
                 />
-
-                {/* THE PANEL — a white card dropping from the dark bar, the
-                    full width of the header content. All subjects in three
-                    columns; each row = 4px signal bar · English name (serif)
-                    · Hindi name. The signal colours are learnt here, before
-                    the reader ever reaches a subject page. Topic counts per
-                    subject arrive in Phase 4, when the CMS feeds this list. */}
+                {/* THE PANEL — a chunky card under the pill: every subject in three
+                    columns, each with its colour bar, Hindi name and topic count */}
                 <div
-                  // anim-menu-in / anim-menu-out: fade + an 8px drop (globals.css → MOTION)
-                  className={`absolute top-full left-4 md:left-8 lg:left-16 right-4 md:right-8 lg:right-16 mt-2 bg-surface text-foreground rounded-none shadow-[0_24px_64px_rgba(0,0,0,0.28)] p-7 pb-6 flex flex-col gap-5 z-50 ${
+                  className={`absolute top-[calc(100%+10px)] left-0 right-0 bg-surface text-foreground rounded-card border-2 border-hairline shadow-card-hover p-7 pb-6 flex flex-col gap-5 z-50 ${
                     subjectsMenu.closing ? "anim-menu-out" : "anim-menu-in"
                   }`}
                   onMouseEnter={openSubjects}
                   onMouseLeave={scheduleClose}
                 >
                   <div className="flex items-baseline justify-between">
-                    <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+                    <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted">
                       {liveCount} {liveCount === 1 ? "subject" : "subjects"} · {totalTopics} {totalTopics === 1 ? "topic" : "topics"} · English and Hindi
                     </span>
-                    <Link
-                      href="/subjects"
-                      onClick={() => setSubjectsOpen(false)}
-                      className="font-body text-[13px] font-semibold text-sapphire hover:text-sapphire-dark transition-colors"
-                    >
+                    <Link href="/subjects" onClick={() => setSubjectsOpen(false)} className="font-body text-[14px] font-extrabold text-sapphire hover:text-sapphire-dark transition-colors">
                       All subjects →
                     </Link>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-x-10 gap-y-1">
+                  <div className="grid grid-cols-3 gap-x-8 gap-y-1">
                     {SUBJECTS.map((subject) => {
                       const live = isLive(subject.slug);
                       const count = topicsBySubject[subject.slug] ?? 0;
@@ -262,245 +227,187 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
                         <>
                           <span
                             aria-hidden="true"
-                            className="w-1 h-9 rounded-sm"
-                            style={{ backgroundColor: live ? SUBJECT_COLORS[subject.slug]?.accent ?? "#059669" : "#d9d6cf" }}
+                            className="w-1.5 h-9 rounded-full"
+                            style={{ backgroundColor: live ? SUBJECT_COLORS[subject.slug]?.accent ?? "var(--accent)" : "var(--line-2)" }}
                           />
-                          {/* Hover = the site's mint, same as every button (owner, 16 Sep).
-                              The fill sits on the TEXT block only, so the signal bar on
-                              the left stays clear of it (owner's note, same day). */}
-                          <span className={`grid grid-cols-[minmax(0,1fr)_auto] gap-3 items-center px-3 py-2.5 rounded-none transition-colors duration-100 ${live ? "group-hover:bg-mint" : ""}`}>
+                          <span className={`grid grid-cols-[minmax(0,1fr)_auto] gap-3 items-center px-3 py-2.5 rounded-[14px] transition-colors duration-100 ${live ? "group-hover:bg-surface-low" : ""}`}>
                             <span className="flex flex-col leading-tight">
-                              <span className={`font-heading text-base font-semibold ${live ? "text-navy-dark" : "text-muted"}`}>
-                                {subject.label}
-                              </span>
-                              <span lang="hi" className={`font-hindi text-xs ${live ? "text-muted group-hover:text-navy-dark/70" : "text-muted/70"} transition-colors`}>
-                                {subject.labelHi}
-                              </span>
+                              <span className={`font-heading text-base font-semibold ${live ? "text-foreground" : "text-muted"}`}>{subject.label}</span>
+                              <span lang="hi" className={`font-hindi text-xs ${live ? "text-muted" : "text-muted/70"}`}>{subject.labelHi}</span>
                             </span>
                             {/* A real count, or an honest "coming soon" */}
-                            <span className={`font-body text-xs whitespace-nowrap ${live ? "text-muted group-hover:text-navy-dark/70" : "text-muted/70 italic"}`}>
+                            <span className={`font-body text-xs font-bold whitespace-nowrap ${live ? "text-muted" : "text-muted/70 italic"}`}>
                               {live ? `${count} ${count === 1 ? "topic" : "topics"}` : "coming soon"}
                             </span>
                           </span>
                         </>
                       );
                       return live ? (
-                        <Link
-                          key={subject.slug}
-                          href={`/${subject.slug}`}
-                          onClick={() => setSubjectsOpen(false)}
-                          className="grid grid-cols-[4px_minmax(0,1fr)] gap-2.5 items-center group"
-                        >
+                        <Link key={subject.slug} href={`/${subject.slug}`} onClick={() => setSubjectsOpen(false)} className="grid grid-cols-[6px_minmax(0,1fr)] gap-2.5 items-center group">
                           {inner}
                         </Link>
                       ) : (
-                        // No page yet → not a link. A dead link that 404s is worse
-                        // than a greyed name (11 of 17 did exactly that before).
-                        <div
-                          key={subject.slug}
-                          aria-disabled="true"
-                          className="grid grid-cols-[4px_minmax(0,1fr)] gap-2.5 items-center cursor-default"
-                        >
+                        // No page yet → not a link (a dead link that 404s is worse than a greyed name)
+                        <div key={subject.slug} aria-disabled="true" className="grid grid-cols-[6px_minmax(0,1fr)] gap-2.5 items-center cursor-default">
                           {inner}
                         </div>
                       );
                     })}
                   </div>
 
-                  <div className="flex items-center justify-between gap-4 pt-4 border-t border-border-subtle">
-                    <span className="font-body text-[13px] text-muted">
-                      Not sure where to start? Every subject, with its categories, on one page.
-                    </span>
-                    <Button href="/subjects" onClick={() => setSubjectsOpen(false)}>
-                      Browse all subjects
-                    </Button>
+                  <div className="flex items-center justify-between gap-4 pt-4 border-t-2 border-border-subtle">
+                    <span className="font-body text-[14px] text-muted">Not sure where to start? Every subject, with its categories, on one page.</span>
+                    <Button href="/subjects" onClick={() => setSubjectsOpen(false)}>Browse all subjects</Button>
                   </div>
                 </div>
               </>
             )}
           </div>
 
-          {/* World360 Atlas (29 Oct 2026) — with a small mint "New" tag for now */}
-          <Link
-            href={atlasHref}
-            className={[
-              "font-body text-[15px] font-medium whitespace-nowrap px-2.5 py-1.5 border-b-2 transition-colors duration-200 flex items-center gap-1.5",
-              onAtlas ? "text-on-dark border-mint" : "text-on-dark/80 border-transparent hover:text-mint",
-            ].join(" ")}
-          >
-            Atlas
-            <span className="font-body text-[9px] font-semibold uppercase tracking-[0.1em] leading-none text-navy-dark bg-mint px-1.5 py-[3px]">
-              New
-            </span>
+          <Link href={atlasHref} className={navLink} aria-current={current(onAtlas)}>
+            Atlas <NewTag />
           </Link>
-
           {OTHER_LINKS.map((link) => (
-            <Link key={link.href} href={link.href} className={linkClass(link.href)}>
+            <Link key={link.href} href={link.href} className={navLink} aria-current={current(pathname === link.href)}>
               {link.label}
             </Link>
           ))}
-        </div>
         </nav>
 
-        {/* Right side — pushed to the far right with ml-auto.
-            Contains the search icon on desktop and the hamburger on mobile.
-            Both live here so they always occupy the same right-side position. */}
-        <div className="ml-auto flex items-center gap-1">
-
-          {/* Search bar — desktop only.
-              This is a <Link> styled to look like a search input field.
-              Clicking it navigates to /search where the real search works.
-              We use a Link (not a real <input>) here because the header search
-              is just a shortcut — the actual typing happens on the /search page. */}
-          {/* On the dark bar the search box is a slightly LIGHTER teal block
-              (#1e3d38) with 10px corners — reads as "a field", not a button. */}
-          <Link
-            href="/search"
-            className="hidden lg:flex items-center gap-2 xl:w-52 h-9 bg-navy rounded-button px-2.5 xl:px-4 text-on-dark/60 hover:text-mint hover:bg-navy/80 transition-colors duration-200 group"
-            aria-label="Search"
-          >
-            {/* Search icon inside the bar */}
+        {/* Right side: search, Read Later, bell, Light/Dark, and (phones/tablets) the menu */}
+        <div className="ml-auto flex items-center gap-1.5 md:gap-2">
+          {/* Search: a wide pill on big screens, a round icon on smaller ones */}
+          <Link href="/search" aria-label="Search" className="gk-icon-btn hidden xl:inline-flex items-center gap-2.5 h-[42px] pl-3.5 pr-4 rounded-full font-body text-sm font-bold text-muted">
+            <SearchIcon /> Search
+          </Link>
+          <Link href="/search" aria-label="Search" className="gk-icon-btn xl:hidden inline-grid place-items-center w-[38px] h-[38px] md:w-[42px] md:h-[42px] rounded-full">
             <SearchIcon />
-            {/* Placeholder-style text — hidden on medium screens (where it's just
-                an icon to save room) and shown as a full bar from lg up. */}
-            <span className="hidden xl:inline font-body text-sm truncate">
-              Search subjects, topics, news...
-            </span>
           </Link>
 
-          {/* Read Later — the bookmark icon (moved out of the menu, 29 Oct 2026).
-              Same size and colour as the bell beside it; a 44px tap target. */}
+          {/* Read Later — the bookmark */}
           <Link
             href="/saved"
             aria-label="Read Later — your saved topics"
             title="Read Later"
-            className={`flex items-center justify-center w-11 h-11 rounded-full transition-colors hover:bg-on-dark/10 ${
-              pathname === "/saved" ? "text-on-dark" : "text-mint"
-            }`}
+            aria-current={current(pathname === "/saved")}
+            className="gk-icon-btn inline-grid place-items-center w-[38px] h-[38px] md:w-[42px] md:h-[42px] rounded-full aria-[current=page]:text-sapphire"
           >
             <BookmarkIcon />
           </Link>
 
-          {/* Bell notification — rings to tell users Hindi is available.
-              In the far-right corner (owner's friend, 17 Sep) — after the search
-              on desktop; on phones it sits just before the hamburger. */}
-          <BellNotification />
+          {/* The bell (Hindi is available). Hidden on small phones, where the
+              header has room for four buttons; it's in the menu there. */}
+          <span className="hidden sm:inline-flex"><BellNotification /></span>
 
-          {/* Hamburger — mobile only */}
+          <ThemeToggle className="max-md:w-[38px] max-md:h-[38px]" />
+
+          {/* The menu button — phones and tablets */}
           <button
-            // w-11 h-11 = a 44px tap target around the 24px icon
-            className="lg:hidden flex items-center justify-center w-11 h-11 text-on-dark hover:text-mint transition-colors"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            type="button"
+            className="gk-icon-btn lg:hidden inline-grid place-items-center w-[38px] h-[38px] md:w-[42px] md:h-[42px] rounded-full"
+            onClick={() => {
+              // opening: read the current mode so the menu's Look switch shows it
+              if (!mobileMenuOpen) setModeState(currentMode() === "dark" ? "dark" : "light");
+              setMobileMenuOpen(!mobileMenuOpen);
+            }}
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileMenuOpen}
+            aria-controls="gk-mobile-menu"
           >
-            {mobileMenuOpen ? <CloseIcon /> : <MenuIcon />}
+            <MenuIcon open={mobileMenuOpen} />
           </button>
         </div>
       </div>
 
-      {/* Mobile menu */}
-      {/* Mobile menu — a dark sheet continuing the bar. Every row is at least
-          48px tall (py-3 + text) so it's comfortable under a thumb. Rows are
-          divided by faint white lines (white at 10% opacity) instead of grey. */}
-      {/* It eases open and closed like the desktop Subjects menu (28 Oct 2026). */}
+      {/* ── THE PHONE / TABLET MENU ──────────────────────────────────────────
+          A full-screen sheet behind the pill (z-index -1 inside the header):
+          big Anton links you can't miss with a thumb, the subjects, the
+          Light/Dark switch, and the smaller links. It fades in and out. */}
       {mobileMenu.present && (
-        <div className={`lg:hidden bg-navy-dark border-t border-on-dark/10 ${mobileMenu.closing ? "anim-menu-out" : "anim-menu-in"}`}>
-          <nav className="max-w-[1200px] mx-auto px-4 py-2" aria-label="Mobile navigation">
-
-            <Link
-              href="/"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center min-h-12 font-body text-base font-medium text-on-dark/85 hover:text-mint transition-colors border-b border-on-dark/10"
-            >
-              Home
-            </Link>
-
-            {/* Subjects — expands inline on mobile */}
-            <div className="border-b border-on-dark/10">
-              <button
-                className="flex items-center justify-between w-full min-h-12 font-body text-base font-medium text-on-dark/85 hover:text-mint transition-colors"
-                onClick={() => setMobileSubjectsOpen(!mobileSubjectsOpen)}
-                aria-expanded={mobileSubjectsOpen}
-              >
-                <span>Subjects</span>
-                <ChevronDownIcon open={mobileSubjectsOpen} />
-              </button>
-
-              {mobileSubjectsOpen && (
-                <div className="pb-3">
-                  {/* Two columns of subjects; each gets its 4px signal bar on
-                      the left so the subject colours are learnt here first. */}
-                  <div className="grid grid-cols-2 gap-1 mb-3">
-                    {SUBJECTS.map((subject) => isLive(subject.slug) ? (
-                      <Link
-                        key={subject.slug}
-                        href={`/${subject.slug}`}
-                        onClick={() => { setMobileMenuOpen(false); setMobileSubjectsOpen(false); }}
-                        className="flex items-center gap-2.5 min-h-11 px-2 rounded-sm text-sm text-on-dark/85 hover:text-mint hover:bg-on-dark/10 transition-colors"
-                      >
-                        <span
-                          aria-hidden="true"
-                          className="w-1 h-7 rounded-sm flex-shrink-0"
-                          style={{ backgroundColor: SUBJECT_COLORS[subject.slug]?.border ?? "#6ee7b7" }}
-                        />
-                        <span className="flex flex-col leading-tight">
-                          <span className="font-medium">{subject.label}</span>
-                          <span lang="hi" className="font-hindi text-[11px] text-on-dark/60">{subject.labelHi}</span>
-                        </span>
-                      </Link>
-                    ) : (
-                      // No page yet → greyed, not a link
-                      <div key={subject.slug} aria-disabled="true" className="flex items-center gap-2.5 min-h-11 px-2 rounded-sm text-sm text-on-dark/40">
-                        <span aria-hidden="true" className="w-1 h-7 rounded-sm flex-shrink-0 bg-on-dark/20" />
-                        <span className="flex flex-col leading-tight">
-                          <span className="font-medium">{subject.label}</span>
-                          <span className="font-body text-[11px] italic">coming soon</span>
-                        </span>
+        <div
+          id="gk-mobile-menu"
+          className={`lg:hidden fixed inset-0 -z-10 bg-background overflow-y-auto overscroll-contain ${mobileMenu.closing ? "anim-fade-out" : "anim-fade-in"}`}
+          style={{ padding: "calc(92px + env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px)) calc(120px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px))" }}
+        >
+          <nav aria-label="Menu" className="max-w-[640px] mx-auto">
+            {/* Big links, numbered: the numbers are just a reading aid */}
+            {[
+              { n: "01", label: "Home", href: "/", on: pathname === "/" },
+              { n: "02", label: "Subjects", href: "", on: !!subjectSlug },
+              { n: "03", label: "Atlas", href: atlasHref, on: onAtlas, isNew: true },
+              { n: "04", label: "Current Affairs", href: "/news", on: pathname === "/news" },
+              { n: "05", label: "Headlines", href: "/pulse", on: pathname === "/pulse" },
+              { n: "06", label: "Read Later", href: "/saved", on: pathname === "/saved" },
+            ].map((item, i) => {
+              const cls = `flex items-baseline gap-3 w-full py-2 border-b-2 border-hairline font-display text-[clamp(38px,10vw,56px)] leading-[1.05] uppercase anim-menu-in ${item.on ? "text-sapphire" : "text-foreground"}`;
+              const num = <small className="font-mono text-xs text-muted min-w-[22px]">{item.n}</small>;
+              // "Subjects" opens the list of subjects underneath instead of going somewhere
+              if (!item.href) {
+                return (
+                  <div key={item.n} style={{ animationDelay: `${i * 45}ms` }} className="anim-menu-in">
+                    <button type="button" onClick={() => setMobileSubjectsOpen(!mobileSubjectsOpen)} aria-expanded={mobileSubjectsOpen} className={`${cls} text-left`}>
+                      {num}{item.label}<span className="ml-auto self-center text-muted"><ChevronDownIcon open={mobileSubjectsOpen} /></span>
+                    </button>
+                    {mobileSubjectsOpen && (
+                      <div className="grid grid-cols-2 gap-1 py-3">
+                        {SUBJECTS.map((subject) => isLive(subject.slug) ? (
+                          <Link key={subject.slug} href={`/${subject.slug}`} className="flex items-center gap-2.5 min-h-12 px-2 rounded-[12px] hover:bg-surface-low">
+                            <span aria-hidden="true" className="w-1.5 h-7 rounded-full flex-shrink-0" style={{ backgroundColor: SUBJECT_COLORS[subject.slug]?.accent ?? "var(--accent)" }} />
+                            <span className="flex flex-col leading-tight">
+                              <span className="font-body text-[15px] font-extrabold text-foreground">{subject.label}</span>
+                              <span lang="hi" className="font-hindi text-[11px] text-muted">{subject.labelHi}</span>
+                            </span>
+                          </Link>
+                        ) : (
+                          <div key={subject.slug} aria-disabled="true" className="flex items-center gap-2.5 min-h-12 px-2 text-muted/70">
+                            <span aria-hidden="true" className="w-1.5 h-7 rounded-full flex-shrink-0 bg-surface-mid" />
+                            <span className="flex flex-col leading-tight">
+                              <span className="font-body text-[15px] font-bold">{subject.label}</span>
+                              <span className="font-body text-[11px] italic">coming soon</span>
+                            </span>
+                          </div>
+                        ))}
+                        <Link href="/subjects" className="col-span-2 pt-2 font-body text-sm font-extrabold text-sapphire">All subjects →</Link>
                       </div>
-                    ))}
+                    )}
                   </div>
-                  <Link
-                    href="/subjects"
-                    onClick={() => { setMobileMenuOpen(false); setMobileSubjectsOpen(false); }}
-                    className="block pt-3 border-t border-on-dark/10 font-body text-sm font-semibold text-mint hover:text-on-dark transition-colors"
+                );
+              }
+              return (
+                <Link key={item.n} href={item.href} className={cls} style={{ animationDelay: `${i * 45}ms` }} aria-current={current(item.on)}>
+                  {num}{item.label}{item.isNew && <span className="self-center"><NewTag /></span>}
+                </Link>
+              );
+            })}
+
+            {/* The Look switch: same as the sun/moon button, with words */}
+            <div className="flex items-center justify-between gap-3 mt-6">
+              <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted">Look</span>
+              <div role="group" aria-label="Look" className="grid grid-cols-2 gap-1 p-1 rounded-[14px] bg-surface-low min-w-[220px]">
+                {(["light", "dark"] as const).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    aria-pressed={mode === m}
+                    onClick={() => { setMode(m); setModeState(m); }}
+                    className={`py-2 rounded-[10px] font-body text-[13px] font-extrabold ${mode === m ? "bg-surface text-foreground shadow-[0_2px_0_var(--line-2)]" : "text-muted"}`}
                   >
-                    View All Subjects →
-                  </Link>
-                </div>
-              )}
+                    {m === "light" ? "☀ Light" : "☾ Dark"}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <Link
-              href={atlasHref}
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2 min-h-12 font-body text-base font-medium text-on-dark/85 hover:text-mint transition-colors border-b border-on-dark/10"
-            >
-              Atlas
-              <span className="font-body text-[10px] font-semibold uppercase tracking-[0.1em] leading-none text-navy-dark bg-mint px-1.5 py-[3px]">New</span>
-            </Link>
-
-            {/* Read Later stays in the phone menu too (as words), since a lone
-                icon is easy to miss on a small screen */}
-            {[...OTHER_LINKS, { label: "Read Later", href: "/saved" }].map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center min-h-12 font-body text-base font-medium text-on-dark/85 hover:text-mint transition-colors border-b border-on-dark/10"
-              >
-                {link.label}
-              </Link>
-            ))}
-
-            <Link
-              href="/search"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2 min-h-12 font-body text-base font-medium text-on-dark/85 hover:text-mint transition-colors"
-            >
-              <SearchIcon />
-              <span>Search</span>
-            </Link>
+            {/* Smaller links, and the Hindi note the bell gives on bigger screens */}
+            <div className="flex flex-wrap gap-x-5 gap-y-2 mt-6 font-body text-[15px] font-extrabold text-muted">
+              <Link href="/search">Search</Link>
+              <Link href="/about">About us</Link>
+              <Link href="/contact">Contact</Link>
+              <Link href="/topics">All topics</Link>
+            </div>
+            <p className="mt-4 font-body text-sm text-muted">
+              Every topic is in English and <span lang="hi" className="font-hindi">हिन्दी</span>. Look for the language switch on any topic.
+            </p>
           </nav>
         </div>
       )}

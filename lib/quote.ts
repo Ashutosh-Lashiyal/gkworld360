@@ -27,6 +27,20 @@ export type DailyQuote = {
 
 const QUOTE_FILE = path.join(process.cwd(), "data", "daily-quote.mdx");
 
+// A portrait saved as a FILE, for quotes whose CMS entry has no portrait yet
+// (30 Oct 2026: the owner noticed the footer photo was missing — the CMS quote
+// for Kofi Annan had no portrait, although public/images/quotes/Kofi_Annan.png
+// exists). The file name is the author's name with spaces as underscores.
+function localPortrait(author: string): string | undefined {
+  const base = author.trim().replace(/\s+/g, "_");
+  for (const ext of ["webp", "jpg", "jpeg", "png"]) {
+    if (fs.existsSync(path.join(process.cwd(), "public", "images", "quotes", `${base}.${ext}`))) {
+      return `/images/quotes/${base}.${ext}`;
+    }
+  }
+  return undefined;
+}
+
 const FALLBACK: DailyQuote = {
   quote:
     "Knowledge is power. Information is liberating. Education is the premise of progress, in every society, in every family.",
@@ -82,7 +96,8 @@ async function pickFromCMS(): Promise<DailyQuote | null> {
       author: chosen.author,
       authorTitle: loc(chosen.authorTitle, "en") || undefined,
       authorTitleHi: loc(chosen.authorTitle, "hi") || undefined,
-      authorImage: chosen.portrait?.url ?? undefined,
+      // the CMS portrait first; otherwise a matching file in public/images/quotes
+      authorImage: chosen.portrait?.url ?? localPortrait(chosen.author),
     };
   } catch (error) {
     console.error(`[quote] CMS unavailable, using the file: ${error instanceof Error ? error.message : String(error)}`);
@@ -108,7 +123,9 @@ const cachedQuoteForDay = unstable_cache(
   // The date is only here to key the cache; the pick itself re-derives it.
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- the date is the cache key
   async (istDate: string) => computeDailyQuote(),
-  ["daily-quote"],
+  // "-v2" (30 Oct 2026): a new cache name, so the portrait fallback above
+  // shows today instead of after tomorrow's refresh. The tag stays the same.
+  ["daily-quote-v2"],
   { revalidate: 86400, tags: ["daily-quote"] }
 );
 

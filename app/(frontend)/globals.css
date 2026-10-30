@@ -2,134 +2,185 @@
 @import "tailwindcss";
 
 /*
-  @theme inline — GKWorld360 Design Tokens
-  ─────────────────────────────────────────────────────────────
-  This block is the Single Source of Truth for every visual value on the site.
+  GKWorld360 Design Tokens — REDESIGN 30 Oct 2026: "Playful + Cinematic"
+  ─────────────────────────────────────────────────────────────────────────────
+  The owner chose a mix of two concepts: the PLAYFUL one (chunky press-down
+  buttons and cards, the quiz cards) and the CINEMATIC one (giant Anton type,
+  the turning Earth on a dark stage). Preview: claude.ai/artifact/Dr36N1feThc8PfUFJ9J4HH
 
-  REDESIGN, 16 Sep 2026 — "Frame + Signal" page system (see the design canvas
-  linked in IDEAS.md). Two layers:
-    • the FRAME  — deep teal (#122a26 / #1e3d38), a warm off-white page
-                   (#f7f6f2), white cards, and ONE accent (mint on dark,
-                   emerald on light). Identical on every page.
-    • the SIGNAL — one subject colour per page, used small (a label, a 4px
-                   bar, a tinted band). Those live in lib/subject-colors.ts.
-  The token NAMES below are unchanged (navy, sapphire, hairline…) so no
-  component had to be touched to pick up the new values — only the VALUES
-  moved. That's the whole point of tokens.
+  THREE LOOKS ("modes"), switched by an attribute on <html>:
+    data-mode="light"    — the default for devices set to light
+    data-mode="dark"     — the default for devices set to dark
+    data-mode="reading"  — articles only: warm, dim "night paper" for reading
+                           in the dark without eye strain (about 9:1 contrast,
+                           gentler than pure white on black)
+  A tiny script in layout.tsx picks the mode BEFORE the page is drawn, so the
+  page never flashes the wrong colours.
 
-  HOW IT WORKS:
-  Every token defined here automatically becomes a Tailwind utility class.
-  Example: --color-navy   → use as  bg-navy   text-navy   border-navy
-  Example: --color-sapphire → use as  bg-sapphire   text-sapphire
-  Example: --font-heading  → use as  font-heading  (applies Source Serif 4)
-  Example: --radius-card   → use as  rounded-card  (8px border radius)
+  HOW IT WORKS (two layers):
+   1. The RAW values live in plain CSS variables (--bg, --ink, --accent…), and
+      each mode block below gives them different values.
+   2. The @theme block maps our long-standing Tailwind token NAMES onto those
+      variables (--color-background → var(--bg), and so on). Every component
+      already uses the names (bg-background, text-muted, border-hairline…), so
+      the whole site changes look — and follows the mode — without editing
+      the components one by one. Same idea as 16 Sep: change values, not names.
 
-  TO CHANGE THE SITE'S LOOK:
-  Edit the values here — not in individual component files.
-  Changing --color-sapphire once updates every button, link, and highlight on the site.
+  TO CHANGE THE SITE'S LOOK: edit the values in the mode blocks below.
+*/
+
+/* ── LIGHT (also the starting point every mode builds on) ─────────────────── */
+:root {
+  --bg: #f2f5f4;            /* page background: a cool, very light grey-green */
+  --surface: #ffffff;       /* cards, menus, panels */
+  --surface-2: #e8efec;     /* hover tint, quiet fills */
+  --ink: #13201c;           /* main text: near-black with a hint of green */
+  --muted: #536159;         /* secondary text: captions, dates */
+  --faint: #84928c;         /* the quietest text: small labels */
+  --line: #dae3df;          /* borders and dividers */
+  --line-2: #c6d4ce;        /* stronger borders (and the chunky card shadow) */
+  --accent: #047857;        /* links, active states: green, the colour of growth */
+  --accent-strong: #065f46; /* hover on links */
+  --accent-soft: #e2f5ec;   /* the soft pill behind the active menu item */
+  --amber: #b45309;         /* the warm accent (Reading mode buttons, dates) */
+  --btn: #047857;           /* the chunky button's face… */
+  --btn-shadow: #064e3b;    /* …and the darker "edge" under it that makes it look pressable */
+  --on-btn: #ffffff;        /* text on the button */
+  --head-bg: rgba(255, 255, 255, 0.86); /* the see-through header pill */
+  --shadow-far: rgba(19, 32, 28, 0.22);
+  --img-filter: none;       /* Reading mode dims pictures; other modes leave them alone */
+  --logo-edge: #10b981;     /* the edge line around the GK letters */
+  --logo-360: #047857;      /* "360" in the logo's name */
+
+  /* The dark CINEMATIC STAGE (homepage hero, page heads, footer) stays dark in
+     every mode. Text on it uses --stage-ink, not --ink. */
+  --stage: #0b0b0d;
+  --stage-ink: #f3f1ed;
+  --stage-muted: #b4b1aa;
+  --stage-line: rgba(243, 241, 237, 0.16);
+  --mint: #6ee7b7;          /* the accent ON the dark stage */
+  --gold: #f2b56b;          /* city lights, Atlas dots */
+
+  /* An "easing" is the speed curve of a movement: starts fast, settles gently */
+  --ease-out-soft: cubic-bezier(0.2, 0.7, 0.2, 1);
+  color-scheme: light;      /* tells the browser to draw form controls and scrollbars light */
+}
+
+/* ── DARK ─────────────────────────────────────────────────────────────────── */
+/* Two selectors, same values: the first applies when the device is set to dark
+   and no mode was chosen yet (only before the script runs, or without
+   JavaScript); the second when data-mode="dark" is set. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mode]) {
+    --bg: #0d0d0f; --surface: #161619; --surface-2: #1e1e22; --ink: #f3f1ed; --muted: #aaa69f; --faint: #78756f;
+    --line: #27272c; --line-2: #36363c; --accent: #6ee7b7; --accent-strong: #a7f3d0; --accent-soft: #13261f; --amber: #f2b56b;
+    --btn: #6ee7b7; --btn-shadow: #0f766e; --on-btn: #04241b; --head-bg: rgba(13, 13, 15, 0.8); --shadow-far: rgba(0, 0, 0, 0.7);
+    --logo-edge: #6ee7b7; --logo-360: #6ee7b7;
+    color-scheme: dark;
+  }
+}
+:root[data-mode="dark"] {
+  --bg: #0d0d0f; --surface: #161619; --surface-2: #1e1e22; --ink: #f3f1ed; --muted: #aaa69f; --faint: #78756f;
+  --line: #27272c; --line-2: #36363c; --accent: #6ee7b7; --accent-strong: #a7f3d0; --accent-soft: #13261f; --amber: #f2b56b;
+  --btn: #6ee7b7; --btn-shadow: #0f766e; --on-btn: #04241b; --head-bg: rgba(13, 13, 15, 0.8); --shadow-far: rgba(0, 0, 0, 0.7);
+  --logo-edge: #6ee7b7; --logo-360: #6ee7b7;
+  color-scheme: dark;
+}
+
+/* ── READING (articles only; switched on from the article page in phase 2) ── */
+/* Warm night paper: no pure white, no pure black, pictures dimmed, nothing moving. */
+:root[data-mode="reading"] {
+  --bg: #17140f; --surface: #1d1913; --surface-2: #241f18; --ink: #dccdb1; --muted: #a8987d; --faint: #7f725e;
+  --line: #2f291f; --line-2: #3b3328; --accent: #d9a55e; --accent-strong: #e8c48c; --accent-soft: #2a2216; --amber: #d9a55e;
+  --btn: #d9a55e; --btn-shadow: #8a6430; --on-btn: #1a1206; --head-bg: rgba(23, 20, 15, 0.92); --shadow-far: rgba(0, 0, 0, 0.6);
+  --img-filter: brightness(0.74) sepia(0.2) saturate(0.85);
+  --stage: #120f0b; --stage-ink: #dccdb1; --stage-muted: #a8987d; --stage-line: rgba(220, 205, 177, 0.14); --mint: #d9a55e; --gold: #d9a55e;
+  --logo-edge: #d9a55e; --logo-360: #d9a55e;
+  color-scheme: dark;
+}
+
+/*
+  @theme inline — the Tailwind token NAMES, now pointing at the mode variables.
+  Every token here becomes a utility class (--color-muted → text-muted, etc.).
+  The old names are kept on purpose: navy, sapphire, hairline… are just names.
 */
 @theme inline {
 
-  /* ── FONTS ──────────────────────────────────────────────────────────────────
-     These reference the CSS variables that layout.tsx sets on <html> via next/font.
-     font-heading → Source Serif 4  (all headings: h1 h2 h3...)
-     font-body    → Inter           (all body text, buttons, labels, UI)           */
-  --font-heading: var(--font-source-serif);
-  --font-body:    var(--font-inter);
+  /* ── FONTS (the variables are set on <html> by next/font in layout.tsx) ──
+     font-heading → Fraunces          headings, card titles, the article body
+     font-body    → Nunito            everything else: UI, buttons, captions
+     font-display → Anton             GIANT titles and the logo's name
+     font-accent  → Instrument Serif  the italic accent word ("Explore *subjects*")
+     font-mono    → Geist Mono        small labels in capitals                    */
+  --font-heading: var(--font-fraunces);
+  --font-body:    var(--font-nunito);
+  --font-display: var(--font-anton);
+  --font-accent:  var(--font-instrument);
+  --font-mono:    var(--font-geist-mono);
 
-  /* ── BRAND COLOURS ───────────────────────────────────────────────────────────
-     "Sage & Teal" — a calm, eye-friendly palette for long study sessions.
-     Dark teal for structure/headings, forest green for interactive accents.      */
-  --color-navy:           #1e3d38;  /* Lifted Teal  — headings, button HOVER fill          */
-  --color-navy-dark:      #122a26;  /* Deep Teal    — header, footer, dark bands, BUTTONS  */
-  --color-sapphire:       #059669;  /* Emerald      — links and small actions on LIGHT     */
-  --color-sapphire-dark:  #047857;  /* Emerald Dark — hover state of those links           */
-  --color-emerald:        #059669;  /* (same as sapphire — kept so old class names work)  */
-  --color-mint:           #6ee7b7;  /* Mint         — the accent on DARK: EN toggle, focus */
-  --color-slate:          #5a7a75;  /* Teal Slate   — neutral, secondary UI elements       */
+  /* ── COLOURS ─────────────────────────────────────────────────────────────── */
+  /* navy-dark: the dark STAGE colour for bands, overlays and the old dark
+     buttons. As a TEXT colour (headings) it is switched to --ink in dark and
+     reading mode further down ("TEXT THAT WAS DARK-ON-LIGHT"). */
+  --color-navy-dark:      var(--stage);
+  --color-navy:           var(--ink);          /* headings */
+  --color-sapphire:       var(--accent);       /* links and small actions */
+  --color-sapphire-dark:  var(--accent-strong);/* their hover */
+  --color-emerald:        var(--accent);
+  --color-mint:           var(--mint);         /* the accent on the dark stage */
+  --color-slate:          var(--muted);
 
-  /* ── PAGE & SURFACE COLOURS ──────────────────────────────────────────────────
-     A warm off-white page with pure-white cards sitting on it. The warmth is
-     deliberate: pure white + dark teal read "AI template"; paper-white + teal
-     reads "printed reference book". Cards stay white so they lift off the page. */
-  --color-background:   #f7f6f2;   /* Page background  — warm paper white                 */
-  --color-surface:      #ffffff;   /* Cards, modals    — pure white, lifts off the page   */
-  --color-surface-low:  #f0ede6;   /* Hover tint       — a shade deeper than the page     */
-  --color-surface-mid:  #e6e3dc;   /* Disabled fill, quiet dividers                        */
-  --color-surface-high: #e2ece8;   /* Strong sections  — teal-grey block (legacy)          */
+  --color-background:   var(--bg);
+  --color-surface:      var(--surface);
+  --color-surface-low:  var(--surface-2);
+  --color-surface-mid:  var(--line);
+  --color-surface-high: var(--surface-2);
 
-  /* ── TEXT COLOURS ────────────────────────────────────────────────────────────
-     Body text stays near-black for maximum readability — the teal palette only
-     affects headings, nav, and accents. Long reading sessions demand dark text.  */
-  --color-foreground: #1a1a1a;   /* Primary text   — near-black, maximum contrast         */
-  --color-muted:      #4a6460;   /* Secondary text — teal-grey for captions, metadata     */
-  --color-on-dark:    #ffffff;   /* Text on dark   — used on teal backgrounds              */
+  --color-foreground: var(--ink);
+  --color-muted:      var(--muted);
+  --color-on-dark:    var(--stage-ink);        /* text on the dark stage */
 
-  /* ── BORDER COLOURS ──────────────────────────────────────────────────────────
-     border-border        → dividers, section separators
-     border-border-subtle → quieter, less visible dividers
-     border-hairline      → the 1px card border                                  */
-  --color-border:        #d9d6cf;  /* Standard borders and dividers — warm grey           */
-  --color-border-subtle: #e6e3dc;  /* Subtle borders — for less prominent separators      */
-  --color-hairline:      #d9d6cf;  /* Card hairline border — warm grey, not teal-grey     */
+  --color-border:        var(--line);
+  --color-border-subtle: var(--line);
+  --color-hairline:      var(--line);
 
-  /* ── STATUS COLOURS ──────────────────────────────────────────────────────────
-     Used for form errors, validation messages. Not used in MVP content pages.    */
-  --color-error:    #ba1a1a;   /* Error text and icon colour                             */
-  --color-error-bg: #ffdad6;   /* Error background — light red tint behind error message */
+  --color-error:    #dc2626;
+  --color-error-bg: #fee2e2;
 
-  /* ── BORDER RADIUS ───────────────────────────────────────────────────────────
-     The shape language is "soft and precise" — never bubbly, never sharp.
-     rounded-sm   → tags, badges, checkboxes, small pills
-     rounded-card → cards, buttons, inputs — the standard component radius        */
-  /* 17 Sep 2026: corners are SQUARE (0px) on cards, buttons, inputs and chips —
-     owner's decision after a friend's review ("edgy"). Pills (hero stats),
-     avatars and the bell stay round on purpose: a pill that isn't round isn't
-     a pill. To go back to soft corners, change these three numbers only.     */
-  --radius-sm:     0px;   /* Small elements  — tags, badges                    */
-  --radius-card:   0px;   /* Cards, buttons, inputs                            */
-  --radius-button: 0px;   /* Same value, named so a button never drifts        */
+  /* ── CORNERS ─────────────────────────────────────────────────────────────────
+     The playful side of the new look is round and chunky (it reverses the
+     square "edgy" corners of 17 Sep). */
+  --radius-sm:     10px;   /* tags, badges */
+  --radius-card:   24px;   /* cards, panels */
+  --radius-button: 16px;   /* buttons, inputs */
 
   /* ── SHADOWS ─────────────────────────────────────────────────────────────────
-     A single, soft, diffused shadow gives cards a "tactile, printed" quality.
-     shadow-card        → resting state  — very subtle, barely lifts the card
-     shadow-card-hover  → hover state    — card lifts noticeably on hover
-     shadow-button      → the one button's hover lift (see components/Button.tsx) */
-  --shadow-card:        0px 4px 20px rgba(15, 23, 42, 0.05);
-  --shadow-card-hover:  0px 8px 30px rgba(15, 23, 42, 0.12);
-  --shadow-button:      0px 4px 12px rgba(18, 42, 38, 0.18);
-  --shadow-button-dark: 0px 4px 12px rgba(0, 0, 0, 0.25);
+     The chunky look: a solid "edge" under cards (0 5px 0), plus a soft glow far
+     below for depth. */
+  --shadow-card:        0 5px 0 var(--line), 0 24px 48px -30px var(--shadow-far);
+  --shadow-card-hover:  0 8px 0 var(--line-2), 0 30px 60px -30px var(--shadow-far);
+  --shadow-button:      0 4px 0 var(--btn-shadow);
+  --shadow-button-dark: 0 4px 0 #0f766e;
 }
 
-/* These base styles live inside @layer base so that Tailwind utility classes
-   (which sit in a higher layer) can always override them. For example, a heading
-   with `text-on-dark` will correctly turn white on a dark banner, instead of
-   being forced to navy by the rule below. This is the correct Tailwind v4 pattern. */
+/* Base styles live in @layer base so Tailwind utility classes can still
+   override them (a heading with text-on-dark stays light on a dark band). */
 @layer base {
 
-  /* ── BASE BODY STYLES ───────────────────────────────────────────────────────
-     These apply to the whole site automatically.
-     Individual components can override them with specific Tailwind classes.      */
+  /* ── BASE BODY STYLES ─────────────────────────────────────────────────────── */
+  html { background-color: var(--bg); }
   body {
-    background-color: #f7f6f2;    /* matches --color-background — warm paper white */
-    color: #1a1a1a;               /* matches --color-foreground — near-black for readability */
-
-    /* Inter with safe fallbacks — if Inter hasn't loaded yet, system fonts show */
-    font-family: var(--font-body), system-ui, sans-serif;
-
-    /* 1.6 line-height is the "body-lg" spec from the design system.
-       This reduces eye strain during long study sessions — a core UX priority. */
+    background-color: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body), system-ui, sans-serif;  /* Nunito, with safe fallbacks */
     line-height: 1.6;
-
-    /* Smooth font rendering on Mac and retina screens */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* When the mode changes, colours glide for half a second instead of snapping */
+    transition: background-color 0.5s, color 0.5s;
   }
 
-  /* ── CLICKABLE THINGS GET THE HAND CURSOR ───────────────────────────────────
-     Links have it by default; <button> elements do NOT in Tailwind v4 (v3 set
-     it). Owner's rule, 18 Sep 2026: anything you can click shows the hand.
-     Disabled buttons keep the arrow, as a hint that they do nothing.           */
+  /* ── CLICKABLE THINGS GET THE HAND CURSOR (owner's rule, 18 Sep 2026) ─────── */
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
   summary,
@@ -141,14 +192,15 @@
     cursor: pointer;
   }
 
-  /* ── HEADING BASE STYLES ─────────────────────────────────────────────────────
-     Every h1–h6 uses Source Serif 4 and navy by default. Components can override
-     the colour with a utility class (e.g. text-on-dark) when needed.            */
+  /* ── HEADINGS: Fraunces, in the page's ink colour ─────────────────────────── */
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-heading), Georgia, serif; /* Georgia = fallback while Source Serif 4 loads */
-    line-height: 1.3;   /* tighter than body — large type needs less space between lines */
-    color: #1e3d38;     /* Dark Teal — the default heading colour */
+    font-family: var(--font-heading), Georgia, serif;
+    line-height: 1.25;
+    color: var(--ink);
   }
+
+  /* Keyboard focus is always visible (a green ring, mint on dark) */
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 }
 
 /* ── HINDI CONTENT ──────────────────────────────────────────────────────────────
@@ -192,7 +244,7 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading), Georgia, serif;
   font-size: 1.25rem;    /* 20px — editorial, 17 Sep 2026 */
   line-height: 1.8;
-  color: #1a1a1a;
+  color: var(--ink);
 }
 
 /* The opening paragraph, a touch larger — the editorial "lead" */
@@ -209,7 +261,7 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading), Georgia, serif;
   font-size: 1.75rem;    /* 28px */
   font-weight: 600;
-  color: #122a26;
+  color: var(--ink);
   margin-top: 2.6em;
   margin-bottom: 1em;
   line-height: 1.2;
@@ -225,14 +277,14 @@ h1, h2, h3, h4, h5, h6 {
   width: 48px;
   height: 3px;
   margin: 14px auto 0;   /* centred under the centred heading */
-  background-color: var(--signal, #059669);
+  background-color: var(--signal, var(--accent));
 }
 
 .prose h3 {
   font-family: var(--font-heading), Georgia, serif;
   font-size: 1.3125rem; /* 21px */
   font-weight: 600;
-  color: #122a26;
+  color: var(--ink);
   margin-top: 1.9rem;
   margin-bottom: 0.6rem;
   line-height: 1.3;
@@ -242,7 +294,7 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading), Georgia, serif;
   font-size: 1.125rem;
   font-weight: 600;
-  color: #122a26;
+  color: var(--ink);
   margin-top: 1.5rem;
   margin-bottom: 0.5rem;
 }
@@ -264,7 +316,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .prose li::marker {
-  color: var(--signal, #059669);
+  color: var(--signal, var(--accent));
 }
 
 .prose li ul,
@@ -275,7 +327,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .prose strong {
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--ink);
 }
 
 .prose em {
@@ -283,28 +335,28 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .prose a {
-  color: #059669;
+  color: var(--accent);
   text-decoration: underline;
   text-underline-offset: 3px;
   text-decoration-thickness: 1px;
 }
 
 .prose a:hover {
-  color: #047857;
+  color: var(--accent-strong);
 }
 
 .prose blockquote {
-  border-left: 3px solid var(--signal, #059669);
+  border-left: 3px solid var(--signal, var(--accent));
   padding: 0.25em 0 0.25em 1.25em;
   margin: 1.75em 0;
   font-style: italic;
-  color: #4a6460;
+  color: var(--muted);
 }
 
 /* Inline code (e.g. `variable`) */
 .prose :not(pre) > code {
-  background-color: #f0ede6;
-  color: #122a26;
+  background-color: var(--surface-2);
+  color: var(--ink);
   font-size: 0.85em;
   padding: 0.2em 0.45em;
   border-radius: 4px;
@@ -343,8 +395,8 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-body), system-ui, sans-serif;
   font-size: 0.9375rem;        /* 15px */
   line-height: 1.5;
-  background-color: #ffffff;
-  border: 1px solid #d9d6cf;
+  background-color: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 0;
   overflow: hidden;
   display: table;
@@ -356,8 +408,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .prose thead th {
-  background-color: var(--signal-bg, #f0ede6);
-  color: var(--signal, #122a26);
+  background-color: var(--signal-bg, var(--surface-2));
+  color: var(--signal, var(--ink));
   font-family: var(--font-body), system-ui, sans-serif;
   font-weight: 600;
   font-size: 0.6875rem;        /* 11px small caps, like every label on the site */
@@ -367,11 +419,12 @@ h1, h2, h3, h4, h5, h6 {
   padding: 0.75rem 1.125rem;
   border-bottom: 1px solid #d9d6cf;
   white-space: nowrap;
+  border-bottom-color: var(--line);
 }
 
 .prose tbody td {
   padding: 0.75rem 1.125rem;
-  border-bottom: 1px solid #ecebe6;
+  border-bottom: 1px solid var(--line);
   vertical-align: top;
 }
 
@@ -388,7 +441,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .prose hr {
   border: none;
-  border-top: 1px solid #d9d6cf;
+  border-top: 1px solid var(--line);
   margin: 2.5rem 0;
 }
 
@@ -397,7 +450,8 @@ h1, h2, h3, h4, h5, h6 {
   max-width: 100%;
   height: auto;
   border-radius: 0;
-  border: 1px solid #d9d6cf;
+  border: 1px solid var(--line);
+  filter: var(--img-filter);
   margin: 1.5em auto;
   display: block;
 }
@@ -540,11 +594,6 @@ h1, h2, h3, h4, h5, h6 {
    start state ("from") to an end state ("to"). A class like .anim-menu-in then
    plays it once. "both" keeps the start state before it begins and the end
    state after it finishes, so nothing flashes.                                  */
-:root {
-  /* An "easing" is the speed curve of a movement. This one starts fast and
-     settles gently — it feels responsive without being abrupt. */
-  --ease-out-soft: cubic-bezier(0.2, 0.7, 0.2, 1);
-}
 
 /* Menus and dropdowns (Subjects, search results, Share, the phone menu):
    fade in while dropping 8px into place… */
@@ -615,4 +664,145 @@ dialog[open].anim-dialog::backdrop { animation: fade-in 200ms ease-out both; }
     transition-delay: 0ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ═════════════════════════════════════════════════════════════════════════════
+   REDESIGN PHASE 1 (30 Oct 2026): the logo, the header, the phone tab bar,
+   the footer, and the rules that let older components follow Dark mode.
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+/* ── TEXT THAT WAS DARK-ON-LIGHT ───────────────────────────────────────────────
+   Many headings use text-navy-dark (dark text on a light page). In Dark and
+   Reading mode the page itself is dark, so that text must turn light. We can't
+   simply make the token light, because the SAME token also paints the dark
+   bands (bg-navy-dark), which must stay dark. So only the TEXT use is switched.
+   [class*="…"] means "any element whose class list contains this text", which
+   also catches versions with opacity like text-navy-dark/70. Things sitting on
+   a mint fill (the "New" tag) keep their dark text. */
+:root[data-mode="dark"] [class*="text-navy-dark"]:not([class*="bg-mint"]),
+:root[data-mode="reading"] [class*="text-navy-dark"]:not([class*="bg-mint"]) {
+  color: var(--ink);
+}
+
+/* Pictures are dimmed slightly in Reading mode (no-op in the other modes) */
+:root[data-mode="reading"] main img { filter: var(--img-filter); }
+
+/* ── THE LOGO (components/Logo.tsx) ─────────────────────────────────────────── */
+.gk-logo { gap: calc(var(--mark-h) * 0.16); line-height: 1; }
+/* The edge line around G and K. paint-order: the line is painted first, then
+   the Earth over it, so only the outer half of the line shows. */
+.gk-logo__edge { stroke: var(--logo-edge); stroke-width: 2.2; stroke-linejoin: round; paint-order: stroke; }
+/* Brighten the Earth pictures a little so the continents read at small sizes */
+.gk-logo__day { filter: brightness(1.35) saturate(1.45) contrast(1.1); }
+.gk-logo__night { filter: brightness(2.1) contrast(1.3) saturate(1.2); }
+:root[data-mode="reading"] .gk-logo__day { filter: sepia(0.6) brightness(0.95); }
+:root[data-mode="reading"] .gk-logo__night { filter: brightness(1.6) sepia(0.7); }
+/* The name: Anton capitals. "WORLD" in ink, "360" in the accent. The mark's
+   letters stand a little taller than the name, so the GK reads as the symbol. */
+.gk-logo__name {
+  font-family: var(--font-display), Impact, sans-serif;
+  font-size: calc(var(--mark-h) * 0.66);
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.gk-logo__360 { color: var(--logo-360); }
+/* On the dark stage (the footer) the name is light and the edge is mint */
+.gk-logo--dark { --logo-edge: var(--mint); --logo-360: var(--mint); }
+.gk-logo--dark .gk-logo__name { color: var(--stage-ink); }
+
+/* ── HEADER PILL (components/Header.tsx) ─────────────────────────────────────
+   A floating pill near the top, see-through with a blur behind it (frosted
+   glass). It hides when you scroll down to read and comes back when you
+   scroll up (the .is-away class is set by the header's script). */
+.gk-head { transition: transform 0.45s var(--ease-out-soft); }
+.gk-head.is-away { transform: translateY(calc(-100% - 24px)); }
+.gk-head__pill {
+  background: var(--head-bg);
+  border: 2px solid var(--line);
+  box-shadow: 0 4px 0 var(--line), 0 18px 40px -24px var(--shadow-far);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  backdrop-filter: blur(16px) saturate(1.4);
+}
+/* The nav links: a soft pill behind the page you're on */
+.gk-nav-link { color: var(--muted); }
+.gk-nav-link:hover { color: var(--ink); background: var(--surface-2); }
+.gk-nav-link[aria-current="page"] { color: var(--accent); background: var(--accent-soft); }
+/* Round icon buttons in the header (search, Read Later, mode) */
+.gk-icon-btn { background: var(--surface); border: 2px solid var(--line); color: var(--ink); transition: transform 0.15s, border-color 0.2s; }
+.gk-icon-btn:hover { border-color: var(--line-2); transform: translateY(-1px); }
+/* The sun/moon button: the two pictures swap with a little turn */
+.gk-theme svg { transition: transform 0.5s var(--ease-out-soft), opacity 0.3s; }
+:root[data-mode="dark"] .gk-theme .gk-sun, :root[data-mode="reading"] .gk-theme .gk-sun { transform: rotate(90deg) scale(0.4); opacity: 0; }
+:root:not([data-mode="dark"]):not([data-mode="reading"]) .gk-theme .gk-moon { transform: rotate(-90deg) scale(0.4); opacity: 0; }
+
+/* ── PHONE TAB BAR (components/PhoneTabBar.tsx), phones only ───────────────── */
+.gk-tabbar {
+  background: var(--head-bg);
+  border: 2px solid var(--line);
+  box-shadow: 0 4px 0 var(--line), 0 18px 40px -20px var(--shadow-far);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  backdrop-filter: blur(16px) saturate(1.4);
+  transition: transform 0.45s var(--ease-out-soft);
+  /* stay clear of the iPhone's home bar */
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+}
+.gk-tabbar.is-away { transform: translateY(calc(100% + 24px)); }
+.gk-tab { color: var(--muted); -webkit-tap-highlight-color: transparent; }
+.gk-tab svg { transition: transform 0.3s var(--ease-out-soft); }
+.gk-tab:active svg { transform: scale(0.86); }
+/* the soft pill behind the current tab */
+.gk-tab::before { content: ""; position: absolute; top: 6px; left: 50%; width: 52px; height: 30px; margin-left: -26px; border-radius: 99px; background: var(--accent-soft); transform: scale(0.4); opacity: 0; transition: transform 0.35s var(--ease-out-soft), opacity 0.2s; z-index: -1; }
+.gk-tab[aria-current="page"] { color: var(--accent); }
+.gk-tab[aria-current="page"]::before { transform: none; opacity: 1; }
+/* Gyaani sits raised in the middle of the bar, like a press-down button */
+.gk-tab-gyaani img { border: 3px solid var(--mint); box-shadow: 0 5px 0 #0f766e, 0 12px 26px -8px rgba(0, 0, 0, 0.5); transition: transform 0.15s, box-shadow 0.15s; }
+.gk-tab-gyaani:active img { transform: translateY(4px); box-shadow: 0 1px 0 #0f766e; }
+/* Phones: room at the bottom of every page so the tab bar never covers the
+   footer, and Gyaani's floating button steps aside (it lives in the bar). */
+@media (max-width: 767px) {
+  body { padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px)); }
+  [data-gyaani-launcher] { display: none !important; }
+}
+
+/* ── FOOTER (components/Footer.tsx) ────────────────────────────────────────── */
+/* The giant GKWORLD360 at the bottom: the letters are a window onto the
+   turning Earth (the same picture as the logo). background-clip: text cuts the
+   picture to the shape of the letters; the animation slides it sideways. */
+.gk-earth-word {
+  font-family: var(--font-display), Impact, sans-serif;
+  font-size: 18.5vw;
+  line-height: 0.82;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-align: center;
+  color: transparent;
+  background-image: url("/brand/earth-day.jpg");
+  /* zoomed in (the picture is 2.2× the word's height) and centred a little
+     above the equator, so the letters show big continents, not the ice caps */
+  background-size: auto 220%;
+  background-position: 0 42%;
+  background-repeat: repeat-x;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-stroke: max(1px, 0.06vw) rgba(110, 231, 183, 0.7);
+  filter: brightness(1.3) saturate(1.4);
+  animation: gk-earth-pan 90s linear infinite;
+  user-select: none;
+}
+@media (min-width: 1400px) { .gk-earth-word { font-size: 260px; } }
+/* The picture is twice as wide as it is tall and 2.2× the word's height, so
+   sliding it by 2 × 2.2 × the height brings it back to the start without a
+   visible jump. (The word's height is 0.82 × its font size.) */
+@keyframes gk-earth-pan { from { background-position: 0 42%; } to { background-position: calc(2 * 2.2 * 0.82 * 18.5vw) 42%; } }
+@media (min-width: 1400px) { @keyframes gk-earth-pan { from { background-position: 0 42%; } to { background-position: calc(2 * 2.2 * 0.82 * 260px) 42%; } } }
+:root[data-mode="reading"] .gk-earth-word { filter: sepia(0.6) brightness(0.9); animation: none; -webkit-text-stroke-color: rgba(217, 165, 94, 0.6); }
+
+/* Everything above switches off for readers who asked for less motion
+   (the global rule at the end of the MOTION section already shortens it;
+   these make sure nothing keeps sliding). */
+@media (prefers-reduced-motion: reduce) {
+  .gk-earth-word { animation: none; }
+  .gk-head.is-away, .gk-tabbar.is-away { transform: none; }
 }

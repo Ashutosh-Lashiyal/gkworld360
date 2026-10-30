@@ -3,8 +3,8 @@
 // Draws the LINK-PREVIEW CARD for a page (18 Sep 2026): the 1200×630 picture
 // WhatsApp, Telegram, X, LinkedIn, Slack and iMessage show when someone pastes
 // a link. Every page's Open Graph tags point here (lib/og.ts builds the URL),
-// so previews always look like GKWorld360 — deep teal, the title in the serif,
-// the subject label in mint, the wordmark. No cover photo on the card: the
+// so previews always look like GKWorld360 — since 30 Oct 2026: the dark stage,
+// the Day & Night logo, the title in Anton capitals, the label in mint. No cover photo on the card: the
 // renderer cannot read WebP (all our media is WebP), and one consistent brand
 // card is the better preview anyway.
 //
@@ -14,17 +14,37 @@
 // the letters actually used — and cache it.
 
 import { ImageResponse } from "next/og";
+import fs from "fs";
+import path from "path";
 import { SITE_NAME } from "@/lib/site";
+
+// REDESIGN 30 Oct 2026: the card now wears the new brand — the dark cinematic
+// stage, the Day & Night logo (the GK letters filled with the Earth), the
+// title in Anton capitals, and the motto in Instrument Serif italic.
+// The logo is a picture file (public/brand/gk-mark-earth-512.png), read once
+// and handed to the renderer as a "data URL" (the file's bytes written as text).
+const LOGO_MARK = (() => {
+  try {
+    const bytes = fs.readFileSync(path.join(process.cwd(), "public", "brand", "gk-mark-earth-512.png"));
+    return `data:image/png;base64,${bytes.toString("base64")}`;
+  } catch (error) {
+    // Never blank the card over a missing logo: say so in the server log, draw the card without it
+    console.error(`[og] logo file missing: ${error instanceof Error ? error.message : String(error)}`);
+    return null;
+  }
+})();
 
 export const runtime = "nodejs";
 export const revalidate = 86400; // a card for a given title is stable for a day
 
 // Fetch a TTF subset for `text` from Google Fonts. The old-browser User-Agent
 // makes Google answer with TTF URLs, which ImageResponse can read.
-async function loadFont(family: string, weight: number, text: string): Promise<ArrayBuffer | null> {
+async function loadFont(family: string, weight: number, text: string, italic = false): Promise<ArrayBuffer | null> {
   try {
+    // ital,wght@1,400 asks Google for the italic face; wght@400 for the upright one
+    const axis = italic ? `ital,wght@1,${weight}` : `wght@${weight}`;
     const css = await fetch(
-      `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family)}:wght@${weight}&text=${encodeURIComponent(text)}`,
+      `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family)}:${axis}&text=${encodeURIComponent(text)}`,
       { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:27.0) Gecko/20100101 Firefox/27.0" }, next: { revalidate: 86400 } }
     ).then((r) => r.text());
     // Google answers this old-browser UA with a WOFF (or TTF) URL — both are fine for ImageResponse.
@@ -55,26 +75,31 @@ export async function GET(req: Request) {
   const lang = searchParams.get("lang") === "hi" ? "hi" : "en";
   const hasDevanagari = /[ऀ-ॿ]/.test(title + label);
 
-  const textForFonts = `${title} ${label} ${SITE_NAME} Know More Grow More English हिन्दी 0123456789·`;
-  const [serif, hindi, sans] = await Promise.all([
-    loadFont("Source Serif 4", 700, textForFonts),
+  const motto = "Know more, grow more";
+  const textForFonts = `${title} ${label} ${SITE_NAME} WORLD360 ${motto} English हिन्दी 0123456789·`;
+  const [display, hindi, sans, accent] = await Promise.all([
+    loadFont("Anton", 400, textForFonts.toUpperCase() + textForFonts),
     hasDevanagari ? loadFont("Noto Sans Devanagari", 700, textForFonts) : Promise.resolve(null),
-    loadFont("Inter", 600, textForFonts),
+    // capitals too: the label and "ENGLISH" are drawn in capital letters, and a
+    // font subset without them falls back to the small letters (seen 30 Oct: "HiSTORY")
+    loadFont("Nunito", 800, textForFonts + textForFonts.toUpperCase()),
+    loadFont("Instrument Serif", 400, motto, true),
   ]);
   const fonts = [
-    ...(serif ? [{ name: "Serif", data: serif, weight: 700 as const, style: "normal" as const }] : []),
+    ...(display ? [{ name: "Display", data: display, weight: 400 as const, style: "normal" as const }] : []),
     ...(hindi ? [{ name: "Hindi", data: hindi, weight: 700 as const, style: "normal" as const }] : []),
-    ...(sans ? [{ name: "Sans", data: sans, weight: 600 as const, style: "normal" as const }] : []),
+    ...(sans ? [{ name: "Sans", data: sans, weight: 800 as const, style: "normal" as const }] : []),
+    ...(accent ? [{ name: "Accent", data: accent, weight: 400 as const, style: "italic" as const }] : []),
   ];
-  const titleFont = hasDevanagari && hindi ? "Hindi, Serif" : "Serif";
+  // Anton has no Devanagari letters, so Hindi titles use the Hindi font
+  const titleFont = hasDevanagari && hindi ? "Hindi, Display" : "Display";
   // Long titles get a smaller size so they always fit on the card
-  const titleSize = title.length > 70 ? 46 : title.length > 40 ? 54 : 64;
+  const titleSize = title.length > 70 ? 54 : title.length > 40 ? 66 : 82;
 
-  // LAYOUT (18 Sep 2026, second version): everything CENTRED and kept inside
-  // the middle ~840px. Chat apps don't all show the full 1200×630 picture —
-  // WhatsApp's small preview, iMessage, Telegram and Slack on phones crop it
-  // to a square or 4:3 from the centre — so text in a corner gets cut off.
-  // Centred text survives every crop.
+  // LAYOUT: everything CENTRED inside the middle ~860px. Chat apps don't all
+  // show the full 1200×630 picture — WhatsApp's small preview, iMessage,
+  // Telegram and Slack on phones crop it from the centre — so text in a corner
+  // gets cut off. Centred text survives every crop. (Same rule as 18 Sep.)
   return new ImageResponse(
     (
       <div
@@ -86,32 +111,38 @@ export async function GET(req: Request) {
           alignItems: "center",
           justifyContent: "center",
           position: "relative",
-          backgroundColor: "#122a26",
-          color: "#fffbf4",
+          // the dark stage, with a soft blue glow at the top right
+          backgroundColor: "#0b0b0d",
+          backgroundImage: "radial-gradient(circle at 80% 18%, rgba(40,75,150,0.35), rgba(11,11,13,0) 55%)",
+          color: "#f3f1ed",
           fontFamily: "Sans",
           textAlign: "center",
         }}
       >
-        {/* mint rule along the top */}
-        <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 10, backgroundColor: "#6ee7b7" }} />
-
-        {/* wordmark, centred near the top */}
-        <div style={{ position: "absolute", top: 52, display: "flex", alignItems: "baseline", gap: 14 }}>
-          <span style={{ fontFamily: "Serif", fontSize: 34, color: "#ffffff" }}>{SITE_NAME}</span>
-          <span style={{ fontFamily: lang === "hi" && hindi ? "Hindi" : "Sans", fontSize: 16, color: "rgba(255,255,255,0.6)", letterSpacing: lang === "hi" ? 0 : 2, textTransform: "uppercase" }}>{lang === "hi" ? fixDevanagari("हिन्दी") : "English"}</span>
+        {/* the logo: GK filled with the Earth, then WORLD360 */}
+        <div style={{ position: "absolute", top: 46, display: "flex", alignItems: "center", gap: 10 }}>
+          {/* A plain <img> is required here: this JSX becomes a PNG on the server,
+              where next/image's optimiser doesn't exist. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {LOGO_MARK && <img src={LOGO_MARK} width={78} height={78} alt="" />}
+          <span style={{ fontFamily: "Display", fontSize: 50, color: "#f3f1ed", letterSpacing: 0.5 }}>WORLD</span>
+          <span style={{ fontFamily: "Display", fontSize: 50, color: "#6ee7b7", letterSpacing: 0.5, marginLeft: -10 }}>360</span>
         </div>
 
         {/* label + title, centred in the safe zone */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 22, maxWidth: 840, padding: "0 40px" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20, maxWidth: 900, padding: "0 40px", marginTop: 40 }}>
           {label && (
-            // Letter-spacing suits uppercase English; it pulls Devanagari apart, so it's off for Hindi labels
-            <span style={{ fontFamily: /[ऀ-ॿ]/.test(label) && hindi ? "Hindi, Sans" : "Sans", fontSize: 20, letterSpacing: /[ऀ-ॿ]/.test(label) ? 0 : 4, textTransform: "uppercase", color: "#6ee7b7" }}>{label}</span>
+            // Letter-spacing suits capitals; it pulls Devanagari apart, so it's off for Hindi labels
+            <span style={{ fontFamily: /[ऀ-ॿ]/.test(label) && hindi ? "Hindi, Sans" : "Sans", fontSize: 20, letterSpacing: /[ऀ-ॿ]/.test(label) ? 0 : 3, textTransform: "uppercase", color: "#6ee7b7" }}>{label}</span>
           )}
-          <span style={{ fontFamily: titleFont, fontSize: titleSize, lineHeight: 1.12, color: "#ffffff", letterSpacing: -0.5 }}>{title}</span>
+          <span style={{ fontFamily: titleFont, fontSize: titleSize, lineHeight: 1.02, color: "#f3f1ed", textTransform: hasDevanagari ? "none" : "uppercase" }}>{title}</span>
         </div>
 
-        {/* short brand line, centred near the bottom */}
-        <span style={{ position: "absolute", bottom: 52, fontSize: 20, color: "rgba(255,255,255,0.6)", letterSpacing: 1 }}>Know More · Grow More</span>
+        {/* the motto, centred near the bottom, plus the language */}
+        <div style={{ position: "absolute", bottom: 44, display: "flex", alignItems: "baseline", gap: 18 }}>
+          <span style={{ fontFamily: accent ? "Accent" : "Sans", fontStyle: "italic", fontSize: 34, color: "#b4b1aa" }}>{motto}</span>
+          <span style={{ fontFamily: lang === "hi" && hindi ? "Hindi" : "Sans", fontSize: 16, color: "#6ee7b7", letterSpacing: lang === "hi" ? 0 : 2, textTransform: "uppercase" }}>{lang === "hi" ? fixDevanagari("हिन्दी") : "English"}</span>
+        </div>
       </div>
     ),
     { width: 1200, height: 630, fonts }

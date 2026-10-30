@@ -24,6 +24,12 @@
 **The task list is `TODO.md`** — read it every session and surface the 🔴 Now section before
 starting anything new. This file is the *status*; TODO.md is the *work*.
 
+**30 Oct 2026 — REDESIGN in progress on branch `feature/redesign`** (made from `feature/atlas`).
+New look "Playful + Cinematic" with Light / Dark / Reading modes and the new "Day & Night" GK logo.
+Phase 1 of 5 built (tokens, fonts, modes, header, phone tab bar, footer, icons, share picture).
+How modes work: `lib/mode.ts` + the colour blocks at the top of `app/(frontend)/globals.css`.
+Logo: `components/Logo.tsx` (+ files in `public/brand/`). Phases 2–5 are listed in TODO.md.
+
 ## Where the product is
 **MVP deployed on the Vercel site.** The redesign, four bilingual articles with images, quotes in
 the CMS, image prompts in /admin, Gyaani with guardrails, Read Later, the daily quote in the footer.

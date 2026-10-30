@@ -1,19 +1,22 @@
 // Footer is a Server Component — no interactivity needed, just links and text.
 // No "use client" required. Server components are faster and better for SEO.
+//
+// REDESIGN 30 Oct 2026 (phase 1): the footer is a rounded block on the dark
+// CINEMATIC stage at the end of every page:
+//   1. the Quote of the day, with the author's photo (as before);
+//   2. the logo and three columns of links (as before);
+//   3. a GIANT "GKWORLD360" whose letters are a window onto the turning Earth
+//      (.gk-earth-word in globals.css — the same Earth as the logo);
+//   4. the copyright line.
+// The dark stage stays dark in every mode; in Reading mode it turns warm.
 
 import Link from "next/link";
 import Image from "next/image";
 import { getDailyQuote } from "@/lib/quote";
+import Logo from "@/components/Logo";
 
-// ── FOOTER COLUMNS ────────────────────────────────────────────────────────────
-// Defined as data so the layout below stays clean and readable.
-//
-// TIDIED 29 Oct 2026 (owner: "why do we have so many Contacts?"). Before, three
-// links ("Contact", "Help Center", "Contact Support") all went to /contact, and
-// "Privacy Policy" / "Terms of Service" went to pages that don't exist (404).
-// Now every link goes somewhere different and real. Contact appears ONCE — and
-// the footer is now its home, since it left the top menu to make room for the
-// Atlas. Privacy + Terms come back when those pages are written (TODO.md).
+// ── FOOTER COLUMNS (tidied 29 Oct 2026: every link goes somewhere different
+// and real; Contact appears once) ──────────────────────────────────────────────
 const footerColumns = [
   {
     heading: "Explore",
@@ -29,6 +32,7 @@ const footerColumns = [
     links: [
       { label: "Search",     href: "/search" },
       { label: "Read Later", href: "/saved" },
+      { label: "All topics", href: "/topics" },
     ],
   },
   {
@@ -40,80 +44,53 @@ const footerColumns = [
   },
 ];
 
-// ── FOOTER COMPONENT ──────────────────────────────────────────────────────────
 export default async function Footer() {
-  // Get the current year dynamically so the copyright never goes out of date
+  // The current year, so the copyright never goes out of date
   const currentYear = new Date().getFullYear();
-  // Quote of the day — moved here from the homepage on 18 Sep 2026 (owner: the
-  // footer looked empty; the quote gives every page a closing thought).
-  // Managed in /admin → Quotes (lib/quote.ts picks today's).
+  // Quote of the day (managed in /admin → Quotes; lib/quote.ts picks today's)
   const quote = await getDailyQuote();
 
   return (
-    // REDESIGN 16 Sep 2026 — the footer is the bottom half of the dark "frame":
-    // the same deep teal as the header, white text at reduced opacity for the
-    // quiet parts, full white on hover. Every page therefore ends on dark, which
-    // is what makes the light/dark alternation of the sections above it read.
-    // border-t: a faint seam so the footer still reads as its own block when the
-    // section above it is ALSO dark (e.g. a subject page's "Recently added" band).
-    <footer className="bg-navy-dark text-on-dark border-t border-on-dark/10">
+    // mx/mb: a small gap around the block so it floats like a card.
+    // bg-navy-dark = the dark stage colour (globals.css).
+    // border: a faint edge, so in Dark mode the black block still stands out from the dark page
+    <footer className="relative mt-24 mx-2.5 mb-2.5 rounded-[28px] md:rounded-[36px] overflow-hidden bg-navy-dark text-on-dark border border-on-dark/10">
+      <div className="max-w-[1240px] mx-auto px-5 md:px-8 pt-14 md:pt-16">
 
-      <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 pt-10 pb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(0,0.6fr))] gap-8 lg:gap-10">
 
-        {/* ── QUOTE OF THE DAY — the footer opens with a closing thought ──── */}
-        <figure className="m-0 mb-8 pb-8 border-b border-on-dark/10 flex flex-col items-center gap-3 text-center">
-          <span className="font-heading text-[44px] leading-[0.6] text-mint select-none" aria-hidden="true">&ldquo;</span>
-          <blockquote className="m-0 font-heading text-lg md:text-[22px] leading-[1.45] italic text-on-dark max-w-[820px] [text-wrap:balance]">
-            {quote.quote}
-          </blockquote>
-          <figcaption className="flex items-center gap-3">
-            {quote.authorImage && (
-              <span className="relative w-10 h-10 rounded-full overflow-hidden border border-on-dark/20 flex-shrink-0">
-                <Image src={quote.authorImage} alt={quote.author} fill className="object-cover" sizes="40px" />
-              </span>
-            )}
-            <span className="flex flex-col gap-0.5 text-left">
-              <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-mint">
-                — {quote.author} · Quote of the day
-              </span>
-              {quote.authorTitle && (
-                <span className="font-body text-xs text-on-dark/60 leading-snug max-w-[560px]">{quote.authorTitle}</span>
+          {/* ── QUOTE OF THE DAY ── */}
+          <figure className="m-0 col-span-2 sm:col-span-3 lg:col-span-1">
+            <span className="font-accent italic text-[22px] leading-none text-mint">Quote of the day</span>
+            <blockquote className="mt-3 mb-0 font-heading font-semibold text-[22px] md:text-[28px] leading-[1.3] tracking-[-0.01em] text-on-dark [text-wrap:balance]">
+              &ldquo;{quote.quote}&rdquo;
+            </blockquote>
+            <figcaption className="mt-4 flex items-center gap-3">
+              {/* The author's photo, round, when the quote has one */}
+              {quote.authorImage && (
+                <span className="relative w-11 h-11 rounded-full overflow-hidden border-2 border-on-dark/20 flex-shrink-0">
+                  <Image src={quote.authorImage} alt={quote.author} fill className="object-cover" sizes="44px" />
+                </span>
               )}
-            </span>
-          </figcaption>
-        </figure>
+              <span className="flex flex-col gap-0.5">
+                <span className="font-body text-[15px] font-extrabold text-on-dark">{quote.author}</span>
+                {quote.authorTitle && (
+                  <span className="font-body text-[13px] text-on-dark/60 leading-snug max-w-[560px] line-clamp-2">{quote.authorTitle}</span>
+                )}
+              </span>
+            </figcaption>
+          </figure>
 
-        {/* ── LOGO + LINK COLUMNS on one row (18 Sep 2026: the tagline is gone,
-            the logo sits as the first column, and the whole footer is shorter) ── */}
-        {/* Logo + three columns (was four; the duplicate "Support" and the
-            broken "Legal" column are gone). */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[1.6fr_1fr_1fr_1fr] gap-8">
-          {/* Logo — first column. The dark-background version of the flat logo
-              (same file as the header). */}
-          <div className="col-span-2 sm:col-span-3 lg:col-span-1">
-            <Link href="/" className="inline-block">
-              <Image
-                src="/images/logo-dark.png"
-                alt="GKWorld360 — Know More, Grow More"
-                height={80}
-                width={108}
-                className="h-16 md:h-20 w-auto"
-              />
-            </Link>
-          </div>
-
+          {/* ── LINK COLUMNS ── */}
           {footerColumns.map((column) => (
             <div key={column.heading}>
-              <h3 className="font-body text-[11px] font-semibold text-on-dark/50 mb-3 uppercase tracking-[0.14em]">
+              <h3 className="font-mono text-[11px] font-medium text-mint mb-3 uppercase tracking-[0.12em]">
                 {column.heading}
               </h3>
-              <ul className="space-y-2">
+              <ul className="space-y-1">
                 {column.links.map((link) => (
                   <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      className="font-body text-sm text-on-dark/80 hover:text-mint transition-colors"
-                    >
+                    <Link href={link.href} className="inline-block py-1 font-body text-[15px] font-bold text-on-dark/70 hover:text-on-dark transition-colors">
                       {link.label}
                     </Link>
                   </li>
@@ -122,18 +99,25 @@ export default async function Footer() {
             </div>
           ))}
         </div>
-      </div>
 
-      {/* ── COPYRIGHT BAR ──────────────────────────────────────────────────────
-          A faint white line (10% opacity) divides it from the columns above */}
-      <div className="border-t border-on-dark/10">
-        <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-4">
-          <p className="font-body text-[13px] text-on-dark/60 text-center">
-            © {currentYear} GKWorld360. All rights reserved. Empowering academic excellence.
-          </p>
+        {/* ── THE LOGO, small, above the giant word ── */}
+        <div className="mt-12 flex items-center justify-between gap-4 flex-wrap">
+          <Link href="/" aria-label="GKWorld360 — home"><Logo size={44} onDark /></Link>
+          <span className="font-accent italic text-[22px] text-on-dark/70">Know more, grow more</span>
         </div>
       </div>
 
+      {/* ── THE GIANT EARTH WORD ── decorative (the logo above already names
+          the site), so screen readers skip it (aria-hidden) */}
+      <div aria-hidden="true" className="gk-earth-word mt-6 -mb-[0.06em]">GKWorld360</div>
+
+      {/* ── COPYRIGHT ── */}
+      <div className="relative z-10 border-t border-on-dark/15 bg-navy-dark">
+        <div className="max-w-[1240px] mx-auto px-5 md:px-8 py-4 flex flex-wrap justify-between gap-2 font-body text-[13px] text-on-dark/60">
+          <span>© {currentYear} GKWorld360. All rights reserved.</span>
+          <span>English · <span lang="hi" className="font-hindi">हिन्दी</span></span>
+        </div>
+      </div>
     </footer>
   );
 }

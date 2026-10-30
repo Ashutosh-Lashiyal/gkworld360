@@ -49,9 +49,19 @@
         and its city lights, mint edge, the Earth turning slowly inside the letters. Letters turned
         into outlines (no font needed). Kit: full logo light/dark, Earth mark, simple mark (tab icon),
         app icons 180/192/512, share picture 1200×630.
-      - [ ] **Owner said YES to phase 1 (30 Oct).** Branch `feature/redesign` (owner runs git), then:
-        tokens + fonts + Light/Dark/Reading, new header + footer with the animated logo, tab icon,
-        app icon, share picture; keep Gyaani, Clear all, quote photo. Owner checks on localhost.
+      - [x] **Phase 1 BUILT (30 Oct) on `feature/redesign`** — owner to check on localhost:3000.
+        New colour tokens with Light/Dark (+ Reading ready for phase 2), 5 new fonts, chunky
+        Button, header pill with animated Day & Night logo + sun/moon + full-screen phone menu,
+        phone tab bar (Gyaani in the middle), footer with quote photo + Earth-filled GKWORLD360,
+        new tab icon / home-screen icon / share picture. Quote photo fallback from
+        public/images/quotes when the CMS quote has no portrait.
+      - [ ] Phase 2: article page + Reading mode (switch on articles, reader panel, nudge after 7 pm).
+      - [ ] Phase 3: homepage (Earth hero + country-lines loader + still photo for old phones).
+      - [ ] Phase 4: all other pages, EN + HI (fix the dim labels on /pulse, /saved; Atlas follows Dark).
+      - [ ] Phase 5: effects (curtain + loading bar between pages, hover/scroll) + phone PageSpeed before/after.
+      - [ ] Laptop disk is 99% full (2.7 GB free on 30 Oct) — the dev server's cache failed to save
+        and served an old stylesheet. Owner to free space; deleting `.next` (1.3 GB, rebuilt
+        automatically) is safe while the dev server is stopped.
         Waiting for the owner's pick → refine → final files
         (light/dark/reading logo, favicon, app icon, share image) → goes in with phase 1.
         Then: owner's yes on the build plan → git branch → phases 1–5.

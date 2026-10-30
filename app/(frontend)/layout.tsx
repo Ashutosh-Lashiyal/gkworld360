@@ -1,6 +1,9 @@
 // Next.js built-in tools for SEO metadata and optimised font loading
 import type { Metadata } from "next";
-import { Source_Serif_4, Inter, Noto_Sans_Devanagari } from "next/font/google";
+import { Anton, Instrument_Serif, Fraunces, Nunito, Geist_Mono, Noto_Sans_Devanagari } from "next/font/google";
+// <Script> lets us place the small "which mode?" script in the page (see below)
+import Script from "next/script";
+import { MODE_SCRIPT } from "@/lib/mode";
 
 // The permanent shell components — appear on every single page
 import Header from "@/components/Header";
@@ -11,6 +14,7 @@ import { getSiteStats } from "@/lib/site-stats";
 import { ogImages } from "@/lib/og";
 import Footer from "@/components/Footer";
 import Gyaani from "@/components/Gyaani";
+import PhoneTabBar from "@/components/PhoneTabBar";
 
 // Site config — URL, name, and the master indexing switch
 import { SITE_URL, SITE_NAME, SITE_TAGLINE, SITE_DESCRIPTION, INDEXING_ENABLED } from "@/lib/site";
@@ -25,25 +29,49 @@ import "./globals.css";
 // next/font loads Google Fonts at build time — no extra network request for visitors.
 // The `variable` option creates a CSS custom property we reference in globals.css.
 
-// Source Serif 4 — the heading font ("literary, authoritative" feel)
-// Used for: h1, h2, h3 — hero titles, section headings, article titles — AND,
-// since the 16 Sep 2026 redesign, the article BODY text (19px, regular weight).
-// Weight 400 was missing before; without it the browser "faked" regular text
-// with the nearest weight it had (600), so whole articles rendered bold.
-const sourceSerif4 = Source_Serif_4({
-  variable: "--font-source-serif", // sets --font-source-serif on <html>
+// REDESIGN 30 Oct 2026 ("Playful + Cinematic"): five fonts, each with one job.
+// next/font downloads them when the site is BUILT and serves them from our own
+// domain, so visitors never wait on Google and nothing jumps when they load.
+
+// Anton — the GIANT, tall capitals: page titles like "KNOW MORE", the logo's name
+const anton = Anton({
+  variable: "--font-anton",
   subsets: ["latin"],
-  weight: ["400", "600", "700"],   // 400 = article body, 600 = headings, 700 = hero/display
-  style: ["normal", "italic"],     // articles use *emphasis*; without an italic face it's faked
-  display: "swap",                 // show text in a fallback font while loading — no invisible text
+  weight: "400",          // Anton comes in one weight only
+  display: "swap",        // show a fallback font until it arrives — no invisible text
 });
 
-// Inter — the body and UI font (clean, screen-optimised sans-serif)
-// Used for: body text, buttons, labels, captions, navigation
-const inter = Inter({
-  variable: "--font-inter",        // sets --font-inter on <html>
+// Instrument Serif (italic) — the elegant accent word: "Explore *subjects*"
+const instrument = Instrument_Serif({
+  variable: "--font-instrument",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],   // 400 = body, 500 = small labels, 600 = buttons
+  weight: "400",
+  style: ["normal", "italic"],
+  display: "swap",
+});
+
+// Fraunces — headings, card titles, and the article body (a warm, bookish serif)
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  style: ["normal", "italic"],
+  display: "swap",
+});
+
+// Nunito — everything else: buttons, menus, captions (rounded and friendly)
+const nunito = Nunito({
+  variable: "--font-nunito",
+  subsets: ["latin"],
+  weight: ["400", "600", "700", "800", "900"],
+  display: "swap",
+});
+
+// Geist Mono — small labels in capitals ("QUOTE OF THE DAY", "EXPLORE")
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+  weight: ["400", "500"],
   display: "swap",
 });
 
@@ -116,7 +144,7 @@ export default async function RootLayout({
       lang="en"
       // Applying both font variables to <html> makes them available everywhere on the site.
       // globals.css reads these variables to power the font-heading and font-body Tailwind classes.
-      className={`${sourceSerif4.variable} ${inter.variable} ${notoDevanagari.variable}`}
+      className={`${anton.variable} ${instrument.variable} ${fraunces.variable} ${nunito.variable} ${geistMono.variable} ${notoDevanagari.variable}`}
       // suppressHydrationWarning tells React: "don't block the page if the <html>
       // element looks slightly different between server and browser."
       // This handles cases where Next.js or macOS system tools add extra styles/attributes
@@ -126,9 +154,9 @@ export default async function RootLayout({
     >
       <body
         className={[
-          "bg-background",   // our off-white page background (#f8f9ff) — from design tokens
-          "text-foreground", // our primary text colour (#0b1c30, deep navy-black)
-          "font-body",       // Inter — applied to all text by default; headings override with font-heading
+          "bg-background",   // the page background — follows Light / Dark / Reading
+          "text-foreground", // the main text colour — follows the mode too
+          "font-body",       // Nunito by default; headings use font-heading (Fraunces)
           "antialiased",     // smooths font edges on Mac/retina screens
           "min-h-screen",    // page is always at least the full height of the viewport
         ].join(" ")}
@@ -136,6 +164,13 @@ export default async function RootLayout({
         // (e.g. "aqua-ext-enabl") that cause a server/client mismatch.
         suppressHydrationWarning
       >
+        {/* LIGHT / DARK / READING — picks the mode BEFORE the page is drawn.
+            strategy="beforeInteractive" puts this tiny script in the first
+            HTML the browser receives, so it runs before anything is painted
+            and the page never flashes light-then-dark. The script itself is
+            in lib/mode.ts. */}
+        <Script id="gk-mode" strategy="beforeInteractive">{MODE_SCRIPT}</Script>
+
         {/* Site-wide structured data: tells search/AI engines what GKWorld360 is,
             and enables the search box to appear in Google results (SearchAction). */}
         <JsonLd
@@ -175,6 +210,8 @@ export default async function RootLayout({
 
         {/* Gyaani — floating AI chatbot, visible on every page */}
         <Gyaani />
+        {/* Phones only: the tab bar along the bottom (Home, Learn, Gyaani, News, Atlas) */}
+        <PhoneTabBar />
         {/* Site-wide confirmation bar (e.g. "Saved to Read Later") — see components/Toast.tsx */}
         <Toast />
         {/* Book-turning-pages overlay while moving between pages. Suspense is

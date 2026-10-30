@@ -45,9 +45,10 @@ export default function BellNotification() {
           (useful on mobile where hover doesn't exist).                        */}
       <button
         onClick={() => setOpen(!open)}
-        // Sits on the dark header bar, so it uses the mint accent (the one
-        // colour allowed on dark surfaces) and a faint white hover halo.
-        className="flex items-center justify-center w-11 h-11 rounded-full text-mint hover:bg-on-dark/10 transition-colors cursor-pointer"
+        // 30 Oct 2026: the header is now a light pill (dark in Dark mode), so
+        // the bell is a round button like its neighbours (gk-icon-btn in
+        // globals.css), in the accent colour so it still catches the eye.
+        className="gk-icon-btn flex items-center justify-center w-[42px] h-[42px] rounded-full text-sapphire cursor-pointer"
         aria-label="Hindi language availability"
       >
         <span className="bell-ring">

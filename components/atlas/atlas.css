@@ -22,8 +22,8 @@
   --ink: #1a1a1a;
   --emerald: #059669;
   --amber-dark: #92400e;  /* era ranges and the "Key points" label                 */
-  --sans: var(--font-inter), system-ui, sans-serif;
-  --serif: var(--font-source-serif), Georgia, serif;
+  --sans: var(--font-nunito), system-ui, sans-serif;
+  --serif: var(--font-fraunces), Georgia, serif;
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   /* the height of the site header, measured by the page — the globe sticks below it on phones */
   --atlas-top: 72px;
@@ -32,8 +32,8 @@
 }
 /* Hindi page: Devanagari first, the Latin fonts for numbers and English names */
 .atlas-app:lang(hi) {
-  --sans: var(--font-devanagari), var(--font-inter), system-ui, sans-serif;
-  --serif: var(--font-devanagari), var(--font-source-serif), Georgia, serif;
+  --sans: var(--font-devanagari), var(--font-nunito), system-ui, sans-serif;
+  --serif: var(--font-devanagari), var(--font-fraunces), Georgia, serif;
 }
 .atlas-app button { cursor: pointer; font-family: inherit; }
 .atlas-app [hidden] { display: none !important; }

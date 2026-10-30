@@ -169,6 +169,14 @@ export default function Gyaani() {
     if (open) setTimeout(() => inputRef.current?.focus(), 100);
   }, [open]);
 
+  // The phone tab bar's Gyaani button (components/PhoneTabBar.tsx) sends the
+  // "gk:open-gyaani" event; this listens for it and opens the chat (30 Oct 2026).
+  useEffect(() => {
+    const openFromTabBar = () => setOpen(true);
+    window.addEventListener("gk:open-gyaani", openFromTabBar);
+    return () => window.removeEventListener("gk:open-gyaani", openFromTabBar);
+  }, []);
+
   const limitReached = questionsUsed >= MAX_QUESTIONS;
 
   // ── SEND MESSAGE ──────────────────────────────────────────────────────────
@@ -245,7 +253,10 @@ export default function Gyaani() {
         // phones while one of its cards is open (components/atlas/atlas.css)
         data-gyaani-launcher
         aria-label={open ? "Close Gyaani" : "Ask Gyaani — your knowledge companion"}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-navy-dark text-on-dark pl-2 pr-4 py-2 rounded-full shadow-card-hover hover:shadow-xl transition-all duration-200"
+        // Redesign 30 Oct 2026: a dark pill with a mint ring and a chunky edge
+        // underneath. On phones it's hidden (globals.css): Gyaani lives in the
+        // tab bar there.
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-navy-dark text-on-dark pl-1.5 pr-4 py-1.5 rounded-full border-2 border-mint/45 shadow-[0_5px_0_#000,0_20px_40px_-14px_rgba(0,0,0,0.6)] hover:-translate-y-0.5 transition-transform duration-200"
       >
         <Avatar size={36} />
         <span className="font-body text-sm font-semibold">
@@ -259,10 +270,12 @@ export default function Gyaani() {
         <div
           // anim-panel-in/out: rises and grows from the bottom-right corner, where
           // the button is (globals.css → MOTION)
-          className={`fixed bottom-20 right-6 z-50 w-[340px] md:w-[380px] flex flex-col rounded-card overflow-hidden shadow-card-hover border border-hairline ${
+          // Big screens: a 380px window above the button. Phones (max-md:): a
+          // sheet across the full width, 88% of the screen tall, rising from
+          // the bottom edge, with rounded top corners only.
+          className={`fixed z-50 flex flex-col overflow-hidden border-2 border-hairline shadow-card-hover bottom-20 right-6 w-[380px] h-[520px] rounded-card max-md:inset-x-0 max-md:bottom-0 max-md:w-auto max-md:h-[88dvh] max-md:rounded-b-none max-md:z-[60] ${
             panel.closing ? "anim-panel-out" : "anim-panel-in"
           }`}
-          style={{ height: "480px" }}
         >
           {/* Header */}
           <div className="bg-navy-dark flex items-center gap-3 px-4 py-3 flex-shrink-0">
@@ -290,7 +303,7 @@ export default function Gyaani() {
                   <div className={[
                     "font-body text-sm leading-relaxed rounded-card px-3 py-2.5",
                     msg.role === "user"
-                      ? "bg-sapphire text-on-dark"
+                      ? "bg-[var(--btn)] text-[var(--on-btn)] font-bold"
                       : "bg-surface-mid text-foreground",
                   ].join(" ")}>
                     {msg.content}
@@ -369,7 +382,7 @@ export default function Gyaani() {
                   onClick={sendMessage}
                   disabled={!input.trim() || loading}
                   aria-label="Send message"
-                  className="w-9 h-9 flex items-center justify-center rounded-full bg-sapphire text-on-dark hover:bg-sapphire-dark transition-colors disabled:opacity-40 flex-shrink-0"
+                  className="w-9 h-9 flex items-center justify-center rounded-full bg-[var(--btn)] text-[var(--on-btn)] shadow-[0_3px_0_var(--btn-shadow)] active:translate-y-[3px] active:shadow-none transition-transform disabled:opacity-40 flex-shrink-0"
                 >
                   <SendIcon />
                 </button>

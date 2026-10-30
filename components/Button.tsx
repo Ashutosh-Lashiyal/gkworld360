@@ -53,45 +53,49 @@ export type ButtonVariant =
 //   rounded-button → the 10px token from globals.css
 //   transition-all duration-150 → colour, lift and shadow all animate together
 //   focus-visible:… → the keyboard focus ring (mint, 2px, sits 2px outside)
+// REDESIGN 30 Oct 2026 — the CHUNKY button from the new "Playful + Cinematic"
+// look. It sits on a darker "edge" (a solid shadow 4px below it), so it looks
+// like a real key. Pressing moves the button DOWN onto its edge, like a key
+// being pressed. Colours come from the mode variables in globals.css, so the
+// button is green in Light, mint in Dark and warm amber in Reading mode.
+// The variant names and the props are unchanged, so no page had to change.
 const BASE =
-  'inline-flex items-center justify-center gap-2 min-h-[44px] px-[18px] ' +
-  'rounded-button border font-body text-sm font-semibold leading-none whitespace-nowrap ' +
-  'transition-all duration-150 ease-out ' +
-  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mint';
+  'inline-flex items-center justify-center gap-2 min-h-[44px] px-5 ' +
+  'rounded-button border-2 font-body text-sm font-extrabold leading-none whitespace-nowrap ' +
+  'transition-[transform,box-shadow,filter] duration-100 ease-out ' +
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]';
 
-// What differs per variant: fill, text and border colours, and the hover.
-// `hover:-translate-y-px` = move up by 1px on hover; `active:translate-y-0`
-// puts it back while the mouse button is held down — that's the "press".
+// "active:" = while the button is being pressed (mouse down, finger down)
+const PRESS = 'active:translate-y-[4px] active:shadow-none ';
+
 const VARIANTS: Record<ButtonVariant, string> = {
+  // The main button: green face on a darker green edge
   primary:
-    'bg-navy-dark text-on-dark border-navy-dark ' +
-    'hover:bg-mint hover:border-mint hover:text-navy-dark hover:-translate-y-px hover:shadow-button ' +
-    'active:translate-y-0 active:shadow-none',
+    'bg-[var(--btn)] text-[var(--on-btn)] border-transparent shadow-[0_4px_0_var(--btn-shadow)] ' +
+    'hover:brightness-110 ' + PRESS,
 
+  // On the dark stage: a mint face (dark text) on a teal edge
   onDark:
-    'bg-surface text-navy-dark border-surface ' +
-    'hover:bg-mint hover:border-mint hover:-translate-y-px hover:shadow-button-dark ' +
-    'active:translate-y-0 active:shadow-none',
+    'bg-mint text-[#04241b] border-transparent shadow-[0_4px_0_#0f766e] ' +
+    'hover:brightness-110 ' + PRESS,
 
+  // The "other" option of a toggle on the dark stage: outline only
   ghostOnDark:
-    'bg-transparent text-on-dark border-on-dark/50 ' +
+    'bg-transparent text-on-dark border-on-dark/40 ' +
     'hover:border-mint hover:text-mint',
 
+  // A quieter button on a light page: white face, grey edge
   ghost:
-    'bg-transparent text-navy-dark border-navy-dark ' +
-    'hover:bg-mint hover:border-mint hover:-translate-y-px hover:shadow-button ' +
-    'active:translate-y-0 active:shadow-none',
+    'bg-surface text-foreground border-[var(--line-2)] shadow-[0_4px_0_var(--line-2)] ' +
+    'hover:border-[var(--accent)] ' + PRESS,
 
   disabled:
-    'bg-surface-mid text-muted/70 border-surface-mid cursor-default select-none',
+    'bg-surface-low text-muted/70 border-transparent cursor-default select-none',
 
-  // The one destructive button (Clear all, Remove): same shape and lift as the
-  // primary, but RED, and it hovers to a darker red rather than mint — a
-  // destructive action should never look inviting. (18 Sep 2026)
+  // Red, for destructive actions only (Clear all, Remove)
   danger:
-    'bg-[#b91c1c] text-on-dark border-[#b91c1c] ' +
-    'hover:bg-[#991b1b] hover:border-[#991b1b] hover:-translate-y-px hover:shadow-button ' +
-    'active:translate-y-0 active:shadow-none',
+    'bg-[#dc2626] text-white border-transparent shadow-[0_4px_0_#991b1b] ' +
+    'hover:brightness-110 ' + PRESS,
 };
 
 /** The full class string for a variant, plus anything extra (e.g. "flex-1"). */
