@@ -1,63 +1,97 @@
 "use client";
-// ReadingProgress — the thin mint bar at the very top of the screen that fills
+// ReadingProgress — the thin line across the very top of the screen that fills
 // as you read an article (added 17 Sep 2026, owner's friend's suggestion).
 //
-// How it works: the article page renders this once and passes the id of the
-// element that holds the article. On every scroll we work out how far the
-// reader has travelled through THAT element (not the whole page — the footer
-// and related topics don't count as reading) and set the bar's width.
+// REDESIGN PHASE 2 (30 Oct 2026):
+//   - The line now sits at the very top of the screen, in the accent colour.
+//     (The header is a floating pill that slides away while you read, so the
+//     old spot "just under the header" would have hidden it.)
+//   - At 90% read, the article is remembered as READ in this browser and a
+//     small "Marked as read ✓" message shows (the first time only).
+//   - SPOTLIGHT: when the reader turned it on (Text settings), every block of
+//     the article is dimmed except the one in the middle of the screen.
+//
+// How the progress works: the article page renders this once; on every scroll
+// we work out how far the reader has travelled through the article BODY (not
+// the whole page — the footer and related topics don't count). The maths is in
+// lib/reading.ts (articleProgress).
+//
+// PERFORMANCE: the bar is moved by writing its style directly (a "ref"), not
+// through React state — scrolling fires many times a second, and redrawing the
+// component each time would be wasted work.
 //
 // "use client" because it listens to scroll events in the browser.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
+import { articleProgress, markRead, ARTICLE_BODY_ID } from "@/lib/reading";
 
-export default function ReadingProgress({ targetId }: { targetId: string }) {
-  const [progress, setProgress] = useState(0); // 0 → 1
-  // Where the sticky header ends, in px from the top of the screen. The bar
-  // sits right under it (owner, 17 Sep: at the very top it was hidden behind
-  // the menu). Measured live because the header is taller on desktop than on
-  // phones and we don't want a magic number here.
-  const [headerBottom, setHeaderBottom] = useState(0);
+// The blocks the Spotlight can light: paragraphs, lists, pictures, tables,
+// headings. They sit straight inside .prose (MDX articles) or one box deeper,
+// in .payload-richtext (CMS articles) — the same list as in globals.css.
+const SPOT_BLOCKS = `#${ARTICLE_BODY_ID} :is(.prose, .prose > .payload-richtext) > :is(p, ul, ol, figure, table, blockquote, h2, h3)`;
+
+export default function ReadingProgress({ lang = "en" }: { lang?: "en" | "hi" }) {
+  const bar = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
-    const el = document.getElementById(targetId);
-    if (!el) return;
-
-    const header = document.querySelector("header");
+    let marked = false;
+    let frame = 0;
 
     const update = () => {
-      if (header) setHeaderBottom(Math.round(header.getBoundingClientRect().bottom));
-      const rect = el.getBoundingClientRect();
-      const viewport = window.innerHeight;
-      // How much of the article has scrolled past the bottom of the viewport,
-      // as a share of the article's height. Clamped between 0 and 1.
-      const scrolled = viewport - rect.top;
-      const total = rect.height + viewport * 0.2; // reach 100% a little before the very end
-      setProgress(Math.min(1, Math.max(0, scrolled / total)));
+      frame = 0;
+      const p = articleProgress();
+      // scaleX(0.5) = the line drawn at half its full width
+      if (bar.current) bar.current.style.transform = `scaleX(${p})`;
+
+      // Finished (90%)? Remember it, and say so once
+      if (p > 0.9 && !marked) {
+        marked = true;
+        if (markRead(pathname)) {
+          window.dispatchEvent(new CustomEvent("gk-toast", { detail: { message: lang === "hi" ? "पढ़ा हुआ ✓" : "Marked as read ✓" } }));
+        }
+      }
+
+      // Spotlight: light the block nearest a line 45% down the screen
+      if (document.documentElement.getAttribute("data-read-spot") === "on") {
+        let best: Element | null = null;
+        let bestDistance = Infinity;
+        document.querySelectorAll(SPOT_BLOCKS).forEach((el) => {
+          const r = el.getBoundingClientRect();
+          const distance = Math.abs(r.top + r.height / 2 - window.innerHeight * 0.45);
+          if (distance < bestDistance) { bestDistance = distance; best = el; }
+          el.classList.remove("is-lit");
+        });
+        (best as Element | null)?.classList.add("is-lit");
+      }
     };
 
+    // requestAnimationFrame: do the work at most once per screen refresh
+    const onScroll = () => { if (!frame) frame = requestAnimationFrame(update); };
     update();
     // `passive: true` tells the browser this listener never blocks scrolling.
-    window.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    // A click in the Text settings can turn Spotlight on: re-check when <html> changes
+    const observer = new MutationObserver(onScroll);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-read-spot"] });
     return () => {
-      window.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      observer.disconnect();
+      cancelAnimationFrame(frame);
     };
-  }, [targetId]);
+  }, [pathname, lang]);
 
   return (
-    // Fixed just BELOW the sticky header (z-40 keeps it under the open Subjects
-    // menu, which is z-50). aria-hidden: decoration; screen readers have the headings.
+    // Fixed at the very top, above the header (z-[70]). aria-hidden: decoration;
+    // screen readers have the headings. origin-left: it grows from the left.
     <div
+      ref={bar}
       aria-hidden="true"
-      className="fixed inset-x-0 z-40 h-1.5 bg-navy-dark/10 pointer-events-none"
-      style={{ top: headerBottom }}
-    >
-      <div
-        className="h-full bg-mint transition-[width] duration-100 ease-out"
-        style={{ width: `${Math.round(progress * 1000) / 10}%` }}
-      />
-    </div>
+      className="fixed left-0 right-0 top-0 z-[70] h-[3px] bg-accent origin-left pointer-events-none"
+      style={{ transform: "scaleX(0)" }}
+    />
   );
 }

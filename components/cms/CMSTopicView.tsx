@@ -58,6 +58,7 @@ export default function CMSTopicView({
   return (
     <ArticleLayout
       colors={colors}
+      lang={lang}
       header={
         <ArticleHeader
           breadcrumbs={breadcrumbs}

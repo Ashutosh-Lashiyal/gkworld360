@@ -1,8 +1,7 @@
 // Next.js built-in tools for SEO metadata and optimised font loading
 import type { Metadata } from "next";
 import { Anton, Instrument_Serif, Fraunces, Nunito, Geist_Mono, Noto_Sans_Devanagari } from "next/font/google";
-// <Script> lets us place the small "which mode?" script in the page (see below)
-import Script from "next/script";
+// The small "which mode?" script that runs before the page is drawn (see below)
 import { MODE_SCRIPT } from "@/lib/mode";
 
 // The permanent shell components — appear on every single page
@@ -165,11 +164,17 @@ export default async function RootLayout({
         suppressHydrationWarning
       >
         {/* LIGHT / DARK / READING — picks the mode BEFORE the page is drawn.
-            strategy="beforeInteractive" puts this tiny script in the first
-            HTML the browser receives, so it runs before anything is painted
-            and the page never flashes light-then-dark. The script itself is
-            in lib/mode.ts. */}
-        <Script id="gk-mode" strategy="beforeInteractive">{MODE_SCRIPT}</Script>
+            A plain inline <script> as the very first thing in <body>: the
+            browser runs it the moment it reads it, before it has drawn any of
+            the page, so the page never flashes light-then-dark. The script
+            itself (and what it sets) is in lib/mode.ts.
+            FIX 30 Oct 2026 (phase 2): this used to be next/script with
+            strategy="beforeInteractive". Checking the real HTML showed that
+            Next.js only QUEUES such a script and runs it once its own
+            JavaScript has loaded — on a slow phone, after the page was already
+            painted. The root layout is drawn once per visit, so a plain script
+            here is safe. */}
+        <script dangerouslySetInnerHTML={{ __html: MODE_SCRIPT }} />
 
         {/* Site-wide structured data: tells search/AI engines what GKWorld360 is,
             and enables the search box to appear in Google results (SearchAction). */}

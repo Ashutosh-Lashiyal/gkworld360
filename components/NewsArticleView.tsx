@@ -75,6 +75,7 @@ export default function NewsArticleView({
 
       <ArticleLayout
         colors={colors}
+        lang={lang}
         header={
           <ArticleHeader
             breadcrumbs={breadcrumbs}
@@ -99,8 +100,8 @@ export default function NewsArticleView({
           recent.length > 0 && (
             <section className="mt-16">
               <div className="flex items-end justify-between mb-6">
-                <h2 className="font-heading text-2xl font-semibold text-navy-dark">More Current Affairs</h2>
-                <Link href="/news" className="font-body text-sm font-semibold text-sapphire hover:text-sapphire-dark transition-colors">
+                <h2 className="m-0 font-display text-4xl md:text-5xl leading-none uppercase text-foreground">More current affairs</h2>
+                <Link href="/news" className="font-body text-sm font-extrabold text-accent hover:underline underline-offset-4">
                   View all →
                 </Link>
               </div>

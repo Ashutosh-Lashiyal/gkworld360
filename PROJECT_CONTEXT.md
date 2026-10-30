@@ -27,7 +27,11 @@ starting anything new. This file is the *status*; TODO.md is the *work*.
 **30 Oct 2026 — REDESIGN in progress on branch `feature/redesign`** (made from `feature/atlas`).
 New look "Playful + Cinematic" with Light / Dark / Reading modes and the new "Day & Night" GK logo.
 Phase 1 of 5 built (tokens, fonts, modes, header, phone tab bar, footer, icons, share picture).
+Phase 2 built (article page + Reading mode; new folder `components/article/`, helpers in
+`lib/reading.ts`, `lib/use-mode.ts`, `lib/use-stored.ts`, `lib/use-saved.ts`, `lib/use-hide-on-scroll.ts`).
+Owner reviews everything once the whole site is redesigned, not phase by phase.
 How modes work: `lib/mode.ts` + the colour blocks at the top of `app/(frontend)/globals.css`.
+Reading mode is per-article: the `data-article` marker (ArticleLayout) + `data-reading` on <html>.
 Logo: `components/Logo.tsx` (+ files in `public/brand/`). Phases 2–5 are listed in TODO.md.
 
 ## Where the product is

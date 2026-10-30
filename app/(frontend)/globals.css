@@ -144,6 +144,15 @@
   --color-border-subtle: var(--line);
   --color-hairline:      var(--line);
 
+  /* Added in phase 2 (30 Oct 2026) for the article reading tools — plain names
+     for the new values, so new code can say text-faint, border-line-2… */
+  --color-faint:       var(--faint);         /* the quietest small labels */
+  --color-line-2:      var(--line-2);        /* stronger borders, chunky edges */
+  --color-accent:      var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-amber:       var(--amber);         /* Reading mode's warm colour */
+  --color-gold:        var(--gold);          /* dates on the dark stage */
+
   --color-error:    #dc2626;
   --color-error-bg: #fee2e2;
 
@@ -242,47 +251,53 @@ h1, h2, h3, h4, h5, h6 {
    tables render as white cards with a tinted header row (--signal-bg).        */
 .prose {
   font-family: var(--font-heading), Georgia, serif;
-  font-size: 1.25rem;    /* 20px — editorial, 17 Sep 2026 */
-  line-height: 1.8;
+  /* PHASE 2 (30 Oct 2026): size and line spacing come from the reader's Text
+     settings (see "READER SETTINGS" near the end of this file). The defaults
+     are the same 20px / 1.8 as before. */
+  font-size: var(--read-size, 1.25rem);
+  line-height: var(--read-lh, 1.8);
   color: var(--ink);
 }
 
-/* The opening paragraph, a touch larger — the editorial "lead" */
-.prose > p:first-child {
-  font-size: 1.375rem;   /* 22px */
-  line-height: 1.7;
+/* PHASE 2: the opening letter of the first paragraph is a big DROP CAP in
+   Anton, in the accent colour — the "printed book" touch from the redesign.
+   Not on Hindi articles: Devanagari letters join up, so one letter can't be
+   lifted out on its own. (The bigger "lead" paragraph of 17 Sep is gone — the
+   drop cap now marks the start.)
+   Two selectors: MDX articles put paragraphs straight inside .prose; CMS
+   articles wrap them in one more box (<div class="payload-richtext">). */
+.prose:not(.font-hindi) > p:first-of-type::first-letter,
+.prose:not(.font-hindi) > .payload-richtext > p:first-of-type::first-letter {
+  float: left;
+  font-family: var(--font-display), Impact, sans-serif;
+  font-size: 4.1em;
+  line-height: 0.8;
+  padding: 0.06em 0.1em 0 0;
+  color: var(--accent);
 }
 
 .prose p {
   margin-bottom: 1.4em;
 }
 
+/* PHASE 2: headings are LEFT-aligned (like the title above them) and grow
+   with the reader's text size (em = "times the body text size"). The centred
+   heading with a coloured rule under it (17 Sep) is gone. */
 .prose h2 {
   font-family: var(--font-heading), Georgia, serif;
-  font-size: 1.75rem;    /* 28px */
+  font-size: 1.6em;      /* 32px at the default size */
   font-weight: 600;
   color: var(--ink);
-  margin-top: 2.6em;
-  margin-bottom: 1em;
-  line-height: 1.2;
-  text-align: center;    /* editorial: headings centred, body text left-aligned */
-}
-
-/* The short signal rule under each H2 — 56px wide, 3px tall, rounded ends.
-   `var(--signal, #059669)` = use the page's signal colour, or emerald if a
-   page didn't set one. */
-.prose h2::after {
-  content: "";
-  display: block;
-  width: 48px;
-  height: 3px;
-  margin: 14px auto 0;   /* centred under the centred heading */
-  background-color: var(--signal, var(--accent));
+  margin-top: 1.9em;
+  margin-bottom: 0.6em;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
 }
 
 .prose h3 {
   font-family: var(--font-heading), Georgia, serif;
-  font-size: 1.3125rem; /* 21px */
+  font-size: 1.15em;    /* 23px at the default size */
   font-weight: 600;
   color: var(--ink);
   margin-top: 1.9rem;
@@ -368,7 +383,7 @@ h1, h2, h3, h4, h5, h6 {
   background-color: #122a26;
   color: #e2e8f0;
   padding: 1.25rem 1.5rem;
-  border-radius: 0;
+  border-radius: 16px;
   overflow-x: auto;
   margin-bottom: 1.4em;
   font-size: 0.875rem;
@@ -396,8 +411,8 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 0.9375rem;        /* 15px */
   line-height: 1.5;
   background-color: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 0;
+  border: 2px solid var(--line);
+  border-radius: 18px;   /* phase 2: rounded, chunky */
   overflow: hidden;
   display: table;
 }
@@ -449,8 +464,8 @@ h1, h2, h3, h4, h5, h6 {
 .prose img {
   max-width: 100%;
   height: auto;
-  border-radius: 0;
-  border: 1px solid var(--line);
+  border-radius: 20px;   /* phase 2: rounded, like the cover */
+  border: 2px solid var(--line);
   filter: var(--img-filter);
   margin: 1.5em auto;
   display: block;
@@ -806,3 +821,211 @@ dialog[open].anim-dialog::backdrop { animation: fade-in 200ms ease-out both; }
   .gk-earth-word { animation: none; }
   .gk-head.is-away, .gk-tabbar.is-away { transform: none; }
 }
+
+/* ═════════════════════════════════════════════════════════════════════════════
+   REDESIGN PHASE 2 (30 Oct 2026): the article page and Reading mode.
+   Components: ArticleLayout, ArticleHeader, components/article/*,
+   TableOfContents, KeyTakeaways, TopicNav, QuickFacts, atlas/OnTheMap.
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+/* ── READING MODE FROM THE FIRST PAINT ─────────────────────────────────────────
+   The script in layout.tsx sets data-reading="1" on <html> when the reader
+   turned Reading mode on. The warm colours apply only when the page ALSO has
+   an article on it (ArticleLayout's data-article marker). ":has(…)" means
+   "the page contains…". So the very first paint of an article is already warm,
+   before any JavaScript runs, and other pages are never affected.
+   (These are the same values as the READING block at the top of this file.
+   Kept as a separate rule on purpose: a browser too old to know :has() skips
+   just this rule, not the main one.) */
+:root[data-reading="1"]:has([data-article]) {
+  --bg: #17140f; --surface: #1d1913; --surface-2: #241f18; --ink: #dccdb1; --muted: #a8987d; --faint: #7f725e;
+  --line: #2f291f; --line-2: #3b3328; --accent: #d9a55e; --accent-strong: #e8c48c; --accent-soft: #2a2216; --amber: #d9a55e;
+  --btn: #d9a55e; --btn-shadow: #8a6430; --on-btn: #1a1206; --head-bg: rgba(23, 20, 15, 0.92); --shadow-far: rgba(0, 0, 0, 0.6);
+  --img-filter: brightness(0.74) sepia(0.2) saturate(0.85);
+  --stage: #120f0b; --stage-ink: #dccdb1; --stage-muted: #a8987d; --stage-line: rgba(220, 205, 177, 0.14); --mint: #d9a55e; --gold: #d9a55e;
+  --logo-edge: #d9a55e; --logo-360: #d9a55e;
+  color-scheme: dark;
+}
+/* Reading mode: the title and section headings in a soft cream, the drop cap quiet */
+:root[data-mode="reading"] [data-article] h1,
+:root[data-mode="reading"] .prose h2 { color: #e8d8ba; }
+:root[data-mode="reading"] .prose > p:first-of-type::first-letter,
+:root[data-mode="reading"] .prose > .payload-richtext > p:first-of-type::first-letter { color: var(--muted); }
+
+/* ── READER SETTINGS (the "Text" panel, components/article/ReaderSettings.tsx) ──
+   Each setting is an attribute on <html> (data-read-size="2" …), set by
+   lib/reading.ts and, before the first paint, by the script in layout.tsx.
+   Here the attributes become real values. */
+:root { --read-size: 1.25rem; --read-lh: 1.8; }       /* the defaults: 20px, 1.8 */
+:root[data-read-size="0"] { --read-size: 1.125rem; }  /* 18px */
+:root[data-read-size="2"] { --read-size: 1.375rem; }  /* 22px */
+:root[data-read-size="3"] { --read-size: 1.5rem; }    /* 24px */
+:root[data-read-spacing="relaxed"] { --read-lh: 2; }
+/* Sans: the body text in Nunito instead of Fraunces (English only) */
+:root[data-read-font="sans"] .prose:not(.font-hindi) { font-family: var(--font-body), system-ui, sans-serif; }
+/* Phones: one step smaller, so the default is 18px on a narrow screen */
+@media (max-width: 767px) {
+  :root { --read-size: 1.125rem; }
+  :root[data-read-size="0"] { --read-size: 1rem; }
+  :root[data-read-size="2"] { --read-size: 1.25rem; }
+  :root[data-read-size="3"] { --read-size: 1.375rem; }
+}
+/* Warm light: an orange tint laid over the whole article page, like a phone's
+   "Night Shift". mix-blend-mode: multiply tints the colours under it instead
+   of covering them. pointer-events: none — clicks go straight through. */
+body:has([data-article])::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  pointer-events: none;
+  background: #ff9a3c;
+  mix-blend-mode: multiply;
+  opacity: 0;
+  transition: opacity 0.6s;
+}
+:root[data-read-warm="1"] body:has([data-article])::after { opacity: 0.1; }
+:root[data-read-warm="2"] body:has([data-article])::after { opacity: 0.2; }
+/* Spotlight: every block of the article is dimmed except the one you are
+   reading (ReadingProgress.tsx adds .is-lit to it as you scroll).
+   :is(.prose, .payload-richtext) — the blocks sit straight in .prose (MDX)
+   or one box deeper (CMS). */
+:root[data-read-spot="on"] :is(.prose, .prose > .payload-richtext) > :is(p, ul, ol, figure, table, blockquote, h2, h3) { opacity: 0.32; transition: opacity 0.4s; }
+:root[data-read-spot="on"] :is(.prose, .prose > .payload-richtext) > .is-lit { opacity: 1; }
+
+/* Small mono labels look wrong in Hindi (capitals and wide letter-spacing
+   don't exist in Devanagari): on Hindi pages they use the Hindi font, unspaced */
+[lang="hi"] .gk-label { font-family: var(--font-devanagari), system-ui, sans-serif; letter-spacing: 0; text-transform: none; font-size: 13px; }
+
+/* ── THE CHUNKY CARD (Key Takeaways, Quick facts, prev/next, side cards) ────── */
+.gk-card {
+  position: relative;
+  background: var(--surface);
+  border: 2px solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: 0 5px 0 var(--line);
+}
+/* Cards that are links lift a little when you point at them */
+.gk-card--lift { transition: transform 0.45s var(--ease-out-soft), box-shadow 0.45s var(--ease-out-soft), border-color 0.3s; }
+.gk-card--lift:hover { transform: translateY(-3px); border-color: var(--line-2); box-shadow: 0 8px 0 var(--line-2); }
+.gk-card--lift:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--line-2); }
+
+/* ── TOOL BUTTONS under the title (components/article/ArticleTools.tsx) ─────── */
+.gk-tbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 16px;
+  border-radius: 14px;
+  border: 2px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 3px 0 var(--line);
+  font-weight: 800;
+  font-size: 14px;
+  transition: transform 0.1s, border-color 0.2s, background-color 0.2s;
+}
+.gk-tbtn:hover { border-color: var(--line-2); }
+/* pressed down: the edge under it disappears, like a real button */
+.gk-tbtn:active { transform: translateY(3px); box-shadow: none; }
+/* "on" (saved, Reading mode on): filled with the button colour */
+.gk-tbtn[aria-pressed="true"] { background: var(--btn); color: var(--on-btn); border-color: var(--btn); box-shadow: 0 3px 0 var(--btn-shadow); }
+/* the Reading mode button is warm amber, so it stands out as the night option */
+.gk-tbtn--reading { border-color: var(--amber); color: var(--amber); }
+.gk-tbtn--reading[aria-pressed="true"] { color: var(--on-btn); border-color: var(--btn); }
+.gk-tbtn[aria-expanded="true"] { border-color: var(--line-2); background: var(--surface-2); }
+
+/* The Text pop-over: drops in from just above */
+.gk-pop { box-shadow: 0 6px 0 var(--line-2), 0 30px 60px -20px var(--shadow-far); animation: gk-pop-in 0.3s var(--ease-out-soft); }
+@keyframes gk-pop-in { from { transform: translateY(-8px) scale(0.98); opacity: 0; } }
+/* The segmented choices inside it: the chosen one looks raised */
+.gk-seg { color: var(--muted); transition: background-color 0.2s, color 0.2s; }
+.gk-seg[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 2px 0 var(--line-2); }
+
+/* ── KEY TAKEAWAYS: the tick boxes ─────────────────────────────────────────── */
+.gk-take { transition: background-color 0.2s; }
+.gk-take:hover { background: var(--surface-2); }
+.gk-take__box {
+  width: 26px;
+  height: 26px;
+  margin-top: 1px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  border: 2px solid var(--line-2);
+  font-weight: 900;
+  font-size: 14px;
+  color: transparent;   /* the ✓ is hidden until ticked */
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s, transform 0.2s;
+}
+.gk-take[aria-checked="true"] .gk-take__box { background: var(--accent); border-color: var(--accent); color: var(--on-btn); transform: scale(1.08); }
+
+/* ── PHONES: the reading bar replaces the tab bar on articles ──────────────── */
+.gk-readbar { display: none; }
+@media (max-width: 767px) {
+  body:has([data-article]) .gk-readbar { display: grid; }
+  body:has([data-article]) .gk-tabbar--main { display: none; }
+}
+.gk-readbar .gk-tab[aria-pressed="true"] { color: var(--accent); }
+.gk-readbar__gyaani img { border: 2px solid var(--mint); }
+
+/* ── BOTTOM SHEETS (components/article/Sheet.tsx) ──────────────────────────── */
+.gk-sheet {
+  padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  border-top: 2px solid var(--line-2);
+  box-shadow: 0 -20px 60px -20px rgba(0, 0, 0, 0.5);
+  animation: gk-sheet-up 0.38s var(--ease-out-soft);
+}
+.gk-sheet-bg { animation: gk-fade-in 0.25s; }
+@keyframes gk-sheet-up { from { transform: translateY(100%); } }
+@keyframes gk-fade-in { from { opacity: 0; } }
+/* The Contents list in the sheet: numbered 01, 02… in mono, sub-sections with a dot */
+.gk-toc-sheet { counter-reset: gk-toc; }
+.gk-toc-sheet button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 8px;
+  align-items: baseline;
+  padding: 12px 10px;
+  border-radius: 14px;
+  text-align: left;
+  font-family: var(--font-heading), Georgia, serif;
+  font-weight: 600;
+  font-size: 17px;
+  line-height: 1.35;
+  color: var(--ink);
+}
+.gk-toc-sheet button::before { counter-increment: gk-toc; content: counter(gk-toc, decimal-leading-zero); font: 500 12px/1 var(--font-geist-mono), monospace; color: var(--faint); }
+.gk-toc-sheet button.is-sub { padding-left: 26px; font-size: 15px; }
+.gk-toc-sheet button.is-sub::before { content: "·"; counter-increment: none; }
+.gk-toc-sheet button[aria-current="true"] { background: var(--accent-soft); color: var(--accent); }
+.font-hindi.gk-toc-sheet button { font-family: var(--font-devanagari), system-ui, sans-serif; }
+
+/* ── THE AFTER-7-PM NOTE (NightNudge in components/article/ReadingMode.tsx) ── */
+.gk-nudge {
+  bottom: calc(22px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.6);
+  animation: gk-nudge-up 0.6s var(--ease-out-soft);
+}
+@keyframes gk-nudge-up { from { transform: translate(-50%, 40px); opacity: 0; } }
+/* on phones it sits above the reading bar */
+@media (max-width: 767px) { .gk-nudge { bottom: calc(92px + env(safe-area-inset-bottom, 0px)); } }
+/* its button: gold, chunky */
+.gk-nudge__on {
+  padding: 12px 18px;
+  border-radius: 14px;
+  background: var(--gold);
+  color: #1a1206;
+  box-shadow: 0 4px 0 #8a6430;
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.gk-nudge__on:active { transform: translateY(4px); box-shadow: none; }
+
+/* end of phase 2 */

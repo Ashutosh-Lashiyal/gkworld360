@@ -93,8 +93,11 @@ export default function SavedList() {
               >
                 <a
                   href={h.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  // Headlines open the publisher's site in a new tab; our own
+                  // articles (saved from an article page, links starting with
+                  // "/") open right here, like any page of the site.
+                  target={h.link.startsWith("/") ? undefined : "_blank"}
+                  rel={h.link.startsWith("/") ? undefined : "noopener noreferrer"}
                   tabIndex={-1}
                   aria-hidden="true"
                   className="relative block w-16 h-16 md:w-[72px] md:h-[72px] overflow-hidden bg-navy-dark"
@@ -104,8 +107,8 @@ export default function SavedList() {
 
                 <a
                   href={h.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  target={h.link.startsWith("/") ? undefined : "_blank"}
+                  rel={h.link.startsWith("/") ? undefined : "noopener noreferrer"}
                   className="flex flex-col gap-1 min-w-0 text-foreground hover:text-sapphire transition-colors"
                 >
                   <span className="font-heading text-[15px] md:text-[17px] font-semibold leading-[1.35] text-navy-dark line-clamp-3 md:line-clamp-2">

@@ -15,11 +15,11 @@
 // comes back when you scroll up (or reach the bottom of the page).
 // Its colours and the pill behind the current tab are in globals.css (.gk-tab…).
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { getSubjectFromPath } from "@/lib/subject-colors";
+import { useHideOnScroll } from "@/lib/use-hide-on-scroll";
 
 // Each icon is one simple outline drawing (24 × 24)
 const ICONS = {
@@ -38,25 +38,9 @@ function TabIcon({ d }: { d: string }) {
 
 export default function PhoneTabBar() {
   const pathname = usePathname();
-  const [away, setAway] = useState(false);
-
   // Slide away on scroll down, back on scroll up or at the very bottom
-  useEffect(() => {
-    let last = window.scrollY;
-    const onScroll = () => {
-      const y = window.scrollY;
-      const atBottom = window.innerHeight + y >= document.documentElement.scrollHeight - 40;
-      if (y > 260 && y > last + 4 && !atBottom) setAway(true);
-      else if (y < last - 4 || y < 260 || atBottom) setAway(false);
-      last = y;
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-  // A new page always starts with the bar showing. (Reset while drawing when
-  // the address changes — React's recommended pattern, no extra effect.)
-  const [lastPath, setLastPath] = useState(pathname);
-  if (pathname !== lastPath) { setLastPath(pathname); setAway(false); }
+  // (lib/use-hide-on-scroll.ts — shared with the article reading bar)
+  const away = useHideOnScroll();
 
   // Which tab is "where you are"
   const hindi = pathname === "/hi" || pathname.startsWith("/hi/");
@@ -74,7 +58,7 @@ export default function PhoneTabBar() {
     <nav
       aria-label="Main (phone)"
       // md:hidden — only on phones. fixed + left/right 10px: a floating bar.
-      className={`gk-tabbar md:hidden fixed z-40 left-2.5 right-2.5 h-[66px] px-1.5 pb-2 rounded-[24px] grid grid-cols-5 items-end ${away ? "is-away" : ""}`}
+      className={`gk-tabbar gk-tabbar--main md:hidden fixed z-40 left-2.5 right-2.5 h-[66px] px-1.5 pb-2 rounded-[24px] grid grid-cols-5 items-end ${away ? "is-away" : ""}`}
     >
       <Link href="/" className={tab} aria-current={current(on.home)}><TabIcon d={ICONS.home} />Home</Link>
       <Link href="/subjects" className={tab} aria-current={current(on.learn)}><TabIcon d={ICONS.learn} />Learn</Link>

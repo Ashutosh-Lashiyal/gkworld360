@@ -1,21 +1,32 @@
 "use client";
 
-// The sun/moon button in the header: flips the site between Light and Dark.
-// (Reading mode is switched on from articles, phase 2. If you press this while
-// reading, it goes back to Light.) The actual switching lives in lib/mode.ts.
+// The sun/moon button in the header.
+//   - On most pages it flips the site between Light and Dark.
+//   - On an ARTICLE (phase 2, 30 Oct 2026) it steps through all three looks:
+//     Light → Dark → Reading → Light. Reading mode is only for articles.
+// The actual switching lives in lib/mode.ts.
 
-import { currentMode, setMode } from "@/lib/mode";
+import { currentMode, onArticle, setMode, setReading } from "@/lib/mode";
 
 export default function ThemeToggle({ className = "" }: { className?: string }) {
-  const flip = () => setMode(currentMode() === "light" ? "dark" : "light");
+  const flip = () => {
+    const now = currentMode();
+    if (onArticle()) {
+      if (now === "light") setMode("dark");
+      else if (now === "dark") setReading(true);
+      else setMode("light"); // from Reading back to Light (this also turns Reading off)
+    } else {
+      setMode(now === "light" ? "dark" : "light");
+    }
+  };
 
   return (
     <button
       type="button"
       onClick={flip}
-      // The label says what the button WILL do; it's correct for both modes
+      // The label says what the button does; it's correct for every mode
       // because a screen reader reads it fresh each time.
-      aria-label="Switch between light and dark"
+      aria-label="Change the look: light, dark or reading"
       title="Light / Dark"
       // gk-theme: globals.css swaps the sun and the moon with a small turn,
       // based on the page's mode, so the icon is right even before React runs.

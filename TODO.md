@@ -55,11 +55,24 @@
         phone tab bar (Gyaani in the middle), footer with quote photo + Earth-filled GKWORLD360,
         new tab icon / home-screen icon / share picture. Quote photo fallback from
         public/images/quotes when the CMS quote has no portrait.
-      - [ ] Phase 2: article page + Reading mode (switch on articles, reader panel, nudge after 7 pm).
+      - [x] **Phase 2 BUILT (30 Oct) on `feature/redesign`** — owner reviews when the whole site is
+        done (owner, 30 Oct: "I can only give feedbacks when the whole site is build").
+        Article page: left-aligned big title, subject pill, language link, tools row (Save · Share ·
+        Text · Reading mode), wide rounded cover, Contents on the left with "N min left", the
+        "Reading at night?" card on the right, ticking Key Takeaways, drop cap, Anton prev/next,
+        dark-stage "On the map", progress line at the top + "Marked as read" (list kept under
+        `gk-read` for phase 4's progress rings). Reading mode: per-article (CSS :has() on the
+        data-article marker, so the first paint is already warm), sun/moon steps Light → Dark →
+        Reading on articles, nudge after 7 pm once per visit. Text panel: size, font, spacing, warm
+        light, spotlight. Phones: reading bar replaces the tab bar on articles, Contents + Text as
+        bottom sheets. Articles can be saved to Read Later. FIX: the mode script was queued by
+        next/script (ran late, could flash light) — now a plain inline script.
       - [ ] Phase 3: homepage (Earth hero + country-lines loader + still photo for old phones).
       - [ ] Phase 4: all other pages, EN + HI (fix the dim labels on /pulse, /saved; Atlas follows Dark).
+        Also: /saved still says "headline(s)" — now holds articles too; subject pages can show
+        "N of M read" from the `gk-read` list; ContentCard (related topics) gets the new card look.
       - [ ] Phase 5: effects (curtain + loading bar between pages, hover/scroll) + phone PageSpeed before/after.
-      - [ ] Laptop disk is 99% full (2.7 GB free on 30 Oct) — the dev server's cache failed to save
+      - [ ] Laptop disk is 99% full (1.7 GB free later on 30 Oct; the dev server again served an old stylesheet in phase 2) — the dev server's cache failed to save
         and served an old stylesheet. Owner to free space; deleting `.next` (1.3 GB, rebuilt
         automatically) is safe while the dev server is stopped.
         Waiting for the owner's pick → refine → final files

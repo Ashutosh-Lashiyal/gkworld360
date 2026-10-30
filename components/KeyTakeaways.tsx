@@ -1,6 +1,6 @@
-// KeyTakeaways — a highlighted callout box for the most important points of a topic.
-// Matches the Stitch design: sapphire left border, light sapphire tint background,
-// uppercase "Key Takeaways" heading, and a clean bulleted list.
+"use client";
+// KeyTakeaways — the "read these first" card with the most important points of
+// a topic.
 //
 // HOW TO USE IT inside any .mdx article:
 //
@@ -11,6 +11,19 @@
 //   ]} />
 //
 // It is registered globally in mdx-components.tsx, so no import is needed in MDX files.
+// CMS articles: the "Key Takeaways" list is pulled out of the body and shown
+// first (CMSTopicView / NewsArticleView pass first={true}).
+//
+// REDESIGN PHASE 2 (30 Oct 2026, "Playful"): a chunky card with a big
+// "KEY TAKEAWAYS" title, and every point can be TICKED once the reader can
+// remember it — a little revision game. The ticks are remembered in this
+// browser, per article page (localStorage key "gk-keys:<page path>"). When
+// every point is ticked, a message says so.
+//
+// "use client": ticking is a click in the browser.
+
+import { usePathname } from "next/navigation";
+import { useStored, writeStored } from "@/lib/use-stored";
 
 type KeyTakeawaysProps = {
   points: string[]; // the list of key takeaway sentences
@@ -18,49 +31,65 @@ type KeyTakeawaysProps = {
 
 // lang: "hi" gives the Hindi heading "लेख से प्राप्त मुख्य बिंदु" (owner's wording, 17 Sep).
 export default function KeyTakeaways({ points, first = false, lang = "en" }: KeyTakeawaysProps & { first?: boolean; lang?: "en" | "hi" }) {
+  const pathname = usePathname();
+  const key = `gk-keys:${pathname}`;
+  // Which points are ticked, by their position (0, 1, 2…). Stored as text, e.g. "[0,2]".
+  const raw = useStored(key);
+  let ticked: number[] = [];
+  try { ticked = JSON.parse(raw || "[]"); } catch { ticked = []; }
+
   if (!points || points.length === 0) return null;
+  const hindi = lang === "hi";
+
+  const toggle = (i: number) => {
+    // Start from what is saved RIGHT NOW (not from the last drawing), so two
+    // quick taps in a row both count
+    let now: number[] = [];
+    try { now = JSON.parse(localStorage.getItem(key) || "[]"); } catch { now = []; }
+    const next = now.includes(i) ? now.filter((n) => n !== i) : [...now, i];
+    writeStored(key, JSON.stringify(next));
+    // The moment the LAST point gets its tick, cheer (components/Toast.tsx)
+    if (next.length === points.length && !now.includes(i)) {
+      window.dispatchEvent(new CustomEvent("gk-toast", { detail: { message: hindi ? "सभी मुख्य बिंदु याद! 🎉" : "All takeaways ticked! 🎉" } }));
+    }
+  };
 
   return (
-    // REDESIGN 16 Sep 2026 (board 2): a WHITE card with a 4px bar on top in the
-    // page's signal colour. `var(--signal)` is set by ArticleLayout from the
-    // subject, so this card is sepia-topped on History, violet on Physics, with
-    // no per-page code. The `not-prose` idea: this sits inside the .prose
-    // column, so the list resets in globals.css keep our own bullets.
-    <aside className={`${first ? "" : "my-8"} flex flex-col bg-surface border border-hairline rounded-card overflow-hidden`}>
-      <span aria-hidden="true" className="h-1 w-full" style={{ backgroundColor: "var(--signal, #059669)" }} />
+    // An <aside>: the article's own list styles (globals.css, .prose aside)
+    // are switched off inside it, so these rows keep their own look.
+    <aside lang={lang} className={`${first ? "" : "my-8"} gk-card px-5 py-5 md:px-[26px] md:py-6 ${hindi ? "font-hindi" : "font-body"}`}>
+      {/* small capitals in the accent colour, then the big title */}
+      <p className={`m-0 text-accent font-extrabold ${hindi ? "text-sm" : "text-xs uppercase tracking-[0.12em]"}`}>
+        {hindi ? "पहले इन्हें पढ़ें" : "Read these first"}
+      </p>
+      <p className={`m-0 mt-1.5 mb-3 text-foreground ${hindi ? "text-[26px] font-bold leading-snug" : "font-display text-[32px] leading-none uppercase"}`}>
+        {hindi ? "लेख से प्राप्त मुख्य बिंदु" : "Key takeaways"}
+      </p>
 
-      <div className="px-6 py-5 flex flex-col gap-3">
-        {/* Heading — small caps in the signal colour, like every label on the site */}
-        <p
-          className="font-body text-[11px] font-semibold uppercase tracking-[0.14em]"
-          style={{ color: "var(--signal, #059669)" }}
-        >
-          {lang === "hi" ? (
-            <span lang="hi" className="font-hindi normal-case tracking-normal text-[13px]">
-              लेख से प्राप्त मुख्य बिंदु{first ? " · पहले इन्हें पढ़ें" : ""}
-            </span>
-          ) : (
-            <>Key Takeaways{first ? " · read these first" : ""}</>
-          )}
-        </p>
-
-        {/* Bulleted list of takeaways — 16px sans so it reads as a summary,
-            distinct from the 19px serif body around it */}
-        <ul className="flex flex-col gap-2">
-          {points.map((point, index) => (
-            <li key={index} className="flex items-start gap-2.5">
-              <span
-                className="mt-[9px] w-1.5 h-1.5 rounded-full flex-shrink-0"
-                style={{ backgroundColor: "var(--signal, #059669)" }}
-                aria-hidden="true"
-              />
-              <span className="font-body text-base text-foreground leading-relaxed">
-                {point}
-              </span>
+      <ul className="grid gap-1 m-0 p-0 list-none">
+        {points.map((point, index) => {
+          const done = ticked.includes(index);
+          return (
+            <li key={index}>
+              {/* role="checkbox" + aria-checked: screen readers announce
+                  "checkbox, ticked / not ticked" for each point */}
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={done}
+                onClick={() => toggle(index)}
+                className="gk-take w-full grid grid-cols-[30px_minmax(0,1fr)] gap-2.5 items-start px-1.5 py-2 rounded-xl text-left text-base leading-relaxed"
+              >
+                <i aria-hidden="true" className="gk-take__box not-italic">✓</i>
+                <span className={done ? "text-muted" : "text-foreground"}>{point}</span>
+              </button>
             </li>
-          ))}
-        </ul>
-      </div>
+          );
+        })}
+      </ul>
+      <small className="block mt-2.5 text-[13px] font-bold text-faint">
+        {hindi ? "याद हो जाने पर हर बिंदु पर निशान लगाएँ।" : "Tick each one once you can remember it."}
+      </small>
     </aside>
   );
 }

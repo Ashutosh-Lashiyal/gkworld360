@@ -799,6 +799,7 @@ export default async function ContentPage({
 
       <ArticleLayout
         colors={colors}
+        lang={lang}
         header={
           <ArticleHeader
             breadcrumbs={breadcrumbs}
@@ -826,8 +827,9 @@ export default async function ContentPage({
         below={
           relatedTopics.length > 0 && (
             <section className="mt-16">
-              <h2 className="font-heading text-2xl font-semibold text-navy-dark mb-5">
-                Related Topics
+              {/* Anton capitals, like every big section title in the redesign */}
+              <h2 className="m-0 mb-6 font-display text-4xl md:text-5xl leading-none uppercase text-foreground">
+                Related topics
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {relatedTopics.map((topic) => {

@@ -18,6 +18,10 @@ type ShareButtonProps = {
   title: string;
   url: string;   // absolute URL of the page
   text?: string; // one line, used by the share sheet and the message apps
+  // "button" (default) = the site's ghost Button; "tool" = the chunky tool
+  // button in an article's tools row (redesign phase 2, 30 Oct 2026)
+  appearance?: "button" | "tool";
+  label?: string; // the button's word — "Share", or "शेयर करें" on Hindi pages
 };
 
 // ── ICONS ─────────────────────────────────────────────────────────────────────
@@ -54,7 +58,7 @@ const Icons = {
   ),
 };
 
-export default function ShareButton({ title, url, text }: ShareButtonProps) {
+export default function ShareButton({ title, url, text, appearance = "button", label = "Share" }: ShareButtonProps) {
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -130,6 +134,14 @@ export default function ShareButton({ title, url, text }: ShareButtonProps) {
     setOpen(false);
   }
 
+  // The share picture: three dots joined by two lines
+  const shareIcon = (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
+      <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" />
+    </svg>
+  );
+
   const enc = encodeURIComponent;
   const links = [
     { label: "WhatsApp", icon: Icons.whatsapp, href: `https://wa.me/?text=${enc(`${message}\n${url}`)}` },
@@ -140,23 +152,28 @@ export default function ShareButton({ title, url, text }: ShareButtonProps) {
 
   return (
     <div ref={wrap} className="relative inline-flex">
-      <Button variant="ghost" onClick={share} aria-label="Share this page" aria-expanded={open}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
-          <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" />
-        </svg>
-        Share
-      </Button>
+      {appearance === "tool" ? (
+        // gk-tbtn: the chunky tool button (globals.css), same as Save / Text beside it
+        <button type="button" className="gk-tbtn" onClick={share} aria-expanded={open}>
+          {shareIcon}
+          <span>{label}</span>
+        </button>
+      ) : (
+        <Button variant="ghost" onClick={share} aria-label="Share this page" aria-expanded={open}>
+          {shareIcon}
+          {label}
+        </Button>
+      )}
 
       {menu.present && (
         <div
           ref={menuRef}
           role="menu"
-          className={`absolute ${alignRight ? "right-0" : "left-0"} scroll-mb-4 top-full mt-2 z-40 min-w-[200px] bg-surface border border-hairline shadow-[0_12px_32px_rgba(0,0,0,0.18)] py-1 ${
+          className={`absolute ${alignRight ? "right-0" : "left-0"} scroll-mb-4 top-full mt-2 z-40 min-w-[200px] bg-surface border-2 border-line-2 rounded-[18px] overflow-hidden shadow-[0_5px_0_var(--line-2),0_24px_48px_-20px_var(--shadow-far)] py-1.5 font-body ${
             menu.closing ? "anim-menu-out" : "anim-menu-in"
           }`}
         >
-          <button type="button" role="menuitem" onClick={copy} className="w-full flex items-center gap-3 text-left px-4 py-2.5 font-body text-sm text-foreground hover:bg-mint transition-colors">
+          <button type="button" role="menuitem" onClick={copy} className="w-full flex items-center gap-3 text-left px-4 py-2.5 font-body text-sm text-foreground hover:bg-accent-soft transition-colors">
             <span className="text-muted">{Icons.link}</span>
             Copy link
           </button>
@@ -168,7 +185,7 @@ export default function ShareButton({ title, url, text }: ShareButtonProps) {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-4 py-2.5 font-body text-sm text-foreground hover:bg-mint transition-colors"
+              className="flex items-center gap-3 px-4 py-2.5 font-body text-sm text-foreground hover:bg-accent-soft transition-colors"
             >
               <span className="text-muted">{l.icon}</span>
               {l.label}

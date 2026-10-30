@@ -20,7 +20,8 @@ export function readSaved(): SavedHeadline[] {
     return [];
   }
 }
-function writeSaved(list: SavedHeadline[]) {
+// Exported (30 Oct 2026) so the article page's Save button can use it too.
+export function writeSaved(list: SavedHeadline[]) {
   localStorage.setItem(READ_LATER_KEY, JSON.stringify(list));
   // Tell other components on the page (the Saved list, any counters) to refresh.
   window.dispatchEvent(new Event("read-later-changed"));

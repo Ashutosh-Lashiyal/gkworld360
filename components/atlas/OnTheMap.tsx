@@ -25,47 +25,49 @@ export default async function OnTheMap({ articlePath, lang }: { articlePath: str
   const base = atlasBase(lang);
 
   return (
+    // REDESIGN PHASE 2 (30 Oct 2026): a card on the dark CINEMATIC stage (the
+    // Atlas's own look) — "ON THE MAP" in big Anton capitals, every date in
+    // gold italics, and "Show →" sliding in when you point at a row.
     <aside
       lang={lang}
       aria-labelledby="on-the-map"
-      className={`mt-12 border border-hairline bg-surface ${lang === "hi" ? "font-hindi" : ""}`}
+      className={`gk-onmap mt-12 overflow-hidden rounded-card border-2 border-[var(--stage-line)] bg-navy-dark text-on-dark ${lang === "hi" ? "font-hindi" : "font-body"}`}
     >
-      {/* A dark strip with a small globe mark — the Atlas's own look */}
-      <div className="flex items-center gap-3 bg-navy-dark text-on-dark px-5 py-3.5">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="text-mint flex-shrink-0">
-          <circle cx="12" cy="12" r="9" />
-          <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" />
-        </svg>
-        <div className="flex flex-col">
-          {/* text-on-dark! — the "!" wins over the article page's own heading
-              colour, which would otherwise paint this dark-on-dark */}
-          <h2 id="on-the-map" className="m-0 font-heading text-lg font-bold leading-tight text-on-dark!">{w.heading}</h2>
-          <span className="font-body text-[13px] text-on-dark/70">{w.lede(entries.length)}</span>
-        </div>
+      <div className="px-6 pt-[22px] pb-2">
+        <span className="font-accent italic text-[22px] leading-tight text-mint">World360 Atlas</span>
+        {/* text-on-dark! — the "!" wins over the article page's own heading
+            colour, which would otherwise paint this dark-on-dark */}
+        <h2 id="on-the-map" className={`m-0 mt-1.5 text-on-dark! ${lang === "hi" ? "font-hindi text-[28px] font-bold leading-snug" : "font-display text-[34px] leading-none uppercase"}`}>
+          {w.heading}
+        </h2>
+        <p className="m-0 mt-2 text-[13px] text-on-dark/70">{w.lede(entries.length)}</p>
       </div>
 
       {/* One row per place: date · what happened · where */}
-      <ol className="list-none m-0 p-0">
+      <ol className="list-none m-0 px-3 pt-1 pb-3">
         {entries.map((e) => (
-          <li key={e.id} className="border-t border-hairline first:border-t-0">
+          <li key={e.id}>
             <Link
               href={`${base}/${e.slug}`}
-              className="grid grid-cols-[minmax(84px,auto)_minmax(0,1fr)] gap-x-4 gap-y-0.5 px-5 py-3 hover:bg-mint transition-colors group"
+              className="group grid grid-cols-1 sm:grid-cols-[110px_minmax(0,1fr)_auto] gap-x-3 gap-y-1 items-center p-3 rounded-[14px] hover:bg-white/[0.07] transition-colors"
             >
-              <span className="font-heading text-[15px] font-bold text-[#92400e] group-hover:text-navy-dark tabular-nums">{e.date}</span>
+              <span className="font-accent italic text-[22px] leading-none text-gold tabular-nums">{e.date}</span>
               <span className="flex flex-col">
-                <span className="font-body text-[15px] font-semibold text-navy-dark">{e.title}</span>
-                <span className="font-body text-[13px] text-muted group-hover:text-navy-dark/80">
+                <span className="text-[15px] font-bold text-on-dark">{e.title}</span>
+                <span className="text-[13px] font-semibold text-on-dark/60">
                   {e.region && e.region !== e.place ? `${e.place} · ${e.region}` : e.place}
                 </span>
+              </span>
+              <span aria-hidden="true" className="hidden sm:block text-mint opacity-0 -translate-x-1.5 group-hover:opacity-100 group-hover:translate-x-0 transition-[opacity,transform] duration-300">
+                {lang === "hi" ? "दिखाएँ →" : "Show →"}
               </span>
             </Link>
           </li>
         ))}
       </ol>
 
-      <div className="border-t border-hairline px-5 py-3">
-        <Link href={base} className="font-body text-sm font-semibold text-sapphire hover:text-sapphire-dark transition-colors">
+      <div className="border-t border-[var(--stage-line)] px-6 py-3.5">
+        <Link href={base} className="text-sm font-extrabold text-mint hover:underline underline-offset-4">
           {w.open}
         </Link>
       </div>
