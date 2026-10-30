@@ -1,35 +1,39 @@
 // GKWorld360 Homepage
-// Server Component — runs on the server, no client-side JS needed.
+// Server Component — runs on the server; only small parts (the Earth, the quiz)
+// run in the browser.
 //
-// REDESIGN 16 Sep 2026 (board 5, revised the same evening on the owner's review):
-//   1. HERO            — DARK. Brand-teal tint over the photo; centred words, the
-//                        search as a white box, four stats. No card (it looked
-//                        cluttered — removed on review).
-//   2. SUBJECTS        — LIGHT. Six white cards; signal colours only as bars/labels.
-//   2b. ATLAS TEASER   — LIGHT section, DARK panel inside: "Knowledge on the map"
-//                        (components/atlas/AtlasTeaser.tsx, 29 Oct 2026). Hidden
-//                        while the Atlas has no published entries.
-//   3. HEADLINES       — DARK band. Numbered list (LatestHeadlinesSection).
-//   4. POPULAR TOPICS  — LIGHT. Four cards → /topics?sort=popular
-//   5. RECENTLY ADDED  — DARK band. Numbered rows → /topics?sort=recent
-//   6. CURRENT AFFAIRS — LIGHT. (The quote of the day moved into the footer, 18 Sep.)
-//   7. FOOTER          — DARK (in layout.tsx).
-// Strict light/dark alternation. "Popular" is recency until real view counts
-// exist (see lib/topics.ts). The About block is gone; its text lives on /about.
+// REDESIGN PHASE 3 (30 Oct 2026, "Playful + Cinematic" — the approved design):
+//   1. HERO on the dark stage — "KNOW MORE" / the turning 3D Earth / "GROW
+//      MORE" in giant letters, a box of live facts, the title, the search, and
+//      a headlines ticker along the bottom. (components/home/HeroEarth.tsx)
+//   2. TODAY'S PRACTICE — quick quiz, fact of the day, place of the day, all
+//      from facts already on the site (components/home/TodaysPractice.tsx)
+//   3. EXPLORE SUBJECTS — a bento grid, the biggest subject in a big card
+//   4. POPULAR TOPICS — a sideways strip of tall posters
+//   5. The "KNOW MORE ✦ grow MORE" band
+//   6. LATEST HEADLINES — six, in a card, with Read Later bookmarks
+//   7. WORLD360 ATLAS — a timeline of six events (components/atlas/AtlasTeaser.tsx)
+//   8. RECENTLY ADDED + CURRENT AFFAIRS — two cards side by side
+//   9. FOOTER (in layout.tsx)
+// The homepage's new pieces live in components/home/. "Popular" is recency
+// until real view counts exist (see lib/topics.ts).
 
 import Link from "next/link";
-import Image from "next/image";
 import SearchBox from "@/components/SearchBox";
-import SubjectCard from "@/components/SubjectCard";
-import ContentCard from "@/components/ContentCard";
-import StatPill from "@/components/StatPill";
 // ScrollReveal: sections below the first screen settle in as you scroll (28 Oct 2026)
 import ScrollReveal from "@/components/ScrollReveal";
-import { getPopularTopics, getRecentlyAddedTopics, formatAddedTime } from "@/lib/topics";
-import NewsCard from "@/components/NewsCard";
+import { getRecentlyAddedTopics } from "@/lib/topics";
 import LatestHeadlinesSection from "@/components/LatestHeadlinesSection";
 import AtlasTeaser from "@/components/atlas/AtlasTeaser";
-import { getHomepageSubjects, hasTranslation, resolveContentFile, getContentMeta, type ContentMeta } from "@/lib/content";
+import HeroEarth from "@/components/home/HeroEarth";
+import HeadlineTicker from "@/components/home/HeadlineTicker";
+import TodaysPractice from "@/components/home/TodaysPractice";
+import SubjectBento from "@/components/home/SubjectBento";
+import TopicPosters from "@/components/home/TopicPosters";
+import KnowMoreBand from "@/components/home/KnowMoreBand";
+import RecentAndNews from "@/components/home/RecentAndNews";
+import { getAtlasEntries } from "@/lib/atlas";
+import { hasTranslation, resolveContentFile, getContentMeta, type ContentMeta } from "@/lib/content";
 import { getRecentNews } from "@/lib/news";
 import { getCMSNewsList, getCMSNewsHindiSlugs } from "@/lib/cms";
 
@@ -40,7 +44,6 @@ import { getCMSNewsList, getCMSNewsHindiSlugs } from "@/lib/cms";
 // cron ever stops. (Sep 2026: 60 s → 1 h; before that every crawler hit re-asked
 // the database, which is why Neon's compute never slept.)
 export const revalidate = 21600;
-import { SUBJECT_COLORS } from "@/lib/subject-colors";
 // getSubjectInfo maps a subject slug like "history" to its display label
 // ("History") and emoji icon ("🏛️") so TopicCards show the right category.
 import { getSubjectInfo } from "@/lib/subjects";
@@ -49,8 +52,10 @@ import { getSiteStats } from "@/lib/site-stats";
 
 // ── HOMEPAGE ──────────────────────────────────────────────────────────────────
 export default async function HomePage() {
-  const homepageSubjects = getHomepageSubjects();
   const stats = await getSiteStats(); // live counts for the hero
+  // The Atlas places: gold dots on the hero Earth, and the "Atlas" fact
+  const atlas = await getAtlasEntries("en");
+  const places = atlas.map((e) => ({ lat: e.lat, lng: e.lng, year: String(e.year), title: e.title }));
 
   // ── CURRENT AFFAIRS (homepage) ────────────────────────────────────────────
   // Merge CMS (Payload) news with the legacy MDX news, newest 3. Each item is
@@ -91,11 +96,10 @@ export default async function HomePage() {
     .sort((a, b) => new Date(b.meta.date ?? 0).getTime() - new Date(a.meta.date ?? 0).getTime())
     .slice(0, 3);
 
-  // ── POPULAR + RECENTLY ADDED ───────────────────────────────────────────────
-  // Both from lib/topics.ts, which merges MDX and CMS topics. Four for the
-  // Popular grid, six for the Recently Added rows (two columns of three).
-  const popularTopics = await getPopularTopics(4);
-  const recentlyAdded = await getRecentlyAddedTopics(6);
+  // ── RECENTLY ADDED ─────────────────────────────────────────────────────────
+  // From lib/topics.ts, which merges MDX and CMS topics. (The Popular posters
+  // fetch their own list — components/home/TopicPosters.tsx.)
+  const recentlyAdded = await getRecentlyAddedTopics(4);
   // "History · Modern India" for a topic's small label
   const topicLabel = (slug: string[]) =>
     [
@@ -105,9 +109,6 @@ export default async function HomePage() {
       .filter(Boolean)
       .join(" · ");
 
-  // recentNews already carries hindiHref/hindiTitle (built above), so the news
-  // section can use it directly.
-  const recentNewsWithHindi = recentNews;
 
   return (
     <>
@@ -117,219 +118,90 @@ export default async function HomePage() {
           the first time each scrolls into view. See components/ScrollReveal.tsx. */}
       <ScrollReveal />
 
-      {/* ══ 1. HERO — DARK ═══════════════════════════════════════════════════
-          The photo is tinted with the FRAME teal (#122a26) at 66%, plus a
-          gradient that darkens toward the bottom where the text sits. Same
-          recipe as every band on the site, in the brand colour instead of a
-          subject's — the homepage belongs to the site, not to one subject.   */}
-      {/* No `overflow-hidden` here on purpose: the search box's results list
-          drops BELOW the hero's bottom edge, and overflow-hidden clipped it. The
-          background photo doesn't need it — `fill` already confines it. */}
-      <section className="relative bg-navy-dark text-on-dark">
-        <Image
-          src="/images/hero-banner.png"
-          alt=""
-          fill
-          priority
-          className="object-cover object-center"
-          sizes="100vw"
-        />
-        <div aria-hidden="true" className="absolute inset-0 bg-navy-dark/65" />
-        <div
-          aria-hidden="true"
-          className="absolute inset-0"
-          style={{ background: "linear-gradient(to top, rgba(18,42,38,0.85) 0%, rgba(18,42,38,0.35) 55%, rgba(18,42,38,0.2) 100%)" }}
-        />
+      {/* ══ 1. HERO — the dark cinematic stage ═══════════════════════════════
+          gk-stage-wrap pulls the stage UP behind the floating header pill, so
+          the dark reaches the top of the screen (globals.css). */}
+      <section aria-label="Welcome" className="gk-stage-wrap">
+        <div className="gk-stage">
+          <div className="gk-hero">
+            {/* The motto, in giant letters above and below the Earth.
+                aria-hidden: decoration — the real heading is the <h1> below. */}
+            <p className="gk-giant gk-giant--top" aria-hidden="true">Know more</p>
 
-        {/* Centred, one column, nothing competing with the words. */}
-        <div className="relative max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-14 md:py-20 flex flex-col items-center text-center gap-5">
-          <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-mint">
-            Trusted educational content · General knowledge · Current affairs
-          </span>
+            {/* Live facts, in a small see-through box */}
+            <dl className="gk-facts">
+              <div><dt>Subjects</dt><dd>{stats.subjects}</dd></div>
+              <div><dt>Topics</dt><dd>{stats.topics}</dd></div>
+              <div>
+                <dt>Atlas</dt>
+                <dd>
+                  {atlas.length > 0 ? (
+                    <Link href="/atlas" className="hover:text-mint transition-colors">
+                      {atlas.length} places<br />{atlas[0].year}–{atlas[atlas.length - 1].year}
+                    </Link>
+                  ) : "Coming soon"}
+                </dd>
+              </div>
+              <div><dt>Languages</dt><dd>English<br /><span lang="hi" className="font-hindi">हिन्दी</span></dd></div>
+            </dl>
 
-          {/* One word in mint — the single accent moment in the headline */}
-          <h1 className="m-0 font-heading text-5xl md:text-6xl lg:text-[72px] font-bold leading-[1.02] tracking-[-0.025em] text-on-dark max-w-[820px] [text-wrap:balance]">
-            Master the World&apos;s <span className="text-mint">Core</span> Knowledge
-          </h1>
-          <p className="m-0 font-body text-base md:text-lg leading-[1.6] text-on-dark/80 max-w-[620px]">
-            A curated reference for UPSC, SSC, Railways and lifelong learners — every
-            topic in English and Hindi, fact-checked and written to be remembered.
-          </p>
-
-          {/* Search as a WHITE box on the dark — the one big input */}
-          <div className="w-full max-w-[620px] mt-1">
-            <SearchBox buttonLabel="Search" boxed />
-          </div>
-
-          {/* Live counts as PILLS (owner, 17 Sep): Subjects · Topics · Categories,
-              and Users once the login feature exists (`stats.users` is undefined
-              until then, so that pill simply doesn't render). Every number is
-              real — lib/site-stats.ts, cached hourly. */}
-          <ul className="flex flex-wrap justify-center gap-3 mt-3 m-0 p-0 list-none">
-            {[
-              [stats.subjects, stats.subjects === 1 ? "Subject" : "Subjects"],
-              [stats.topics, stats.topics === 1 ? "Topic" : "Topics"],
-              [stats.categories, stats.categories === 1 ? "Category" : "Categories"],
-              ...(stats.users !== undefined ? [[stats.users, stats.users === 1 ? "Reader" : "Readers"]] : []),
-            ].map(([value, label]) => (
-              <li key={String(label)}>
-                <StatPill value={value} label={String(label)} tone="dark" />
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      {/* ══ 2. EXPLORE SUBJECTS — LIGHT ══════════════════════════════════════
-          Six subject cards, read from content/ — change homepageOrder in a
-          subject's overview.mdx to swap which six appear here.               */}
-      <section className="bg-background">
-        <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-14 md:py-[72px] flex flex-col gap-6">
-          <div data-reveal className="flex flex-wrap items-end justify-between gap-4">
-            <div className="flex flex-col gap-1.5">
-              <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Choose a subject to start</span>
-              <h2 className="m-0 font-heading text-3xl md:text-[40px] font-bold tracking-[-0.015em] text-navy-dark">
-                Explore Subjects
-              </h2>
+            <div className="gk-hero__globe">
+              <HeroEarth places={places} />
             </div>
-            <Link href="/subjects" className="font-body text-sm font-semibold text-sapphire hover:text-sapphire-dark transition-colors whitespace-nowrap">
-              All subjects →
-            </Link>
+
+            <p className="gk-giant gk-giant--bot" aria-hidden="true">Grow more</p>
+            <div className="gk-cue" aria-hidden="true">Scroll<i /></div>
           </div>
 
-          <div data-reveal-group className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {homepageSubjects.map((subject, i) => (
-              <SubjectCard
-                key={subject.slug}
-                title={subject.meta.title}
-                description={subject.meta.description}
-                slug={subject.slug}
-                image={subject.meta.image}
-                index={i}
-              />
-            ))}
+          {/* The title, the promise, the search */}
+          <div className="gk-hero-intro max-w-[1320px] mx-auto px-4 md:px-8">
+            <h1 className="m-0">
+              <em className="gk-big-title__accent">Master</em> the world’s core knowledge
+            </h1>
+            <div>
+              <p className="m-0 mb-5 font-body text-base md:text-lg leading-[1.6] text-on-dark/75">
+                A curated reference for UPSC, SSC, Railways and lifelong learners. Every topic in English and Hindi, fact-checked and written to be remembered.
+              </p>
+              <SearchBox buttonLabel="Search" boxed />
+              <p className="m-0 mt-3 font-body text-sm text-on-dark/70">
+                Try{" "}
+                {["Revolt of 1857", "Vasco da Gama", "Fort William"].map((q, i) => (
+                  <span key={q}>
+                    {i > 0 && " · "}
+                    <Link href={`/search?q=${encodeURIComponent(q)}`} className="font-extrabold text-on-dark underline decoration-on-dark/40 underline-offset-4 hover:decoration-mint">{q}</Link>
+                  </span>
+                ))}
+              </p>
+            </div>
           </div>
+
+          {/* The newest headlines, sliding along the bottom */}
+          <HeadlineTicker />
         </div>
       </section>
 
-      {/* ══ 2b. WORLD360 ATLAS — the "Knowledge on the map" panel ═════════════
-          Straight after Explore Subjects (placement agreed 29 Oct 2026). */}
-      <AtlasTeaser />
+      {/* ══ 2. TODAY'S PRACTICE ═══════════════════════════════════════════════ */}
+      <TodaysPractice />
 
-      {/* ══ 3. LATEST HEADLINES — DARK band ══════════════════════════════════ */}
+      {/* ══ 3. EXPLORE SUBJECTS ═══════════════════════════════════════════════
+          Six subjects, read from content/ — change homepageOrder in a
+          subject's overview.mdx to swap which six appear here. */}
+      <SubjectBento />
+
+      {/* ══ 4. POPULAR TOPICS ═════════════════════════════════════════════════ */}
+      <TopicPosters />
+
+      {/* ══ 5. THE MOTTO BAND ═════════════════════════════════════════════════ */}
+      <KnowMoreBand />
+
+      {/* ══ 6. LATEST HEADLINES ═══════════════════════════════════════════════ */}
       <LatestHeadlinesSection />
 
-      {/* ══ 4. POPULAR TOPICS — LIGHT ════════════════════════════════════════
-          Four cards. "View all" opens /topics with the Popular sort active. */}
-      {popularTopics.length > 0 && (
-        <section className="bg-background">
-          <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-14 md:py-[72px] flex flex-col gap-6">
-            <div data-reveal className="flex flex-wrap items-end justify-between gap-4">
-              <div className="flex flex-col gap-1.5">
-                <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Most read</span>
-                <h2 className="m-0 font-heading text-3xl md:text-[40px] font-bold tracking-[-0.015em] text-navy-dark">
-                  Popular Topics
-                </h2>
-              </div>
-              <Link href="/topics?sort=popular" className="font-body text-sm font-semibold text-sapphire hover:text-sapphire-dark transition-colors whitespace-nowrap">
-                All topics →
-              </Link>
-            </div>
-            {/* 4 across on desktop, 2 on tablet, 1 on phones */}
-            <div data-reveal-group className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {popularTopics.map((t) => (
-                <ContentCard
-                  key={t.slug.join("/")}
-                  title={t.meta.title}
-                  description={t.meta.description}
-                  href={"/" + t.slug.join("/")}
-                  image={t.meta.image}
-                  label={topicLabel(t.slug)}
-                  hoverBg={SUBJECT_COLORS[t.slug[0]]?.bg}
-                  accent={SUBJECT_COLORS[t.slug[0]]?.accent}
-                  hindiHref={t.hindiHref}
-                  hindiTitle={t.hindiTitle}
-                />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+      {/* ══ 7. WORLD360 ATLAS — the timeline ══════════════════════════════════ */}
+      <AtlasTeaser />
 
-      {/* ══ 5. RECENTLY ADDED — DARK band ════════════════════════════════════
-          Numbered rows, two columns — the same pattern as a subject page's
-          "New in History" band. "View all" opens /topics with Recent active. */}
-      {recentlyAdded.length > 0 && (
-        <section className="bg-navy-dark text-on-dark">
-          <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12 md:py-14 flex flex-col gap-6">
-            <div data-reveal className="flex flex-wrap items-end justify-between gap-4">
-              <div className="flex flex-col gap-1.5">
-                <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-mint">Fresh from the desk</span>
-                <h2 className="m-0 font-heading text-3xl md:text-[40px] font-bold tracking-[-0.015em] text-on-dark">
-                  Recently Added
-                </h2>
-              </div>
-              <Link href="/topics?sort=recent" className="font-body text-sm font-semibold text-mint hover:text-on-dark transition-colors whitespace-nowrap">
-                View all →
-              </Link>
-            </div>
-            <ol data-reveal-group className="grid grid-cols-1 md:grid-cols-2 gap-x-12 list-none m-0 p-0">
-              {recentlyAdded.map((t, i) => (
-                <li key={t.slug.join("/")}>
-                  <Link
-                    href={"/" + t.slug.join("/")}
-                    className="grid grid-cols-[40px_minmax(0,1fr)_auto] gap-3.5 items-baseline py-4 border-b border-on-dark/10 hover:text-mint transition-colors"
-                  >
-                    <span className="font-heading text-xl font-bold text-mint">{String(i + 1).padStart(2, "0")}</span>
-                    <span className="flex flex-col gap-0.5">
-                      <span className="font-heading text-lg font-semibold leading-snug">{t.meta.title}</span>
-                      <span className="font-body text-[13px] text-on-dark/60">
-                        {topicLabel(t.slug)} · {formatAddedTime(t.meta.date)}
-                      </span>
-                    </span>
-                    <span className="font-body text-xs text-on-dark/60 whitespace-nowrap">{t.hindiHref ? "EN · हिन्दी" : "EN"}</span>
-                  </Link>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </section>
-      )}
-
-      {/* ══ 6. CURRENT AFFAIRS — LIGHT ══════════════════════════════════════ */}
-      <section className="bg-background">
-        <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-14 md:py-[72px] flex flex-col gap-14">
-          {recentNews.length > 0 && (
-            <div className="flex flex-col gap-6">
-              <div data-reveal className="flex flex-wrap items-end justify-between gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em]" style={{ color: SUBJECT_COLORS["current-affairs"].accent }}>
-                    Exam-focused write-ups · <span lang="hi" className="font-hindi normal-case tracking-normal">समसामयिकी</span>
-                  </span>
-                  <h2 className="m-0 font-heading text-3xl md:text-[40px] font-bold tracking-[-0.015em] text-navy-dark">
-                    Current Affairs
-                  </h2>
-                </div>
-                <Link href="/news" className="font-body text-sm font-semibold text-sapphire hover:text-sapphire-dark transition-colors whitespace-nowrap">
-                  All write-ups →
-                </Link>
-              </div>
-              <div data-reveal-group className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {recentNewsWithHindi.map((item) => (
-                  <NewsCard
-                    key={item.url}
-                    url={item.url}
-                    meta={item.meta}
-                    hindiHref={item.hindiHref}
-                    hindiTitle={item.hindiTitle}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-        </div>
-      </section>
+      {/* ══ 8. RECENTLY ADDED + CURRENT AFFAIRS ═══════════════════════════════ */}
+      <RecentAndNews recent={recentlyAdded} topicLabel={topicLabel} news={recentNews[0] ?? null} />
     </>
   );
 }

@@ -67,7 +67,20 @@
         light, spotlight. Phones: reading bar replaces the tab bar on articles, Contents + Text as
         bottom sheets. Articles can be saved to Read Later. FIX: the mode script was queued by
         next/script (ran late, could flash light) — now a plain inline script.
-      - [ ] Phase 3: homepage (Earth hero + country-lines loader + still photo for old phones).
+      - [x] **Phase 3 BUILT (30 Oct) on `feature/redesign`.** Homepage: dark stage hero with KNOW MORE /
+        3D Earth (three.js, `lib/earth-scene.ts`, Atlas places as gold dots + labels, drag to spin) /
+        GROW MORE, live facts box, title + search + "Try" links, headlines ticker. Loader = country
+        lines + city lights then sunrise (`lib/globe-loader.ts`), once per visit. Old/slow phones,
+        data saver, reduce-motion, no WebGL → still photo `public/images/earth/earth.webp` (49 KB, a
+        snapshot of the real Earth). Pictures in `public/earth/` (phones get the 1024 px ones).
+        Below: Today's practice (quiz from Atlas cards, fact from Key Takeaways, place of the day with
+        a server-drawn map — `lib/daily.ts`, no database change), subjects bento, popular-topic
+        posters, KNOW MORE ✦ grow MORE band, headlines card, Atlas timeline (replaces the teaser panel;
+        TeaserGlobe deleted), recently added + current affairs. New folder `components/home/`.
+      - [ ] **Content gap found 30 Oct:** "The Portuguese in India" has NO cover image on the dev CMS
+        (a placeholder glow shows instead). Check production too; add the cover in /admin.
+      - [ ] Phase 5 homepage effects still to do: hero words part as you scroll, poster strip moves
+        sideways with vertical scroll, the band speeds up with scrolling, numbers count up.
       - [ ] Phase 4: all other pages, EN + HI (fix the dim labels on /pulse, /saved; Atlas follows Dark).
         Also: /saved still says "headline(s)" — now holds articles too; subject pages can show
         "N of M read" from the `gk-read` list; ContentCard (related topics) gets the new card look.

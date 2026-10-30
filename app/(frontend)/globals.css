@@ -1029,3 +1029,391 @@ body:has([data-article])::after {
 .gk-nudge__on:active { transform: translateY(4px); box-shadow: none; }
 
 /* end of phase 2 */
+
+/* ═════════════════════════════════════════════════════════════════════════════
+   REDESIGN PHASE 3 (30 Oct 2026): the homepage. Components: app/(frontend)/page.tsx,
+   components/home/*, components/SectionHead.tsx, LatestHeadlinesSection,
+   atlas/AtlasTeaser. The 3D Earth is lib/earth-scene.ts; its loader lib/globe-loader.ts.
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+/* ── SECTION TITLES (components/SectionHead.tsx) ───────────────────────────── */
+/* Giant Anton capitals, with one word in Instrument Serif italic */
+.gk-big-title {
+  font-family: var(--font-display), Impact, sans-serif;
+  font-weight: 400;
+  font-size: clamp(54px, 8.4vw, 128px);
+  line-height: 0.86;
+  text-transform: uppercase;
+  letter-spacing: 0.005em;
+  text-wrap: balance;
+}
+.gk-big-title__accent {
+  font-family: var(--font-instrument), Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.06em;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--accent);
+}
+/* "All subjects →": the arrow slides a little when you point at the link */
+.gk-more { display: inline-flex; align-items: center; gap: 8px; }
+.gk-more__arrow { display: inline-block; transition: transform 0.3s var(--ease-out-soft); }
+.gk-more:hover .gk-more__arrow, a:hover .gk-more__arrow { transform: translateX(5px); }
+
+/* ── THE HERO STAGE ────────────────────────────────────────────────────────── */
+/* Pulled up behind the floating header pill (68px tall on phones, 74px from
+   768px), so the dark stage starts at the very top of the screen. */
+.gk-stage-wrap { margin-top: -68px; padding: 0 max(10px, env(safe-area-inset-right, 0px)) 0 max(10px, env(safe-area-inset-left, 0px)); }
+@media (min-width: 768px) { .gk-stage-wrap { margin-top: -74px; } }
+.gk-stage {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0 0 28px 28px;
+  /* two soft glows (blue top right, violet bottom left) over the near-black */
+  background:
+    radial-gradient(60% 50% at 70% 30%, rgba(40, 75, 150, 0.22), transparent 70%),
+    radial-gradient(40% 50% at 10% 70%, rgba(95, 65, 150, 0.14), transparent 70%),
+    var(--stage);
+  color: var(--stage-ink);
+  padding-top: 96px;
+}
+@media (min-width: 768px) { .gk-stage { border-radius: 0 0 36px 36px; } }
+
+/* KNOW MORE (solid) above the Earth, GROW MORE (outlined) below it */
+.gk-hero { position: relative; display: flex; flex-direction: column; align-items: center; }
+.gk-giant {
+  position: relative;
+  margin: 0;
+  width: 100%;
+  text-align: center;
+  font-family: var(--font-display), Impact, sans-serif;
+  font-size: clamp(76px, 17.2vw, 270px);
+  line-height: 0.82;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+.gk-giant--top { color: var(--stage-ink); }
+.gk-giant--bot { color: transparent; -webkit-text-stroke: 1.5px rgba(243, 241, 237, 0.62); margin-top: -9vw; }
+.gk-hero__globe { position: relative; z-index: 2; width: min(84vw, 520px); margin-top: -9vw; }
+/* the facts box: under the Earth on phones… */
+.gk-facts {
+  order: 5;
+  position: relative;
+  z-index: 3;
+  width: calc(100% - 40px);
+  margin: 22px auto 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: 1px solid rgba(243, 241, 237, 0.45);
+  background: rgba(11, 11, 13, 0.4);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.gk-facts div { padding: 12px 14px; border-right: 1px solid rgba(243, 241, 237, 0.45); border-bottom: 1px solid rgba(243, 241, 237, 0.45); }
+.gk-facts div:nth-child(2n) { border-right: 0; }
+.gk-facts div:nth-child(n + 3) { border-bottom: 0; }
+.gk-facts dt { font: 500 11px/1 var(--font-geist-mono), monospace; letter-spacing: 0.08em; text-transform: uppercase; color: var(--stage-muted); }
+.gk-facts dd { margin: 7px 0 0; font: 700 17px/1.2 var(--font-nunito), sans-serif; font-variant-numeric: tabular-nums; }
+.gk-cue { display: none; }
+/* …and from 1024px: the words sit at the top and bottom of a tall stage, the
+   Earth in the middle, the facts on the left, a "Scroll" cue on the right */
+@media (min-width: 1024px) {
+  .gk-hero { display: grid; place-items: center; min-height: min(58vw, 760px); }
+  .gk-giant { position: absolute; left: 0; right: 0; }
+  .gk-giant--top { top: 0; }
+  .gk-giant--bot { bottom: 0; margin-top: 0; }
+  .gk-hero__globe { width: min(44vw, 600px); margin-top: 0; }
+  .gk-facts { position: absolute; order: 0; left: max(24px, calc((100% - 1320px) / 2 + 32px)); top: 42%; width: 300px; margin: 0; }
+  .gk-cue {
+    position: absolute; z-index: 3; right: max(24px, calc((100% - 1320px) / 2 + 32px)); top: 46%;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    font: 500 11px/1 var(--font-geist-mono), monospace; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--stage-muted); writing-mode: vertical-rl;
+  }
+  .gk-cue i { width: 1px; height: 60px; background: linear-gradient(var(--stage-ink), transparent); animation: gk-cue 2s var(--ease-out-soft) infinite; }
+}
+@keyframes gk-cue { from { transform: scaleY(0); transform-origin: top; } 50% { transform: scaleY(1); transform-origin: top; } 51% { transform-origin: bottom; } to { transform: scaleY(0); transform-origin: bottom; } }
+
+/* The title and the search under the Earth */
+.gk-hero-intro { position: relative; z-index: 3; display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; align-items: end; padding-block: 40px 40px; }
+.gk-hero-intro h1 {
+  font-family: var(--font-display), Impact, sans-serif;
+  font-weight: 400;
+  font-size: clamp(46px, 5.6vw, 88px);
+  line-height: 0.92;
+  text-transform: uppercase;
+  text-wrap: balance;
+  color: var(--stage-ink);
+}
+.gk-hero-intro h1 .gk-big-title__accent { color: var(--mint); font-size: 1.08em; }
+@media (min-width: 1024px) { .gk-hero-intro { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 44px; padding-block: 40px 44px; } }
+
+/* ── THE EARTH (components/home/HeroEarth.tsx) ─────────────────────────────── */
+.gk-earth {
+  position: relative;
+  aspect-ratio: 1;
+  width: 100%;
+  touch-action: pan-y;   /* phones: up/down still scrolls the page; sideways spins the Earth */
+  cursor: grab;
+  /* before anything loads: a dark circle where the Earth will be */
+  background: radial-gradient(circle at 50% 50%, #0a1220 0 38%, transparent 38.5%);
+}
+.gk-earth:active { cursor: grabbing; }
+.gk-earth.is-still { cursor: default; background: none; }
+.gk-earth__canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; transition: opacity 0.8s; }
+.gk-earth__loader { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; display: none; }
+.gk-earth.is-loading .gk-earth__loader, .gk-earth.is-sunrise .gk-earth__loader { display: block; }
+/* while the loader plays (or before a returning visitor's Earth is ready),
+   the 3D Earth and its dots are hidden */
+.gk-earth.is-loading .gk-earth__canvas, .gk-earth.is-loading .gk-earth__dots,
+.gk-earth.is-waiting .gk-earth__canvas, .gk-earth.is-waiting .gk-earth__dots { opacity: 0; }
+/* SUNRISE: daylight sweeps from left to right — the real Earth is revealed by
+   a moving soft edge (a "mask"), and the loader's lines are hidden by the
+   opposite edge, so one replaces the other exactly where the light passes */
+.gk-earth.is-sunrise .gk-earth__canvas, .gk-earth.is-sunrise .gk-earth__loader {
+  -webkit-mask-size: 260% 100%; mask-size: 260% 100%;
+  animation: gk-sunrise 2.2s var(--ease-out-soft) forwards;
+}
+.gk-earth.is-sunrise .gk-earth__canvas { -webkit-mask-image: linear-gradient(100deg, #000 45%, transparent 55%); mask-image: linear-gradient(100deg, #000 45%, transparent 55%); }
+.gk-earth.is-sunrise .gk-earth__loader { -webkit-mask-image: linear-gradient(100deg, transparent 45%, #000 55%); mask-image: linear-gradient(100deg, transparent 45%, #000 55%); }
+@keyframes gk-sunrise { from { -webkit-mask-position: 100% 0; mask-position: 100% 0; } to { -webkit-mask-position: 0 0; mask-position: 0 0; } }
+/* The still photo is see-through around the Earth, and its glow fades out
+   softly (each pixel's brightness = how solid it is), so it sits on the dark
+   stage like the live Earth does. */
+.gk-earth__still { object-fit: contain; animation: gk-fade-in 0.6s; }
+/* "Drawing the map · 42%" */
+.gk-earth__status {
+  position: absolute; z-index: 3; left: 50%; bottom: 10%; transform: translateX(-50%);
+  margin: 0; padding: 7px 12px; border-radius: 99px;
+  background: rgba(5, 7, 13, 0.6); border: 1px solid var(--stage-line);
+  white-space: nowrap; font: 500 11px/1 var(--font-geist-mono), monospace; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--stage-muted); transition: opacity 0.4s;
+}
+.gk-earth__status b { color: var(--mint); font-weight: 500; font-variant-numeric: tabular-nums; }
+.gk-earth:not(.is-loading) .gk-earth__status { opacity: 0; }
+/* "↔ Drag to spin" — on touch screens only, gone once you've touched the Earth */
+.gk-earth__hint {
+  position: absolute; z-index: 3; left: 50%; bottom: 10%; transform: translateX(-50%);
+  display: none; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 99px;
+  background: rgba(11, 11, 13, 0.55); border: 1px solid var(--stage-line); color: var(--stage-ink);
+  font: 800 12px/1 var(--font-nunito), sans-serif; pointer-events: none; transition: opacity 0.5s;
+}
+@media (pointer: coarse) { .gk-earth.is-live .gk-earth__hint { display: inline-flex; } }
+.gk-earth.is-dragged .gk-earth__hint { opacity: 0; }
+/* The Atlas places: small gold dots, and the label beside one of them */
+.gk-earth__dots { position: absolute; inset: 0; pointer-events: none; transition: opacity 0.8s; }
+.gk-earth__dot {
+  position: absolute; left: 0; top: 0; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%;
+  background: var(--gold); box-shadow: 0 0 0 1px rgba(5, 7, 13, 0.85), 0 0 6px rgba(242, 181, 107, 0.6); transition: opacity 0.3s;
+}
+.gk-earth__dot.is-on { box-shadow: 0 0 0 1px rgba(5, 7, 13, 0.85), 0 0 0 5px rgba(242, 181, 107, 0.25), 0 0 14px rgba(242, 181, 107, 0.9); }
+.gk-earth__callout { position: absolute; z-index: 2; left: 0; top: 0; opacity: 0; transition: opacity 0.45s; }
+.gk-earth__callout-box {
+  position: absolute; bottom: 10px; left: 10px; width: max-content; max-width: 220px; padding: 8px 12px; border-radius: 12px;
+  background: rgba(8, 12, 22, 0.84); border: 1px solid rgba(242, 181, 107, 0.35);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); color: #eef3f1; font-family: var(--font-nunito), sans-serif;
+}
+.gk-earth__callout-box b { display: block; font-size: 12px; font-weight: 800; line-height: 1.2; color: var(--gold); letter-spacing: 0.04em; }
+.gk-earth__callout-box span { display: block; font-size: 13px; margin-top: 3px; }
+
+/* ── THE HEADLINES TICKER (components/home/HeadlineTicker.tsx) ─────────────── */
+.gk-ticker { position: relative; z-index: 3; display: flex; align-items: center; border-top: 1px solid var(--stage-line); overflow: hidden; }
+.gk-ticker__label {
+  flex: none; display: flex; align-items: center; gap: 8px; padding: 14px 20px;
+  font: 500 11px/1 var(--font-geist-mono), monospace; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--mint); background: var(--stage); border-right: 1px solid var(--stage-line);
+}
+/* the red "live" light, pulsing */
+.gk-ticker__label i { width: 7px; height: 7px; border-radius: 50%; background: #f87171; animation: gk-live 1.6s infinite; }
+@keyframes gk-live { 50% { opacity: 0.25; } }
+/* the window fades out at both ends, so headlines slide in and out softly */
+.gk-ticker__window { flex: 1; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
+.gk-ticker__track { display: flex; width: max-content; animation: gk-marquee 80s linear infinite; }
+.gk-ticker:hover .gk-ticker__track, .gk-ticker:focus-within .gk-ticker__track { animation-play-state: paused; }
+.gk-ticker__item { display: inline-flex; align-items: center; gap: 10px; padding: 14px 26px; font: 700 15px/1.2 var(--font-nunito), sans-serif; color: var(--stage-ink); white-space: nowrap; }
+.gk-ticker__item:hover { color: var(--mint); }
+.gk-ticker__item b { font: 500 11px/1 var(--font-geist-mono), monospace; letter-spacing: 0.08em; text-transform: uppercase; color: var(--stage-muted); }
+@keyframes gk-marquee { to { transform: translateX(-50%); } }
+
+/* ── TODAY'S PRACTICE (components/home/TodaysPractice.tsx + QuickQuiz.tsx) ─── */
+/* Phones: a row you swipe sideways, one card at a time ("scroll snap") */
+.gk-practice {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 86%; gap: 14px;
+  overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 4px 22px; margin: 0 -4px;
+  scrollbar-width: none;
+}
+.gk-practice::-webkit-scrollbar { display: none; }
+.gk-practice > * { scroll-snap-align: start; }
+/* From 1024px: three cards side by side, each tilted a little differently */
+@media (min-width: 1024px) {
+  .gk-practice { grid-auto-flow: row; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr) minmax(0, 1fr); align-items: start; gap: 22px; overflow: visible; padding: 0 0 30px; margin: 0; }
+  .gk-pcard { transform: rotate(var(--tilt, 0deg)) translateY(var(--lift, 0px)); }
+  .gk-pcard:hover { transform: rotate(0deg) translateY(-8px); }
+  .gk-pcard--quiz { --tilt: -2.5deg; --lift: 18px; }
+  .gk-pcard--fact { --tilt: 1.5deg; }
+  .gk-pcard--map { --tilt: 3deg; --lift: 26px; }
+}
+.gk-pcard { padding: 26px; border-radius: 28px; box-shadow: 0 6px 0 var(--line), 0 30px 60px -32px var(--shadow-far); transition: transform 0.45s var(--ease-out-soft); }
+.gk-pcard--map { padding: 0; }
+/* the quiz's progress bar: grey, then green (right) or red (wrong) */
+.gk-qbar { flex: 1; height: 8px; border-radius: 8px; background: var(--surface-2); transition: background-color 0.3s; }
+.gk-qbar.is-now { background: var(--line-2); }
+.gk-qbar.is-right { background: #10b981; }
+.gk-qbar.is-wrong { background: #f87171; }
+/* the answer buttons: chunky; green and red after a tap */
+.gk-opt {
+  position: relative; padding: 13px 16px; border-radius: 15px; border: 2px solid var(--line); background: var(--surface);
+  box-shadow: 0 3px 0 var(--line); font: 800 16px/1.3 var(--font-nunito), sans-serif; text-align: left; color: var(--ink);
+  transition: transform 0.08s, border-color 0.2s, background-color 0.2s;
+}
+.gk-opt:hover:not(:disabled) { border-color: var(--accent); }
+.gk-opt:active:not(:disabled) { transform: translateY(3px); box-shadow: none; }
+.gk-opt:disabled { cursor: default; }
+.gk-opt.is-right { border-color: #10b981; background: color-mix(in srgb, #10b981 14%, var(--surface)); box-shadow: 0 3px 0 #10b981; }
+.gk-opt.is-wrong { border-color: #f87171; background: color-mix(in srgb, #f87171 14%, var(--surface)); box-shadow: 0 3px 0 #f87171; animation: gk-shake 0.4s; }
+@keyframes gk-shake { 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
+/* the place map: a dark "night map" with mint coasts and a pulsing gold pin */
+.gk-placemap__sea { fill: #0b1a2b; }
+.gk-placemap__grid { fill: none; stroke: rgba(110, 231, 183, 0.12); stroke-width: 0.6; }
+.gk-placemap__land { fill: #1d3b34; stroke: #6ee7b7; stroke-width: 1; stroke-linejoin: round; }
+:root[data-mode="reading"] .gk-placemap__land { stroke: var(--gold); fill: #2a2418; }
+.gk-pin { position: absolute; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 2px rgba(5, 7, 13, 0.8); }
+.gk-pin::after { content: ""; position: absolute; inset: -9px; border-radius: 50%; border: 2px solid var(--gold); animation: gk-ping 2s var(--ease-out-soft) infinite; }
+@keyframes gk-ping { from { transform: scale(0.3); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+.gk-pin-label { position: absolute; transform: translate(14px, -50%); padding: 6px 9px; border-radius: 9px; background: rgba(5, 7, 13, 0.78); color: #fff; font: 800 12px/1 var(--font-nunito), sans-serif; white-space: nowrap; }
+
+/* ── SUBJECTS BENTO (components/home/SubjectBento.tsx) ─────────────────────── */
+.gk-bento { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+@media (min-width: 640px) { .gk-bento { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .gk-bento { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.gk-subj { overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
+.gk-subj__pic { position: relative; aspect-ratio: 16 / 10; overflow: hidden; background: var(--stage); }
+.gk-subj__pic img { transition: transform 1s var(--ease-out-soft), filter 0.5s; filter: var(--img-filter); }
+.gk-subj:hover .gk-subj__pic img { transform: scale(1.07); }
+.gk-subj__txt { display: flex; flex-direction: column; gap: 6px; padding: 18px 20px 20px; flex: 1; }
+/* the subject's colour: dark shade on light pages, light shade on dark pages */
+.gk-subj__tag { font-size: 13px; font-weight: 800; line-height: 1.3; color: var(--cl); }
+:root[data-mode="dark"] .gk-subj__tag, :root[data-mode="reading"] .gk-subj__tag { color: var(--cd); }
+.gk-subj__name { margin: 0; font-family: var(--font-display), Impact, sans-serif; font-weight: 400; font-size: 30px; line-height: 1; text-transform: uppercase; letter-spacing: 0.01em; color: var(--ink); }
+.gk-subj__desc { margin: 0; color: var(--muted); font-size: 14px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.gk-subj__meta { margin-top: auto; padding-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; font-weight: 700; color: var(--faint); }
+.gk-subj__go { color: var(--accent); font-weight: 800; }
+.gk-soon { font-size: 12px; font-weight: 800; padding: 6px 10px; border-radius: 999px; border: 2px solid var(--line); color: var(--muted); }
+/* subjects still being written: the picture greyed until you point at it */
+.gk-subj--wait .gk-subj__pic img { filter: saturate(0.4) brightness(0.92); }
+.gk-subj--wait:hover .gk-subj__pic img { filter: none; }
+/* THE BIG CARD: two columns wide, two rows tall, the picture filling it, the
+   words on a dark fade at the bottom */
+@media (min-width: 640px) { .gk-subj--big { grid-column: span 2; grid-row: span 2; } }
+.gk-subj--big { position: relative; min-height: 420px; }
+.gk-subj--big .gk-subj__pic { position: absolute; inset: 0; aspect-ratio: auto; }
+.gk-subj--big .gk-subj__pic::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 25%, rgba(5, 7, 13, 0.92)); }
+.gk-subj--big .gk-subj__txt { position: relative; z-index: 2; margin-top: auto; flex: none; padding: 28px; color: #f4f1ec; }
+.gk-subj--big .gk-subj__name { font-size: clamp(64px, 8vw, 128px); line-height: 0.86; color: #f4f1ec; }
+.gk-subj--big .gk-subj__desc { color: rgba(244, 241, 236, 0.82); font-size: 16px; max-width: 32em; }
+.gk-subj--big .gk-subj__tag, .gk-subj--big .gk-subj__go { color: var(--gold) !important; }
+.gk-subj--big .gk-subj__meta { color: rgba(244, 241, 236, 0.7); }
+/* its topics, rising in one by one when you point at the card (always shown on touch screens) */
+.gk-subj__inside { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 2px; padding: 0; list-style: none; }
+.gk-subj__inside li {
+  font-size: 13px; font-weight: 700; padding: 5px 11px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.2);
+  transform: translateY(8px); opacity: 0.001;
+  transition: transform 0.5s var(--ease-out-soft), opacity 0.5s; transition-delay: calc(var(--i) * 50ms);
+}
+.gk-subj--big:hover .gk-subj__inside li, .gk-subj--big:focus-visible .gk-subj__inside li { transform: none; opacity: 1; }
+@media (hover: none) { .gk-subj__inside li { transform: none; opacity: 1; } }
+/* PHONES: the smaller subject cards go two to a row, picture + name only, so
+   six subjects don't make a very long scroll (the big card stays full width) */
+@media (max-width: 639px) {
+  .gk-bento { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .gk-subj--big { grid-column: span 2; min-height: 380px; }
+  .gk-subj:not(.gk-subj--big) .gk-subj__txt { padding: 12px 14px 14px; gap: 4px; }
+  .gk-subj:not(.gk-subj--big) .gk-subj__name { font-size: 22px; }
+  .gk-subj:not(.gk-subj--big) .gk-subj__desc { display: none; }
+  .gk-subj:not(.gk-subj--big) .gk-subj__meta { padding-top: 6px; }
+  .gk-subj:not(.gk-subj--big) .gk-subj__meta > span:first-child { display: none; }
+  .gk-subj:not(.gk-subj--big) .gk-soon { padding: 4px 8px; font-size: 11px; }
+}
+
+/* ── POPULAR TOPICS: the poster strip (components/home/TopicPosters.tsx) ───── */
+.gk-posters {
+  display: flex; gap: 22px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none;
+  /* the first poster lines up with the page's content; the strip runs to the screen's edge */
+  padding: 4px max(16px, calc((100vw - 1320px) / 2 + 32px)) 18px;
+  scroll-padding-left: max(16px, calc((100vw - 1320px) / 2 + 32px));
+}
+@media (max-width: 767px) { .gk-posters { gap: 14px; } }
+.gk-posters::-webkit-scrollbar { display: none; }
+.gk-poster {
+  position: relative; flex: none; scroll-snap-align: start;
+  width: clamp(240px, min(26vw, 50vh), 360px); aspect-ratio: 4 / 5.2;
+  border-radius: 28px; overflow: hidden; color: #f4f1ec; background: var(--stage);
+  border: 2px solid var(--line); box-shadow: 0 6px 0 var(--line); transition: box-shadow 0.5s;
+}
+@media (max-width: 767px) { .gk-poster { width: 76vw; } }
+.gk-poster:hover { box-shadow: 0 12px 0 var(--line-2), 0 40px 70px -30px var(--shadow-far); }
+.gk-poster__img { transform: scale(1.12); transition: transform 1.2s var(--ease-out-soft); filter: var(--img-filter); }
+.gk-poster:hover .gk-poster__img { transform: scale(1.02); }
+/* a dark fade at the top (for the number) and a deep one at the bottom (for the title) */
+.gk-poster::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5, 7, 13, 0.2), transparent 30%, transparent 45%, rgba(5, 7, 13, 0.92)); }
+.gk-poster__n { position: absolute; z-index: 2; top: 18px; left: 22px; font: 500 12px/1 var(--font-geist-mono), monospace; letter-spacing: 0.1em; }
+.gk-poster__txt { position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; padding: 22px; font-family: var(--font-nunito), sans-serif; }
+.gk-poster__title { margin: 0 0 8px; font-family: var(--font-display), Impact, sans-serif; font-weight: 400; font-size: 40px; line-height: 0.92; text-transform: uppercase; color: #f4f1ec; }
+/* the summary slides up when you point at the poster */
+.gk-poster__desc { margin: 0; font-size: 14px; line-height: 1.5; color: rgba(244, 241, 236, 0.8); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; max-height: 0; opacity: 0; transition: max-height 0.6s var(--ease-out-soft), opacity 0.4s; }
+.gk-poster:hover .gk-poster__desc, .gk-poster:focus-visible .gk-poster__desc { max-height: 7em; opacity: 1; }
+.gk-poster__langs { display: flex; gap: 6px; margin-top: 12px; }
+.gk-poster__langs span { font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.3); }
+.gk-poster--end { display: grid; place-items: center; text-align: center; background: var(--btn); color: var(--on-btn); border-color: var(--btn); }
+.gk-poster--end::after { display: none; }
+.gk-poster--end b { font: 400 54px/0.9 var(--font-display), Impact, sans-serif; text-transform: uppercase; }
+
+/* ── THE MOTTO BAND (components/home/KnowMoreBand.tsx) ─────────────────────── */
+.gk-band { overflow: hidden; padding-block: 34px; border-block: 2px solid var(--line); }
+.gk-band__track { display: flex; width: max-content; animation: gk-marquee 60s linear infinite; }
+.gk-band__word {
+  font: 400 clamp(64px, 10vw, 150px)/1 var(--font-display), Impact, sans-serif; text-transform: uppercase;
+  padding-right: 0.4em; white-space: nowrap; color: transparent; -webkit-text-stroke: 1.5px var(--ink);
+}
+.gk-band__word:nth-child(2n) { color: var(--ink); -webkit-text-stroke: 0; }
+.gk-band__word em { font: italic 400 1em/1 var(--font-instrument), Georgia, serif; text-transform: none; color: var(--accent); -webkit-text-stroke: 0; }
+
+/* ── HEADLINES card rows, and the "recently added" rows ────────────────────── */
+.gk-hl, .gk-row { transition: background-color 0.2s; }
+.gk-hl:hover, .gk-row:hover { background: var(--surface-2); }
+.gk-hl__go, .gk-row__arrow { opacity: 0; transform: translateX(-6px); transition: opacity 0.25s, transform 0.3s var(--ease-out-soft); }
+.gk-hl:hover .gk-hl__go, .gk-row:hover .gk-row__arrow { opacity: 1; transform: none; }
+
+/* ── ATLAS TIMELINE (components/atlas/AtlasTeaser.tsx) ─────────────────────── */
+.gk-tl { overflow-x: auto; scrollbar-width: none; padding-bottom: 6px; }
+.gk-tl::-webkit-scrollbar { display: none; }
+.gk-tl__list {
+  position: relative; list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(var(--n), minmax(150px, 1fr)); gap: 14px; min-width: max-content;
+}
+@media (min-width: 1024px) { .gk-tl__list { min-width: 0; } }
+/* the line the knobs sit on: drawn behind the list, through the knobs */
+.gk-tl__list::before { content: ""; position: absolute; left: 0; right: 0; top: 52px; height: 3px; border-radius: 3px; background: linear-gradient(90deg, var(--amber), var(--line-2)); }
+.gk-tl__item { display: flex; flex-direction: column; gap: 6px; }
+.gk-tl__year { font: 400 34px/1 var(--font-display), Impact, sans-serif; color: var(--ink); }
+.gk-tl__knob { position: relative; width: 16px; height: 16px; margin: 4px 0 8px; border-radius: 50%; background: var(--surface); border: 3px solid var(--amber); transition: transform 0.3s var(--ease-out-soft), background-color 0.3s; }
+.gk-tl__item:hover .gk-tl__knob { transform: scale(1.4); background: var(--amber); }
+.gk-tl__title { font-weight: 800; font-size: 15px; line-height: 1.35; color: var(--ink); max-width: 16em; }
+.gk-tl__item:hover .gk-tl__title { color: var(--accent); }
+.gk-tl__place { font-size: 13px; font-weight: 700; color: var(--faint); }
+
+/* A topic with no picture yet: a soft mint glow on the dark stage colour,
+   instead of an empty black box that looks like a broken image */
+.gk-noimg { background: radial-gradient(120% 90% at 25% 20%, rgba(110, 231, 183, 0.28), transparent 60%), radial-gradient(90% 80% at 90% 100%, rgba(242, 181, 107, 0.2), transparent 60%), var(--stage); }
+
+/* ── LESS MOTION: everything on the homepage stands still ──────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .gk-ticker__track, .gk-band__track { animation: none; }
+  .gk-pcard, .gk-pcard:hover { transform: none !important; }
+}
+
+/* end of phase 3 */
