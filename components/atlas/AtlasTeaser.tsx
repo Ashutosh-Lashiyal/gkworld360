@@ -14,13 +14,30 @@
 //
 // Server component. Uses the Atlas's saved entry list (no extra database
 // work) and draws NOTHING while the Atlas has no published entries.
+//
+// PHASE 4 (30 Oct 2026): also used on SUBJECT pages — pass `subject` to show
+// only that subject's places, and your own title ("History on the Atlas:
+// WHERE IT happened").
 
 import Link from "next/link";
 import SectionHead from "@/components/SectionHead";
 import { getAtlasEntries } from "@/lib/atlas";
 
-export default async function AtlasTeaser() {
-  const entries = await getAtlasEntries("en");
+type AtlasTeaserProps = {
+  subject?: string; // only this subject's places (e.g. "history")
+  eyebrow?: string;
+  title?: string;
+  accent?: string;
+};
+
+export default async function AtlasTeaser({
+  subject,
+  eyebrow = "New · World360 Atlas",
+  title = "Knowledge",
+  accent = "on the map",
+}: AtlasTeaserProps = {}) {
+  const all = await getAtlasEntries("en");
+  const entries = subject ? all.filter((e) => e.subject === subject) : all;
   if (entries.length === 0) return null;
 
   // Six events spread evenly through time (entries are already in time order):
@@ -32,11 +49,11 @@ export default async function AtlasTeaser() {
     <section aria-labelledby="atlas-title" className="max-w-[1320px] mx-auto px-4 md:px-8 pt-20 md:pt-28">
       <SectionHead
         id="atlas-title"
-        eyebrow="New · World360 Atlas"
-        title="Knowledge"
-        accent="on the map"
+        eyebrow={eyebrow}
+        title={title}
+        accent={accent}
         lede="Battles, discoveries, journeys and births, on one globe and in time order. Pick a year to see where it happened."
-        more={{ href: "/atlas", label: "Open the Atlas" }}
+        more={{ href: subject ? `/atlas?subject=${subject}` : "/atlas", label: "Open the Atlas" }}
       />
 
       {/* On phones the timeline scrolls sideways (gk-tl in globals.css) */}

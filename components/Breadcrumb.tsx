@@ -23,17 +23,18 @@ type BreadcrumbProps = {
 export default function Breadcrumb({ items, tone = "default" }: BreadcrumbProps) {
   // Colour classes depend on whether we're on a light or dark background
   const isLight = tone === "light";
+  // REDESIGN PHASE 4 (30 Oct 2026): bold and quiet, like the design's "crumbs"
   const linkClass = isLight
-    ? "text-on-dark/80 hover:text-on-dark transition-colors"
-    : "text-muted hover:text-sapphire transition-colors";
+    ? "text-on-dark/60 hover:text-on-dark transition-colors"
+    : "text-muted hover:text-foreground transition-colors";
   const currentClass = isLight
-    ? "text-on-dark font-medium"
-    : "text-navy font-medium";
+    ? "text-on-dark/90"
+    : "text-foreground";
   const separatorClass = isLight ? "text-on-dark/50" : "text-muted opacity-50";
 
   return (
-    <nav aria-label="Breadcrumb" className={isLight ? "mb-4" : "mb-6"}>
-      <ol className="flex flex-wrap items-center gap-1 font-body text-sm">
+    <nav aria-label="Breadcrumb" className={isLight ? "mb-4" : "mb-5"}>
+      <ol className="flex flex-wrap items-center gap-1.5 m-0 p-0 list-none font-body text-sm font-bold">
 
         {/* Home is always first */}
         <li>

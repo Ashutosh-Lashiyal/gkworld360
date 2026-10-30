@@ -47,7 +47,7 @@ export default function SearchResults({ index, initialQuery }: SearchResultsProp
             highlight that makes it feel like a proper clickable button.     */}
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-1.5 font-body text-sm text-muted hover:text-navy bg-transparent hover:bg-surface-mid rounded-full px-3 py-1.5 transition-all duration-200 cursor-pointer"
+          className="gk-tbtn"
           aria-label="Close search"
         >
           <span className="text-xl leading-none font-light">×</span>
@@ -56,24 +56,19 @@ export default function SearchResults({ index, initialQuery }: SearchResultsProp
       </div>
 
       {/* ── SEARCH INPUT ───────────────────────────────────────────────────────*/}
-      <div className="relative max-w-2xl">
+      {/* PHASE 4 (30 Oct 2026): a big chunky box (gk-input in globals.css) */}
+      <div className="relative max-w-3xl">
         <input
           type="text"
           value={query}
           onChange={(e) => handleChange(e.target.value)}
           placeholder="Search subjects, categories, topics, news..."
           autoFocus
-          className={[
-            "w-full font-body text-base text-foreground placeholder:text-muted",
-            "bg-surface border border-hairline rounded-card",
-            "pl-11 pr-4 py-3.5",
-            "outline-none focus:border-sapphire focus:ring-2 focus:ring-sapphire/20",
-            "transition-colors",
-          ].join(" ")}
+          className="gk-input w-full pl-12 pr-4 py-4 font-body text-lg font-bold text-foreground placeholder:text-muted placeholder:font-semibold"
         />
         {/* Magnifying-glass icon inside the input on the left */}
         <svg
-          className="absolute left-4 top-1/2 -translate-y-1/2 text-muted"
+          className="absolute left-[18px] top-1/2 -translate-y-1/2 text-muted"
           width="18" height="18" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
           aria-hidden="true"
@@ -91,12 +86,12 @@ export default function SearchResults({ index, initialQuery }: SearchResultsProp
         {/* State 2: query typed, but nothing matched */}
         {trimmedQuery && results.length === 0 && (
           <div className="py-8">
-            <p className="font-body text-lg text-navy font-medium">
+            <p className="m-0 font-display text-4xl uppercase text-foreground">
               No results for &ldquo;{trimmedQuery}&rdquo;
             </p>
             <p className="font-body text-muted mt-2">
               Try a different word, or check your spelling. You can also{" "}
-              <Link href="/subjects" className="text-sapphire hover:text-sapphire-dark">
+              <Link href="/subjects" className="font-bold text-accent hover:underline underline-offset-4">
                 browse all subjects
               </Link>
               .
@@ -110,28 +105,24 @@ export default function SearchResults({ index, initialQuery }: SearchResultsProp
             <p className="font-body text-sm text-muted mb-4">
               {results.length} result{results.length !== 1 ? "s" : ""} for &ldquo;{trimmedQuery}&rdquo;
             </p>
-            <ul className="flex flex-col gap-3">
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 m-0 p-0 list-none">
               {results.map((item) => (
                 <li key={item.url}>
                   <Link
                     href={item.url}
-                    className={[
-                      "group block bg-surface border border-hairline rounded-card",
-                      "p-4 shadow-card hover:shadow-card-hover hover:border-sapphire",
-                      "transition-all duration-200",
-                    ].join(" ")}
+                    className="group gk-card gk-card--lift flex flex-col items-start h-full px-5 py-[18px]"
                   >
                     {/* Type label (Subject / Category / Topic) */}
-                    <span className="font-body text-xs font-semibold text-sapphire uppercase tracking-wider">
+                    <span className="font-body text-xs font-extrabold uppercase tracking-[0.12em] text-accent">
                       {item.type}
                     </span>
                     {/* Title */}
-                    <h2 className="font-heading text-lg font-semibold text-navy group-hover:text-sapphire transition-colors leading-snug mt-1">
+                    <h2 className="m-0 mt-1.5 font-heading text-[21px] font-semibold leading-snug text-foreground group-hover:text-accent transition-colors">
                       {item.title}
                     </h2>
                     {/* Description */}
                     {item.description && (
-                      <p className="font-body text-sm text-muted leading-relaxed line-clamp-2 mt-1">
+                      <p className="m-0 mt-1.5 font-body text-sm text-muted leading-relaxed line-clamp-2">
                         {item.description}
                       </p>
                     )}

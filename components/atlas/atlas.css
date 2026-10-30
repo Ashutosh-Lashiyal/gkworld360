@@ -12,16 +12,16 @@
    repeated here as short local names. */
 
 .atlas-app {
-  --frame: #122a26;       /* Deep Teal — globe panel, dark buttons (= navy-dark)   */
-  --mint: #6ee7b7;        /* the accent on dark (= mint)                           */
-  --surface: #ffffff;
-  --surface-low: #f0ede6;
-  --page: #f7f6f2;        /* the page background (= background)                    */
-  --hairline: #d9d6cf;
-  --muted: #4a6460;
-  --ink: #1a1a1a;
-  --emerald: #059669;
-  --amber-dark: #92400e;  /* era ranges and the "Key points" label                 */
+  /* REDESIGN PHASE 4 (30 Oct 2026): the Atlas now FOLLOWS LIGHT / DARK.
+     --surface, --muted, --ink and --mint are no longer set here: the Atlas
+     uses the site's own values (globals.css), which change with the mode.
+     The rest point at the site's values too. */
+  --frame: #122a26;       /* Deep Teal — globe panel, dark buttons, the chosen entry */
+  --surface-low: var(--surface-2);
+  --page: var(--bg);      /* the page background                                   */
+  --hairline: var(--line);
+  --emerald: var(--accent);
+  --amber-dark: var(--amber); /* era ranges and the "Key points" label             */
   --sans: var(--font-nunito), system-ui, sans-serif;
   --serif: var(--font-fraunces), Georgia, serif;
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
@@ -31,6 +31,9 @@
   color: var(--ink);
 }
 /* Hindi page: Devanagari first, the Latin fonts for numbers and English names */
+/* Dark mode: the "frame" (the chosen entry, dark buttons) needs to stand out
+   from a dark page, so it becomes a brighter deep teal */
+:root[data-mode="dark"] .atlas-app { --frame: #17594a; }
 .atlas-app:lang(hi) {
   --sans: var(--font-devanagari), var(--font-nunito), system-ui, sans-serif;
   --serif: var(--font-devanagari), var(--font-fraunces), Georgia, serif;

@@ -66,18 +66,14 @@ export default async function PulsePage({
     return qs ? `/pulse?${qs}` : "/pulse";
   };
 
-  // One chip. `on` = the active filter (dark fill); otherwise a white outline.
+  // One chip. `on` = the active filter (filled); otherwise an outline.
+  // PHASE 4 (30 Oct 2026): chunky round chips (gk-chip in globals.css).
   const chip = (label: string, to: string, on: boolean) => (
     <Link
       key={label}
       href={to}
       aria-current={on ? "true" : undefined}
-      className={[
-        "inline-flex items-center min-h-9 px-3.5 rounded-button border font-body text-[13px] font-semibold whitespace-nowrap transition-colors",
-        on
-          ? "bg-navy-dark border-navy-dark text-on-dark"
-          : "bg-surface border-hairline text-foreground hover:border-mint hover:bg-mint/20",
-      ].join(" ")}
+      className="gk-chip"
     >
       {label}
     </Link>
@@ -94,7 +90,7 @@ export default async function PulsePage({
         label="Aggregated from trusted Indian sources · kept for about a week"
         title="Latest Headlines"
       >
-        <p className="m-0 w-full flex flex-wrap justify-center items-center gap-x-2 gap-y-1 font-body text-sm text-muted">
+        <p className="m-0 w-full flex flex-wrap items-center gap-x-2 gap-y-1 font-body text-sm text-muted">
           <span>
             <strong className="font-semibold text-navy-dark">{totalDocs}</strong> Headlines from the last 7 days
             {category || source ? " matching your filter" : ""}
@@ -104,7 +100,7 @@ export default async function PulsePage({
           <span aria-hidden="true" className="opacity-50">·</span>
           <span className="inline-flex items-center gap-1.5">
             Tap the bookmark
-            <span aria-hidden="true" className="inline-flex items-center justify-center w-6 h-6 border border-hairline bg-surface">
+            <span aria-hidden="true" className="inline-flex items-center justify-center w-6 h-6 rounded-md border-2 border-hairline bg-surface">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg>
             </span>
             to save one to Read Later
@@ -118,7 +114,7 @@ export default async function PulsePage({
         </Button>
       </PageTitle>
 
-      <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 pt-10 pb-14">
+      <div className="max-w-[1320px] mx-auto px-4 md:px-8 pt-10 pb-6">
         {/* ── FILTER CHIPS — scroll sideways on phones, wrap on desktop ─────── */}
         <div className="-mx-4 px-4 md:mx-0 md:px-0 flex md:flex-wrap items-center gap-2.5 overflow-x-auto [scrollbar-width:none] pb-1">
           {chip("All", href({ category: undefined }), !category)}
@@ -131,7 +127,7 @@ export default async function PulsePage({
         <div className="mt-6 lg:grid lg:grid-cols-12 lg:gap-14 lg:items-start">
           <div className="lg:col-span-8">
             {items.length > 0 ? (
-              <ol className="m-0 p-0 list-none flex flex-col">
+              <ol className="gk-card m-0 p-2 list-none flex flex-col">
                 {items.map((h, i) => (
                   <HeadlineRow key={h.link} headline={h} index={first + i} />
                 ))}
@@ -174,7 +170,7 @@ export default async function PulsePage({
           {/* Sidebar: your saved list, then the sources as a dark card */}
           <aside className="mt-10 lg:mt-0 lg:col-span-4 flex flex-col gap-5">
             <ReadLaterPeek />
-            <div className="flex flex-col gap-2 bg-navy-dark text-on-dark rounded-card px-5 py-5">
+            <div className="flex flex-col gap-2 bg-navy-dark text-on-dark rounded-card border-2 border-[var(--stage-line)] px-5 py-5">
               <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-mint">Sources</span>
               <ul className="m-0 p-0 list-none flex flex-col">
                 {HEADLINE_SOURCES.map(({ source: s, feeds }) => (

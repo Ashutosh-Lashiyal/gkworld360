@@ -7,6 +7,7 @@ import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/og";
 import { getSearchIndex } from "@/lib/search";
 import SearchResults from "@/components/SearchResults";
+import PageTitle from "@/components/PageTitle";
 
 // Title only — the root layout appends " | GKWorld360". pageMetadata also
 // gives the page its link-preview card (lib/og.ts).
@@ -31,13 +32,13 @@ export default async function SearchPage({
   const index = await getSearchIndex();
 
   return (
-    <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12">
-      <h1 className="font-heading text-4xl font-bold text-navy mb-8">
-        Search
-      </h1>
-
-      {/* The interactive search box + results (client component) */}
-      <SearchResults index={index} initialQuery={initialQuery} />
-    </div>
+    <>
+      {/* PHASE 4 (30 Oct 2026): the big title (components/PageTitle.tsx) */}
+      <PageTitle colors={null} label="Subjects · topics · current affairs" title="Search" />
+      <div className="max-w-[1320px] mx-auto px-4 md:px-8 pt-8 pb-6">
+        {/* The interactive search box + results (client component) */}
+        <SearchResults index={index} initialQuery={initialQuery} />
+      </div>
+    </>
   );
 }

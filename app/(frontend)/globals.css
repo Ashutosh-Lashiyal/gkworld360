@@ -1417,3 +1417,144 @@ body:has([data-article])::after {
 }
 
 /* end of phase 3 */
+
+/* ═════════════════════════════════════════════════════════════════════════════
+   REDESIGN PHASE 4 (30 Oct 2026): every other page. Components: PageTitle,
+   StatPill, ContentCard, ReadTick, CategoryPath, Breadcrumb, HeadlineRow,
+   SearchResults, SavedList, Select, the pages under app/(frontend)/.
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+/* ── PAGE TITLES (components/PageTitle.tsx) ────────────────────────────────── */
+/* The small italic line above a title, in the subject's colour: the dark shade
+   on light pages, the light shade on dark pages (--cl / --cd set by PageTitle) */
+.gk-eyebrow { color: var(--cl, var(--accent)); }
+:root[data-mode="dark"] .gk-eyebrow, :root[data-mode="reading"] .gk-eyebrow { color: var(--cd, var(--accent)); }
+/* SUBJECT PAGES: the subject's name filled with its own picture.
+   background-clip: text = the picture only shows through the letters. */
+.gk-fill-word {
+  margin: 0;
+  font-family: var(--font-display), Impact, sans-serif;
+  font-weight: 400;
+  line-height: 0.8;
+  text-transform: uppercase;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  color: transparent;
+  background-size: cover;
+  background-position: 50% 45%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  /* a thin light edge, so dark parts of the picture still read as letters */
+  -webkit-text-stroke: 1px rgba(243, 241, 237, 0.18);
+  filter: var(--img-filter);
+}
+
+/* ── CARDS (components/ContentCard.tsx) ────────────────────────────────────── */
+/* The label pill: the subject's colour, mixed with the text colour so it
+   stays readable on light AND dark pages (--signal is set by the card) */
+.gk-pill-signal {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font: 800 12px/1.3 var(--font-nunito), sans-serif;
+  color: color-mix(in srgb, var(--signal, var(--accent)) 72%, var(--ink));
+  background: color-mix(in srgb, var(--signal, var(--accent)) 14%, transparent);
+}
+/* on dark pages, more of the text colour so the pill stays easy to read */
+:root[data-mode="dark"] .gk-pill-signal, :root[data-mode="reading"] .gk-pill-signal { color: color-mix(in srgb, var(--signal, var(--accent)) 45%, var(--ink)); background: color-mix(in srgb, var(--signal, var(--accent)) 26%, transparent); }
+.gk-card__pic img { filter: var(--img-filter); }
+
+/* ── FILTER CHIPS (/pulse) ─────────────────────────────────────────────────── */
+.gk-chip {
+  display: inline-flex; align-items: center; flex: none; white-space: nowrap;
+  padding: 8px 16px; border-radius: 999px; border: 2px solid var(--line); background: var(--surface);
+  box-shadow: 0 3px 0 var(--line); font: 800 14px/1.2 var(--font-nunito), sans-serif; color: var(--muted);
+  transition: transform 0.12s, color 0.2s, border-color 0.2s, background-color 0.2s;
+}
+.gk-chip:hover { color: var(--ink); border-color: var(--line-2); }
+.gk-chip:active { transform: translateY(3px); box-shadow: none; }
+/* the chosen filter: filled with the text colour */
+.gk-chip[aria-current="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); box-shadow: 0 3px 0 var(--btn-shadow); }
+
+/* ── FORM BOXES (search, contact, the dropdown) ────────────────────────────── */
+.gk-input {
+  border-radius: 16px;
+  border: 2px solid var(--line-2);
+  background: var(--surface);
+  box-shadow: 0 4px 0 var(--line);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.gk-input:focus, .gk-input:focus-visible, .gk-input.is-open { border-color: var(--accent); box-shadow: 0 4px 0 var(--accent-soft); }
+
+/* ── CATEGORY PAGES: the learning path (components/CategoryPath.tsx) ───────── */
+/* the "Learning path / Grid" switch */
+.gk-view-btn { color: var(--muted); transition: background-color 0.2s, color 0.2s; }
+.gk-view-btn[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.gk-path { position: relative; max-width: 760px; margin: 30px auto 0; padding-bottom: 10px; }
+/* the dotted line joining the circles (drawn by the component) */
+.gk-path__route { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.gk-path__route path { fill: none; stroke: var(--line-2); stroke-width: 4; stroke-dasharray: 2 12; stroke-linecap: round; }
+/* each topic: a round picture and its label, in a zig-zag (0 · 22% · 44% · 22% · 0…) */
+.gk-path__node { position: relative; display: flex; align-items: center; gap: 22px; margin-bottom: 60px; width: max-content; max-width: 100%; }
+.gk-path__node:nth-child(4n + 2) { margin-left: 22%; }
+.gk-path__node:nth-child(4n + 3) { margin-left: 44%; }
+.gk-path__node:nth-child(4n + 4) { margin-left: 22%; }
+@media (max-width: 639px) {
+  .gk-path__node:nth-child(4n + 2), .gk-path__node:nth-child(4n + 4) { margin-left: 14%; }
+  .gk-path__node:nth-child(4n + 3) { margin-left: 28%; }
+  .gk-path__node { gap: 16px; margin-bottom: 44px; }
+}
+/* the round picture: a chunky button you can press */
+.gk-path__disc {
+  position: relative; flex: none; display: grid; place-items: center;
+  width: 108px; height: 108px; border-radius: 50%;
+  background: var(--surface); border: 3px solid var(--line-2); box-shadow: 0 8px 0 var(--line-2);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+@media (max-width: 639px) { .gk-path__disc { width: 84px; height: 84px; box-shadow: 0 6px 0 var(--line-2); } }
+.gk-path__disc img { filter: var(--img-filter); }
+.gk-path__disc:hover { transform: translateY(-4px) scale(1.04); }
+.gk-path__disc:active { transform: translateY(6px); box-shadow: 0 2px 0 var(--line-2); }
+/* read: a green ring and a ✓ */
+.gk-path__node.is-done .gk-path__disc { border-color: #10b981; box-shadow: 0 8px 0 #065f46; }
+.gk-path__node.is-done .gk-path__disc::after {
+  content: "✓"; position: absolute; right: -4px; bottom: -4px; z-index: 2;
+  width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%;
+  background: #10b981; color: #fff; font-weight: 900; border: 3px solid var(--bg);
+}
+/* "Start" / "Next" bubble over the next topic to read, bobbing gently */
+.gk-path__bubble {
+  position: absolute; left: 50%; bottom: calc(100% + 12px); z-index: 2; transform: translateX(-50%);
+  padding: 9px 14px; border-radius: 12px; background: var(--btn); color: var(--on-btn);
+  font: 800 13px/1 var(--font-nunito), sans-serif; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
+  box-shadow: 0 3px 0 var(--btn-shadow); animation: gk-bob 1.6s ease-in-out infinite;
+}
+.gk-path__bubble::after { content: ""; position: absolute; left: 50%; top: 100%; margin-left: -7px; border: 7px solid transparent; border-top-color: var(--btn); }
+@keyframes gk-bob { 50% { transform: translateX(-50%) translateY(-6px); } }
+.gk-path__label { max-width: 300px; font-family: var(--font-nunito), sans-serif; }
+.gk-path__label b { display: block; font: italic 400 22px/1 var(--font-instrument), Georgia, serif; color: var(--amber); }
+.gk-path__label a { display: block; margin-top: 4px; font: 400 30px/1 var(--font-display), Impact, sans-serif; text-transform: uppercase; color: var(--ink); }
+@media (max-width: 639px) {
+  .gk-path__label a { font-size: 24px; }
+  /* the zig-zag pushes some labels right — keep them narrow enough to fit */
+  .gk-path__label { max-width: 150px; }
+}
+.gk-path__label a:hover { color: var(--accent); }
+.gk-path__label small { display: block; margin-top: 6px; color: var(--muted); font-size: 13px; font-weight: 700; }
+
+/* ── 404 ───────────────────────────────────────────────────────────────────── */
+.gk-404 {
+  font: 400 clamp(140px, 28vw, 320px)/0.8 var(--font-display), Impact, sans-serif;
+  color: transparent;
+  -webkit-text-stroke: 2px var(--line-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gk-path__bubble { animation: none; }
+}
+/* The Atlas's filter buttons: round chips like the rest of the site */
+.atlas-app .tl-eras button, .atlas-app .tl-subjects button, .atlas-app .tl-play { border-radius: 999px; }
+/* end of phase 4 */
+

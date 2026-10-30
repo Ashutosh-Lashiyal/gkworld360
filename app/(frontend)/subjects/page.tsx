@@ -5,6 +5,7 @@
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/og";
 import SubjectCard from "@/components/SubjectCard";
+import PageTitle from "@/components/PageTitle";
 import { getAllSubjects } from "@/lib/content";
 
 // Title only — the root layout appends " | GKWorld360". pageMetadata also
@@ -23,20 +24,18 @@ export default function SubjectsPage() {
   const subjects = getAllSubjects();
 
   return (
-    <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12">
-
-      {/* Page header */}
-      <div className="mb-10">
-        <h1 className="font-heading text-4xl font-bold text-navy">
-          All Subjects
-        </h1>
-        <p className="font-body text-lg text-muted mt-3">
-          Browse all {subjects.length} subject{subjects.length !== 1 ? "s" : ""} available on GKWorld360
-        </p>
-      </div>
+    <>
+      {/* REDESIGN PHASE 4 (30 Oct 2026): the big title (components/PageTitle.tsx) */}
+      <PageTitle
+        colors={null}
+        breadcrumbs={[{ label: "Subjects", href: "/subjects" }]}
+        label="Choose where to start"
+        title="All Subjects"
+        description={`${subjects.length} subject${subjects.length !== 1 ? "s" : ""} to begin with. History is open now; the others are being written and checked.`}
+      />
 
       {/* Subject card grid — same 3-column layout as homepage */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div data-reveal-group className="max-w-[1320px] mx-auto px-4 md:px-8 pt-10 md:pt-12 pb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {subjects.map((subject) => (
           <SubjectCard
             key={subject.slug}
@@ -57,6 +56,6 @@ export default function SubjectsPage() {
           </p>
         </div>
       )}
-    </div>
+    </>
   );
 }

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Anton, Instrument_Serif, Fraunces, Nunito, Geist_Mono, Noto_Sans_Devanagari } from "next/font/google";
 // The small "which mode?" script that runs before the page is drawn (see below)
 import { MODE_SCRIPT } from "@/lib/mode";
+import ModeFallback from "@/components/ModeFallback";
 
 // The permanent shell components — appear on every single page
 import Header from "@/components/Header";
@@ -175,6 +176,9 @@ export default async function RootLayout({
             painted. The root layout is drawn once per visit, so a plain script
             here is safe. */}
         <script dangerouslySetInnerHTML={{ __html: MODE_SCRIPT }} />
+        {/* …and a safety net for pages React has to build in the browser,
+            where that script can't run (components/ModeFallback.tsx) */}
+        <ModeFallback />
 
         {/* Site-wide structured data: tells search/AI engines what GKWorld360 is,
             and enables the search box to appear in Google results (SearchAction). */}

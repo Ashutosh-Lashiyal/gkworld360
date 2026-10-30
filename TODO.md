@@ -81,9 +81,19 @@
         (a placeholder glow shows instead). Check production too; add the cover in /admin.
       - [ ] Phase 5 homepage effects still to do: hero words part as you scroll, poster strip moves
         sideways with vertical scroll, the band speeds up with scrolling, numbers count up.
-      - [ ] Phase 4: all other pages, EN + HI (fix the dim labels on /pulse, /saved; Atlas follows Dark).
-        Also: /saved still says "headline(s)" — now holds articles too; subject pages can show
-        "N of M read" from the `gk-read` list; ContentCard (related topics) gets the new card look.
+      - [x] **Phase 4 BUILT (30 Oct) on `feature/redesign`.** Every other page: new PageTitle (big
+        Anton title, italic last word; SUBJECT pages on the dark stage with the name filled with
+        its picture + Anton stats), chunky ContentCard with a "✓ Read" badge (ReadTick) and the
+        English/हिन्दी buttons kept, subject page (categories, "Start here" steps, the subject's
+        Atlas timeline, recently added), CATEGORY page = learning path (zig-zag circles, dotted line,
+        "Next" bubble, "N of M read" ring) with a Grid switch (`components/CategoryPath.tsx`),
+        /subjects, /topics, /news (Anton months), /pulse (round chips, rows in a card, dark-mode
+        pills fixed), /search, /saved ("items", articles too), /about, /contact (chunky inputs and
+        dropdown), 404, the Atlas now follows Light/Dark (EN + HI). Safety net
+        `components/ModeFallback.tsx` for pages React builds in the browser.
+      - [ ] Known (dev only): the laptop's "page not found" screen shows a React warning about the
+        mode script, because the dev server builds that page in the browser. Check on the Vercel
+        site after deploying; if it shows there too, revisit.
       - [ ] Phase 5: effects (curtain + loading bar between pages, hover/scroll) + phone PageSpeed before/after.
       - [ ] Laptop disk is 99% full (1.7 GB free later on 30 Oct; the dev server again served an old stylesheet in phase 2) — the dev server's cache failed to save
         and served an old stylesheet. Owner to free space; deleting `.next` (1.3 GB, rebuilt

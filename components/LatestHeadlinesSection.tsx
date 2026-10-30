@@ -45,7 +45,7 @@ export default async function LatestHeadlinesSection() {
                     <span
                       className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-extrabold"
                       style={{
-                        color: `color-mix(in srgb, ${CATEGORY_COLOR[h.category] ?? "#4a6460"} 75%, var(--ink))`,
+                        color: `color-mix(in srgb, ${CATEGORY_COLOR[h.category] ?? "#4a6460"} 60%, var(--ink))`,
                         backgroundColor: `color-mix(in srgb, ${CATEGORY_COLOR[h.category] ?? "#4a6460"} 14%, transparent)`,
                       }}
                     >

@@ -14,6 +14,7 @@ import { getPopularTopics, getRecentlyAddedTopics } from "@/lib/topics";
 import { SUBJECT_COLORS } from "@/lib/subject-colors";
 import { getSubjectInfo } from "@/lib/subjects";
 import ContentCard from "@/components/ContentCard";
+import PageTitle from "@/components/PageTitle";
 import SortToggle from "@/components/SortToggle";
 
 // Title only — the root layout appends " | GKWorld360". pageMetadata also
@@ -64,37 +65,25 @@ export default async function TopicsPage({
   });
 
   return (
-    <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12">
-
-      {/* ── PAGE HEADER ──────────────────────────────────────────────────────── */}
-      <div className="mb-10">
-        {/* Breadcrumb */}
-        <nav className="mb-4">
-          <Link href="/" className="font-body text-sm text-muted hover:text-navy transition-colors">
-            Home
-          </Link>
-          <span className="mx-2 text-muted">›</span>
-          <span className="font-body text-sm text-navy">All Topics</span>
-        </nav>
-
-        <h1 className="font-heading text-4xl font-bold text-navy mb-2">
-          All Topics
-        </h1>
-        <p className="font-body text-lg text-muted">
-          {enrichedTopics.length} topic{enrichedTopics.length !== 1 ? "s" : ""} across all subjects
-        </p>
-      </div>
-
-      {/* ── SORT TOGGLE ──────────────────────────────────────────────────────── */}
-      {/* SortToggle is a client component — it changes the URL when clicked,
-          which causes this server component to re-render with the new sort.   */}
-      <div className="mb-8">
+    <>
+      {/* REDESIGN PHASE 4 (30 Oct 2026): the big title (components/PageTitle.tsx),
+          with the sort switch in the row underneath */}
+      <PageTitle
+        colors={null}
+        breadcrumbs={[{ label: "All Topics", href: "/topics" }]}
+        label="Every topic, in English and Hindi"
+        title="All Topics"
+        description={`${enrichedTopics.length} topic${enrichedTopics.length !== 1 ? "s" : ""} across all subjects.`}
+      >
+        {/* SortToggle is a client component — it changes the URL when clicked,
+            which causes this server component to re-render with the new sort. */}
         <SortToggle activeSort={activeSort} />
-      </div>
+      </PageTitle>
 
+    <div className="max-w-[1320px] mx-auto px-4 md:px-8 pt-10 md:pt-12 pb-6">
       {/* ── TOPIC GRID ───────────────────────────────────────────────────────── */}
       {enrichedTopics.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div data-reveal-group className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {enrichedTopics.map((topic) => (
             <ContentCard
               key={topic.href}
@@ -125,5 +114,6 @@ export default async function TopicsPage({
         </div>
       )}
     </div>
+    </>
   );
 }

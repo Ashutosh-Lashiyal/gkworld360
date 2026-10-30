@@ -24,12 +24,20 @@
 //
 // No `"use client"` — there is no browser state any more, so this is a plain
 // server component. Less JavaScript shipped to the reader.
+//
+// REDESIGN PHASE 4 (30 Oct 2026, "Playful"): a chunky card — 2px border, the
+// solid edge underneath (gk-card), lifts when you point at it, the picture
+// zooms slowly; the label is a round pill in the subject's colour; the title
+// is bigger (Fraunces 23px). Articles you have finished get a "✓ Read" badge
+// on the picture (ReadTick — your reading list from the article pages).
+// The two buttons stay (owner, 16 Sep: Hindi must be one tap away on phones).
 import Link from "next/link";
 import Image from "next/image";
 // ViewTransition comes from React itself (no extra library). It names the
 // title so it can glide into the article's heading on the next page.
 import { ViewTransition } from "react";
 import Button from "@/components/Button";
+import ReadTick from "@/components/ReadTick";
 import { titleTransitionName } from "@/lib/view-transition";
 
 type ContentCardProps = {
@@ -93,11 +101,12 @@ export default function ContentCard({
     // row is the same height and the buttons line up along the bottom.
     <article
       className={[
-        "group flex flex-col h-full rounded-card bg-surface overflow-hidden transition-all duration-200",
-        flat
-          ? "border-0 shadow-[0_16px_48px_rgba(0,0,0,0.3)]"
-          : "border border-hairline shadow-card hover:shadow-card-hover hover:-translate-y-0.5",
+        "group gk-card flex flex-col h-full overflow-hidden",
+        flat ? "" : "gk-card--lift",
       ].join(" ")}
+      // the subject's colour, for the label pill (globals.css mixes it with
+      // the page's text colour so it reads on light AND dark pages)
+      style={{ ["--signal" as string]: accentColor }}
     >
       {/* ── IMAGE SLOT ────────────────────────────────────────────────────
           Always rendered, so cards with and without images stay the same
@@ -105,8 +114,11 @@ export default function ContentCard({
       <Link
         href={href}
         aria-label={title}
-        className="relative block aspect-video w-full"
-        style={{ backgroundColor: placeholderBg }}
+        tabIndex={-1}
+        // no picture yet → the soft glow on the dark stage colour (gk-noimg),
+        // which looks intentional in Light AND Dark mode
+        className={`gk-card__pic relative block aspect-[16/10] w-full overflow-hidden ${image ? "" : "gk-noimg"}`}
+        style={image ? { backgroundColor: placeholderBg } : undefined}
       >
         {image ? (
           <Image
@@ -114,7 +126,7 @@ export default function ContentCard({
             alt=""
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover"
+            className="object-cover transition-transform duration-1000 ease-[var(--ease-out-soft)] group-hover:scale-[1.07]"
           />
         ) : (
           // No image yet — a thin accent bar at the top gives the empty slot
@@ -127,39 +139,34 @@ export default function ContentCard({
         )}
         {badge && (
           <span
-            className="absolute left-3.5 top-3.5 px-2 py-1 rounded-none bg-surface font-body text-[11px] font-semibold uppercase tracking-[0.14em]"
+            className="absolute left-3.5 top-3.5 px-2.5 py-1 rounded-full bg-surface font-body text-xs font-extrabold"
             style={{ color: accentColor }}
           >
             {badge}
           </span>
         )}
+        {/* "✓ Read" — only for articles, only once you've finished them */}
+        {!comingSoon && <ReadTick path={href} />}
       </Link>
 
       {/* ── TEXT ──────────────────────────────────────────────────────────── */}
-      <div className="flex flex-col flex-1 gap-1.5 p-5">
-        {label && (
-          <span
-            className="font-body text-[11px] font-semibold uppercase tracking-widest"
-            style={{ color: accentColor }}
-          >
-            {label}
-          </span>
-        )}
+      <div className="flex flex-col flex-1 items-start gap-2 px-5 pt-[18px] pb-5">
+        {label && <span className="gk-pill-signal">{label}</span>}
 
         {/* PAGE TRANSITION (28 Oct 2026): the title carries the same name as
             the article page's heading (lib/view-transition.ts), so when the
             reader opens the card, this title glides and grows into the big
             heading. <ViewTransition> passes the name to the <h3> inside it. */}
         <ViewTransition name={titleTransitionName(href)}>
-          <h3 className="font-heading text-lg font-semibold text-navy leading-snug">
-            <Link href={href} className="group-hover:text-sapphire transition-colors">
+          <h3 className="m-0 font-heading text-[21px] md:text-[23px] font-semibold leading-[1.18] text-foreground">
+            <Link href={href} className="group-hover:text-accent transition-colors">
               {title}
             </Link>
           </h3>
         </ViewTransition>
 
         {description && (
-          <p className="font-body text-sm text-muted leading-relaxed line-clamp-2">
+          <p className="m-0 font-body text-[14.5px] text-muted leading-relaxed line-clamp-3">
             {description}
           </p>
         )}
@@ -168,7 +175,7 @@ export default function ContentCard({
           <div className="flex flex-wrap gap-x-5 gap-y-1 pt-2 font-body text-[13px] text-muted">
             {stats.map((st) => (
               <span key={st.label} className="inline-flex items-baseline gap-1.5">
-                <strong className="font-heading text-lg font-bold text-navy-dark leading-none">{st.value}</strong>
+                <strong className="font-display text-xl font-normal text-foreground leading-none">{st.value}</strong>
                 {st.label}
               </span>
             ))}
@@ -178,7 +185,7 @@ export default function ContentCard({
         {/* ── BUTTONS ────────────────────────────────────────────────────────
             `mt-auto` pushes this row to the bottom of the card, whatever the
             text height above it. Two buttons when Hindi exists, one if not. */}
-        <div className="mt-auto pt-4 flex gap-2">
+        <div className="mt-auto pt-3 flex gap-2 self-stretch">
           {comingSoon ? (
             <Button variant="disabled" className="flex-1">
               Coming soon

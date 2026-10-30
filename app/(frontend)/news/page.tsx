@@ -137,17 +137,18 @@ export default async function NewsListingPage() {
       </span>
     </PageTitle>
 
-    <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 pt-12 md:pt-16 pb-12 md:pb-16">
+    <div className="max-w-[1320px] mx-auto px-4 md:px-8 pt-12 md:pt-16 pb-6">
 
       {all.length > 0 ? (
         <div className="space-y-14">
           {monthKeys.map((k) => (
             <section key={k}>
               {/* Month heading (e.g. "May 2026") */}
-              <h2 className="font-heading text-2xl font-bold text-navy mb-6 pb-2 border-b border-hairline">
+              {/* PHASE 4 (30 Oct 2026): the month in big Anton capitals */}
+              <h2 data-reveal className="m-0 mb-6 pb-3 border-b-2 border-hairline font-display text-[40px] md:text-[54px] font-normal leading-none uppercase text-foreground">
                 {monthLabel(k)}
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div data-reveal-group className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {groups.get(k)!.map((item) => (
                   <NewsCard
                     key={item.url}

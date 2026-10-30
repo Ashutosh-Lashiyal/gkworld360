@@ -103,16 +103,16 @@ export default function Select({ id, name, options, placeholder = "Select…", d
         onKeyDown={onButtonKey}
         className={[
           "w-full flex items-center justify-between gap-3 text-left",
-          "font-body text-base bg-background border border-hairline rounded-card px-4 py-3",
-          "outline-none focus:border-sapphire focus:ring-2 focus:ring-sapphire/20 transition-colors",
-          open ? "border-sapphire ring-2 ring-sapphire/20" : "",
+          // gk-input: the same chunky box as the other form fields (phase 4, 30 Oct 2026)
+          "gk-input font-body text-base px-4 py-3",
+          open ? "is-open" : "",
           value ? "text-foreground" : "text-muted",
         ].join(" ")}
       >
         <span className="truncate">{value || placeholder}</span>
         {/* The arrow turns over when the list is open */}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
-          className={`flex-shrink-0 text-navy transition-transform duration-200 ${open ? "rotate-180" : ""}`}>
+          className={`flex-shrink-0 text-muted transition-transform duration-200 ${open ? "rotate-180" : ""}`}>
           <polyline points="6 9 12 15 18 9" />
         </svg>
       </button>
@@ -126,7 +126,7 @@ export default function Select({ id, name, options, placeholder = "Select…", d
           tabIndex={-1}
           aria-activedescendant={optionId(active)}
           onKeyDown={onListKey}
-          className={`absolute left-0 right-0 top-full mt-1.5 z-30 max-h-72 overflow-auto bg-surface border border-hairline shadow-card-hover py-1.5 outline-none ${
+          className={`absolute left-0 right-0 top-full mt-2 z-30 max-h-72 overflow-auto bg-surface border-2 border-line-2 rounded-[18px] shadow-[0_5px_0_var(--line-2),0_24px_48px_-20px_var(--shadow-far)] py-1.5 outline-none ${
             menu.closing ? "anim-menu-out" : "anim-menu-in"
           }`}
         >
@@ -143,7 +143,7 @@ export default function Select({ id, name, options, placeholder = "Select…", d
                 className={[
                   "flex items-center justify-between gap-3 px-4 py-2.5 cursor-pointer font-body text-[15px] transition-colors",
                   // Highlight = the site's mint, the same as every menu and button hover
-                  i === active ? "bg-mint text-navy-dark" : "text-foreground",
+                  i === active ? "bg-accent-soft text-accent" : "text-foreground",
                   selected ? "font-semibold" : "",
                 ].join(" ")}
               >

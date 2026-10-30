@@ -1,9 +1,15 @@
-// StatPill — "number + word" in a round pill, e.g. (2) topics. Used for the
-// live counts on the hero and on subject pages. Pills stay round on purpose
-// even though cards and buttons are square (17 Sep 2026): a pill that isn't
-// round isn't a pill.
-//   tone="dark"  → translucent white on a dark hero
-//   tone="light" → white with a hairline border, on the page
+// StatPill — one live count, e.g. "4 / Topics". Used under page titles (subject
+// pages, /subjects) for real numbers only (lib/site-stats.ts).
+//
+// REDESIGN PHASE 4 (30 Oct 2026): no longer a round pill — a big Anton number
+// with its word underneath, the design's "stats" row:
+//
+//     1          4          12
+//     Category   Topics     Places on the Atlas
+//
+//   tone="dark"  → for the dark stage (subject pages)
+//   tone="light" → for the page
+// (The name StatPill is kept so the pages using it didn't have to change.)
 //
 // Numbers count up from 0 when the page opens (CountUp, 28 Oct 2026). Text
 // values like "—" are shown as they are.
@@ -20,18 +26,11 @@ export default function StatPill({
   tone?: "light" | "dark";
 }) {
   return (
-    <span
-      className={[
-        "inline-flex items-center gap-2.5 min-h-12 px-6 rounded-full",
-        tone === "dark"
-          ? "bg-on-dark/10 border border-on-dark/25 backdrop-blur-sm text-on-dark"
-          : "bg-surface border border-hairline text-muted",
-      ].join(" ")}
-    >
-      <span className={`font-heading text-2xl font-bold leading-none ${tone === "dark" ? "text-on-dark" : "text-navy-dark"}`}>
+    <span className="inline-flex flex-col mr-4 md:mr-6">
+      <span className={`font-display text-[40px] md:text-[46px] leading-none tabular-nums ${tone === "dark" ? "text-on-dark" : "text-foreground"}`}>
         {typeof value === "number" ? <CountUp value={value} /> : value}
       </span>
-      <span className={`font-body text-[15px] font-medium ${tone === "dark" ? "text-on-dark/85" : ""}`}>{label}</span>
+      <span className={`mt-1.5 font-body text-sm font-bold ${tone === "dark" ? "text-on-dark/60" : "text-muted"}`}>{label}</span>
     </span>
   );
 }

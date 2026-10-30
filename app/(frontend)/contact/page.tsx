@@ -6,6 +6,7 @@
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/og";
 import Button from "@/components/Button";
+import PageTitle from "@/components/PageTitle";
 import Select from "@/components/Select";
 
 // Title only — the root layout appends " | GKWorld360". pageMetadata also
@@ -30,30 +31,23 @@ const CONTACT_REASONS = [
 export default function ContactPage() {
   return (
     <>
-      {/* ── HEADER ────────────────────────────────────────────────────────────*/}
-      <section className="bg-surface border-b border-hairline">
-        <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-16">
-          <div className="max-w-[720px]">
-            <h1 className="font-heading text-4xl md:text-5xl font-bold text-navy leading-tight">
-              Get in touch
-            </h1>
-            <p className="font-body text-lg text-muted mt-4 leading-relaxed">
-              We would love to hear from you — whether it is a content
-              suggestion, a correction, or just a question. Fill in the form
-              below and we will get back to you as soon as possible.
-            </p>
-          </div>
-        </div>
-      </section>
+      {/* REDESIGN PHASE 4 (30 Oct 2026): the big title (components/PageTitle.tsx);
+          the form sits in a chunky card with chunky boxes (gk-input) */}
+      <PageTitle
+        colors={null}
+        label="Questions, corrections, ideas"
+        title="Get in touch"
+        description="We would love to hear from you — whether it is a content suggestion, a correction, or just a question. Fill in the form below and we will get back to you as soon as possible."
+      />
 
       {/* ── FORM + INFO ───────────────────────────────────────────────────────*/}
-      <section className="bg-background">
-        <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-16">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+      <section>
+        <div className="max-w-[1320px] mx-auto px-4 md:px-8 pt-10 md:pt-12 pb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 items-start">
 
             {/* ── CONTACT FORM (left, takes 2/3 width) ──────────────────────*/}
-            <div className="lg:col-span-2">
-              <h2 className="font-heading text-2xl font-semibold text-navy mb-6">
+            <div className="lg:col-span-2 gk-card p-6 md:p-8">
+              <h2 className="m-0 font-display text-4xl font-normal uppercase text-foreground mb-6">
                 Send us a message
               </h2>
 
@@ -65,7 +59,7 @@ export default function ContactPage() {
                 <div className="flex flex-col gap-1.5">
                   <label
                     htmlFor="name"
-                    className="font-body text-sm font-semibold text-navy"
+                    className="font-body text-sm font-extrabold text-foreground"
                   >
                     Your name
                   </label>
@@ -73,13 +67,7 @@ export default function ContactPage() {
                     id="name"
                     type="text"
                     placeholder="Ashutosh Lashiyal"
-                    className={[
-                      "font-body text-base text-foreground placeholder:text-muted",
-                      "bg-background border border-hairline rounded-card",
-                      "px-4 py-3",
-                      "outline-none focus:border-sapphire focus:ring-2 focus:ring-sapphire/20",
-                      "transition-colors",
-                    ].join(" ")}
+                    className="gk-input px-4 py-3 font-body text-base text-foreground placeholder:text-muted"
                   />
                 </div>
 
@@ -87,7 +75,7 @@ export default function ContactPage() {
                 <div className="flex flex-col gap-1.5">
                   <label
                     htmlFor="email"
-                    className="font-body text-sm font-semibold text-navy"
+                    className="font-body text-sm font-extrabold text-foreground"
                   >
                     Email address
                   </label>
@@ -95,13 +83,7 @@ export default function ContactPage() {
                     id="email"
                     type="email"
                     placeholder="you@example.com"
-                    className={[
-                      "font-body text-base text-foreground placeholder:text-muted",
-                      "bg-background border border-hairline rounded-card",
-                      "px-4 py-3",
-                      "outline-none focus:border-sapphire focus:ring-2 focus:ring-sapphire/20",
-                      "transition-colors",
-                    ].join(" ")}
+                    className="gk-input px-4 py-3 font-body text-base text-foreground placeholder:text-muted"
                   />
                 </div>
 
@@ -109,7 +91,7 @@ export default function ContactPage() {
                 <div className="flex flex-col gap-1.5">
                   <label
                     htmlFor="reason"
-                    className="font-body text-sm font-semibold text-navy"
+                    className="font-body text-sm font-extrabold text-foreground"
                   >
                     Reason for contact
                   </label>
@@ -123,7 +105,7 @@ export default function ContactPage() {
                 <div className="flex flex-col gap-1.5">
                   <label
                     htmlFor="message"
-                    className="font-body text-sm font-semibold text-navy"
+                    className="font-body text-sm font-extrabold text-foreground"
                   >
                     Message
                   </label>
@@ -131,13 +113,7 @@ export default function ContactPage() {
                     id="message"
                     rows={6}
                     placeholder="Write your message here..."
-                    className={[
-                      "font-body text-base text-foreground placeholder:text-muted",
-                      "bg-background border border-hairline rounded-card",
-                      "px-4 py-3",
-                      "outline-none focus:border-sapphire focus:ring-2 focus:ring-sapphire/20",
-                      "transition-colors resize-none",
-                    ].join(" ")}
+                    className="gk-input px-4 py-3 font-body text-base text-foreground placeholder:text-muted"
                   />
                 </div>
 
@@ -163,7 +139,7 @@ export default function ContactPage() {
                 </h3>
                 <div className="flex flex-col gap-4">
                   <div className="flex flex-col gap-1">
-                    <span className="font-body text-sm font-semibold text-navy">
+                    <span className="font-body text-sm font-extrabold text-foreground">
                       Email
                     </span>
                     <span className="font-body text-sm text-muted">
@@ -171,7 +147,7 @@ export default function ContactPage() {
                     </span>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <span className="font-body text-sm font-semibold text-navy">
+                    <span className="font-body text-sm font-extrabold text-foreground">
                       Response time
                     </span>
                     <span className="font-body text-sm text-muted">
@@ -182,7 +158,7 @@ export default function ContactPage() {
               </div>
 
               {/* What to expect */}
-              <div className="bg-surface-low border border-hairline rounded-card p-5">
+              <div className="gk-card p-5">
                 <h4 className="font-heading text-base font-semibold text-navy mb-3">
                   What happens after you write to us?
                 </h4>

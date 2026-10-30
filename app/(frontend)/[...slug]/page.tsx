@@ -26,6 +26,9 @@ import {
 } from "@/lib/content";
 import ArticleHeader from "@/components/ArticleHeader";
 import PageTitle from "@/components/PageTitle";
+import SectionHead from "@/components/SectionHead";
+import CategoryPath from "@/components/CategoryPath";
+import AtlasTeaser from "@/components/atlas/AtlasTeaser";
 import { ogImages as buildOgImages } from "@/lib/og";
 import StatPill from "@/components/StatPill";
 import { formatAddedTime } from "@/lib/topics";
@@ -452,18 +455,19 @@ export default async function ContentPage({
       const hindi = t.hindiHref ? { href: t.hindiHref } : getHindiInfo(t.slug);
       return (
         <li key={t.slug.join("/")}>
+          {/* gk-row: tints on hover, the arrow slides in (globals.css) */}
           <Link
             href={`/${t.slug.join("/")}`}
-            className="grid grid-cols-[40px_minmax(0,1fr)_auto] gap-3.5 items-baseline py-4 border-b border-border-subtle text-foreground hover:text-sapphire transition-colors"
+            className="gk-row group grid grid-cols-[44px_minmax(0,1fr)_auto] gap-3.5 items-center px-3.5 py-3.5 rounded-2xl font-body"
           >
-            <span className="font-heading text-xl font-bold" style={{ color: tone === "signal" ? colors?.accent ?? "#059669" : "#4a6460" }}>
+            <span className={`font-display text-[28px] leading-none ${tone === "signal" ? "text-accent" : "text-line-2"}`}>
               {String(i + 1).padStart(2, "0")}
             </span>
-            <span className="flex flex-col gap-0.5">
-              <span className="font-heading text-lg font-semibold leading-snug text-navy-dark">{t.meta.title}</span>
-              <span className="font-body text-[13px] text-muted">{meta}</span>
+            <span className="flex flex-col gap-0.5 min-w-0">
+              <span className="text-base font-bold leading-snug text-foreground group-hover:text-accent transition-colors">{t.meta.title}</span>
+              <span className="text-[13px] font-semibold text-faint">{meta} · {hindi ? <>EN · <span lang="hi" className="font-hindi">हिन्दी</span></> : "EN"}</span>
             </span>
-            <span className="font-body text-xs text-muted whitespace-nowrap">{hindi ? "EN · हिन्दी" : "EN"}</span>
+            <span aria-hidden="true" className="gk-row__arrow font-extrabold text-accent">→</span>
           </Link>
         </li>
       );
@@ -471,9 +475,10 @@ export default async function ContentPage({
 
     const hindiCount = allTopics.filter((t) => t.hindiHref || getHindiInfo(t.slug)).length;
 
-    // QUIET LAYOUT, 17 Sep 2026 (board 11): no banner. Centred title block on
-    // the page → live counts as pills → Categories grid → "Start here" and
-    // "Recently added" as two quiet lists side by side. Header · page · footer.
+    // REDESIGN PHASE 4 (30 Oct 2026): the subject's name on the dark stage,
+    // FILLED with its own picture → its categories → "Start here" as three
+    // numbered steps → the subject's places on the World360 Atlas (a
+    // timeline) → recently added.
     return (
       <>
         <PageTitle
@@ -483,29 +488,21 @@ export default async function ContentPage({
           title={meta.title}
           titleHi={subjectInfo?.labelHi}
           description={meta.description}
-          size="large"
+          image={meta.image}
         >
           {categories.length > 0 && (
-            <StatPill value={categories.length} label={categories.length === 1 ? "category" : "categories"} />
+            <StatPill tone="dark" value={categories.length} label={categories.length === 1 ? "Category" : "Categories"} />
           )}
-          <StatPill value={allTopics.length} label={allTopics.length === 1 ? "topic" : "topics"} />
-          <StatPill value={hindiCount} label="in Hindi" />
+          <StatPill tone="dark" value={allTopics.length} label={allTopics.length === 1 ? "Topic" : "Topics"} />
+          <StatPill tone="dark" value={hindiCount} label="In Hindi" />
         </PageTitle>
 
         {/* ── CATEGORIES (or loose topics) ────────────────────────────────── */}
-        <div id={categories.length > 0 ? "categories" : "topics"} className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 pt-14 md:pt-16 flex flex-col gap-6">
+        <section id={categories.length > 0 ? "categories" : "topics"} className="max-w-[1320px] mx-auto px-4 md:px-8 pt-16 md:pt-24">
           {categories.length > 0 ? (
             <>
-              <div className="flex flex-wrap items-end justify-between gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em]" style={{ color: colors?.accent ?? "#059669" }}>
-                    Browse by category
-                  </span>
-                  <h2 className="m-0 font-heading text-3xl md:text-4xl font-bold text-navy-dark tracking-[-0.015em]">Categories</h2>
-                </div>
-                <span className="font-body text-[13px] text-muted">In reading order</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              <SectionHead eyebrow="Browse by category" title="Pick a" accent="category" lede="In reading order." />
+              <div data-reveal-group className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {categories.map((cat) => {
                   const count = topicsByCategory.get(cat.slug)?.length ?? 0;
                   return (
@@ -527,8 +524,8 @@ export default async function ContentPage({
             </>
           ) : looseTopics.length > 0 ? (
             <>
-              <h2 className="m-0 font-heading text-3xl md:text-4xl font-bold text-navy-dark tracking-[-0.015em]">Topics</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              <SectionHead eyebrow={meta.title} title="All" accent="topics" />
+              <div data-reveal-group className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {looseTopics.map((topic) => {
                   const hindi = topic.hindiHref
                     ? { href: topic.hindiHref, title: topic.hindiTitle }
@@ -551,34 +548,45 @@ export default async function ContentPage({
             </>
           ) : (
             // Nothing yet — empty state
-            <div className="py-16 text-center">
-              <p className="font-body text-lg text-muted">Topics coming soon. Check back later.</p>
+            <div className="gk-card py-14 px-6 text-center">
+              <p className="m-0 font-display text-4xl uppercase text-foreground">Coming soon</p>
+              <p className="m-0 mt-2 font-body text-muted">{meta.title} articles are being written and checked.</p>
             </div>
           )}
-        </div>
+        </section>
 
-        {/* ── START HERE + RECENTLY ADDED — two quiet lists ───────────────── */}
-        {allTopics.length > 0 && (
-          <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 pt-14 md:pt-16 pb-14 md:pb-20 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
-            <section className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5">
-                <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em]" style={{ color: colors?.accent ?? "#059669" }}>New to the subject?</span>
-                <h2 className="m-0 font-heading text-2xl md:text-[28px] font-bold text-navy-dark">Start here</h2>
-              </div>
-              <ol className="m-0 p-0 list-none flex flex-col">
-                {startHere.map((t, i) => topicRow(t, i, "signal", categoryTitle(t)))}
-              </ol>
-            </section>
-            <section className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5">
-                <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Fresh from the desk</span>
-                <h2 className="m-0 font-heading text-2xl md:text-[28px] font-bold text-navy-dark">Recently added</h2>
-              </div>
-              <ol className="m-0 p-0 list-none flex flex-col">
-                {recentlyAdded.map((t, i) => topicRow(t, i, "muted", [categoryTitle(t), formatAddedTime(t.meta.date)].filter(Boolean).join(" · ")))}
-              </ol>
-            </section>
-          </div>
+        {/* ── START HERE — three numbered steps ───────────────────────────── */}
+        {startHere.length > 0 && (
+          <section className="max-w-[1320px] mx-auto px-4 md:px-8 pt-16 md:pt-24">
+            <SectionHead eyebrow="New to the subject?" title="Start" accent="here" lede="Read these in order. Each one picks up where the last stopped." />
+            <ol data-reveal-group className="grid grid-cols-1 md:grid-cols-3 gap-[18px] m-0 p-0 list-none">
+              {startHere.map((t, i) => (
+                <li key={t.slug.join("/")}>
+                  <Link href={`/${t.slug.join("/")}`} className="gk-card gk-card--lift flex flex-col items-start gap-2.5 h-full p-[22px] font-body">
+                    <span className="font-display text-[54px] leading-none text-accent">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="font-heading text-[22px] font-semibold leading-tight text-foreground">{t.meta.title}</span>
+                    {t.meta.description && <span className="text-sm text-muted line-clamp-3">{t.meta.description}</span>}
+                    <span className="gk-more mt-auto pt-1 font-extrabold text-accent">
+                      {categoryTitle(t) || "Read"} <span aria-hidden="true" className="gk-more__arrow">→</span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
+
+        {/* ── THIS SUBJECT ON THE WORLD360 ATLAS (draws nothing if it has no places) */}
+        <AtlasTeaser subject={slug[0]} eyebrow={`${meta.title} on the Atlas`} title="Where it" accent="happened" />
+
+        {/* ── RECENTLY ADDED ──────────────────────────────────────────────── */}
+        {recentlyAdded.length > 0 && (
+          <section className="max-w-[1320px] mx-auto px-4 md:px-8 pt-16 md:pt-24 pb-6">
+            <SectionHead eyebrow="Fresh from the desk" title="Recently" accent="added" more={{ href: "/topics?sort=recent", label: "All topics" }} />
+            <ol className="gk-card m-0 p-2.5 list-none">
+              {recentlyAdded.map((t, i) => topicRow(t, i, "muted", [categoryTitle(t), formatAddedTime(t.meta.date)].filter(Boolean).join(" · ")))}
+            </ol>
+          </section>
         )}
       </>
     );
@@ -603,56 +611,61 @@ export default async function ContentPage({
 
     return (
       <>
-        {/* QUIET LAYOUT, 17 Sep 2026 (board 11): centred title block, no banner */}
+        {/* REDESIGN PHASE 4 (30 Oct 2026): the big title, then the topics as a
+            LEARNING PATH (round pictures in a zig-zag, a "2 of 4 read" ring)
+            with a switch to the usual card grid — components/CategoryPath.tsx */}
         <PageTitle
           colors={colors}
           breadcrumbs={parentCrumbs}
-          label={[getSubjectInfo(slug[0])?.label ?? breadcrumbs[0]?.label, slug.length > 1 ? "Category" : "Subject"].filter(Boolean).join(" · ")}
+          label={[getSubjectInfo(slug[0])?.label ?? breadcrumbs[0]?.label, `${topics.length} ${topics.length === 1 ? "topic" : "topics"}`].filter(Boolean).join(" · ")}
           title={meta.title}
           description={meta.description}
-        >
-          <span className="font-body text-[13px] text-muted">
-            {topics.length} {topics.length === 1 ? "topic" : "topics"} · in reading order
-            {topics.some((t) => t.hindiHref || getHindiInfo(t.slug)) ? " · English and Hindi" : ""}
-          </span>
-        </PageTitle>
+        />
 
-        <div className="max-w-[1200px] mx-auto px-4 md:px-8 lg:px-16 py-12 md:py-16 flex flex-col gap-6">
+        <section className="max-w-[1320px] mx-auto px-4 md:px-8 pt-10 md:pt-12 pb-6">
           {topics.length > 0 ? (
-            <>
-              <div className="flex items-baseline justify-between gap-4">
-                <h2 className="m-0 font-heading text-2xl md:text-3xl font-bold text-navy-dark">Topics</h2>
-                <span className="font-body text-[13px] text-muted">Read them in order — each builds on the last</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {topics.map((topic, i) => {
-                  // CMS topics carry their own Hindi link; MDX topics use the file check.
-                  const hindi = topic.hindiHref
-                    ? { href: topic.hindiHref, title: topic.hindiTitle }
-                    : getHindiInfo(topic.slug);
-                  return (
-                    <ContentCard
-                      key={topic.slug.join("/")}
-                      title={topic.meta.title}
-                      description={topic.meta.description}
-                      label={`${meta.title} · ${String(i + 1).padStart(2, "0")}`}
-                      href={`/${topic.slug.join("/")}`}
-                      hoverBg={colors?.bg}
-                      accent={colors?.accent}
-                      image={topic.meta.image}
-                      hindiHref={hindi?.href}
-                      hindiTitle={hindi?.title}
-                    />
-                  );
-                })}
-              </div>
-            </>
+            <CategoryPath
+              topics={topics.map((topic) => {
+                const hindi = topic.hindiHref ? { href: topic.hindiHref } : getHindiInfo(topic.slug);
+                return {
+                  title: topic.meta.title,
+                  href: `/${topic.slug.join("/")}`,
+                  image: topic.meta.image,
+                  hindiHref: hindi?.href,
+                };
+              })}
+              grid={
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {topics.map((topic, i) => {
+                    // CMS topics carry their own Hindi link; MDX topics use the file check.
+                    const hindi = topic.hindiHref
+                      ? { href: topic.hindiHref, title: topic.hindiTitle }
+                      : getHindiInfo(topic.slug);
+                    return (
+                      <ContentCard
+                        key={topic.slug.join("/")}
+                        title={topic.meta.title}
+                        description={topic.meta.description}
+                        label={`${meta.title} · ${String(i + 1).padStart(2, "0")}`}
+                        href={`/${topic.slug.join("/")}`}
+                        hoverBg={colors?.bg}
+                        accent={colors?.accent}
+                        image={topic.meta.image}
+                        hindiHref={hindi?.href}
+                        hindiTitle={hindi?.title}
+                      />
+                    );
+                  })}
+                </div>
+              }
+            />
           ) : (
-            <div className="py-16 text-center">
-              <p className="font-body text-lg text-muted">Topics coming soon. Check back later.</p>
+            <div className="gk-card py-14 px-6 text-center">
+              <p className="m-0 font-display text-4xl uppercase text-foreground">Coming soon</p>
+              <p className="m-0 mt-2 font-body text-muted">Topics are being written and checked. Check back later.</p>
             </div>
           )}
-        </div>
+        </section>
       </>
     );
   }

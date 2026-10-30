@@ -25,8 +25,8 @@ export default function ReadLaterPeek() {
   if (!saved) return null;
 
   return (
-    <div className="flex flex-col gap-2 bg-surface border border-hairline rounded-card px-5 py-5">
-      <span className="font-body text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+    <div className="gk-card flex flex-col gap-2 px-5 py-5">
+      <span className="font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-faint">
         Read Later · {saved.length} saved
       </span>
 
@@ -42,7 +42,7 @@ export default function ReadLaterPeek() {
                 href={h.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block py-2 font-heading text-[15px] font-semibold leading-snug text-navy-dark hover:text-sapphire transition-colors line-clamp-2"
+                className="block py-2 font-body text-[15px] font-bold leading-snug text-foreground hover:text-accent transition-colors line-clamp-2"
               >
                 {h.title}
               </a>
@@ -51,7 +51,7 @@ export default function ReadLaterPeek() {
         </ul>
       )}
 
-      <Link href="/saved" className="mt-1 font-body text-[13px] font-semibold text-sapphire hover:text-sapphire-dark transition-colors">
+      <Link href="/saved" className="mt-1 font-body text-[13px] font-extrabold text-accent hover:underline underline-offset-4">
         Open your list →
       </Link>
     </div>
