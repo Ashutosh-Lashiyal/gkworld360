@@ -14,6 +14,48 @@
 
 ## 🔴 Now
 
+- [ ] **REDESIGN — owner chose the look (30 Oct): Playful + Cinematic mix, all pages, Light / Dark /
+      Reading mode.** Preview: https://claude.ai/artifact/Dr36N1feThc8PfUFJ9J4HH ("Now we are talking…
+      the site looks great"). Owner loves the quiz card — grow it into a real quiz section later.
+      Fix the small things once it is on dev. Plan proposed 30 Oct, **waiting for the owner's yes**.
+      - [ ] Restore on dev (missing in the preview, all exist in today's code): Gyaani chat panel,
+        "Clear all" on Read Later, the quote author's photo in the footer. (All three now shown in
+        the preview, 30 Oct.)
+      - [x] **Owner decided (30 Oct):** (1) Earth back in the homepage hero — the 3D Earth loads
+        after the page appears, a LOADER shows until it's ready, old/slow phones get a still Earth
+        photo instead (reverses the 28 Oct "no globe in the hero / no three.js"). (2) Quiz + fact
+        of the day use facts already in the articles and Atlas cards — no database change; the
+        real quiz section comes later (accounts → highlights → quiz). (3) First visit matches the
+        visitor's device setting (light or dark).
+      - [x] **Loaders chosen (30 Oct)** — https://claude.ai/artifact/DeY6KBfWwCu1rF94S1apGQ
+        Earth: globe skeleton with clear country lines + city lights (from the night picture), then
+        sunrise sweeps the real Earth in. Pages: curtain with the page name + a striped loading bar
+        along the bottom. Small waits as shown (search shimmer, Gyaani dots, blur-up pictures).
+      - [ ] **Phone designs — owner asked to see them before finalising (30 Oct).** Preview:
+        https://claude.ai/artifact/JznxmzDBqyJMsp7SzFV6La (every page in a phone frame). Proposed:
+        bottom tab bar (Home · Learn · Gyaani · News · Atlas), reading toolbar on articles, sheets for
+        Contents/Text, full-screen menu, swipeable practice cards, drag-to-spin Earth. Also fixed:
+        article text was squeezed narrow on phones. **Waiting for the owner's verdict.**
+        Owner (30 Oct): "every thing now seems to be good".
+      - [ ] **New logo — owner: the old logo doesn't match the new site (30 Oct).** Five concepts:
+        https://claude.ai/artifact/Hoc4rwr44mNASjzqqPptcL — Round 2 (owner: "completely new, not
+        based on the old logo; match the theme and the motto"): Know + Grow (G/K) = Claude's pick,
+        Curious Earth (?), Growth loop, Steps up, + Sunrise Earth kept from round 1. Compass 360
+        DROPPED — owner: a future phone app with a compass icon would be mistaken for a compass app.
+        Round 3 (30 Oct, owner: "ok with GK but make it fancy, as innovative as the site"): five
+        animated GK logos on the same link — Day & Night (Claude's pick: Earth-filled letters),
+        Orbit GK, Chunky 3D, Sunrise GK, Neon draw. Each has a simple still version for tiny sizes.
+        **[x] FINAL (30 Oct): Day & Night** — G filled with the daylight Earth, K with the night side
+        and its city lights, mint edge, the Earth turning slowly inside the letters. Letters turned
+        into outlines (no font needed). Kit: full logo light/dark, Earth mark, simple mark (tab icon),
+        app icons 180/192/512, share picture 1200×630.
+      - [ ] **Owner said YES to phase 1 (30 Oct).** Branch `feature/redesign` (owner runs git), then:
+        tokens + fonts + Light/Dark/Reading, new header + footer with the animated logo, tab icon,
+        app icon, share picture; keep Gyaani, Clear all, quote photo. Owner checks on localhost.
+        Waiting for the owner's pick → refine → final files
+        (light/dark/reading logo, favicon, app icon, share image) → goes in with phase 1.
+        Then: owner's yes on the build plan → git branch → phases 1–5.
+      - [ ] Reading mode = the eye-strain-free night reading the owner asked for at the project start.
 - [x] **Atlas step 4 + menu tidy-up — BUILT 29 Oct on `feature/atlas`, owner to review.**
       "Atlas" in the main menu · Read Later → bookmark icon by the bell · Contact → footer only ·
       homepage "Knowledge on the map" section after Explore Subjects · "On the map" box on articles ·
@@ -39,17 +81,23 @@
         `drafts/ncert-fixes-2026-10-29.json` (both articles, EN + HI, + the Surat image's alt
         text) and `create-atlas-entries.mjs --replace` (12 dev cards remade; Surat card is now
         /atlas/the-english-open-a-factory-at-surat-1612). Checked on the rendered pages.
-      - [ ] **Owner:** look at the fixed pages on dev, then say go → run the same fix on
-        PRODUCTION: `npm run dev:prod`, then `node scripts/fix-text.mjs
-        drafts/ncert-fixes-2026-10-29.json --production`. (Atlas cards aren't on production yet —
-        they go there later from the corrected file.)
+      - [x] **NCERT fixes copied into PRODUCTION (29 Oct, owner checked dev + said go).** All 4
+        article/language groups + the image alt fixed on sweet-tree; a second run found every old
+        sentence 0 times. NOTE: those articles are DRAFTS on production (404 on the Vercel site) —
+        the fixes show once they are republished (see "Republish #3, #4, #5"). Atlas cards go to
+        production later from the corrected file.
       - [x] **Owner decided (29 Oct): KEEP cards whose facts aren't in NCERT at all** (Dutch 1602 /
         Amsterdam, Masulipatnam 1605, Pulicat 1610, Chinsura 1653, Cochin 1663, Albuquerque).
         The rule is: where NCERT states a fact, NCERT wins; where NCERT is silent, the book's
         fact stays.
-      - [ ] Write the Atlas step into docs/GKWORLD360_CONTENT_PIPELINE.md (Atlas build step 5).
-      - [ ] Check: the Hindi page of "The Revolt of 1857" seems to have no Hindi BODY in the CMS
-        (only the title is Hindi) — its card's section list falls back to English.
+      - [x] Atlas step written into docs/GKWORLD360_CONTENT_PIPELINE.md §9f (29 Oct), with the
+        fix-text tool and the NCERT rule in the decisions log.
+      - [x] **Checked (29 Oct): the Revolt of 1857 Hindi page is MISSING on the Vercel site** (404;
+        English is live). In the production CMS the published version has no Hindi at all, and the
+        latest draft has the Hindi TITLE only — the body falls back to English. The full translation
+        still exists: `drafts/revolt-of-1857.hi.json` (44 blocks).
+        - [ ] **Owner:** OK to re-run `node scripts/add-hindi.mjs drafts/revolt-of-1857.hi.json
+          --production`, then publish? (Saves as a draft first.)
 - [x] **Atlas fixes from the owner's review (29 Oct) — DONE:** (1) a plain mouse-wheel scroll over
       the globe no longer zooms (it trapped page scrolling) — only pinch (phone or trackpad) and
       the + / − buttons zoom; (2) the Share menu scrolls itself into view, flips left when there's
@@ -102,7 +150,8 @@
       **Plan:** a tiny URL that only calls `revalidatePath` inline (<1 s, fits the 30 s limit),
       called by cron-job.org a few minutes after each sync. **Test that the homepage's `age` resets
       before calling it done.** Correct PROJECT_CONTEXT.md / SERVICES.md in the same change. *(9 Oct)*
-- [ ] **Republish #3, #4, #5 on the Vercel site** — turned back into drafts by `write-prompts`
+- [ ] **Republish #3, #4, #5 on the Vercel site** — STILL 404 on 29 Oct (Portuguese, Dutch, English); their
+      drafts now carry the NCERT fixes, so publishing them is safe. Turned back into drafts by `write-prompts`
       (tool since fixed); `node scripts/publish-article.mjs 3 4 5 --production` or Publish in /admin. *(18 Sep)*
 - [ ] **Brainstorm: accounts → highlights → quiz** — design conversation first (who logs in,
       what a highlight is, where quiz questions come from, email vs Google), then a branch with

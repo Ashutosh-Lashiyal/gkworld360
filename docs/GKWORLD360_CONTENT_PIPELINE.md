@@ -251,7 +251,9 @@ How, without editing `.env.local`: `npm run dev:prod` starts a SECOND local serv
 
 Tools (all `node scripts/…`): `create-article-draft.mjs <draft.json>` · `add-images.mjs
 <images.json>` · `add-hindi.mjs <hi.json>` · `export-article.mjs <slug>` → `import-article.mjs
-<export.json>` (whole article, images dropped) · `delete-article.mjs <id>`.
+<export.json>` (whole article, images dropped) · `delete-article.mjs <id>` · `fix-text.mjs
+<fixes.json>` (swap exact sentences in existing articles — 29 Oct, see §9f) ·
+`create-atlas-entries.mjs <entries.json> [--replace]` (§9f).
 
 First run, 18 Sep: Portuguese (import), Dutch + English (drafts + images), Revolt Hindi — all
 now drafts on the Vercel site, awaiting the owner's Publish.
@@ -289,6 +291,35 @@ picks today's: pinned-to-today wins → else active quotes rotate by day-of-year
 Seed/bulk-add with `node scripts/add-quote.mjs drafts/quotes.json [--production]`.
 **Accuracy rule:** only real, verifiable quotes with correct attribution.
 
+## 9f. World360 Atlas cards and fact fixes (29 Oct 2026)
+
+**An Atlas card** (collection `atlas-entries`, shown at `/atlas`) is one event at one place,
+linked to the article that explains it. Cards are made AFTER their article exists:
+
+1. **Claude proposes the cards** for an article: the events that happened at a place, each with
+   lat/lng, year (negative = BC), month/day only if the source gives them, and a **hook** —
+   2–3 sentences, max 250 characters, English + Hindi — that says what happened and ends on
+   something the article answers. Title + place + region (today's name, e.g. "Kozhikode, Kerala").
+2. **Rules:** every fact in a hook is IN the article; every date is checked against NCERT
+   (§10, 29 Oct); map positions are looked up. Anything uncertain goes in the entry's
+   `reviewNotes` (stays in the file, never reaches the CMS) for the owner to answer.
+3. **The file is the master copy** — `drafts/atlas-catch-up.json` (or a new file per article).
+4. **Into the CMS as drafts:** `node scripts/create-atlas-entries.mjs <file> [--production]`.
+   Safe to run twice (existing cards are skipped). The web address (`/atlas/<slug>`) is made
+   from the English title + year and is **locked once published**.
+5. **Corrections:** fix the FILE, then run again with `--replace` — DRAFT cards are deleted and
+   remade from the file; PUBLISHED cards are never touched (fix those in `/admin`).
+6. **The owner reviews and publishes** in `/admin` → Atlas entries. The card's "In the full
+   article" list (the article's section headings) is automatic.
+
+**Fixing facts in an existing article** (e.g. after an NCERT check): write a fixes file —
+`{ articles: [{ slug, locale, fixes: [{ find, replace }] }], media: [{ find, replace }] }` —
+and run `node scripts/fix-text.mjs <file>` on dev, check the pages, then `--production`.
+Each `find` must match exactly once in that article + language, or that whole article is
+skipped and listed (never half-fixed). A published article stays published. Example:
+`drafts/ncert-fixes-2026-10-29.json`. Tip: running the same file a second time is a free
+check — every find should now report "found 0 times".
+
 ## 10. Decisions log
 
 | Date | Decision | Reason |
@@ -302,3 +333,5 @@ Seed/bulk-add with `node scripts/add-quote.mjs drafts/quotes.json [--production]
 | 14 Sep | Duplicates: detect → explain → owner decides | Never silently overwrite reviewed work |
 | 14 Sep | Review in `/admin`, not files | Edit in the real editor; simplest to build |
 | 14 Sep | Photos never enter the project folder | Copyrighted pages must not reach git |
+| 29 Oct | **NCERT is the source of truth for facts and dates.** Where NCERT states a fact, NCERT wins (with NCERT's precision — "May 1498", no day); where NCERT is silent, the book's fact stays | Readers are exam learners, for whom NCERT is the standard |
+| 29 Oct | Atlas cards: one hook per card, every hook fact in the article, file = master copy | Cards tease the article; one source of truth for corrections |
