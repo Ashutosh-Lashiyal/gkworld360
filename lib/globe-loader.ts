@@ -1,10 +1,16 @@
 // lib/globe-loader.ts — the homepage Earth's LOADER (chosen by the owner, 30 Oct
 // 2026): while the real 3D Earth downloads, the Earth's "skeleton" is drawn —
-// a dark sphere, faint latitude/longitude lines, then the coastlines and
-// country borders spreading out from the middle, then the city lights
-// switching on, brightest first. When the 3D Earth is ready, "sunrise" sweeps
-// it in from the left (CSS, in globals.css) right over these lines.
+// a dark sphere, faint latitude/longitude lines, then the coastlines
+// spreading out from the middle, then the city lights switching on, brightest
+// first. When the 3D Earth is ready, "sunrise" sweeps it in from the left
+// (CSS, in globals.css) right over these lines.
 // Browser only (it draws on a <canvas>).
+//
+// NO COUNTRY BORDERS (owner, 31 Oct 2026): the free world map data draws
+// India's border in Kashmir/Ladakh differently from India's official map, and
+// publishing such a map in India is a legal risk. The World360 Atlas already
+// avoided borders for the same reason; the loader now shows coastlines only.
+// Don't add borders back until India-compliant boundary data is available.
 //
 // WHY THE MATHS MATCHES: the lines are drawn with the SAME view as the 3D
 // camera in lib/earth-scene.ts (seen from 8° north, 3.94 Earth-sizes away,
@@ -12,11 +18,11 @@
 // exactly on top of the line that was drawn for it.
 //
 // The data:
-//   public/earth/lines.json — { b: borders, c: coastlines }, each a list of
-//     lines, each line a list of [longitude, latitude] points (≈30 KB zipped);
+//   public/earth/lines.json — { c: coastlines }: a list of lines, each line a
+//     list of [longitude, latitude] points (≈20 KB zipped);
 //   the night picture — every bright spot becomes a city light.
 
-export type LoaderLines = { b: [number, number][][]; c: [number, number][][] };
+export type LoaderLines = { c: [number, number][][] };
 export type LoaderColours = { line: string; light: string };
 
 // The camera, in the same numbers as lib/earth-scene.ts
@@ -116,14 +122,14 @@ export function createGlobeLoader(canvas: HTMLCanvasElement, lines: LoaderLines,
     // 2. latitude and longitude lines, faint
     ctx.lineWidth = 0.7; ctx.globalAlpha = 0.16 * disc; stroke(grid);
 
-    // 3. coastlines and borders, revealed by a ring spreading from the middle
+    // 3. the coastlines, revealed by a ring spreading from the middle
+    //    (no country borders — see the note at the top of this file)
     const rv = ease((p - 0.06) / 0.34), rr = R * 1.08 * rv;
     if (rv > 0) {
       ctx.save();
       ctx.beginPath(); ctx.arc(cx, cy, rr, 0, Math.PI * 2); ctx.clip();
       ctx.lineJoin = "round";
-      ctx.lineWidth = 1.1; ctx.globalAlpha = 0.9; stroke(lines.c);
-      ctx.lineWidth = 0.6; ctx.globalAlpha = 0.5; stroke(lines.b);
+      ctx.lineWidth = 1.2; ctx.globalAlpha = 0.95; stroke(lines.c);
       ctx.restore();
       if (rv < 1) {
         ctx.globalAlpha = 0.55 * (1 - rv); ctx.lineWidth = 2;

@@ -26,34 +26,33 @@ export default async function AtlasPage({ lang, slug }: { lang: AtlasLang; slug?
   const t = T[lang];
   const tail = slug ? `/${slug}` : "";
 
-  // REDESIGN (31 Oct 2026, "Full design"): the whole Atlas sits on the dark
-  // CINEMATIC STAGE, like the homepage hero — the giant title, the
-  // introduction and the language switch, then the timeline and the
-  // realistic Earth (AtlasExplorer). The stage stays dark in every mode.
+  // REDESIGN (31 Oct 2026): the giant title, the introduction and the language
+  // switch, then the timeline and the realistic Earth (AtlasExplorer).
+  // FOLLOWS LIGHT / DARK (owner, 31 Oct 2026): the page is light in Light mode
+  // and dark in Dark mode, like every other page — only the Earth panel stays
+  // dark in every mode, because it shows the Earth in space.
   const [first, ...rest] = t.title.split(" ");
   const hindi = lang === "hi";
   return (
-    <section className="gk-stage-wrap">
-      <div className="gk-stage">
-        <header className="max-w-[1320px] mx-auto px-4 md:px-8 pt-3 pb-8 md:pb-10">
-          {/* Breadcrumb adds "Home" in front by itself */}
-          <Breadcrumb items={[{ label: t.title, href: atlasBase(lang) }]} tone="light" />
-          <span className="block font-accent italic text-[22px] leading-tight text-mint">
-            {hindi ? "मानचित्र पर ज्ञान" : "Knowledge on the map"}
-          </span>
-          {/* Title in the page's own language only (owner, 29 Oct 2026).
-              English: WORLD360 in Anton, "atlas" in mint italics. */}
-          <h1 className={`m-0 mt-1 text-on-dark! ${hindi ? "font-hindi text-5xl md:text-7xl font-bold leading-tight" : "gk-big-title"}`}>
-            {hindi ? t.title : <>{first} <em className="gk-big-title__accent text-mint!">{rest.join(" ").toLowerCase()}</em></>}
-          </h1>
-          <p className={`m-0 mt-4 max-w-[44em] text-base md:text-lg leading-relaxed text-on-dark/70 ${hindi ? "font-hindi" : "font-body"}`}>{t.lede}</p>
-          <div className="mt-6">
-            <LanguageToggle current={lang} enHref={`/atlas${tail}`} hiHref={`/hi/atlas${tail}`} onDark />
-          </div>
-        </header>
-        <AtlasExplorer entries={entries} lang={lang} initialSlug={slug ?? null} siteUrl={SITE_URL} />
-      </div>
-    </section>
+    <>
+      <header className="max-w-[1320px] mx-auto px-4 md:px-8 pt-8 md:pt-12 pb-8 md:pb-10">
+        {/* Breadcrumb adds "Home" in front by itself */}
+        <Breadcrumb items={[{ label: t.title, href: atlasBase(lang) }]} />
+        <span className={`block text-accent ${hindi ? "font-hindi text-lg" : "font-accent italic text-[22px] leading-tight"}`}>
+          {hindi ? "मानचित्र पर ज्ञान" : "Knowledge on the map"}
+        </span>
+        {/* Title in the page's own language only (owner, 29 Oct 2026).
+            English: WORLD360 in Anton, "atlas" in green italics. */}
+        <h1 className={`m-0 mt-1 text-foreground ${hindi ? "font-hindi text-5xl md:text-7xl font-bold leading-tight" : "gk-big-title"}`}>
+          {hindi ? t.title : <>{first} <em className="gk-big-title__accent">{rest.join(" ").toLowerCase()}</em></>}
+        </h1>
+        <p className={`m-0 mt-4 max-w-[44em] text-base md:text-lg leading-relaxed text-muted ${hindi ? "font-hindi" : "font-body"}`}>{t.lede}</p>
+        <div className="mt-6">
+          <LanguageToggle current={lang} enHref={`/atlas${tail}`} hiHref={`/hi/atlas${tail}`} />
+        </div>
+      </header>
+      <AtlasExplorer entries={entries} lang={lang} initialSlug={slug ?? null} siteUrl={SITE_URL} />
+    </>
   );
 }
 

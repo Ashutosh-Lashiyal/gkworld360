@@ -445,7 +445,8 @@ export default function AtlasExplorer({ entries, lang, initialSlug, siteUrl }: P
     );
 
   return (
-    // is-stage: the Atlas sits on the dark cinematic stage (atlas.css, 31 Oct 2026)
+    // is-stage: the new Atlas look (atlas.css, 31 Oct 2026) — follows Light / Dark;
+    // only the Earth panel stays dark (it shows the Earth in space)
     <div ref={rootRef} className="atlas-app is-stage" lang={lang}>
       <div className="atlas-grid" ref={gridRef}>
         {/* ── TIMELINE ── */}

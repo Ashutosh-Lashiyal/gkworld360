@@ -110,15 +110,19 @@
         "Drag through time" slider; dark card with gold date + Anton title. Weak devices keep the
         dotted globe (`lib/earth-support.ts`). Every old feature kept (filters, eras, Play, cards,
         share, card links, near-by, keyboard).
-      - [ ] **ASK OWNER — map borders (found 31 Oct):** the Atlas avoids country borders on purpose
-        ("India-compliant boundary data comes first"), but the homepage LOADER (phase 3) draws
-        country borders from Natural Earth, whose Kashmir/Ladakh lines differ from India's official
-        map. Proposed fix: coastlines only in the loader (drop `b` in public/earth/lines.json).
-      - [ ] **Phase 5 speed check — BLOCKED: disk full (298 MB free on 31 Oct; 4.9 GB later that day).** Plan: "before" =
-        PageSpeed (phone) of the current Vercel site (old design); "after" = a production build of
-        `feature/redesign` (`next build` + `next start`, dev DB raspy-shadow) measured with
-        Lighthouse, phone settings, homepage + an article. Needs ~1–2 GB free. Owner to free space
-        (safe candidates: `npm cache clean --force` ≈ 4.3 GB; old Playwright browsers).
+        **Owner, 31 Oct: "Follow Light/Dark"** — the Atlas page, timeline, card and lists now follow
+        the mode; only the Earth panel stays dark in every mode (it shows the Earth in space).
+      - [x] **Map borders — owner, 31 Oct: "your recommendation" → coastlines only.** The homepage
+        loader no longer draws country borders (public/earth/lines.json now has coastlines only;
+        lib/globe-loader.ts). RULE: no country borders on any map until India-compliant data exists.
+      - [x] **Phase 5 speed check DONE (31 Oct)** — Lighthouse 12.8.2, phone settings, 2 runs each.
+        BEFORE = the Vercel site (old design); AFTER = a local production build of feature/redesign.
+        Homepage: score 61/73 → 53/73; largest paint 7.4–8.4 s → 5.7–6.5 s (better); blocking time
+        46–199 ms → 198–1076 ms (worse: the 3D Earth's code starts during page load); size 872 KB →
+        1252 KB (three.js + more fonts). Article (Revolt of 1857): 75/86 → 77/78; size 691 → 962 KB
+        (bigger cover picture, more fonts). Proposed fixes (waiting for the owner's yes): start the
+        Earth only once the page is idle, trim unused font weights, smaller cover on phones.
+        Real check after deploying: PageSpeed Insights on the Vercel site.
       - [ ] Laptop disk is 99% full (1.7 GB free later on 30 Oct; the dev server again served an old stylesheet in phase 2) — the dev server's cache failed to save
         and served an old stylesheet. Owner to free space; deleting `.next` (1.3 GB, rebuilt
         automatically) is safe while the dev server is stopped.
