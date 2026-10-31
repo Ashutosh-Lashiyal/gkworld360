@@ -29,6 +29,8 @@ import { SUBJECTS } from "@/lib/subjects";
 import { SUBJECT_COLORS } from "@/lib/subject-colors";
 import { HISTORY_ERAS, MAX_ZOOM, MERGE_PX, PERIODS, T, atlasBase, eraOf, type AtlasEntry, type AtlasLang } from "@/lib/atlas-shared";
 import type { AtlasGlobe } from "@/lib/atlas-globe";
+import type { AtlasEarthLayer } from "@/lib/atlas-earth-layer";
+import { canRun3D } from "@/lib/earth-support";
 
 type Props = {
   entries: AtlasEntry[]; //        already in time order (lib/atlas.ts)
@@ -38,7 +40,9 @@ type Props = {
 };
 
 // How the card was opened — decides focus and scrolling (see select()).
-type From = "timeline" | "globe" | "nav" | "play" | "link";
+// "slider" = the "Drag through time" slider (31 Oct 2026): like "nav", but it
+// must NOT move keyboard focus to the card, or the slider would stop dragging.
+type From = "timeline" | "globe" | "nav" | "play" | "link" | "slider";
 
 const NEAR_KM = 25; // places closer than this count as "the same spot" (Delhi 1857 & 1947)
 const reducedMotion = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -96,6 +100,8 @@ export default function AtlasExplorer({ entries, lang, initialSlug, siteUrl }: P
   const titleRef = useRef<HTMLHeadingElement>(null);
   const cardRef = useRef<HTMLElement>(null);
   const globeRef = useRef<AtlasGlobe | null>(null);
+  // The realistic Earth drawn under the globe (lib/atlas-earth-layer.ts, 31 Oct 2026)
+  const layerRef = useRef<AtlasEarthLayer | null>(null);
   const openTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const focusTitle = useRef(false); //       move keyboard focus to the card title once it opens
   const revealItem = useRef(false); //       scroll the timeline to the selected row
@@ -259,6 +265,20 @@ export default function AtlasExplorer({ entries, lang, initialSlug, siteUrl }: P
         // Opened from a shared link → face that place at once.
         if (live.current.current !== null) g.jumpTo(live.current.current);
         setMapState("ready");
+        // REDESIGN (31 Oct 2026): the realistic Earth, the same as on the
+        // homepage, drawn UNDER the globe's dots. Loaded only now, and only on
+        // devices that can handle it (lib/earth-support.ts); anything else —
+        // or if it fails — keeps the dotted globe, which already works.
+        if (canRun3D({ motion: false }) && gpRef.current) {
+          import("@/lib/atlas-earth-layer")
+            .then(({ createAtlasEarthLayer }) => createAtlasEarthLayer(gpRef.current!, { phone: !isWide() }))
+            .then((layer) => {
+              if (cancelled) { layer.dispose(); return; }
+              layerRef.current = layer;
+              g.setLayer(layer);
+            })
+            .catch((error) => console.warn("[atlas] keeping the dotted globe — the realistic Earth could not load:", error));
+        }
       })
       .catch((error) => {
         console.error("[atlas] the globe could not load:", error);
@@ -268,6 +288,8 @@ export default function AtlasExplorer({ entries, lang, initialSlug, siteUrl }: P
       cancelled = true;
       globeRef.current?.destroy();
       globeRef.current = null;
+      layerRef.current?.dispose();
+      layerRef.current = null;
     };
     // The globe is built once per page; the callbacks read the latest state from `live`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -423,7 +445,8 @@ export default function AtlasExplorer({ entries, lang, initialSlug, siteUrl }: P
     );
 
   return (
-    <div ref={rootRef} className="atlas-app" lang={lang}>
+    // is-stage: the Atlas sits on the dark cinematic stage (atlas.css, 31 Oct 2026)
+    <div ref={rootRef} className="atlas-app is-stage" lang={lang}>
       <div className="atlas-grid" ref={gridRef}>
         {/* ── TIMELINE ── */}
         <aside className="tl-col" aria-label={t.timeline}>
@@ -517,6 +540,29 @@ export default function AtlasExplorer({ entries, lang, initialSlug, siteUrl }: P
             </>
           )}
           {mapState === "failed" && <p className="gp-status">{t.mapFailed}</p>}
+
+          {/* DRAG THROUGH TIME (31 Oct 2026, from the approved design): a
+              slider along the bottom of the globe. Each step is one entry on
+              the timeline you can see, in time order — slide it and the globe
+              flies from place to place. */}
+          {visible.length > 1 && (
+            <div className="gp-scrub">
+              <label htmlFor="atlas-scrub">{t.dragTime}</label>
+              <input
+                id="atlas-scrub"
+                type="range"
+                min={0}
+                max={visible.length - 1}
+                step={1}
+                value={current !== null && visible.includes(current) ? visible.indexOf(current) : 0}
+                onChange={(ev) => select(visible[Number(ev.target.value)], "slider")}
+              />
+              <div className="gp-scrub__ends">
+                <span>{entries[visible[0]].date}</span>
+                <span>{entries[visible[visible.length - 1]].date}</span>
+              </div>
+            </div>
+          )}
 
           {/* The "N entries here" list */}
           <div className="gp-pop" ref={popRef} role="dialog" aria-label={pop ? t.entriesHere(pop.ids.length) : undefined} hidden={!pop}>

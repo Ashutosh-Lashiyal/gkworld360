@@ -234,3 +234,139 @@
    to space out anyway. */
 .atlas-app:lang(hi) .ac-subj, .atlas-app:lang(hi) .ac-era, .atlas-app:lang(hi) .ac-kt,
 .atlas-app:lang(hi) .tl-subj, .atlas-app:lang(hi) .tl-era-range, .atlas-app:lang(hi) .atlas-draft, .atlas-app:lang(hi) .tl-live { letter-spacing: 0; }
+
+/* ═══ REDESIGN, 31 Oct 2026 — THE ATLAS ON THE DARK STAGE ("Full design") ════
+   The approved design puts the whole Atlas on the dark cinematic stage, like
+   the homepage hero: gold italic years, round chips, the realistic Earth
+   (lib/atlas-earth-layer.ts) with a "Drag through time" slider, and a dark
+   card with the title in giant Anton letters. Everything the Atlas did before
+   still works the same; only the look changes.
+   HOW: the root gets the class .is-stage (AtlasExplorer.tsx), and the colour
+   names this file uses are pointed at the stage's colours here. `:root` in
+   front makes these win over the Light/Dark rules above in every mode. */
+:root .atlas-app.is-stage {
+  --ink: var(--stage-ink);
+  --muted: var(--stage-muted);
+  --faint: rgba(243, 241, 237, 0.45);
+  --surface: #141418;                     /* the card and the lists */
+  --surface-low: rgba(255, 255, 255, 0.05);
+  --surface-2: rgba(255, 255, 255, 0.06);
+  --page: var(--stage);
+  --hairline: var(--stage-line);
+  --line: var(--stage-line);
+  --line-2: rgba(243, 241, 237, 0.24);
+  --frame: #0e2621;
+  --emerald: var(--mint);
+  --amber-dark: var(--gold);
+  --accent: var(--mint);
+  --accent-soft: rgba(110, 231, 183, 0.12);
+  /* the site's buttons inside the Atlas turn mint, as on the stage everywhere */
+  --btn: var(--mint);
+  --btn-shadow: #0f766e;
+  --on-btn: #04241b;
+  color: var(--ink);
+}
+/* The stage clips its round corners with overflow: CLIP (not hidden), so the
+   globe can still "stick" to the top of the screen on phones — a parent with
+   overflow: hidden would stop position: sticky from working. */
+.gk-stage:has(.atlas-app.is-stage) { overflow: clip; }
+
+/* ── The timeline ── */
+.atlas-app.is-stage .tl-col, .atlas-app.is-stage .tl-tools { background: var(--page); }
+.atlas-app.is-stage .tl-subjects button, .atlas-app.is-stage .tl-eras button {
+  background: transparent; border: 1px solid var(--stage-line); color: var(--stage-muted); font-weight: 800;
+}
+.atlas-app.is-stage .tl-subjects button:hover, .atlas-app.is-stage .tl-eras button:hover {
+  background: rgba(255, 255, 255, 0.06); border-color: rgba(243, 241, 237, 0.35); color: var(--stage-ink);
+}
+/* the chosen chip: filled with the light ink */
+.atlas-app.is-stage .tl-subjects button[aria-pressed="true"], .atlas-app.is-stage .tl-eras button.on {
+  background: var(--stage-ink); border-color: var(--stage-ink); color: var(--stage);
+}
+/* Play: a chunky mint button */
+.atlas-app.is-stage .tl-play { border: 0; background: var(--mint); color: #04241b; font-weight: 800; box-shadow: 0 3px 0 #0f766e; }
+.atlas-app.is-stage .tl-play:hover, .atlas-app.is-stage .tl-play[aria-pressed="true"] { background: #a7f3d0; color: #04241b; }
+.atlas-app.is-stage .tl-play:active { transform: translateY(3px); box-shadow: none; }
+.atlas-app.is-stage .tl::before { background: var(--stage-line); }
+/* era headings in Anton capitals, their years in gold */
+.atlas-app.is-stage .tl-era-name { font: 400 24px/1 var(--font-anton), Impact, sans-serif; text-transform: uppercase; letter-spacing: 0.01em; color: var(--stage-ink); }
+.atlas-app.is-stage .tl-era-range { color: var(--gold); }
+.atlas-app.is-stage .tl-era::before { width: 12px; height: 12px; left: 2px; top: 22px; border-radius: 50%; background: var(--mint); }
+/* each entry: a row, not a box; a soft tint on hover */
+.atlas-app.is-stage .tl-item {
+  margin: 2px 0; padding: 13px 14px 13px 16px; border: 0; border-bottom: 1px solid rgba(243, 241, 237, 0.07);
+  border-radius: 14px; background: transparent; box-shadow: none;
+}
+.atlas-app.is-stage .tl-item:hover { transform: none; box-shadow: none; background: rgba(255, 255, 255, 0.05); }
+.atlas-app.is-stage .tl-item::before { background: var(--stage); }
+/* the chosen entry: a mint line on its left and a mint tint */
+.atlas-app.is-stage .tl-item[aria-current="true"] { background: rgba(110, 231, 183, 0.08); border: 0; padding-left: 16px; box-shadow: inset 3px 0 0 var(--mint); }
+.atlas-app.is-stage .tl-item[aria-current="true"]::after { display: none; }
+/* the year in gold italics (Instrument Serif), the title bold */
+.atlas-app.is-stage .tl-date { font: italic 400 21px/1 var(--font-instrument), Georgia, serif; color: var(--gold); }
+.atlas-app.is-stage .tl-title { font-weight: 700; color: var(--stage-ink); }
+.atlas-app.is-stage .tl-subj { color: color-mix(in srgb, var(--sig, #b5b0a5) 50%, #fff); background: rgba(255, 255, 255, 0.06); border-radius: 999px; padding: 4px 8px; }
+.atlas-app.is-stage .atlas-draft { color: #fdba74; }
+
+/* ── The globe panel: the stage with a soft blue glow, the realistic Earth
+      at the bottom, the dots canvas on top ── */
+.atlas-app.is-stage .gp { background: radial-gradient(60% 55% at 50% 45%, rgba(40, 75, 150, 0.24), transparent 70%), var(--stage); }
+.atlas-app.is-stage .gp::before { display: none; }
+.atlas-app .gp canvas.gp-earth { z-index: 0; pointer-events: none; transition: opacity 0.3s; }
+/* zoom buttons: one round, see-through column */
+.atlas-app.is-stage .gp-zoom { bottom: 104px; border: 1px solid var(--stage-line); border-radius: 16px; overflow: hidden; background: rgba(11, 11, 13, 0.62); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.atlas-app.is-stage .gp-zoom button:hover { background: var(--mint); color: #04241b; }
+/* the "drag to turn…" hint moves to the top so the slider has the bottom */
+.atlas-app.is-stage .gp-hint { top: 14px; bottom: auto; padding: 5px 10px; border-radius: 999px; background: rgba(11, 11, 13, 0.6); }
+/* DRAG THROUGH TIME: a see-through strip along the bottom of the globe */
+.atlas-app .gp-scrub {
+  position: absolute; z-index: 2; left: 16px; right: 16px; bottom: 14px;
+  padding: 10px 14px; border-radius: 16px; border: 1px solid var(--stage-line);
+  background: rgba(11, 11, 13, 0.62); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.atlas-app .gp-scrub label { display: block; margin-bottom: 6px; font: 500 11px/1 var(--font-geist-mono), monospace; letter-spacing: 0.1em; text-transform: uppercase; color: var(--stage-muted); }
+.atlas-app .gp-scrub input { display: block; width: 100%; margin: 0; accent-color: var(--gold); cursor: pointer; }
+.atlas-app .gp-scrub__ends { display: flex; justify-content: space-between; margin-top: 6px; font: 500 12px/1 var(--font-geist-mono), monospace; color: var(--stage-muted); }
+/* when the card is open on a wide screen, the slider leaves room for it on the right */
+@media (min-width: 900px) { .atlas-app .gp:has(.acard.open) .gp-scrub { right: calc(min(400px, 100% - 40px) + 36px); } }
+
+/* the "N entries here" list */
+.atlas-app.is-stage .gp-pop { border: 1px solid var(--stage-line); border-radius: 16px; box-shadow: 0 24px 50px -16px rgba(0, 0, 0, 0.7); }
+.atlas-app.is-stage .pop-it:hover { background: rgba(110, 231, 183, 0.12); }
+.atlas-app.is-stage .pop-it b { font: italic 400 17px/1.2 var(--font-instrument), Georgia, serif; color: var(--gold); }
+.atlas-app.is-stage .pop-zoom { border: 0; border-radius: 12px; background: var(--mint); color: #04241b; font-weight: 800; }
+
+/* ── The card ── */
+.atlas-app.is-stage .acard { border: 1px solid var(--stage-line); border-radius: 22px; overflow: hidden; box-shadow: 0 30px 70px -20px rgba(0, 0, 0, 0.7); }
+.atlas-app.is-stage .ac-x { border-radius: 999px; background: rgba(11, 11, 13, 0.7); }
+.atlas-app.is-stage .ac-x:hover { background: var(--mint); color: #04241b; }
+.atlas-app.is-stage .ac-subj { color: color-mix(in srgb, var(--sig, #b5b0a5) 50%, #fff); }
+.atlas-app.is-stage .ac-subj::before { border-radius: 50%; }
+/* the date in gold italics, the title in giant Anton capitals */
+.atlas-app.is-stage .ac-date { font: italic 400 34px/1 var(--font-instrument), Georgia, serif; color: var(--gold); }
+.atlas-app.is-stage .ac-title { font: 400 34px/0.95 var(--font-anton), Impact, sans-serif; text-transform: uppercase; letter-spacing: 0.01em; color: var(--stage-ink); }
+.atlas-app.is-stage .ac-hook { color: var(--stage-ink); }
+.atlas-app.is-stage .ac-kt { color: var(--gold); }
+.atlas-app.is-stage .ac-inside { border-radius: 12px; }
+.atlas-app.is-stage .ac-sections a { color: var(--stage-ink); }
+.atlas-app.is-stage .ac-sections a:hover { color: var(--mint); }
+.atlas-app.is-stage .ac-near button { border-radius: 999px; color: var(--stage-ink); }
+.atlas-app.is-stage .ac-near button:hover { background: var(--mint); border-color: var(--mint); color: #04241b; }
+.atlas-app.is-stage .ac-nav button { color: var(--stage-ink); }
+.atlas-app.is-stage .ac-nav button:hover:not(:disabled) { background: rgba(110, 231, 183, 0.1); }
+.atlas-app.is-stage .ac-nav button:hover:not(:disabled) small { color: var(--stage-muted); }
+.atlas-app.is-stage .ac-nav button:disabled { color: rgba(243, 241, 237, 0.3); }
+/* Hindi: the dates and titles in the Devanagari font — the italic and the
+   Anton capitals don't exist for Hindi letters */
+.atlas-app.is-stage:lang(hi) .tl-date, .atlas-app.is-stage:lang(hi) .ac-date, .atlas-app.is-stage:lang(hi) .pop-it b { font-family: var(--font-devanagari), sans-serif; font-style: normal; font-weight: 700; font-size: 17px; }
+.atlas-app.is-stage:lang(hi) .ac-date { font-size: 26px; }
+.atlas-app.is-stage:lang(hi) .ac-title, .atlas-app.is-stage:lang(hi) .tl-era-name { font-family: var(--font-devanagari), sans-serif; font-weight: 700; text-transform: none; line-height: 1.3; }
+.atlas-app.is-stage:lang(hi) .ac-title { font-size: 26px; }
+.atlas-app.is-stage:lang(hi) .tl-era-name { font-size: 20px; }
+@media (max-width: 899px) {
+  .atlas-app.is-stage .acard { border-radius: 22px 22px 0 0; border-top: 3px solid var(--mint); }
+}
+/* Hindi: the slider's label without letter-spacing (it pulls Devanagari apart) */
+.atlas-app:lang(hi) .gp-scrub label, .atlas-app:lang(hi) .gp-scrub__ends { letter-spacing: 0; font-family: var(--font-devanagari), sans-serif; font-size: 12px; }
+/* Phones: the globe is small — no hint line over it (dragging works the same) */
+@media (max-width: 899px) { .atlas-app.is-stage .gp-hint { display: none; } }

@@ -20,6 +20,7 @@
 
 import { geoEquirectangular, geoOrthographic, geoPath, type GeoPermissibleObjects } from "d3-geo";
 import { MAX_ZOOM, MERGE_PX } from "@/lib/atlas-shared";
+import type { AtlasEarthLayer } from "@/lib/atlas-earth-layer";
 
 const RAD = Math.PI / 180;
 const INDIA_LON = 78; //          the globe starts facing India…
@@ -80,6 +81,11 @@ export class AtlasGlobe {
   private cosL = 1; private sinL = 0; private cosP = 1; private sinP = 0;
   private raf = 0;
   private cleanups: (() => void)[] = [];
+  // THE REALISTIC EARTH underneath (31 Oct 2026, lib/atlas-earth-layer.ts).
+  // When it's there, this class stops painting its own sea and dotted land
+  // (until you zoom in close) and only draws the dots, numbers and labels on top.
+  private layer: AtlasEarthLayer | null = null;
+  setLayer(layer: AtlasEarthLayer | null) { this.layer = layer; this.dotsKey = null; }
 
   constructor(private c: HTMLCanvasElement, private o: GlobeOptions) {
     this.ctx = c.getContext("2d")!;
@@ -234,24 +240,34 @@ export class AtlasGlobe {
     this.proj.scale(this.Rz).translate([this.CX, this.CY]).rotate([-this.lon, -this.lat]);
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     ctx.clearRect(0, 0, this.W, this.H);
-    ctx.beginPath(); path({ type: "Sphere" }); ctx.fillStyle = "#163630"; ctx.fill(); //          the sea
-    ctx.beginPath(); path(this.o.land); ctx.fillStyle = "rgba(110,231,183,0.07)"; ctx.fill(); //  a whisper of land under the dots
+    // With the realistic Earth underneath: draw it first, turned exactly like
+    // this globe. The dotted land then appears only when zoomed in close,
+    // where the photo gets blurry (landAlpha 0 → 1 between zoom 2.5 and 5).
+    // (at most 0.6 over the real Earth, so the photo still shows through)
+    const landAlpha = this.layer ? 0.6 * Math.min(1, Math.max(0, (this.zoom - 2.5) / 2.5)) : 1;
+    if (this.layer) this.layer.render({ lon: this.lon, lat: this.lat, Rz: this.Rz, CX: this.CX, CY: this.CY, W: this.W, H: this.H, zoom: this.zoom });
+    else {
+      ctx.beginPath(); path({ type: "Sphere" }); ctx.fillStyle = "#163630"; ctx.fill(); //          the sea
+      ctx.beginPath(); path(this.o.land); ctx.fillStyle = "rgba(110,231,183,0.07)"; ctx.fill(); //  a whisper of land under the dots
+    }
     // Land dots, in three brightness steps: brighter as they face us.
     const s = Math.max(1.3, Math.min(2.6, this.Rz / 210));
     const buckets: number[][] = [[], [], []];
     const D = this.dots, W = this.W, H = this.H;
-    for (let i = 0; i < D.length; i += 3) {
+    // (skipped entirely while the dotted land is invisible — saves work every frame)
+    if (landAlpha > 0) for (let i = 0; i < D.length; i += 3) {
       const p = this.screen([D[i], D[i + 1], D[i + 2]]);
       if (p.depth <= 0.02 || p.sx < -4 || p.sy < -4 || p.sx > W + 4 || p.sy > H + 4) continue;
       buckets[p.depth > 0.55 ? 2 : p.depth > 0.25 ? 1 : 0].push(p.sx, p.sy);
     }
-    [0.35, 0.65, 0.95].forEach((a, k) => {
+    if (landAlpha > 0) [0.35, 0.65, 0.95].forEach((a, k) => {
       const b = buckets[k];
       ctx.beginPath();
       for (let i = 0; i < b.length; i += 2) ctx.rect(b[i] - s / 2, b[i + 1] - s / 2, s, s);
-      ctx.fillStyle = `rgba(167,243,208,${a})`; ctx.fill();
+      ctx.fillStyle = `rgba(167,243,208,${a * landAlpha})`; ctx.fill();
     });
-    ctx.beginPath(); path({ type: "Sphere" }); ctx.strokeStyle = "rgba(110,231,183,0.45)"; ctx.lineWidth = 1.2; ctx.stroke(); // the rim
+    // the rim: a mint line on the dotted globe; only faint over the real Earth
+    ctx.beginPath(); path({ type: "Sphere" }); ctx.strokeStyle = `rgba(110,231,183,${this.layer ? 0.12 : 0.45})`; ctx.lineWidth = 1.2; ctx.stroke();
     // "INDIA" over India, zoomed out with nothing selected.
     if (this.o.indiaLabel && this.sel === null && this.zoom < 2.5) {
       const lab = this.screen(unit(78.3, 19.8));

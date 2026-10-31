@@ -125,6 +125,7 @@ export const T = {
     zoomOut: "Zoom out",
     zoomReset: "Show the whole globe",
     hint: "Drag to turn · pinch or use + − to zoom · tap a dot",
+    dragTime: "Drag through time", // the time slider under the globe (31 Oct 2026)
     globeLabel: "Globe showing every place on the timeline. Pick a place from the timeline to turn the globe to it.",
     mapFailed: "The map could not load. The timeline still works.",
     empty: "No places on the map yet — they appear here as articles are published.",
@@ -162,6 +163,7 @@ export const T = {
     zoomOut: "ज़ूम आउट",
     zoomReset: "पूरा ग्लोब दिखाएँ",
     hint: "घुमाने के लिए खींचें · ज़ूम के लिए पिंच करें या + − दबाएँ · किसी बिंदु पर टैप करें",
+    dragTime: "समय में आगे-पीछे खिसकाएँ",
     globeLabel: "ग्लोब, जिस पर समयरेखा का हर स्थान है। समयरेखा से कोई स्थान चुनें, ग्लोब वहाँ घूम जाएगा।",
     mapFailed: "मानचित्र लोड नहीं हो सका। समयरेखा फिर भी काम करती है।",
     empty: "अभी मानचित्र पर कोई स्थान नहीं है — लेख प्रकाशित होने के साथ ये यहाँ दिखेंगे।",

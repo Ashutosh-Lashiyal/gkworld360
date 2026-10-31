@@ -101,7 +101,20 @@
         (`PosterPin`), the motto band reacts to scroll speed/direction, section titles rise word by
         word, cards tilt + shine and a cursor ring names the action (mouse only, `PointerFx`),
         hero numbers count up. All off for reduce-motion; curtain and ring off in Reading mode.
-      - [ ] **Phase 5 speed check — BLOCKED: disk full (298 MB free on 31 Oct).** Plan: "before" =
+      - [x] **Atlas FULL redesign BUILT (31 Oct; owner: "atlas is still how it was earlier" → chose
+        "Full design").** Whole Atlas on the dark stage (EN + HI): giant WORLD360 *atlas* title, gold
+        italic years, round chips, mint Play, Anton era headings, rows instead of boxes; the REALISTIC
+        EARTH under the globe's dots (`lib/atlas-earth-layer.ts`, same pictures/lighting as the
+        homepage, lined up exactly with the dotted globe, which still does all the turning/tapping/
+        zoom); the dotted land fades in only when zoomed in close (the photo blurs there); new
+        "Drag through time" slider; dark card with gold date + Anton title. Weak devices keep the
+        dotted globe (`lib/earth-support.ts`). Every old feature kept (filters, eras, Play, cards,
+        share, card links, near-by, keyboard).
+      - [ ] **ASK OWNER — map borders (found 31 Oct):** the Atlas avoids country borders on purpose
+        ("India-compliant boundary data comes first"), but the homepage LOADER (phase 3) draws
+        country borders from Natural Earth, whose Kashmir/Ladakh lines differ from India's official
+        map. Proposed fix: coastlines only in the loader (drop `b` in public/earth/lines.json).
+      - [ ] **Phase 5 speed check — BLOCKED: disk full (298 MB free on 31 Oct; 4.9 GB later that day).** Plan: "before" =
         PageSpeed (phone) of the current Vercel site (old design); "after" = a production build of
         `feature/redesign` (`next build` + `next start`, dev DB raspy-shadow) measured with
         Lighthouse, phone settings, homepage + an article. Needs ~1–2 GB free. Owner to free space

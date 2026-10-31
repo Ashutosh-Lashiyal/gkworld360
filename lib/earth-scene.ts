@@ -42,6 +42,56 @@ type Options = {
 
 const clamp = (x: number, a = 0, b = 1) => Math.min(b, Math.max(a, x));
 
+// ── THE EARTH'S COLOURS (shared with the Atlas, lib/atlas-earth-layer.ts) ──
+// Two small "shaders" — programs that run on the graphics chip once per
+// pixel — for the Earth and for the glow around it. The sun is fixed relative
+// to the VIEWER (up and to the left), so whatever the Earth turns to, the
+// middle of the view is in daylight and the right edge shows the night side.
+// `ortho`: the Atlas draws the Earth flat-on (no perspective), so the
+// direction to the viewer is the same everywhere: straight out of the screen.
+export function makeEarthMaterials(
+  maps: { day: THREE.Texture; night: THREE.Texture; water: THREE.Texture },
+  { ortho = false }: { ortho?: boolean } = {},
+) {
+  const SUN = new THREE.Vector3(-0.55, 0.35, 0.76).normalize();
+  const earthMaterial = new THREE.ShaderMaterial({
+    uniforms: { dayMap: { value: maps.day }, nightMap: { value: maps.night }, waterMap: { value: maps.water }, uSun: { value: SUN } },
+    vertexShader: `varying vec2 vUv; varying vec3 vN; varying vec3 vV;
+      void main(){ vUv = uv; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = ${ortho ? "vec3(0.0, 0.0, 1.0)" : "normalize(-mv.xyz)"}; gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `uniform sampler2D dayMap; uniform sampler2D nightMap; uniform sampler2D waterMap; uniform vec3 uSun;
+      varying vec2 vUv; varying vec3 vN; varying vec3 vV;
+      void main(){
+        vec3 base = texture2D(dayMap, vUv).rgb;
+        float water = smoothstep(0.35, 0.65, texture2D(waterMap, vUv).r);
+        float NdL = dot(vN, uSun), lit = smoothstep(-0.10, 0.22, NdL);
+        // daylight, brightest where the sun is overhead
+        vec3 col = base * (0.04 + 1.08 * max(NdL, 0.0));
+        // a warm sunset band along the day/night line
+        col += base * vec3(0.55, 0.22, 0.05) * smoothstep(0.22, 0.0, abs(NdL - 0.04)) * 0.35;
+        // city lights on the night side, on land only
+        col += pow(texture2D(nightMap, vUv).rgb, vec3(1.5)) * vec3(1.0, 0.8, 0.52) * 1.9 * (1.0 - lit) * (1.0 - water);
+        // the sun's glint on the oceans
+        float NdH = max(dot(vN, normalize(uSun + vV)), 0.0);
+        col += vec3(1.0, 0.95, 0.85) * (pow(NdH, 220.0) * 0.35 + pow(NdH, 18.0) * 0.04) * water * lit;
+        // the blue haze of atmosphere at the edge
+        float rim = pow(1.0 - max(dot(vN, vV), 0.0), 2.6);
+        col = mix(col, vec3(0.34, 0.6, 1.0) * (0.3 + lit), rim * 0.62 * clamp(NdL + 0.45, 0.0, 1.0));
+        gl_FragColor = vec4(col, 1.0);
+      }`,
+  });
+  const glowMaterial = new THREE.ShaderMaterial({
+    uniforms: { uSun: { value: SUN } },
+    vertexShader: `varying vec3 vN; void main(){ vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+    fragmentShader: `uniform vec3 uSun; varying vec3 vN; void main(){ float i = pow(0.68 - dot(vN, vec3(0.0,0.0,1.0)), 3.0);
+      gl_FragColor = vec4(0.25, 0.52, 1.0, 1.0) * i * 1.6 * (0.2 + 0.8 * smoothstep(-0.5, 0.6, dot(vN, uSun))); }`,
+    side: THREE.BackSide,
+    blending: THREE.AdditiveBlending,
+    transparent: true,
+    depthWrite: false,
+  });
+  return { earthMaterial, glowMaterial };
+}
+
 export async function createEarthScene(box: HTMLElement, opts: Options): Promise<EarthScene> {
   // ── THE PICTURES ─────────────────────────────────────────────────────────
   const loader = new THREE.TextureLoader();
@@ -68,8 +118,7 @@ export async function createEarthScene(box: HTMLElement, opts: Options): Promise
   const camera = new THREE.PerspectiveCamera(37, 1, 0.1, 50);
   camera.position.set(0, 0.55, 3.9);
   camera.lookAt(0, 0, 0);
-  // Where the sun is: up and to the left, so the right edge shows the night side
-  const SUN = new THREE.Vector3(-0.55, 0.35, 0.76).normalize();
+  // (The sun's direction lives in makeEarthMaterials above.)
 
   // A latitude/longitude → a point on the sphere (radius r)
   const toVec = (lat: number, lng: number, r: number) => {
@@ -77,48 +126,13 @@ export async function createEarthScene(box: HTMLElement, opts: Options): Promise
     return new THREE.Vector3(-r * Math.sin(p) * Math.cos(t), r * Math.cos(p), r * Math.sin(p) * Math.sin(t));
   };
 
-  // ── THE EARTH ────────────────────────────────────────────────────────────
-  const earthMaterial = new THREE.ShaderMaterial({
-    uniforms: { dayMap: { value: day }, nightMap: { value: night }, waterMap: { value: water }, uSun: { value: SUN } },
-    vertexShader: `varying vec2 vUv; varying vec3 vN; varying vec3 vV;
-      void main(){ vUv = uv; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }`,
-    fragmentShader: `uniform sampler2D dayMap; uniform sampler2D nightMap; uniform sampler2D waterMap; uniform vec3 uSun;
-      varying vec2 vUv; varying vec3 vN; varying vec3 vV;
-      void main(){
-        vec3 base = texture2D(dayMap, vUv).rgb;
-        float water = smoothstep(0.35, 0.65, texture2D(waterMap, vUv).r);
-        float NdL = dot(vN, uSun), lit = smoothstep(-0.10, 0.22, NdL);
-        // daylight, brightest where the sun is overhead
-        vec3 col = base * (0.04 + 1.08 * max(NdL, 0.0));
-        // a warm sunset band along the day/night line
-        col += base * vec3(0.55, 0.22, 0.05) * smoothstep(0.22, 0.0, abs(NdL - 0.04)) * 0.35;
-        // city lights on the night side, on land only
-        col += pow(texture2D(nightMap, vUv).rgb, vec3(1.5)) * vec3(1.0, 0.8, 0.52) * 1.9 * (1.0 - lit) * (1.0 - water);
-        // the sun's glint on the oceans
-        float NdH = max(dot(vN, normalize(uSun + vV)), 0.0);
-        col += vec3(1.0, 0.95, 0.85) * (pow(NdH, 220.0) * 0.35 + pow(NdH, 18.0) * 0.04) * water * lit;
-        // the blue haze of atmosphere at the edge
-        float rim = pow(1.0 - max(dot(vN, vV), 0.0), 2.6);
-        col = mix(col, vec3(0.34, 0.6, 1.0) * (0.3 + lit), rim * 0.62 * clamp(NdL + 0.45, 0.0, 1.0));
-        gl_FragColor = vec4(col, 1.0);
-      }`,
-  });
+  // ── THE EARTH AND ITS GLOW (the colour programs are shared with the Atlas) ──
+  const { earthMaterial, glowMaterial } = makeEarthMaterials({ day, night, water });
   const globe = new THREE.Group();
   scene.add(globe);
   const detail = opts.phone ? 64 : 96; // how smooth the sphere is (more = rounder, slower)
   globe.add(new THREE.Mesh(new THREE.SphereGeometry(1, detail, detail), earthMaterial));
 
-  // ── THE GLOW AROUND IT ───────────────────────────────────────────────────
-  const glowMaterial = new THREE.ShaderMaterial({
-    uniforms: { uSun: { value: SUN } },
-    vertexShader: `varying vec3 vN; void main(){ vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
-    fragmentShader: `uniform vec3 uSun; varying vec3 vN; void main(){ float i = pow(0.68 - dot(vN, vec3(0.0,0.0,1.0)), 3.0);
-      gl_FragColor = vec4(0.25, 0.52, 1.0, 1.0) * i * 1.6 * (0.2 + 0.8 * smoothstep(-0.5, 0.6, dot(vN, uSun))); }`,
-    side: THREE.BackSide,
-    blending: THREE.AdditiveBlending,
-    transparent: true,
-    depthWrite: false,
-  });
   const glowGeometry = new THREE.SphereGeometry(1.12, 64, 64);
   scene.add(new THREE.Mesh(glowGeometry, glowMaterial));
 

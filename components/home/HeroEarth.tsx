@@ -18,27 +18,12 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { createGlobeLoader, loaderStage, type LoaderLines } from "@/lib/globe-loader";
+// "Can this device run the 3D Earth?" — shared with the Atlas (lib/earth-support.ts)
+import { canRun3D } from "@/lib/earth-support";
 import type { EarthPlace, EarthScene } from "@/lib/earth-scene";
 
 // Remembered for this visit only: the loader has played once
 const SEEN_KEY = "gk-earth-seen";
-
-/** Can this device run the 3D Earth comfortably? */
-function canRun3D(): boolean {
-  // Navigator extras that not every browser has — read them carefully
-  const nav = navigator as Navigator & { deviceMemory?: number; connection?: { saveData?: boolean; effectiveType?: string } };
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return false; // asked for less motion
-  if (nav.connection?.saveData) return false;                                     // data saver on
-  if (/(^|-)2g$/.test(nav.connection?.effectiveType ?? "")) return false;          // very slow network
-  if (nav.deviceMemory !== undefined && nav.deviceMemory < 4) return false;       // under 4 GB of memory
-  if (nav.hardwareConcurrency !== undefined && nav.hardwareConcurrency < 4) return false; // fewer than 4 processor cores
-  try {
-    // Does this browser support 3D drawing at all?
-    return !!document.createElement("canvas").getContext("webgl");
-  } catch {
-    return false;
-  }
-}
 
 type Stage = "waiting" | "loading" | "sunrise" | "live" | "still";
 
