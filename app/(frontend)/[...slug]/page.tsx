@@ -562,7 +562,7 @@ export default async function ContentPage({
             <ol data-reveal-group className="grid grid-cols-1 md:grid-cols-3 gap-[18px] m-0 p-0 list-none">
               {startHere.map((t, i) => (
                 <li key={t.slug.join("/")}>
-                  <Link href={`/${t.slug.join("/")}`} className="gk-card gk-card--lift flex flex-col items-start gap-2.5 h-full p-[22px] font-body">
+                  <Link href={`/${t.slug.join("/")}`} className="gk-card gk-card--lift gk-tilt flex flex-col items-start gap-2.5 h-full p-[22px] font-body" data-cursor="Read">
                     <span className="font-display text-[54px] leading-none text-accent">{String(i + 1).padStart(2, "0")}</span>
                     <span className="font-heading text-[22px] font-semibold leading-tight text-foreground">{t.meta.title}</span>
                     {t.meta.description && <span className="text-sm text-muted line-clamp-3">{t.meta.description}</span>}

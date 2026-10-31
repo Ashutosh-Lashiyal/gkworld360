@@ -62,7 +62,7 @@ export default function RecentAndNews({
       )}
 
       {news && (
-        <Link href={news.url} className="gk-card gk-card--lift group overflow-hidden flex flex-col font-body">
+        <Link href={news.url} className="gk-card gk-card--lift gk-tilt group overflow-hidden flex flex-col font-body" data-cursor="Read">
           <div className="relative aspect-[2/1] overflow-hidden bg-navy-dark">
             {news.meta.image && <Image src={news.meta.image} alt="" fill sizes="(max-width: 1023px) 100vw, 640px" className="object-cover transition-transform duration-1000 group-hover:scale-[1.06]" />}
           </div>

@@ -26,6 +26,8 @@ import { getRecentlyAddedTopics } from "@/lib/topics";
 import LatestHeadlinesSection from "@/components/LatestHeadlinesSection";
 import AtlasTeaser from "@/components/atlas/AtlasTeaser";
 import HeroEarth from "@/components/home/HeroEarth";
+import HeroScrollFx from "@/components/home/HeroScrollFx";
+import CountUp from "@/components/CountUp";
 import HeadlineTicker from "@/components/home/HeadlineTicker";
 import TodaysPractice from "@/components/home/TodaysPractice";
 import SubjectBento from "@/components/home/SubjectBento";
@@ -122,6 +124,8 @@ export default async function HomePage() {
           gk-stage-wrap pulls the stage UP behind the floating header pill, so
           the dark reaches the top of the screen (globals.css). */}
       <section aria-label="Welcome" className="gk-stage-wrap">
+        {/* Phase 5: the hero comes apart as you scroll (components/home/HeroScrollFx.tsx) */}
+        <HeroScrollFx />
         <div className="gk-stage">
           <div className="gk-hero">
             {/* The motto, in giant letters above and below the Earth.
@@ -130,8 +134,9 @@ export default async function HomePage() {
 
             {/* Live facts, in a small see-through box */}
             <dl className="gk-facts">
-              <div><dt>Subjects</dt><dd>{stats.subjects}</dd></div>
-              <div><dt>Topics</dt><dd>{stats.topics}</dd></div>
+              {/* CountUp: the numbers count up from 0 when the page opens */}
+              <div><dt>Subjects</dt><dd><CountUp value={stats.subjects} /></dd></div>
+              <div><dt>Topics</dt><dd><CountUp value={stats.topics} /></dd></div>
               <div>
                 <dt>Atlas</dt>
                 <dd>

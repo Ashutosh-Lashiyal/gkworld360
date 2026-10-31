@@ -32,7 +32,7 @@ Phase 2 built (article page + Reading mode; new folder `components/article/`, he
 Phase 3 built (homepage: 3D Earth hero `components/home/HeroEarth.tsx` + `lib/earth-scene.ts`
 (three.js) + loader `lib/globe-loader.ts`; today's quiz/fact/place `lib/daily.ts`; other sections in
 `components/home/`). Phase 4 built (all other pages: PageTitle, ContentCard, CategoryPath learning
-path, Atlas follows Light/Dark). Only phase 5 (effects + phone speed check) is left. Owner reviews
+path, Atlas follows Light/Dark). Phase 5 effects built (curtain, scroll effects, tilt, cursor ring); only the phone speed check is left (blocked: disk full, 31 Oct). Owner reviews
 everything once the whole site is redesigned, not phase by phase.
 How modes work: `lib/mode.ts` + the colour blocks at the top of `app/(frontend)/globals.css`.
 Reading mode is per-article: the `data-article` marker (ArticleLayout) + `data-reading` on <html>.

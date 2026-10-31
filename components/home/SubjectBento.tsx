@@ -47,7 +47,8 @@ export default async function SubjectBento() {
             <Link
               key={s.slug}
               href={`/${s.slug}`}
-              className={`gk-card gk-card--lift gk-subj ${isBig ? "gk-subj--big" : ""} ${n === 0 ? "gk-subj--wait" : ""}`}
+              className={`gk-card gk-card--lift gk-tilt gk-subj ${isBig ? "gk-subj--big" : ""} ${n === 0 ? "gk-subj--wait" : ""}`}
+              data-cursor={n > 0 ? "Explore" : "Soon"}
               // the subject's two colours: a dark one for light pages, a light one for dark pages
               style={{ ["--cl" as string]: colours?.accent ?? "#047857", ["--cd" as string]: colours?.bandAccent ?? "#6ee7b7" }}
             >

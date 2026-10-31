@@ -52,7 +52,7 @@ export default async function TodaysPractice() {
         )}
 
         {place && (
-          <Link href={`/atlas/${place.slug}`} className="gk-card gk-pcard gk-pcard--map block overflow-hidden font-body">
+          <Link href={`/atlas/${place.slug}`} className="gk-card gk-pcard gk-pcard--map block overflow-hidden font-body" data-cursor="Map">
             <PlaceMap lat={place.lat} lng={place.lng} label={`${place.place} · ${place.date}`} />
             <div className="px-6 pt-5 pb-6">
               <span className="text-xs font-extrabold uppercase tracking-[0.12em] text-accent">Place of the day</span>

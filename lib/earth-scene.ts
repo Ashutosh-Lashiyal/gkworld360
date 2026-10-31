@@ -178,7 +178,10 @@ export async function createEarthScene(box: HTMLElement, opts: Options): Promise
     const t = (now - t0) / 1000;
     // after 4 seconds without touching, a drag slowly eases back
     if (!dragging && now - lastTouch > 4000) drag *= 0.985;
-    const want = centre + 0.5 * Math.sin(t * 0.11) + drag;
+    // data-spin: how far the reader has scrolled the hero (components/home/
+    // HeroScrollFx.tsx writes it) — scrolling down turns the Earth too
+    const spin = Number(box.dataset.spin || 0);
+    const want = centre + 0.5 * Math.sin(t * 0.11) + spin + drag;
     const diff = Math.atan2(Math.sin(want - yaw), Math.cos(want - yaw));
     yaw += dragging ? diff : diff * 0.06;
     globe.rotation.y = yaw;

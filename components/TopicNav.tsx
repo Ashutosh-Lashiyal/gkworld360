@@ -26,7 +26,7 @@ export default function TopicNav({ previous, next }: TopicNavProps) {
       {previous ? (
         <Link
           href={`/${previous.slug.join("/")}`}
-          className="group gk-card gk-card--lift flex flex-col gap-1.5 px-6 py-[22px]"
+          data-cursor="Read" className="group gk-card gk-card--lift gk-tilt flex flex-col gap-1.5 px-6 py-[22px]"
         >
           <span className="font-body text-[13px] font-extrabold uppercase tracking-[0.06em] text-muted">← Previous</span>
           <span className="font-display text-[26px] md:text-[30px] leading-none uppercase text-foreground group-hover:text-accent transition-colors">
@@ -42,7 +42,7 @@ export default function TopicNav({ previous, next }: TopicNavProps) {
       {next ? (
         <Link
           href={`/${next.slug.join("/")}`}
-          className="group gk-card gk-card--lift flex flex-col gap-1.5 px-6 py-[22px] sm:text-right sm:items-end"
+          data-cursor="Read" className="group gk-card gk-card--lift gk-tilt flex flex-col gap-1.5 px-6 py-[22px] sm:text-right sm:items-end"
         >
           <span className="font-body text-[13px] font-extrabold uppercase tracking-[0.06em] text-muted">Next →</span>
           <span className="font-display text-[26px] md:text-[30px] leading-none uppercase text-foreground group-hover:text-accent transition-colors">

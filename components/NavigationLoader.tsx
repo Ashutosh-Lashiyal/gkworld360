@@ -20,6 +20,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import BookLoader from "@/components/BookLoader";
+import { curtainWillPlay } from "@/components/PageCurtain";
 
 export default function NavigationLoader() {
   const pathname = usePathname();
@@ -46,6 +47,10 @@ export default function NavigationLoader() {
       const dest = `${url.pathname}${url.search}`;
       if (url.hash && url.pathname === window.location.pathname && url.search === window.location.search) return;
       if (dest === `${window.location.pathname}${window.location.search}`) return;
+      // 31 Oct 2026: changes to ANOTHER page get the curtain (PageCurtain.tsx);
+      // this book overlay now covers only what the curtain skips — filters and
+      // sorting on the same page, and readers with less motion / Reading mode.
+      if (curtainWillPlay(url)) return;
 
       setTarget(dest);
       if (timer.current) clearTimeout(timer.current);

@@ -94,7 +94,18 @@
       - [ ] Known (dev only): the laptop's "page not found" screen shows a React warning about the
         mode script, because the dev server builds that page in the browser. Check on the Vercel
         site after deploying; if it shows there too, revisit.
-      - [ ] Phase 5: effects (curtain + loading bar between pages, hover/scroll) + phone PageSpeed before/after.
+      - [x] **Phase 5 effects BUILT (31 Oct) on `feature/redesign`.** Page CURTAIN with the next
+        page's name + striped loading bar (`components/PageCurtain.tsx`; the book overlay now only
+        covers same-page filter/sort changes), hero comes apart on scroll + scroll turns the Earth
+        (`HeroScrollFx`), Popular posters move sideways while scrolling on wide screens
+        (`PosterPin`), the motto band reacts to scroll speed/direction, section titles rise word by
+        word, cards tilt + shine and a cursor ring names the action (mouse only, `PointerFx`),
+        hero numbers count up. All off for reduce-motion; curtain and ring off in Reading mode.
+      - [ ] **Phase 5 speed check — BLOCKED: disk full (298 MB free on 31 Oct).** Plan: "before" =
+        PageSpeed (phone) of the current Vercel site (old design); "after" = a production build of
+        `feature/redesign` (`next build` + `next start`, dev DB raspy-shadow) measured with
+        Lighthouse, phone settings, homepage + an article. Needs ~1–2 GB free. Owner to free space
+        (safe candidates: `npm cache clean --force` ≈ 4.3 GB; old Playwright browsers).
       - [ ] Laptop disk is 99% full (1.7 GB free later on 30 Oct; the dev server again served an old stylesheet in phase 2) — the dev server's cache failed to save
         and served an old stylesheet. Owner to free space; deleting `.next` (1.3 GB, rebuilt
         automatically) is safe while the dev server is stopped.

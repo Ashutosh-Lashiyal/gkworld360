@@ -12,6 +12,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import SectionHead from "@/components/SectionHead";
+import PosterPin from "@/components/home/PosterPin";
 import { getPopularTopics } from "@/lib/topics";
 
 export default async function TopicPosters() {
@@ -21,6 +22,9 @@ export default async function TopicPosters() {
 
   return (
     <section aria-labelledby="popular-title" className="pt-20 md:pt-28">
+      {/* PosterPin (phase 5): on wide screens the strip moves sideways while
+          you scroll down; elsewhere it's the normal swipeable strip */}
+      <PosterPin>
       <div className="max-w-[1320px] mx-auto px-4 md:px-8">
         <SectionHead id="popular-title" eyebrow="Most read" title="Popular" accent="topics" more={{ href: "/topics?sort=popular", label: "All topics" }} />
       </div>
@@ -30,7 +34,7 @@ export default async function TopicPosters() {
       <div className="gk-posters" data-reveal-group>
         {topics.map((t, i) => (
           // gk-noimg: a soft glow behind the title when a topic has no picture yet
-          <Link key={t.slug.join("/")} href={"/" + t.slug.join("/")} className={`gk-poster ${t.meta.image ? "" : "gk-noimg"}`}>
+          <Link key={t.slug.join("/")} href={"/" + t.slug.join("/")} className={`gk-poster gk-tilt ${t.meta.image ? "" : "gk-noimg"}`} data-cursor="Read">
             {t.meta.image && <Image src={t.meta.image} alt="" fill sizes="(max-width: 767px) 78vw, 360px" className="gk-poster__img object-cover" />}
             <span className="gk-poster__n">{String(i + 1).padStart(2, "0")} / {total}</span>
             <div className="gk-poster__txt">
@@ -43,10 +47,13 @@ export default async function TopicPosters() {
             </div>
           </Link>
         ))}
-        <Link href="/topics" className="gk-poster gk-poster--end">
+        <Link href="/topics" className="gk-poster gk-poster--end" data-cursor="All">
           <b>All<br />topics →</b>
         </Link>
       </div>
+      {/* how far along the strip you are (shown only while it's pinned) */}
+      <div className="gk-posters-progress max-w-[1320px] mx-auto px-4 md:px-8" aria-hidden="true"><span><i /></span></div>
+      </PosterPin>
     </section>
   );
 }

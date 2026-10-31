@@ -8,6 +8,8 @@ import ModeFallback from "@/components/ModeFallback";
 // The permanent shell components — appear on every single page
 import Header from "@/components/Header";
 import Toast from "@/components/Toast";
+import PageCurtain from "@/components/PageCurtain";
+import PointerFx from "@/components/PointerFx";
 import NavigationLoader from "@/components/NavigationLoader";
 import { Suspense } from "react";
 import { getSiteStats } from "@/lib/site-stats";
@@ -223,9 +225,15 @@ export default async function RootLayout({
         <PhoneTabBar />
         {/* Site-wide confirmation bar (e.g. "Saved to Read Later") — see components/Toast.tsx */}
         <Toast />
-        {/* Book-turning-pages overlay while moving between pages. Suspense is
-            required because the loader reads the URL's search params. */}
+        {/* MOVING BETWEEN PAGES (31 Oct 2026): the curtain with the next page's
+            name and a loading bar (PageCurtain); the book overlay stays for
+            slow filter/sort changes on the same page (NavigationLoader).
+            Suspense is required because both read the URL's search params. */}
+        {/* Mouse only: cards lean towards the pointer, and a ring names the
+            action ("Read", "Explore") — components/PointerFx.tsx */}
+        <PointerFx />
         <Suspense fallback={null}>
+          <PageCurtain />
           <NavigationLoader />
         </Suspense>
 

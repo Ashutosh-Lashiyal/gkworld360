@@ -102,8 +102,10 @@ export default function ContentCard({
     <article
       className={[
         "group gk-card flex flex-col h-full overflow-hidden",
-        flat ? "" : "gk-card--lift",
+        flat ? "" : "gk-card--lift gk-tilt",
       ].join(" ")}
+      // the word in the mouse's ring (components/PointerFx.tsx)
+      data-cursor={comingSoon ? "Soon" : ctaLabel.startsWith("Explore") ? "Explore" : "Read"}
       // the subject's colour, for the label pill (globals.css mixes it with
       // the page's text colour so it reads on light AND dark pages)
       style={{ ["--signal" as string]: accentColor }}

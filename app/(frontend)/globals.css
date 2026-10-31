@@ -1558,3 +1558,119 @@ body:has([data-article])::after {
 .atlas-app .tl-eras button, .atlas-app .tl-subjects button, .atlas-app .tl-play { border-radius: 999px; }
 /* end of phase 4 */
 
+
+/* ═════════════════════════════════════════════════════════════════════════════
+   REDESIGN PHASE 5 (31 Oct 2026): effects. The page curtain, the homepage's
+   scroll effects, rising titles, card tilt + shine, the cursor ring.
+   Everything here stands still for readers who asked for less motion.
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+/* ── THE PAGE CURTAIN (components/PageCurtain.tsx) ─────────────────────────── */
+/* Waiting below the screen; .is-in sweeps it up (its top edge curved like a
+   curtain), .is-out lifts it away upwards. */
+.gk-curtain {
+  position: fixed; inset: 0; z-index: 90;
+  display: grid; place-items: center; padding: 24px;
+  background: var(--btn); color: var(--on-btn);
+  transform: translateY(100%); visibility: hidden; pointer-events: none;
+}
+.gk-curtain.is-in { visibility: visible; animation: gk-curtain-in 0.34s var(--ease-out-soft) forwards; }
+.gk-curtain.is-out { visibility: visible; animation: gk-curtain-out 0.42s var(--ease-out-soft) forwards; }
+@keyframes gk-curtain-in { from { transform: translateY(100%); border-radius: 50% 50% 0 0 / 12% 12% 0 0; } to { transform: translateY(0); border-radius: 0; } }
+@keyframes gk-curtain-out { from { transform: translateY(0); } to { transform: translateY(-100%); border-radius: 0 0 50% 50% / 0 0 12% 12%; } }
+/* the next page's name */
+.gk-curtain b {
+  font: 400 clamp(44px, 9vw, 140px)/0.9 var(--font-display), Impact, sans-serif;
+  text-transform: uppercase; text-align: center; text-wrap: balance; max-width: 14ch;
+}
+.gk-curtain b:lang(hi) { font-family: var(--font-devanagari), sans-serif; font-weight: 700; line-height: 1.2; }
+/* the loading bar along the bottom: "LOADING · 64%" over a striped track */
+.gk-curtain__bar {
+  position: absolute; left: 50%; bottom: calc(34px + env(safe-area-inset-bottom, 0px));
+  width: min(560px, calc(100% - 48px)); transform: translateX(-50%);
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; align-items: center;
+  font: 500 12px/1 var(--font-geist-mono), monospace; letter-spacing: 0.12em; text-transform: uppercase;
+}
+.gk-curtain__track { grid-column: 1 / -1; position: relative; height: 12px; border-radius: 99px; background: color-mix(in srgb, var(--on-btn) 18%, transparent); box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.14); }
+/* the fill: diagonal stripes that keep sliding, so it looks busy even while waiting */
+.gk-curtain__fill {
+  position: absolute; inset: 0; border-radius: 99px; transform-origin: left; transform: scaleX(var(--lp, 0));
+  background: repeating-linear-gradient(-45deg, var(--on-btn) 0 9px, color-mix(in srgb, var(--on-btn) 76%, var(--btn)) 9px 18px);
+  background-size: 25.5px 100%; animation: gk-stripes 0.6s linear infinite;
+}
+.gk-curtain__head {
+  position: absolute; top: 50%; left: calc(var(--lp, 0) * 100%); width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%;
+  background: var(--on-btn); box-shadow: 0 0 0 5px color-mix(in srgb, var(--on-btn) 25%, transparent), 0 0 16px var(--on-btn);
+}
+@keyframes gk-stripes { to { background-position: 25.5px 0; } }
+
+/* ── POPULAR TOPICS, PINNED (components/home/PosterPin.tsx), wide screens ──── */
+/* While pinned, the visible part sticks to the screen and the strip is moved
+   by the script instead of being scrolled sideways */
+.gk-pin-wrap.is-pinned .gk-pin-sticky { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+/* the title and the progress bar keep the page's full width inside the pinned box */
+.gk-pin-wrap.is-pinned .gk-pin-sticky > :not(.gk-posters) { width: 100%; }
+.gk-pin-wrap.is-pinned .gk-posters { overflow: visible; width: max-content; scroll-snap-type: none; will-change: transform; }
+.gk-posters-progress { display: none; }
+.gk-pin-wrap.is-pinned .gk-posters-progress { display: block; margin-top: 18px; }
+.gk-posters-progress span { display: block; height: 3px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.gk-posters-progress i { display: block; height: 100%; background: var(--accent); transform-origin: left; transform: scaleX(0); }
+
+/* ── THE MOTTO BAND, driven by the script (components/home/KnowMoreBand.tsx) ── */
+.gk-band__track.is-js { animation: none; will-change: transform; }
+
+/* ── RISING TITLES (components/SectionHead.tsx) ────────────────────────────── */
+/* Each word in its own window (overflow: hidden). While the title waits below
+   the screen (.reveal-pending, set by ScrollReveal) the words sit below their
+   windows; when it arrives they rise in, one after another (--i). The padding
+   keeps the tails of letters like g, p and y from being cut off. */
+.gk-w { display: inline-block; overflow: hidden; vertical-align: top; padding: 0 0.04em 0.22em; margin: 0 -0.04em -0.22em; }
+.gk-w > span { display: inline-block; transition: transform 1s var(--ease-out-soft); transition-delay: calc(var(--i, 0) * 55ms); }
+.reveal-pending .gk-w > span { transform: translateY(110%); }
+
+/* ── CARD TILT + SHINE, and THE CURSOR RING (components/PointerFx.tsx) ─────── */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  /* The card leans by --rx / --ry (written by the script) and lifts on hover */
+  .gk-tilt {
+    transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--ty, 0px));
+    transition: transform 0.45s var(--ease-out-soft), box-shadow 0.45s var(--ease-out-soft), border-color 0.3s;
+  }
+  .gk-tilt:hover { --ty: -4px; }
+  .gk-tilt:active { --ty: 2px; }
+  /* while the mouse moves over it, follow quickly; when it leaves, settle slowly */
+  .gk-tilt.is-tilting { transition: transform 0.12s linear, box-shadow 0.45s var(--ease-out-soft), border-color 0.3s; }
+  /* the shine: a soft light under the pointer (--gx / --gy) */
+  .gk-tilt::before {
+    content: ""; position: absolute; inset: 0; z-index: 3; border-radius: inherit; pointer-events: none;
+    background: radial-gradient(420px circle at var(--gx, 50%) var(--gy, 50%), rgba(255, 255, 255, 0.2), transparent 45%);
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .gk-tilt:hover::before { opacity: 1; }
+  :root[data-mode="dark"] .gk-tilt::before { background: radial-gradient(420px circle at var(--gx, 50%) var(--gy, 50%), rgba(255, 255, 255, 0.07), transparent 45%); }
+
+  /* The ring: small and faint; over a named thing it grows, fills with the
+     button colour and shows the word */
+  .gk-cursor {
+    position: fixed; left: 0; top: 0; z-index: 95; width: 34px; height: 34px; margin: -17px 0 0 -17px;
+    display: grid; place-items: center; border-radius: 50%; border: 1.5px solid var(--ink);
+    pointer-events: none; opacity: 0;
+    transition: width 0.3s var(--ease-out-soft), height 0.3s var(--ease-out-soft), margin 0.3s var(--ease-out-soft), background-color 0.3s, border-color 0.3s, opacity 0.3s;
+  }
+  .gk-cursor span { font: 800 12px/1 var(--font-nunito), sans-serif; letter-spacing: 0.06em; text-transform: uppercase; color: var(--on-btn); opacity: 0; transition: opacity 0.2s; }
+  .gk-cursor.is-on { opacity: 0.5; }
+  .gk-cursor.is-big { width: 84px; height: 84px; margin: -42px 0 0 -42px; background: var(--btn); border-color: var(--btn); opacity: 0.95; }
+  .gk-cursor.is-big span { opacity: 1; }
+}
+/* Everywhere: the ring never takes space or catches a tap (it's only drawn
+   for a mouse, in the block above) */
+.gk-cursor { position: fixed; left: 0; top: 0; pointer-events: none; opacity: 0; }
+/* Never in Reading mode, and not at all without a mouse */
+:root[data-mode="reading"] .gk-cursor { display: none; }
+@media not ((hover: hover) and (pointer: fine)) { .gk-cursor { display: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .gk-curtain { display: none; }
+  .reveal-pending .gk-w > span { transform: none; }
+  .gk-cursor { display: none; }
+}
+/* end of phase 5 */

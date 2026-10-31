@@ -163,6 +163,8 @@ export default function HeroEarth({ places }: { places: EarthPlace[] }) {
       ref={box}
       className={`gk-earth is-${stage} ${dragged ? "is-dragged" : ""}`}
       onPointerDown={() => setDragged(true)}
+      // the word in the mouse's ring (components/PointerFx.tsx) — only when it can be spun
+      data-cursor={stage === "still" ? undefined : "Drag"}
       // For screen readers: a short description instead of the moving picture
       role="img"
       aria-label="The Earth, turning slowly, with places from the World360 Atlas marked in gold"

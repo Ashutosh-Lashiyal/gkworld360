@@ -20,6 +20,23 @@ type SectionHeadProps = {
   onDark?: boolean;              // on the dark stage: light text, mint accents
 };
 
+// PHASE 5 (31 Oct 2026): each word sits in its own little window, so when the
+// title scrolls into view the words RISE into place one after another
+// (globals.css, .gk-w — only on pages with ScrollReveal, e.g. the homepage).
+// `start` = the number of words before these, so the delays carry on.
+function Words({ text, start = 0 }: { text: string; start?: number }) {
+  return (
+    <>
+      {text.split(" ").map((word, i) => (
+        <span key={i}>
+          {i > 0 && " "}
+          <span className="gk-w"><span style={{ ["--i" as string]: start + i }}>{word}</span></span>
+        </span>
+      ))}
+    </>
+  );
+}
+
 export default function SectionHead({ eyebrow, title, accent, lede, more, id, onDark = false }: SectionHeadProps) {
   return (
     // data-reveal: settles in as it scrolls into view (components/ScrollReveal.tsx)
@@ -27,8 +44,8 @@ export default function SectionHead({ eyebrow, title, accent, lede, more, id, on
       <div className="min-w-0">
         <span className={`font-accent italic text-[22px] leading-tight ${onDark ? "text-mint" : "text-accent"}`}>{eyebrow}</span>
         <h2 id={id} className={`gk-big-title m-0 mt-1 ${onDark ? "text-on-dark!" : "text-foreground"}`}>
-          {title}
-          {accent && <> <em className="gk-big-title__accent">{accent}</em></>}
+          <Words text={title} />
+          {accent && <> <em className="gk-big-title__accent"><Words text={accent} start={title.split(" ").length} /></em></>}
         </h2>
         {lede && <p className={`m-0 mt-3.5 max-w-[34em] font-body text-[17px] ${onDark ? "text-on-dark/70" : "text-muted"}`}>{lede}</p>}
       </div>
