@@ -1084,35 +1084,41 @@ body:has([data-article])::after {
 .gk-giant--top { color: var(--stage-ink); }
 .gk-giant--bot { color: transparent; -webkit-text-stroke: 1.5px rgba(243, 241, 237, 0.62); margin-top: -9vw; }
 .gk-hero__globe { position: relative; z-index: 2; width: min(84vw, 520px); margin-top: -9vw; }
-/* the facts box: under the Earth on phones… */
-.gk-facts {
-  order: 5;
-  position: relative;
-  z-index: 3;
-  width: calc(100% - 40px);
-  margin: 22px auto 0;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  border: 1px solid rgba(243, 241, 237, 0.45);
-  background: rgba(11, 11, 13, 0.4);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+/* PHONES AND TABLETS: one caption under the Earth — "● Gold dots: places on
+   the Atlas · Open →" (2 Nov 2026). It sits over the bottom edge of the Earth,
+   above GROW MORE, inside the Earth's box so it moves with it on scroll. */
+.gk-hero__caption {
+  /* bottom: GROW MORE tucks 9vw up under the Earth (margin-top: -9vw above),
+     so the caption sits that much higher plus a gap, clear of the letters */
+  position: absolute; z-index: 3; left: 50%; bottom: calc(9vw + 14px); transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; box-sizing: border-box; padding: 8px 14px;
+  border-radius: 99px; background: rgba(11, 11, 13, 0.8); border: 1px solid var(--stage-line);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  color: var(--stage-ink); font: 700 13.5px/1.2 var(--font-nunito), sans-serif; white-space: nowrap;
 }
-.gk-facts div { padding: 12px 14px; border-right: 1px solid rgba(243, 241, 237, 0.45); border-bottom: 1px solid rgba(243, 241, 237, 0.45); }
-.gk-facts div:nth-child(2n) { border-right: 0; }
-.gk-facts div:nth-child(n + 3) { border-bottom: 0; }
-.gk-facts dt { font: 500 11px/1 var(--font-geist-mono), monospace; letter-spacing: 0.08em; text-transform: uppercase; color: var(--stage-muted); }
-.gk-facts dd { margin: 7px 0 0; font: 700 17px/1.2 var(--font-nunito), sans-serif; font-variant-numeric: tabular-nums; }
+.gk-hero__caption-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 7px var(--gold); flex: none; }
+/* LAPTOPS AND DESKTOPS: the facts as one quiet line under GROW MORE (2 Nov 2026). */
+.gk-hero-stats { display: none; }
 .gk-cue { display: none; }
 /* …and from 1024px: the words sit at the top and bottom of a tall stage, the
-   Earth in the middle, the facts on the left, a "Scroll" cue on the right */
+   Earth in the middle, a "Scroll" cue on the right, the facts line underneath */
 @media (min-width: 1024px) {
   .gk-hero { display: grid; place-items: center; min-height: min(58vw, 760px); }
   .gk-giant { position: absolute; left: 0; right: 0; }
   .gk-giant--top { top: 0; }
   .gk-giant--bot { bottom: 0; margin-top: 0; }
   .gk-hero__globe { width: min(44vw, 600px); margin-top: 0; }
-  .gk-facts { position: absolute; order: 0; left: max(24px, calc((100% - 1320px) / 2 + 32px)); top: 42%; width: 300px; margin: 0; }
+  .gk-hero__caption { display: none; }
+  .gk-hero-stats {
+    position: relative; z-index: 3; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 14px;
+    margin: 22px 0 0; padding: 0 24px;
+    font: 500 12.5px/1.4 var(--font-geist-mono), monospace; letter-spacing: 0.12em; text-transform: uppercase; color: var(--stage-muted);
+  }
+  .gk-hero-stats > span[aria-hidden] { opacity: 0.5; }
+  .gk-hero-stats__link { color: var(--mint); text-underline-offset: 4px; }
+  .gk-hero-stats__link:hover { text-decoration: underline; }
+  /* the Hindi word: in its own font, no capitals or letter-spacing (Hindi has none) */
+  .gk-hero-stats__hi { font: 600 14px/1 var(--font-devanagari), sans-serif; letter-spacing: 0; text-transform: none; color: var(--mint); }
   .gk-cue {
     position: absolute; z-index: 3; right: max(24px, calc((100% - 1320px) / 2 + 32px)); top: 46%;
     display: flex; flex-direction: column; align-items: center; gap: 10px;
@@ -1375,22 +1381,69 @@ body:has([data-article])::after {
 .gk-hl:hover .gk-hl__go, .gk-row:hover .gk-row__arrow { opacity: 1; transform: none; }
 
 /* ── ATLAS TIMELINE (components/atlas/AtlasTeaser.tsx) ─────────────────────── */
-.gk-tl { overflow-x: auto; scrollbar-width: none; padding-bottom: 6px; }
-.gk-tl::-webkit-scrollbar { display: none; }
-.gk-tl__list {
-  position: relative; list-style: none; margin: 0; padding: 0;
-  display: grid; grid-template-columns: repeat(var(--n), minmax(150px, 1fr)); gap: 14px; min-width: max-content;
+/* EVERY SUBJECT (2 Nov 2026): each chip, tag and knob is painted from its
+   subject's colours, handed down as CSS variables by the component:
+   --sb bright shade · --sa dark shade (text on light pages) · --sd light shade
+   (text on dark pages). One set of rules, any number of subjects. */
+
+/* "SUBJECTS ON THE ATLAS" — the small label over the row of subjects */
+.gk-tl-label { margin: 0 0 12px; font: 500 11px/1 var(--font-geist-mono), monospace; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); }
+/* a subject chip: filled with a tint of its colour when it has places… */
+.gk-tl-chip {
+  display: inline-flex; align-items: center; gap: 9px; min-height: 44px; box-sizing: border-box; padding: 8px 16px;
+  border-radius: 99px; border: 2px solid var(--sb); background: color-mix(in srgb, var(--sb) 13%, transparent);
+  color: var(--sa); font-weight: 900; font-size: 15px; transition: background-color 0.2s;
+}
+a.gk-tl-chip:hover { background: color-mix(in srgb, var(--sb) 24%, transparent); }
+.gk-tl-chip__dot { width: 11px; height: 11px; border-radius: 50%; background: var(--sb); flex: none; }
+.gk-tl-chip__count { font-size: 13px; font-weight: 800; opacity: 0.8; }
+/* …a dashed outline marked "soon" when it has none yet */
+.gk-tl-chip--soon { border: 2px dashed var(--line-2); background: transparent; color: var(--muted); font-weight: 800; }
+.gk-tl-chip--soon .gk-tl-chip__dot { background: transparent; border: 2.5px solid var(--sb); box-sizing: border-box; }
+.gk-tl-chip--soon .gk-tl-chip__count { font: 500 10.5px/1 var(--font-geist-mono), monospace; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); opacity: 1; }
+/* dark pages: the light shade of each colour, so it reads on near-black */
+:root[data-mode="dark"] .gk-tl-chip:not(.gk-tl-chip--soon), :root[data-mode="reading"] .gk-tl-chip:not(.gk-tl-chip--soon) { color: var(--sd); background: color-mix(in srgb, var(--sb) 20%, transparent); }
+
+/* THE TIMELINE. Phones: a line DOWN the left, events stacked under each other. */
+.gk-tl__list { position: relative; list-style: none; margin: 0; padding: 0 0 0 34px; display: flex; flex-direction: column; gap: 22px; }
+.gk-tl__list::before { content: ""; position: absolute; left: 7px; top: 8px; bottom: 8px; width: 3px; border-radius: 3px; background: var(--line-2); }
+/* one event: the year with its subject tag beside it, then the title and the place */
+.gk-tl__item { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 10px; row-gap: 4px; }
+.gk-tl__item .gk-tl__title, .gk-tl__item .gk-tl__place { grid-column: 1 / -1; }
+.gk-tl__knob { position: absolute; left: -34px; top: 8px; width: 17px; height: 17px; box-sizing: border-box; border-radius: 50%; background: var(--surface); border: 3px solid var(--sb, var(--amber)); transition: transform 0.3s var(--ease-out-soft), background-color 0.3s; }
+a.gk-tl__item:hover .gk-tl__knob { transform: scale(1.4); background: var(--sb, var(--amber)); }
+.gk-tl__year { font: 400 30px/1 var(--font-display), Impact, sans-serif; color: var(--ink); }
+.gk-tl__tag {
+  justify-self: start; padding: 3px 8px; border-radius: 99px; background: color-mix(in srgb, var(--sb) 16%, transparent);
+  color: var(--sa); font-size: 11px; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase;
+}
+:root[data-mode="dark"] .gk-tl__tag, :root[data-mode="reading"] .gk-tl__tag { color: var(--sd); background: color-mix(in srgb, var(--sb) 24%, transparent); }
+:root[data-mode="dark"] .gk-tl__knob, :root[data-mode="reading"] .gk-tl__knob { border-color: var(--sd, var(--amber)); }
+.gk-tl__title { font-weight: 800; font-size: 16px; line-height: 1.35; color: var(--ink); max-width: 16em; }
+a.gk-tl__item:hover .gk-tl__title { color: var(--accent); }
+.gk-tl__place { font-size: 13px; font-weight: 700; color: var(--faint); }
+/* the "Next" stop: dashed, quieter, one dot per subject still to come */
+.gk-tl__item--next .gk-tl__year { color: var(--faint); }
+.gk-tl__item--next .gk-tl__knob { border: 3px dashed var(--faint); background: var(--bg); }
+.gk-tl__item--next .gk-tl__title { color: var(--muted); }
+.gk-tl__dot { width: 10px; height: 10px; border-radius: 50%; background: var(--sb); }
+:root[data-mode="dark"] .gk-tl__dot, :root[data-mode="reading"] .gk-tl__dot { background: var(--sd); }
+
+/* Tablets and up: the events side by side on one line (scrolling sideways
+   when they don't fit, until 1024px where they always do) */
+@media (min-width: 768px) {
+  .gk-tl { overflow-x: auto; scrollbar-width: none; padding-bottom: 6px; }
+  .gk-tl::-webkit-scrollbar { display: none; }
+  .gk-tl__list { display: grid; grid-template-columns: repeat(var(--n), minmax(150px, 1fr)); gap: 14px; padding: 0; min-width: max-content; }
+  /* the line the knobs sit on: drawn behind the list, through the knobs */
+  .gk-tl__list::before { left: 0; right: 0; top: 52px; bottom: auto; width: auto; height: 3px; }
+  .gk-tl__item { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+  .gk-tl__knob { position: relative; left: auto; top: auto; width: 16px; height: 16px; margin: 4px 0 8px; }
+  .gk-tl__year { font-size: 34px; }
+  .gk-tl__tag { align-self: flex-start; }
+  .gk-tl__title { font-size: 15px; }
 }
 @media (min-width: 1024px) { .gk-tl__list { min-width: 0; } }
-/* the line the knobs sit on: drawn behind the list, through the knobs */
-.gk-tl__list::before { content: ""; position: absolute; left: 0; right: 0; top: 52px; height: 3px; border-radius: 3px; background: linear-gradient(90deg, var(--amber), var(--line-2)); }
-.gk-tl__item { display: flex; flex-direction: column; gap: 6px; }
-.gk-tl__year { font: 400 34px/1 var(--font-display), Impact, sans-serif; color: var(--ink); }
-.gk-tl__knob { position: relative; width: 16px; height: 16px; margin: 4px 0 8px; border-radius: 50%; background: var(--surface); border: 3px solid var(--amber); transition: transform 0.3s var(--ease-out-soft), background-color 0.3s; }
-.gk-tl__item:hover .gk-tl__knob { transform: scale(1.4); background: var(--amber); }
-.gk-tl__title { font-weight: 800; font-size: 15px; line-height: 1.35; color: var(--ink); max-width: 16em; }
-.gk-tl__item:hover .gk-tl__title { color: var(--accent); }
-.gk-tl__place { font-size: 13px; font-weight: 700; color: var(--faint); }
 
 /* A topic with no picture yet: a soft mint glow on the dark stage colour,
    instead of an empty black box that looks like a broken image */
@@ -1553,23 +1606,22 @@ body:has([data-article])::after {
 
 /* ── THE PAGE CURTAIN (components/PageCurtain.tsx) ─────────────────────────── */
 /* Waiting below the screen; .is-in sweeps it up (its top edge curved like a
-   curtain), .is-out lifts it away upwards. */
+   curtain), .is-out lifts it away upwards.
+   WATER LOADER (2 Nov 2026): deep teal in BOTH Light and Dark, so the sky-blue
+   water in the letters always shows; the bar's stripes are the water's blue. */
 .gk-curtain {
+  --curtain: #064e3b; /*  the deep-teal curtain */
+  --water: #7dd3fc; /*    the sky-blue water (same as lib/water-word.ts) */
   position: fixed; inset: 0; z-index: 90;
-  display: grid; place-items: center; padding: 24px;
-  background: var(--btn); color: var(--on-btn);
+  background: var(--curtain); color: #e9fbf3;
   transform: translateY(100%); visibility: hidden; pointer-events: none;
 }
 .gk-curtain.is-in { visibility: visible; animation: gk-curtain-in 0.34s var(--ease-out-soft) forwards; }
 .gk-curtain.is-out { visibility: visible; animation: gk-curtain-out 0.42s var(--ease-out-soft) forwards; }
 @keyframes gk-curtain-in { from { transform: translateY(100%); border-radius: 50% 50% 0 0 / 12% 12% 0 0; } to { transform: translateY(0); border-radius: 0; } }
 @keyframes gk-curtain-out { from { transform: translateY(0); } to { transform: translateY(-100%); border-radius: 0 0 50% 50% / 0 0 12% 12%; } }
-/* the next page's name */
-.gk-curtain b {
-  font: 400 clamp(44px, 9vw, 140px)/0.9 var(--font-display), Impact, sans-serif;
-  text-transform: uppercase; text-align: center; text-wrap: balance; max-width: 14ch;
-}
-.gk-curtain b:lang(hi) { font-family: var(--font-devanagari), sans-serif; font-weight: 700; line-height: 1.2; }
+/* the canvas the water word is painted on: the whole curtain */
+.gk-curtain__water { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 /* the loading bar along the bottom: "LOADING · 64%" over a striped track */
 .gk-curtain__bar {
   position: absolute; left: 50%; bottom: calc(34px + env(safe-area-inset-bottom, 0px));
@@ -1577,16 +1629,16 @@ body:has([data-article])::after {
   display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; align-items: center;
   font: 500 12px/1 var(--font-geist-mono), monospace; letter-spacing: 0.12em; text-transform: uppercase;
 }
-.gk-curtain__track { grid-column: 1 / -1; position: relative; height: 12px; border-radius: 99px; background: color-mix(in srgb, var(--on-btn) 18%, transparent); box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.14); }
-/* the fill: diagonal stripes that keep sliding, so it looks busy even while waiting */
+.gk-curtain__track { grid-column: 1 / -1; position: relative; height: 12px; border-radius: 99px; background: rgba(255, 255, 255, 0.16); box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.18); }
+/* the fill: diagonal water-blue stripes that keep sliding, so it looks busy even while waiting */
 .gk-curtain__fill {
   position: absolute; inset: 0; border-radius: 99px; transform-origin: left; transform: scaleX(var(--lp, 0));
-  background: repeating-linear-gradient(-45deg, var(--on-btn) 0 9px, color-mix(in srgb, var(--on-btn) 76%, var(--btn)) 9px 18px);
+  background: repeating-linear-gradient(-45deg, var(--water) 0 9px, color-mix(in srgb, var(--water) 70%, var(--curtain)) 9px 18px);
   background-size: 25.5px 100%; animation: gk-stripes 0.6s linear infinite;
 }
 .gk-curtain__head {
   position: absolute; top: 50%; left: calc(var(--lp, 0) * 100%); width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%;
-  background: var(--on-btn); box-shadow: 0 0 0 5px color-mix(in srgb, var(--on-btn) 25%, transparent), 0 0 16px var(--on-btn);
+  background: #e9fbf3; box-shadow: 0 0 0 5px color-mix(in srgb, var(--water) 35%, transparent), 0 0 16px var(--water);
 }
 @keyframes gk-stripes { to { background-position: 25.5px 0; } }
 
@@ -1717,7 +1769,6 @@ body:has([data-article])::after {
 }
 .gk-hi-btn:hover { background: rgba(110, 231, 183, 0.16); }
 .gk-hi-btn small { font: 800 11px/1 var(--font-nunito), sans-serif; letter-spacing: 0.08em; text-transform: uppercase; color: var(--stage-muted); }
-.gk-facts .gk-facts__hi { background: rgba(110, 231, 183, 0.1); }
 
 /* ── GYAANI (components/Gyaani.tsx — redesign, 2 Nov 2026) ───────────────────
    The chat helper, in the site's chunky style. Every colour is a site token

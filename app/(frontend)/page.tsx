@@ -55,7 +55,7 @@ import { getSiteStats } from "@/lib/site-stats";
 // ── HOMEPAGE ──────────────────────────────────────────────────────────────────
 export default async function HomePage() {
   const stats = await getSiteStats(); // live counts for the hero
-  // The Atlas places: gold dots on the hero Earth, and the "Atlas" fact
+  // The Atlas places: gold dots on the hero Earth, and their count in the facts line
   const atlas = await getAtlasEntries("en");
   const places = atlas.map((e) => ({ lat: e.lat, lng: e.lng, year: String(e.year), title: e.title }));
 
@@ -132,32 +132,46 @@ export default async function HomePage() {
                 aria-hidden: decoration — the real heading is the <h1> below. */}
             <p className="gk-giant gk-giant--top" aria-hidden="true">Know more</p>
 
-            {/* Live facts, in a small see-through box */}
-            <dl className="gk-facts">
-              {/* CountUp: the numbers count up from 0 when the page opens */}
-              <div><dt>Subjects</dt><dd><CountUp value={stats.subjects} /></dd></div>
-              <div><dt>Topics</dt><dd><CountUp value={stats.topics} /></dd></div>
-              <div>
-                <dt>Atlas</dt>
-                <dd>
-                  {atlas.length > 0 ? (
-                    <Link href="/atlas" className="hover:text-mint transition-colors">
-                      {atlas.length} places<br />{atlas[0].year}–{atlas[atlas.length - 1].year}
-                    </Link>
-                  ) : "Coming soon"}
-                </dd>
-              </div>
-              {/* Hindi discoverability (2 Nov 2026): "हिन्दी" is a link to the Hindi start page */}
-              <div className="gk-facts__hi"><dt>Languages</dt><dd>English<br /><Link href="/hi" lang="hi" className="font-hindi text-mint underline underline-offset-4 decoration-mint/50 hover:decoration-mint">हिन्दी →</Link></dd></div>
-            </dl>
-
             <div className="gk-hero__globe">
               <HeroEarth places={places} />
+              {/* PHONES AND TABLETS (2 Nov 2026, owner's pick "Hero A"): one
+                  caption under the Earth saying what the gold dots are, and
+                  where to see them all. Hidden from 1024px, where the facts
+                  line below takes over (globals.css, .gk-hero__caption). */}
+              {atlas.length > 0 && (
+                <Link href="/atlas" className="gk-hero__caption">
+                  <span className="gk-hero__caption-dot" aria-hidden="true" />
+                  Gold dots: places on the Atlas
+                  <span className="text-mint font-black">Open →</span>
+                </Link>
+              )}
             </div>
 
             <p className="gk-giant gk-giant--bot" aria-hidden="true">Grow more</p>
             <div className="gk-cue" aria-hidden="true">Scroll<i /></div>
           </div>
+
+          {/* LAPTOPS AND DESKTOPS (2 Nov 2026, owner's pick "Hero B"): the
+              live facts as ONE quiet line under GROW MORE — it replaced the
+              boxed 2×2 table that sat beside the Earth. Every number is
+              counted from the database (lib/site-stats.ts, lib/atlas.ts), so it
+              changes by itself when something is published in /admin. Hidden
+              on phones, where the caption under the Earth does the job. */}
+          <p className="gk-hero-stats">
+            {/* CountUp: the numbers count up from 0 when the page opens */}
+            <span><CountUp value={stats.subjects} /> subjects</span>
+            <span aria-hidden="true">·</span>
+            <span><CountUp value={stats.topics} /> topics</span>
+            {atlas.length > 0 && (
+              <>
+                <span aria-hidden="true">·</span>
+                {/* the Atlas link, in teal, with an arrow (owner, 2 Nov 2026). */}
+                <Link href="/atlas" className="gk-hero-stats__link">{atlas.length} places on the Atlas →</Link>
+              </>
+            )}
+            <span aria-hidden="true">·</span>
+            <span>English + <Link href="/hi" lang="hi" className="gk-hero-stats__hi">हिन्दी</Link></span>
+          </p>
 
           {/* The title, the promise, the search */}
           <div className="gk-hero-intro max-w-[1320px] mx-auto px-4 md:px-8">

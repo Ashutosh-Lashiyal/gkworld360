@@ -1,13 +1,19 @@
 "use client";
 
 // PageCurtain — the page transition the owner chose (30 Oct 2026, loader
-// option 2): when you click a link to another page, a CURTAIN in the button
-// colour sweeps up from the bottom carrying the next page's name in giant
-// letters, with a chunky striped LOADING BAR along the bottom:
+// option 2): when you click a link to another page, a CURTAIN sweeps up from
+// the bottom carrying the next page's name in giant letters, with a chunky
+// striped LOADING BAR along the bottom.
+//
+// THE WATER (2 Nov 2026, owner's choice from round 6): the name is drawn as
+// EMPTY GLASS LETTERS that fill with SKY-BLUE WATER as the page loads — the
+// water level IS the loading bar's number. The curtain is deep teal in both
+// Light and Dark (so the blue water always shows), and the bar's stripes are
+// the water's blue. The drawing itself lives in lib/water-word.ts.
 //
 //            ┌────────────────────────────────┐
 //            │                                │
-//            │          MODERN INDIA          │
+//            │      MODERN INDIA  (filling)   │
 //            │                                │
 //            │   LOADING                 64%  │
 //            │   ▰▰▰▰▰▰▰▰▰▰▰▰▱▱▱▱▱▱▱▱        │
@@ -15,8 +21,8 @@
 //
 // The bar creeps towards 90% while the next page is on its way (we can't know
 // its exact size, so this part is an honest guess), fills to 100% the moment
-// the page arrives, and the curtain lifts away upwards. After 3 seconds it adds
-// "slow connection" so nobody thinks it's stuck.
+// the page arrives, the water settles for a blink, and the curtain lifts away
+// upwards. After 3 seconds it adds "slow connection" so nobody thinks it's stuck.
 //
 // HOW: we listen for clicks on links to OTHER pages of the site, stop Next.js
 // from handling that click itself, raise the curtain (0.34 s), and only then
@@ -30,6 +36,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { WaterWord } from "@/lib/water-word";
 
 // Names for the site's main pages (anything else uses the link's own words)
 const NAMES: Record<string, string> = {
@@ -76,11 +83,13 @@ export default function PageCurtain() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [phase, setPhase] = useState<Phase>("idle");
-  const [name, setName] = useState("");
   const [slow, setSlow] = useState(false);
 
   const box = useRef<HTMLDivElement>(null);
   const percent = useRef<HTMLSpanElement>(null);
+  // The canvas the water word is painted on, and the painter (made on first use)
+  const canvas = useRef<HTMLCanvasElement>(null);
+  const water = useRef<WaterWord | null>(null);
   // Where we came from, and whether we've arrived — refs, read by the animation
   const from = useRef<string | null>(null);
   const arrived = useRef(false);
@@ -116,7 +125,10 @@ export default function PageCurtain() {
       from.current = `${window.location.pathname}${window.location.search}`;
       arrived.current = false;
       const id = ++job.current;
-      setName(nameFor(a, url.pathname));
+      const pageName = nameFor(a, url.pathname);
+      // A fresh, empty word on the canvas
+      if (canvas.current && !water.current) water.current = new WaterWord(canvas.current);
+      water.current?.setWord(pageName);
       setSlow(false);
       setPhase("in");
 
@@ -124,25 +136,37 @@ export default function PageCurtain() {
       window.setTimeout(() => { if (id === job.current) router.push(dest); }, 340);
       // 2. "slow connection" after 3 s
       const slowTimer = window.setTimeout(() => { if (id === job.current) setSlow(true); }, 3000);
-      // 3. the bar: creeps towards 90% until the page arrives, then fills
+      // 3. the bar AND the water: creep towards 90% until the page arrives, then fill
       let p = 0;
+      let fullAt = 0; // when the letters became full (0 = not yet)
       const started = performance.now();
       const step = () => {
         if (id !== job.current) return;
-        const waited = performance.now() - started;
+        const now = performance.now();
+        const waited = now - started;
         // Never stuck: after 10 s lift the curtain whatever happened
         if (waited > 10000) arrived.current = true;
-        p = arrived.current && waited > 340 ? Math.min(1, p + 0.09) : p + (0.9 - p) * 0.03;
+        p = arrived.current && waited > 340 ? Math.min(1, p + 0.05) : p + (0.9 - p) * 0.03;
         box.current?.style.setProperty("--lp", p.toFixed(3));
         if (percent.current) percent.current.textContent = `${Math.round(p * 100)}%`;
-        if (p < 1) { requestAnimationFrame(step); return; }
-        // 4. arrived and full: lift the curtain away upwards
-        window.clearTimeout(slowTimer);
-        window.setTimeout(() => {
-          if (id !== job.current) return;
-          setPhase("out");
-          window.setTimeout(() => { if (id === job.current) setPhase("idle"); }, 460);
-        }, 140);
+        // Paint this frame of the water (the waves move with the time)
+        water.current?.draw(p, waited / 1000);
+        if (p >= 1 && !fullAt) {
+          fullAt = now;
+          window.clearTimeout(slowTimer);
+          // 4. full: let the water settle a blink (0.3 s), then lift the curtain away upwards
+          window.setTimeout(() => {
+            if (id !== job.current) return;
+            setPhase("out");
+            window.setTimeout(() => {
+              if (id !== job.current) return;
+              setPhase("idle");
+              water.current?.clear();
+            }, 460);
+          }, 300);
+        }
+        // Keep the waves moving until the curtain has gone (0.3 s + 0.46 s)
+        if (!fullAt || now - fullAt < 760) requestAnimationFrame(step);
       };
       requestAnimationFrame(step);
     };
@@ -157,7 +181,8 @@ export default function PageCurtain() {
       aria-hidden="true"
       className={`gk-curtain ${phase === "in" ? "is-in" : phase === "out" ? "is-out" : ""}`}
     >
-      <b lang={/[ऀ-ॿ]/.test(name) ? "hi" : undefined}>{name}</b>
+      {/* the next page's name, filling with water (painted by lib/water-word.ts) */}
+      <canvas ref={canvas} className="gk-curtain__water" />
       <div className="gk-curtain__bar">
         <span>{slow ? "Loading · slow connection" : "Loading"}</span>
         <span ref={percent} className="tabular-nums">0%</span>

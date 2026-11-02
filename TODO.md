@@ -147,7 +147,21 @@
         which article "this article" is; on Hindi pages the source card opens the Hindi article.
         Article headings carry data-article-title (ArticleHeader.tsx). Tested with real questions,
         EN + HI, light + dark, laptop + phone. Old "setState in effect" lint error gone.
-      - [ ] **Water loader (next):** sky-blue water filling the page name + striped bar kept.
+      - [x] **Water loader BUILT (2 Nov):** the page name on the curtain is drawn as empty glass
+        letters filling with sky-blue water (level = the bar's %), deep-teal curtain in both modes,
+        striped bar kept in the water's blue. Drawing in `lib/water-word.ts`, used by
+        `components/PageCurtain.tsx`. Hindi names work (Firefox checked). Still skipped in Reading
+        mode and for less-motion readers.
+      - [x] **Hero facts + Atlas section BUILT (2 Nov, owner's picks from the canvas
+        https://claude.ai/artifact/Qek2kMt3CuKE2ZoYnSRsKP).** The boxed 2×2 facts table is gone.
+        Laptops (≥1024px): one quiet line under GROW MORE — "6 SUBJECTS · 4 TOPICS · 12 PLACES ON
+        THE ATLAS → · ENGLISH + हिन्दी" (Atlas link in teal). Phones/tablets: a caption under the
+        Earth — "● Gold dots: places on the Atlas · Open →". All numbers live from the database.
+        "Knowledge on the map" now shows EVERY subject: the six homepage subjects as coloured chips
+        (with places = filled + count + link to /atlas?subject=…; none yet = dashed "soon"), a
+        subject tag on each event, a dashed "Next" stop; phones get a downward timeline. Subject
+        pages keep the plain version. Files: page.tsx, components/atlas/AtlasTeaser.tsx,
+        HeroScrollFx.tsx, globals.css.
       - [x] **Phase 5 speed check DONE (31 Oct)** — Lighthouse 12.8.2, phone settings, 2 runs each.
         BEFORE = the Vercel site (old design); AFTER = a local production build of feature/redesign.
         Homepage: score 61/73 → 53/73; largest paint 7.4–8.4 s → 5.7–6.5 s (better); blocking time

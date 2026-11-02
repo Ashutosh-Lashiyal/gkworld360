@@ -39,7 +39,12 @@ when the page is idle); Hindi discoverability, all 5 pieces (`lib/lang.ts`, `com
 `HindiWelcome.tsx`, `article/AlsoInHindi.tsx`, Hindi start page `app/(frontend)/hi/page.tsx`; the
 bell is gone); Gyaani redesigned and PAGE-AWARE (the chat sends the page address; the route looks
 the article up and tells Gemini which one "this article" is). Coastlines only on the loader, no
-borders. Next: the sky-blue water loader in `components/PageCurtain.tsx`.
+borders. Water loader BUILT: the curtain's page name fills with sky-blue water (`lib/water-word.ts`
+draws it on a canvas; `components/PageCurtain.tsx` runs it), deep-teal curtain, striped bar kept.
+Hero facts box replaced (laptop: one line under GROW MORE with a teal "12 places on the Atlas →";
+phone: "Gold dots: places on the Atlas · Open →" caption under the Earth). "Knowledge on the map"
+now shows every subject (coloured subject chips, subject tags, a "Next" stop) — AtlasTeaser.tsx.
+Next: owner tries the 5 Hindi pieces + Gyaani + water loader on dev, then decides what to remove.
 How modes work: `lib/mode.ts` + the colour blocks at the top of `app/(frontend)/globals.css`.
 Reading mode is per-article: the `data-article` marker (ArticleLayout) + `data-reading` on <html>.
 Logo: `components/Logo.tsx` (+ files in `public/brand/`). Phases 2–5 are listed in TODO.md.

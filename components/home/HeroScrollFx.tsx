@@ -5,7 +5,6 @@
 //   - KNOW MORE slides off to the left, GROW MORE to the right;
 //   - the Earth grows a little and sinks; scrolling also TURNS it
 //     (lib/earth-scene.ts reads the data-spin number we write on it);
-//   - on wide screens the facts box fades out.
 // Draws nothing; it moves the hero's parts with CSS transforms, at most once
 // per screen refresh. Nothing moves for readers who asked for less motion.
 
@@ -21,7 +20,6 @@ export default function HeroScrollFx() {
     const top = hero.querySelector<HTMLElement>(".gk-giant--top");
     const bottom = hero.querySelector<HTMLElement>(".gk-giant--bot");
     const globe = hero.querySelector<HTMLElement>(".gk-hero__globe");
-    const facts = hero.querySelector<HTMLElement>(".gk-facts");
     const earth = hero.querySelector<HTMLElement>(".gk-earth");
 
     let frame = 0;
@@ -33,7 +31,6 @@ export default function HeroScrollFx() {
       if (top) top.style.transform = `translateX(${-p * 28}%)`;
       if (bottom) bottom.style.transform = `translateX(${p * 28}%)`;
       if (globe) globe.style.transform = `scale(${1 + p * 0.18}) translateY(${p * 8}%)`;
-      if (facts && window.innerWidth >= 1024) facts.style.opacity = String(1 - p * 1.4);
       if (earth) earth.dataset.spin = (p * 2.2).toFixed(3);
     };
     const onScroll = () => { if (!frame) frame = requestAnimationFrame(update); };
