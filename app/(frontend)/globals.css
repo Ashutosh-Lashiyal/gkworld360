@@ -488,26 +488,6 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: 0;
 }
 
-/* ── BELL RING ANIMATION ─────────────────────────────────────────────────────
-   Simulates a ringing bell — swings left and right a few times, then pauses.
-   transform-origin: top center makes it swing from the top, like a hanging bell.
-   The animation plays for the first 30% of each 3-second cycle, then pauses.   */
-@keyframes bell-ring {
-  0%   { transform: rotate(0deg); }
-  8%   { transform: rotate(18deg); }
-  16%  { transform: rotate(-14deg); }
-  24%  { transform: rotate(12deg); }
-  30%  { transform: rotate(-8deg); }
-  36%  { transform: rotate(0deg); }
-  100% { transform: rotate(0deg); }
-}
-
-.bell-ring {
-  display: inline-block;
-  transform-origin: top center;
-  animation: bell-ring 3s ease-in-out infinite;
-}
-
 /* Hindi prose headings must use Devanagari (overrides the English heading font above) */
 .font-hindi.prose h2,
 .font-hindi.prose h3,
@@ -793,7 +773,9 @@ dialog[open].anim-dialog::backdrop { animation: fade-in 200ms ease-out both; }
   white-space: nowrap;
   text-align: center;
   color: transparent;
-  background-image: url("/brand/earth-day.jpg");
+  /* SPEED (2 Nov 2026): no picture until the reader scrolls near the footer —
+     components/EarthWord.tsx adds .is-near then (see the rules just below) */
+  background-image: none;
   /* zoomed in (the picture is 2.2× the word's height) and centred a little
      above the equator, so the letters show big continents, not the ice caps */
   background-size: auto 220%;
@@ -807,6 +789,10 @@ dialog[open].anim-dialog::backdrop { animation: fade-in 200ms ease-out both; }
   user-select: none;
 }
 @media (min-width: 1400px) { .gk-earth-word { font-size: 260px; } }
+/* the picture: the small version on phones (the word is small there), the
+   full one from 768px up */
+.gk-earth-word.is-near { background-image: url("/brand/earth-day-512.jpg"); }
+@media (min-width: 768px) { .gk-earth-word.is-near { background-image: url("/brand/earth-day.jpg"); } }
 /* The picture is twice as wide as it is tall and 2.2× the word's height, so
    sliding it by 2 × 2.2 × the height brings it back to the start without a
    visible jump. (The word's height is 0.82 × its font size.) */
@@ -1674,3 +1660,183 @@ body:has([data-article])::after {
   .gk-cursor { display: none; }
 }
 /* end of phase 5 */
+
+/* ═════════════════════════════════════════════════════════════════════════════
+   HINDI DISCOVERABILITY (2 Nov 2026) — "people should know from the first
+   second that the site is in Hindi". Components: LangSwitch, HindiWelcome,
+   article/AlsoInHindi, the homepage hero button, app/(frontend)/hi/page.tsx.
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+/* ── THE HEADER SWITCH: EN | हिं (components/LangSwitch.tsx) ───────────────── */
+.gk-lang { padding: 3px; border-radius: 999px; border: 2px solid var(--accent); background: var(--surface); }
+.gk-lang button { border: 0; background: none; padding: 6px 11px; border-radius: 999px; font: 900 13px/1 var(--font-nunito), sans-serif; color: var(--muted); transition: background-color 0.2s, color 0.2s; }
+.gk-lang button:hover { color: var(--ink); }
+/* the language you're reading: filled with the button colour */
+.gk-lang button[aria-pressed="true"] { background: var(--btn); color: var(--on-btn); }
+.gk-lang .gk-lang__hi, .gk-lang-one.gk-lang__hi { font: 700 14px/1.05 var(--font-devanagari), sans-serif; }
+/* phones: one round button for the other language, filled so it stands out */
+.gk-lang-one {
+  display: inline-grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; border: 0;
+  background: var(--btn); color: var(--on-btn); box-shadow: 0 3px 0 var(--btn-shadow);
+  font: 900 12px/1 var(--font-nunito), sans-serif;
+}
+.gk-lang-one:active { transform: translateY(3px); box-shadow: none; }
+@media (min-width: 640px) { .gk-lang-one { display: none; } }
+
+/* ── THE FIRST-VISIT STRIP (components/HindiWelcome.tsx) ───────────────────── */
+/* Hidden unless the script that runs before the page is drawn set
+   data-hi-strip on <html> (lib/mode.ts) — so it never pops in late. */
+.gk-hi-strip { display: none; }
+:root[data-hi-strip="en"] .gk-hi-strip--en, :root[data-hi-strip="hi"] .gk-hi-strip--hi {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;
+  padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px));
+  background: #064e3b; color: #e9fbf3;
+}
+.gk-hi-strip__text { flex: 1 1 220px; min-width: 0; margin: 0; font: 600 14px/1.4 var(--font-nunito), sans-serif; }
+.gk-hi-strip__text b { display: block; font: 700 16px/1.35 var(--font-devanagari), sans-serif; color: #fff; }
+.gk-hi-strip--hi .gk-hi-strip__text span { font-family: var(--font-devanagari), sans-serif; }
+.gk-hi-strip__yes { border: 0; border-radius: 12px; padding: 10px 16px; background: #6ee7b7; color: #04241b; font: 700 15px/1 var(--font-devanagari), sans-serif; box-shadow: 0 3px 0 #0f766e; }
+.gk-hi-strip__yes:active { transform: translateY(3px); box-shadow: none; }
+.gk-hi-strip__no { border: 1.5px solid rgba(255, 255, 255, 0.45); border-radius: 12px; padding: 9px 13px; background: none; color: #e9fbf3; font: 800 13px/1 var(--font-nunito), sans-serif; }
+.gk-hi-strip__x { border: 0; background: none; color: rgba(255, 255, 255, 0.75); font-size: 24px; line-height: 1; padding: 0 4px; }
+
+/* ── "यह लेख हिन्दी में भी है" (components/article/AlsoInHindi.tsx) ───────── */
+/* Only for readers who prefer Hindi (data-prefers-hi, set before the page is drawn) */
+.gk-also-hi { display: none; }
+:root[data-prefers-hi="1"] .gk-also-hi {
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+  border-radius: 16px; border: 2px solid var(--accent); background: var(--accent-soft);
+}
+.gk-also-hi__ic { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--btn); color: var(--on-btn); font: 700 15px/1 var(--font-devanagari), sans-serif; }
+
+/* ── THE HOMEPAGE HERO's HINDI BUTTON ──────────────────────────────────────── */
+.gk-hi-btn {
+  display: inline-flex; align-items: center; gap: 10px; padding: 12px 18px; border-radius: 14px;
+  border: 2px solid var(--mint); background: rgba(110, 231, 183, 0.08); color: var(--mint);
+  font: 700 17px/1 var(--font-devanagari), sans-serif; transition: background-color 0.2s;
+}
+.gk-hi-btn:hover { background: rgba(110, 231, 183, 0.16); }
+.gk-hi-btn small { font: 800 11px/1 var(--font-nunito), sans-serif; letter-spacing: 0.08em; text-transform: uppercase; color: var(--stage-muted); }
+.gk-facts .gk-facts__hi { background: rgba(110, 231, 183, 0.1); }
+
+/* ── GYAANI (components/Gyaani.tsx — redesign, 2 Nov 2026) ───────────────────
+   The chat helper, in the site's chunky style. Every colour is a site token
+   (--stage, --surface, --btn…), so Light, Dark and Reading mode just work.
+     .gk-gy-launch   the floating "Ask Gyaani · ज्ञानी" button (big screens)
+     .gk-gy          the chat window (a sheet from the bottom on phones)
+     .gk-gy-dim      phones only: the dimmed page behind the sheet
+     .gk-gy-bub      one speech bubble (--g = Gyaani, --u = the reader)
+     .gk-gy-src      the "Source · GKWorld360" article card in an answer   */
+
+/* The button: a dark pill, avatar in a mint ring, a black edge underneath */
+.gk-gy-launch {
+  display: flex; align-items: center; gap: 10px; padding: 6px 18px 6px 6px; border-radius: 999px;
+  background: var(--stage); color: var(--stage-ink); border: 2px solid rgba(110, 231, 183, 0.5);
+  box-shadow: 0 5px 0 #000, 0 20px 40px -14px rgba(0, 0, 0, 0.6);
+  font: 800 15px/1 var(--font-body), sans-serif; transition: transform 0.2s var(--ease-out-soft);
+}
+.gk-gy-launch:hover { transform: translateY(-2px); }
+.gk-gy-launch:active { transform: translateY(4px); box-shadow: 0 1px 0 #000; }
+.gk-gy-launch .gk-gy-avatar { border: 2px solid var(--mint); }
+.gk-gy-launch__hi { margin-left: -4px; font: 700 15px/1 var(--font-devanagari), sans-serif; color: var(--mint); }
+
+/* The window: big screens — 400 × 600 above the button. On a shorter laptop
+   screen it gets shorter, so it never covers the header (about 250px is
+   left for the header above and the button below).  */
+.gk-gy {
+  position: fixed; z-index: 50; right: 24px; bottom: 92px; width: 400px; height: 600px; max-height: calc(100dvh - 250px);
+  display: flex; flex-direction: column; overflow: hidden; border-radius: 26px;
+  border: 2px solid var(--line-2); background: var(--surface); color: var(--ink);
+  box-shadow: 0 6px 0 var(--line-2), 0 34px 70px -30px var(--shadow-far);
+  /* Nunito for English, Noto Sans Devanagari for any Hindi letters (Nunito has none) */
+  font-family: var(--font-body), var(--font-devanagari), system-ui, sans-serif;
+}
+/* Phones: a sheet across the full width, 88% of the screen tall, over the tab bar */
+@media (max-width: 767px) {
+  .gk-gy {
+    inset: auto 0 0 0; width: auto; height: 88dvh; max-height: none; z-index: 60;
+    border-radius: 24px 24px 0 0; border-width: 3px 0 0; border-top-color: var(--mint); box-shadow: none;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+.gk-gy.is-hindi { font-family: var(--font-devanagari), var(--font-body), system-ui, sans-serif; }
+.gk-gy-dim { position: fixed; inset: 0; z-index: 55; background: rgba(0, 0, 0, 0.45); animation: gy-dim-in 0.2s both; }
+.gk-gy-dim.is-closing { animation: gy-dim-out 0.16s both; }
+@keyframes gy-dim-in { from { opacity: 0; } }
+@keyframes gy-dim-out { to { opacity: 0; } }
+
+/* Header: the dark stage with a soft blue glow in the corner */
+.gk-gy__head {
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px; flex: none;
+  background: radial-gradient(70% 120% at 85% 0%, rgba(40, 75, 150, 0.3), transparent 70%), var(--stage); color: var(--stage-ink);
+}
+.gk-gy__head .gk-gy-avatar { border: 3px solid var(--mint); }
+.gk-gy__name { margin: 0; font: 400 24px/1 var(--font-display), Impact, sans-serif; letter-spacing: 0.01em; text-transform: uppercase; }
+.gk-gy__name span { margin-left: 6px; font: 700 16px/1 var(--font-devanagari), sans-serif; color: var(--mint); text-transform: none; }
+/* up to two lines (a long article title), then … */
+.gk-gy__sub { margin: 4px 0 0; font-size: 12.5px; line-height: 1.3; color: var(--stage-muted); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.gk-gy__live { display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: var(--mint); vertical-align: 1px; }
+.gk-gy__x { flex: none; width: 36px; height: 36px; border-radius: 50%; background: rgba(255, 255, 255, 0.08); color: var(--stage-ink); font-size: 22px; line-height: 1; transition: background-color 0.2s; }
+.gk-gy__x:hover { background: rgba(255, 255, 255, 0.18); }
+
+/* The conversation */
+.gk-gy__body { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: var(--bg); }
+.gk-gy-bub { max-width: 86%; padding: 11px 14px; border-radius: 18px; font-size: 14.5px; line-height: 1.55; overflow-wrap: anywhere; }
+.gk-gy-bub--g { align-self: flex-start; background: var(--surface); border: 2px solid var(--line); border-bottom-left-radius: 6px; }
+.gk-gy-bub--u { align-self: flex-end; background: var(--btn); color: var(--on-btn); font-weight: 700; border-bottom-right-radius: 6px; box-shadow: 0 3px 0 var(--btn-shadow); }
+.gk-gy-bub p { margin: 0; }
+.gk-gy-bub p + p, .gk-gy-bub p + ul, .gk-gy-bub ul + p { margin-top: 8px; }
+.gk-gy-bub ul { margin: 6px 0 0; padding-left: 18px; list-style: disc; }
+.gk-gy-bub li { margin: 3px 0; }
+.gk-gy-bub__warn { margin-top: 8px !important; font-size: 12px; font-weight: 700; color: var(--faint); }
+.gk-gy-typing { display: inline-flex; gap: 4px; padding: 4px 0; }
+.gk-gy-typing i { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); animation: gy-dot 1s infinite; }
+.gk-gy-typing i:nth-child(2) { animation-delay: 0.15s; }
+.gk-gy-typing i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes gy-dot { 50% { transform: translateY(-4px); opacity: 0.5; } }
+
+/* The article card inside an answer */
+.gk-gy-src { display: block; margin-top: 10px; padding: 10px 12px; border-radius: 14px; border: 2px solid var(--line); background: var(--bg); color: var(--ink); transition: border-color 0.2s, transform 0.2s var(--ease-out-soft); }
+.gk-gy-src:hover { border-color: var(--accent); transform: translateY(-2px); }
+.gk-gy-src small { display: block; font: 500 10px/1 var(--font-mono), monospace; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+.gk-gy-src b { display: block; margin-top: 5px; font: 600 15px/1.3 var(--font-heading), var(--font-devanagari), Georgia, serif; }
+.gk-gy.is-hindi .gk-gy-src b { font-family: var(--font-devanagari), sans-serif; font-weight: 700; }
+.gk-gy-src span { display: block; margin-top: 4px; font-size: 12.5px; font-weight: 800; color: var(--accent); }
+
+/* Tap-to-ask suggestions: one row that scrolls sideways */
+.gk-gy__chips { display: flex; gap: 7px; overflow-x: auto; padding: 10px 14px 4px; flex: none; background: var(--surface); scrollbar-width: none; }
+.gk-gy__chips::-webkit-scrollbar { display: none; }
+.gk-gy__chips button {
+  flex: none; padding: 8px 12px; border-radius: 99px; border: 2px solid var(--line); background: var(--surface);
+  box-shadow: 0 2px 0 var(--line); font-weight: 800; font-size: 13px; color: var(--ink); transition: border-color 0.2s;
+}
+.gk-gy__chips button.font-hindi { font-weight: 600; font-size: 13.5px; }
+.gk-gy__chips button:hover { border-color: var(--accent); }
+.gk-gy__chips button:active { transform: translateY(2px); box-shadow: none; }
+.gk-gy__chips button:disabled { opacity: 0.5; }
+
+/* The question box and the send button */
+.gk-gy__form { display: flex; align-items: center; gap: 8px; padding: 10px 14px 6px; flex: none; background: var(--surface); }
+.gk-gy__form input {
+  flex: 1; min-width: 0; padding: 12px 14px; border-radius: 14px; border: 2px solid var(--line-2); background: var(--bg);
+  color: var(--ink); font: inherit; font-size: 16px; font-weight: 600; outline: none; /* 16px: phones don't zoom in on it */
+}
+.gk-gy__form input::placeholder { color: var(--faint); }
+.gk-gy__form input:focus { border-color: var(--accent); }
+.gk-gy__form button {
+  flex: none; display: grid; place-items: center; width: 46px; height: 46px; border-radius: 14px;
+  background: var(--btn); color: var(--on-btn); box-shadow: 0 3px 0 var(--btn-shadow);
+}
+.gk-gy__form button:active { transform: translateY(3px); box-shadow: none; }
+.gk-gy__form button:disabled { opacity: 0.4; }
+.gk-gy__count { flex: none; font-size: 12px; color: var(--muted); }
+.gk-gy__limit { margin: 0; padding: 14px; flex: none; background: var(--surface); text-align: center; font-size: 14px; color: var(--muted); }
+
+/* "7 of 10 left today": a dot for each question */
+.gk-gy__left { display: flex; align-items: center; gap: 8px; padding: 6px 16px 12px; flex: none; background: var(--surface); font-size: 12px; font-weight: 800; color: var(--faint); }
+.gk-gy__left i { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.gk-gy__left i.is-used { background: var(--line-2); }
+
+@media (prefers-reduced-motion: reduce) {
+  .gk-gy-typing i, .gk-gy-dim { animation: none; }
+}

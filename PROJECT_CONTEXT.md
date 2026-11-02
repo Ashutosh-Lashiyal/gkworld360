@@ -32,8 +32,14 @@ Phase 2 built (article page + Reading mode; new folder `components/article/`, he
 Phase 3 built (homepage: 3D Earth hero `components/home/HeroEarth.tsx` + `lib/earth-scene.ts`
 (three.js) + loader `lib/globe-loader.ts`; today's quiz/fact/place `lib/daily.ts`; other sections in
 `components/home/`). Phase 4 built (all other pages: PageTitle, ContentCard, CategoryPath learning
-path, Atlas follows Light/Dark). Phase 5 effects built (curtain, scroll effects, tilt, cursor ring). Atlas fully redesigned 31 Oct (realistic Earth layer `lib/atlas-earth-layer.ts` under `lib/atlas-globe.ts`); it follows Light/Dark, only the Earth panel is always dark. Left: the phone speed check, and the owner's call on country borders in the homepage loader (TODO). Owner reviews
+path, Atlas follows Light/Dark). Phase 5 effects built (curtain, scroll effects, tilt, cursor ring). Atlas fully redesigned 31 Oct (realistic Earth layer `lib/atlas-earth-layer.ts` under `lib/atlas-globe.ts`); it follows Light/Dark, only the Earth panel is always dark. Owner reviews
 everything once the whole site is redesigned, not phase by phase.
+**2 Nov:** speed fixes built (512 px logo pictures, footer Earth loads late, homepage Earth starts
+when the page is idle); Hindi discoverability, all 5 pieces (`lib/lang.ts`, `components/LangSwitch.tsx`,
+`HindiWelcome.tsx`, `article/AlsoInHindi.tsx`, Hindi start page `app/(frontend)/hi/page.tsx`; the
+bell is gone); Gyaani redesigned and PAGE-AWARE (the chat sends the page address; the route looks
+the article up and tells Gemini which one "this article" is). Coastlines only on the loader, no
+borders. Next: the sky-blue water loader in `components/PageCurtain.tsx`.
 How modes work: `lib/mode.ts` + the colour blocks at the top of `app/(frontend)/globals.css`.
 Reading mode is per-article: the `data-article` marker (ArticleLayout) + `data-reading` on <html>.
 Logo: `components/Logo.tsx` (+ files in `public/brand/`). Phases 2–5 are listed in TODO.md.

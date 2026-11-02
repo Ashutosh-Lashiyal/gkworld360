@@ -26,6 +26,7 @@ import { titleTransitionName } from "@/lib/view-transition";
 import Breadcrumb from "@/components/Breadcrumb";
 import ArticleTools from "@/components/article/ArticleTools";
 import PhoneReadingBar from "@/components/article/PhoneReadingBar";
+import AlsoInHindi from "@/components/article/AlsoInHindi";
 import { absoluteUrl } from "@/lib/site";
 import type { SubjectColors } from "@/lib/subject-colors";
 import type { Headline } from "@/lib/pulse";
@@ -83,6 +84,9 @@ export default function ArticleHeader({
   const heading = (
     <h1
       lang={lang}
+      // A name Gyaani finds the article's title by ("Reading: …" in the chat
+      // window — components/Gyaani.tsx)
+      data-article-title
       className={`m-0 font-semibold text-navy-dark [text-wrap:balance] ${
         hindi
           ? "font-hindi text-[34px] md:text-[48px] lg:text-[58px] leading-[1.25]"
@@ -105,6 +109,10 @@ export default function ArticleHeader({
               the same name the topic card gives its title — so the card title
               glides into this heading. */}
           {shareUrl ? <ViewTransition name={titleTransitionName(shareUrl)}>{heading}</ViewTransition> : heading}
+
+          {/* "यह लेख हिन्दी में भी है" — English articles that also exist in
+              Hindi, for readers who prefer Hindi (components/article/AlsoInHindi.tsx) */}
+          {!hindi && hiHref && enHref && <AlsoInHindi hiHref={hiHref} />}
 
           {/* META LINE — the subject pill, reading time, date, the other language */}
           <div className={`mt-6 flex flex-wrap items-center gap-x-3.5 gap-y-2 text-sm font-bold text-muted ${hindi ? "font-hindi" : "font-body"}`}>

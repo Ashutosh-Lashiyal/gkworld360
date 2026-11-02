@@ -147,7 +147,8 @@ export default async function HomePage() {
                   ) : "Coming soon"}
                 </dd>
               </div>
-              <div><dt>Languages</dt><dd>English<br /><span lang="hi" className="font-hindi">हिन्दी</span></dd></div>
+              {/* Hindi discoverability (2 Nov 2026): "हिन्दी" is a link to the Hindi start page */}
+              <div className="gk-facts__hi"><dt>Languages</dt><dd>English<br /><Link href="/hi" lang="hi" className="font-hindi text-mint underline underline-offset-4 decoration-mint/50 hover:decoration-mint">हिन्दी →</Link></dd></div>
             </dl>
 
             <div className="gk-hero__globe">
@@ -168,6 +169,10 @@ export default async function HomePage() {
                 A curated reference for UPSC, SSC, Railways and lifelong learners. Every topic in English and Hindi, fact-checked and written to be remembered.
               </p>
               <SearchBox buttonLabel="Search" boxed />
+              {/* HINDI, right where first-time visitors look (2 Nov 2026) */}
+              <Link href="/hi" lang="hi" className="gk-hi-btn mt-4">
+                हिन्दी में पढ़ें → <small lang="en">Read in Hindi</small>
+              </Link>
               <p className="m-0 mt-3 font-body text-sm text-on-dark/70">
                 Try{" "}
                 {["Revolt of 1857", "Vasco da Gama", "Fort William"].map((q, i) => (

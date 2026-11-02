@@ -14,6 +14,7 @@
 import { useEffect } from "react";
 import { baseMode, readingWanted } from "@/lib/mode";
 import { readReader } from "@/lib/reading";
+import { LANG_KEY, STRIP_KEY, deviceIsHindi } from "@/lib/lang";
 
 export default function ModeFallback() {
   useEffect(() => {
@@ -22,6 +23,14 @@ export default function ModeFallback() {
     root.setAttribute("data-mode", baseMode());
     if (readingWanted()) root.setAttribute("data-reading", "1");
     for (const [key, value] of Object.entries(readReader())) root.setAttribute(`data-read-${key}`, String(value));
+    // the language bits too (the same rules as MODE_SCRIPT — lib/lang.ts)
+    try {
+      const chosen = localStorage.getItem(LANG_KEY), hiDevice = deviceIsHindi();
+      if (!chosen && localStorage.getItem(STRIP_KEY) !== "1") root.setAttribute("data-hi-strip", hiDevice ? "hi" : "en");
+      if (chosen === "hi" || (!chosen && hiDevice)) root.setAttribute("data-prefers-hi", "1");
+    } catch {
+      // storage blocked: no strip, no note — the header switch still works
+    }
   }, []);
   return null;
 }

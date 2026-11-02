@@ -128,11 +128,16 @@ const getSiteContext = unstable_cache(computeSiteContext, ["gyaani-site-context"
 
 // The pages Gyaani can point to with a card: every topic (MDX + CMS) and every
 // CMS news item. Cached alongside the context.
-async function computeSourceIndex(): Promise<{ title: string; href: string; description: string }[]> {
+// hindiHref / hindiTitle (2 Nov 2026): the Hindi version of a topic, when it
+// has one — so a reader on a Hindi page gets a card that opens in Hindi.
+type SourceEntry = { title: string; href: string; description: string; hindiHref?: string; hindiTitle?: string };
+async function computeSourceIndex(): Promise<SourceEntry[]> {
   const topics = (await getAllTopics()).map((t) => ({
     title: t.meta.title,
     href: "/" + t.slug.join("/"),
     description: t.meta.description ?? "",
+    hindiHref: t.hindiHref,
+    hindiTitle: t.hindiTitle,
   }));
   const news = (await getCMSKnowledge())
     .filter((e) => e.url.startsWith("/news/"))
@@ -181,6 +186,26 @@ Do NOT mention the source tag in your visible answer — it is parsed automatica
 ${siteContext}`;
 }
 
+// ── THE PAGE THE READER IS ON (2 Nov 2026) ───────────────────────────────────
+// The chat window sends the address of the page it was opened on (e.g.
+// "/history/modern-india/the-dutch-in-india" or "/hi/history/…"). We look that
+// address up in OUR OWN list of articles — the browser only tells us WHERE the
+// reader is, never what to say — and add a short note to Gyaani's
+// instructions, so "Summarise this article" knows which article is meant.
+// Returns "" when the page isn't an article (the homepage, a subject page…).
+function pageNote(article: SourceEntry | undefined, readerHindi: boolean): string {
+  const lines: string[] = [];
+  if (article) {
+    lines.push(
+      `The reader is reading the GKWorld360 article "${article.title}" right now. When they say "this article", "this page", "it" or "here", they mean this article: answer from it first, and use its exact title in the SOURCE tag.`
+    );
+  }
+  if (readerHindi) {
+    lines.push("The reader is using the Hindi version of the site. Answer in Hindi unless they write in English or ask for English.");
+  }
+  return lines.length > 0 ? `\n\n## Where the reader is\n${lines.join("\n")}` : "";
+}
+
 // ── GEMINI API ENDPOINT ───────────────────────────────────────────────────────
 // Using gemini-2.5-flash — latest stable model available on this account
 const GEMINI_URL =
@@ -193,7 +218,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ reply: "Gyaani is resting at the moment. The articles are all still here to read — come back soon.", success: false });
   }
 
-  let payload: { message?: unknown; history?: unknown };
+  let payload: { message?: unknown; history?: unknown; page?: unknown };
   try {
     payload = await req.json();
   } catch {
@@ -232,9 +257,18 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  // The page the reader is on (optional). Only a sensible-looking address is
+  // accepted: it must start with "/" and be short — anything else is ignored.
+  const page =
+    typeof payload.page === "string" && /^\/[\w\-/]{0,200}$/.test(payload.page) ? payload.page : "";
+  // Hindi pages live under /hi; the same article's English address is the rest
+  const readerHindi = page === "/hi" || page.startsWith("/hi/");
+  const englishPath = readerHindi ? page.slice(3) || "/" : page;
+
   // Build Gyaani's knowledge from site articles + personality prompt
-  const siteContext = await getSiteContext();
-  const systemPrompt = buildSystemPrompt(siteContext, mode);
+  const [siteContext, sourceIndex] = await Promise.all([getSiteContext(), getSourceIndex()]);
+  const reading = page ? sourceIndex.find((t) => t.href === englishPath) : undefined;
+  const systemPrompt = buildSystemPrompt(siteContext, mode) + pageNote(reading, readerHindi);
 
   // Convert conversation history to Gemini's format.
   // Gemini uses "user" and "model" as role names (not "gyaani").
@@ -309,12 +343,19 @@ export async function POST(req: NextRequest) {
     if (sourceName) {
       // Look the named source up across MDX topics, CMS topics and CMS news.
       // Accept if either string contains the other (handles partial matches).
-      const match = (await getSourceIndex()).find((t) => {
+      const match = sourceIndex.find((t) => {
         const title  = t.title.toLowerCase();
         const source = sourceName.toLowerCase();
         return title.includes(source) || source.includes(title);
       });
-      if (match) sourceArticle = match;
+      if (match) {
+        // A reader on a Hindi page gets the Hindi version of the article when
+        // there is one (its Hindi title, no English description underneath)
+        sourceArticle =
+          readerHindi && match.hindiHref
+            ? { title: match.hindiTitle ?? match.title, href: match.hindiHref, description: "" }
+            : { title: match.title, href: match.href, description: match.description };
+      }
     }
 
     // success: true tells the client to count this as a used question

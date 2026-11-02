@@ -128,6 +128,26 @@
         (3) GYAANI REDESIGN: new launcher + chat window, bilingual greeting, page-aware suggestions
         (Gyaani told which article you're on — small API change), "7 of 10 left today".
         Proposed order: speed fixes → Hindi → Gyaani → water loader.
+        **Owner, 2 Nov:** loader = water + striped bar, SKY BLUE water · Hindi: build ALL FIVE, owner
+        tries them on dev and then decides which to remove · Gyaani design approved · order: yes.
+      - [x] **Hindi — all five BUILT (2 Nov), owner to try on dev and pick:** (1) EN | हिं switch in
+        the header on every page (components/LangSwitch.tsx; replaced the bell, BellNotification.tsx
+        deleted; on phones one round हिं button, Read Later moved into the phone menu); (2) first-visit
+        strip (components/HindiWelcome.tsx; Hindi first for Hindi phones); (3) "हिन्दी में पढ़ें"
+        button + Languages link in the homepage hero; (4) Hindi start page /hi
+        (app/(frontend)/hi/page.tsx, in the sitemap); (5) "यह लेख हिन्दी में भी है" on English articles
+        (components/article/AlsoInHindi.tsx). Choice remembered in localStorage (lib/lang.ts);
+        strip + note decided before the page is drawn (MODE_SCRIPT), so nothing jumps.
+      - [x] **Gyaani redesign BUILT (2 Nov)** — components/Gyaani.tsx + "GYAANI" block in globals.css.
+        Dark pill "Ask Gyaani · ज्ञानी"; chunky window with GYAANI ज्ञानी header ("Reading: <article>"
+        on articles); bilingual welcome; tap-to-ask chips (article: Summarise / Key dates / इसे हिन्दी
+        में समझाइए); real lists + bold in answers; "7 of 10 left today" dots; all words in Hindi on
+        /hi pages; phone sheet with the page dimmed; Escape closes. PAGE-AWARE: the window sends the
+        page address, app/api/gyaani/route.ts looks it up in its own article list and tells Gemini
+        which article "this article" is; on Hindi pages the source card opens the Hindi article.
+        Article headings carry data-article-title (ArticleHeader.tsx). Tested with real questions,
+        EN + HI, light + dark, laptop + phone. Old "setState in effect" lint error gone.
+      - [ ] **Water loader (next):** sky-blue water filling the page name + striped bar kept.
       - [x] **Phase 5 speed check DONE (31 Oct)** — Lighthouse 12.8.2, phone settings, 2 runs each.
         BEFORE = the Vercel site (old design); AFTER = a local production build of feature/redesign.
         Homepage: score 61/73 → 53/73; largest paint 7.4–8.4 s → 5.7–6.5 s (better); blocking time
@@ -136,6 +156,14 @@
         (bigger cover picture, more fonts). Proposed fixes (waiting for the owner's yes): start the
         Earth only once the page is idle, trim unused font weights, smaller cover on phones.
         Real check after deploying: PageSpeed Insights on the Vercel site.
+      - [x] **Speed fixes BUILT + measured (2 Nov).** Logo uses 512 px Earth pictures (was 1024 →
+        ~200 KB saved on every page); the footer's Earth word loads its picture only near the footer
+        (components/EarthWord.tsx); the homepage Earth starts after the page has loaded and the
+        browser is idle; the loader reads a 512 px night picture. Results (phone Lighthouse, local
+        production build): article 79/81 (old site 75/86), 770 KB (was 962); homepage 1055 KB (was
+        1252), main content at 4.7–6.6 s (old site 7.4–8.4 s); homepage score still swings 46–73
+        because the test keeps measuring while the Earth starts. Possible next step if wanted: on
+        phones, start the 3D Earth only when the reader taps it (still photo first).
       - [ ] Laptop disk is 99% full (1.7 GB free later on 30 Oct; the dev server again served an old stylesheet in phase 2) — the dev server's cache failed to save
         and served an old stylesheet. Owner to free space; deleting `.next` (1.3 GB, rebuilt
         automatically) is safe while the dev server is stopped.

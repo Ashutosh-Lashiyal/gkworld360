@@ -4,6 +4,7 @@ import { Anton, Instrument_Serif, Fraunces, Nunito, Geist_Mono, Noto_Sans_Devana
 // The small "which mode?" script that runs before the page is drawn (see below)
 import { MODE_SCRIPT } from "@/lib/mode";
 import ModeFallback from "@/components/ModeFallback";
+import HindiWelcome from "@/components/HindiWelcome";
 
 // The permanent shell components — appear on every single page
 import Header from "@/components/Header";
@@ -208,6 +209,11 @@ export default async function RootLayout({
         />
 
         {/* Header sits at the top of every page — sticky, always visible */}
+        {/* First visit only: "GKWorld360 अब हिन्दी में भी" — the welcome strip
+            (components/HindiWelcome.tsx, 2 Nov 2026). Shown or hidden before
+            the page is drawn, so it never pushes the page down late. */}
+        <HindiWelcome />
+
         <Header topicsBySubject={stats.topicsBySubject} liveSubjects={stats.liveSubjects} totalTopics={stats.topics} />
 
         {/* flex-1 makes the main content area grow to fill all available space.

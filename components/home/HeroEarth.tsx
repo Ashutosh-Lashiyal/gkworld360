@@ -44,9 +44,26 @@ export default function HeroEarth({ places }: { places: EarthPlace[] }) {
     let scene: EarthScene | null = null;
     let frame = 0;
 
-    // Everything below happens AFTER the first paint (this is an effect).
-    // The decision runs one frame later, so React has finished drawing.
-    frame = requestAnimationFrame(() => {
+    // SPEED (2 Nov 2026): wait until the page has FINISHED LOADING and the
+    // browser has a quiet moment ("idle") before starting anything here.
+    // The Earth's code is heavy work for a phone; before, it started while
+    // the page was still loading and froze a slow phone for up to a second.
+    // Now the words, the search and the buttons are ready first, and the
+    // Earth (with its loader) starts a moment later. The dark circle where
+    // it goes is already on screen, so nothing jumps.
+    let idle = 0;
+    const whenQuiet = (fn: () => void) => {
+      const go = () => {
+        // requestIdleCallback = "call me when you have nothing else to do"
+        // (Safari doesn't have it: a short timer instead). timeout: at most 2 s.
+        if (typeof window.requestIdleCallback === "function") idle = window.requestIdleCallback(fn, { timeout: 2000 });
+        else idle = setTimeout(fn, 400) as unknown as number;
+      };
+      if (document.readyState === "complete") go();
+      else window.addEventListener("load", go, { once: true });
+    };
+    whenQuiet(() => {
+      if (cancelled) return;
       if (!canRun3D()) { setStage("still"); return; }
 
       const phone = window.innerWidth < 768;
@@ -139,6 +156,7 @@ export default function HeroEarth({ places }: { places: EarthPlace[] }) {
     return () => {
       cancelled = true;
       cancelAnimationFrame(frame);
+      if (typeof window.cancelIdleCallback === "function") window.cancelIdleCallback(idle); else clearTimeout(idle);
       scene?.dispose();
     };
   }, [places]);

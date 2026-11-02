@@ -14,6 +14,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { getDailyQuote } from "@/lib/quote";
 import Logo from "@/components/Logo";
+// The giant Earth-filled GKWORLD360 (its picture loads only near the footer)
+import EarthWord from "@/components/EarthWord";
 
 // ── FOOTER COLUMNS (tidied 29 Oct 2026: every link goes somewhere different
 // and real; Contact appears once) ──────────────────────────────────────────────
@@ -109,7 +111,7 @@ export default async function Footer() {
 
       {/* ── THE GIANT EARTH WORD ── decorative (the logo above already names
           the site), so screen readers skip it (aria-hidden) */}
-      <div aria-hidden="true" className="gk-earth-word mt-6 -mb-[0.06em]">GKWorld360</div>
+      <EarthWord />
 
       {/* ── COPYRIGHT ── */}
       <div className="relative z-10 border-t border-on-dark/15 bg-navy-dark">

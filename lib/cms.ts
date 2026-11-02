@@ -492,6 +492,43 @@ export async function getCMSNewsHindiSlugs(limit = 200): Promise<Set<string>> {
   }
 }
 
+// The published news items that have a Hindi version, WITH their Hindi titles
+// and dates — for the Hindi start page /hi (2 Nov 2026). Same single query as
+// getCMSNewsHindiSlugs above (all languages, only the columns we need).
+export type CMSHindiNews = { slug: string; title: string; eventDate: string | null; category: string | null };
+export async function getCMSNewsInHindi(limit = 200): Promise<CMSHindiNews[]> {
+  try {
+    const payload = await getClient();
+    const result = await payload.find({
+      collection: "news",
+      where: { _status: { equals: "published" } },
+      locale: "all",
+      depth: 0,
+      limit,
+      sort: "-eventDate",
+      select: { slug: true, title: true, eventDate: true, category: true },
+    });
+    const out: CMSHindiNews[] = [];
+    for (const d of result.docs) {
+      const title = d.title as unknown as Partial<Record<CMSLocale, string | null>>;
+      const hi = title?.hi?.trim();
+      if (!hi) continue;
+      // `category` may also come back per language — take the Hindi one if there is one
+      const cat = d.category as unknown as string | Partial<Record<CMSLocale, string | null>> | null;
+      out.push({
+        slug: d.slug as string,
+        title: hi,
+        eventDate: (d.eventDate as string | null) ?? null,
+        category: typeof cat === "string" ? cat : cat?.hi ?? cat?.en ?? null,
+      });
+    }
+    return out;
+  } catch (error) {
+    cmsUnavailable("getCMSNewsInHindi", `limit=${limit}`, error);
+    return [];
+  }
+}
+
 // ── ARTICLES FOR A LISTING PAGE (category / subject) ─────────────────────────
 // Returns every PUBLISHED CMS article that belongs to one subject (and optionally
 // one category), shaped so a listing page can render it.

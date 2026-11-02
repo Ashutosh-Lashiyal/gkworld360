@@ -70,6 +70,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const atlasPages: MetadataRoute.Sitemap = [
     { url: `${SITE_URL}/atlas`,    lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: `${SITE_URL}/hi/atlas`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
+    // The Hindi start page (2 Nov 2026) — everything that exists in Hindi
+    { url: `${SITE_URL}/hi`,       lastModified: now, changeFrequency: "weekly", priority: 0.8 },
   ];
   for (const lang of ["en", "hi"] as const) {
     for (const e of await getAtlasEntries(lang)) {

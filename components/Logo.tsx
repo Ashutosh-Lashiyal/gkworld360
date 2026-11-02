@@ -13,7 +13,10 @@
 //    window, the Earth picture is the wallpaper behind it.
 //  - <animateTransform> slides the wallpaper sideways forever (70 seconds per
 //    full turn). This is SVG's own animation system, so it needs no JavaScript.
-//  - The pictures live in /public/brand (earth-day.jpg, earth-night.jpg).
+//  - The pictures live in /public/brand (earth-day-512.jpg, earth-night-512.jpg).
+//    SPEED (2 Nov 2026): 512-pixel versions — the logo is under 50 pixels tall,
+//    so the 1024-pixel ones it used before cost ~200 KB on every page for no
+//    visible difference. 512 is still sharp on high-resolution screens.
 //
 // The animation pauses for readers who asked their device for less motion,
 // and in Reading mode (Reading mode is calm: nothing moves).
@@ -97,8 +100,8 @@ export default function Logo({ size = 44, withName = true, onDark = false, class
         className="flex-none overflow-visible"
       >
         <defs>
-          {earth("day", "/brand/earth-day.jpg", "gk-logo__day")}
-          {earth("night", "/brand/earth-night.jpg", "gk-logo__night")}
+          {earth("day", "/brand/earth-day-512.jpg", "gk-logo__day")}
+          {earth("night", "/brand/earth-night-512.jpg", "gk-logo__night")}
         </defs>
         {/* .gk-logo__edge (globals.css) draws the mint edge line. It is painted
             first and the Earth on top ("paint-order: stroke"), so the line only

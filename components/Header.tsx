@@ -10,9 +10,10 @@
 //   - the Subjects menu with every subject, its Hindi name and live topic counts
 //     (subjects without a page yet are greyed and not links);
 //   - Atlas with its "New" tag (the Hindi Atlas on Hindi pages);
-//   - Current Affairs, Headlines, search, Read Later (bookmark) and the bell.
+//   - Current Affairs, Headlines, search, Read Later (bookmark) and the language switch.
 // What's new:
 //   - the animated Day & Night logo (components/Logo.tsx);
+//   - the EN | हिं language switch (components/LangSwitch.tsx, replaced the bell 2 Nov 2026);
 //   - the sun/moon button for Light / Dark (components/ThemeToggle.tsx);
 //   - phones and tablets get a FULL-SCREEN menu with big links, and phones also
 //     get the tab bar at the bottom (components/PhoneTabBar.tsx);
@@ -26,7 +27,8 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { getSubjectFromPath, SUBJECT_COLORS } from "@/lib/subject-colors";
 import { SUBJECTS } from "@/lib/subjects";
-import BellNotification from "@/components/BellNotification";
+// The EN | हिं language switch (replaced the bell, 2 Nov 2026)
+import LangSwitch from "@/components/LangSwitch";
 import Button from "@/components/Button";
 import Logo from "@/components/Logo";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -274,8 +276,8 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
           ))}
         </nav>
 
-        {/* Right side: search, Read Later, bell, Light/Dark, and (phones/tablets) the menu */}
-        <div className="ml-auto flex items-center gap-1.5 md:gap-2">
+        {/* Right side: search, Read Later, EN | हिं, Light/Dark, and (phones/tablets) the menu */}
+        <div className="ml-auto flex items-center gap-1 min-[400px]:gap-1.5 md:gap-2">
           {/* Search: a wide pill on big screens, a round icon on smaller ones */}
           <Link href="/search" aria-label="Search" className="gk-icon-btn hidden xl:inline-flex items-center gap-2.5 h-[42px] pl-3.5 pr-4 rounded-full font-body text-sm font-bold text-muted">
             <SearchIcon /> Search
@@ -290,14 +292,17 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
             aria-label="Read Later — your saved topics"
             title="Read Later"
             aria-current={current(pathname === "/saved")}
-            className="gk-icon-btn inline-grid place-items-center w-[38px] h-[38px] md:w-[42px] md:h-[42px] rounded-full aria-[current=page]:text-sapphire"
+            // hidden on phones (2 Nov 2026): the EN | हिं button needed the room;
+            // on phones Read Later is in the menu instead
+            className="gk-icon-btn hidden sm:inline-grid place-items-center w-[38px] h-[38px] md:w-[42px] md:h-[42px] rounded-full aria-[current=page]:text-sapphire"
           >
             <BookmarkIcon />
           </Link>
 
-          {/* The bell (Hindi is available). Hidden on small phones, where the
-              header has room for four buttons; it's in the menu there. */}
-          <span className="hidden sm:inline-flex"><BellNotification /></span>
+          {/* The language switch: EN | हिं (a pill; one round button on phones).
+              It replaced the ringing bell on 2 Nov 2026 — a bell didn't tell
+              anyone the site is in Hindi. components/LangSwitch.tsx */}
+          <LangSwitch />
 
           <ThemeToggle className="max-md:w-[38px] max-md:h-[38px]" />
 
@@ -398,16 +403,19 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
               </div>
             </div>
 
-            {/* Smaller links, and the Hindi note the bell gives on bigger screens */}
+            {/* Smaller links, and the way to the Hindi start page */}
             <div className="flex flex-wrap gap-x-5 gap-y-2 mt-6 font-body text-[15px] font-extrabold text-muted">
               <Link href="/search">Search</Link>
+              {/* Read Later lives here on phones (no room for its button in the header) */}
+              <Link href="/saved">Read Later</Link>
               <Link href="/about">About us</Link>
               <Link href="/contact">Contact</Link>
               <Link href="/topics">All topics</Link>
             </div>
-            <p className="mt-4 font-body text-sm text-muted">
-              Every topic is in English and <span lang="hi" className="font-hindi">हिन्दी</span>. Look for the language switch on any topic.
-            </p>
+            {/* Hindi, from the menu too: straight to the Hindi start page */}
+            <Link href="/hi" lang="hi" className="mt-5 inline-flex items-center gap-2 px-4 py-3 rounded-2xl border-2 border-accent bg-accent-soft font-hindi text-base font-bold text-accent">
+              हिन्दी में पढ़ें → <span lang="en" className="font-body text-xs font-extrabold uppercase tracking-[0.08em] text-muted">Read in Hindi</span>
+            </Link>
           </nav>
         </div>
       )}

@@ -39,10 +39,16 @@ export const READER_KEY = "gk-reader";
  *   2. data-reading = "1" if Reading mode is on (CSS only uses it on articles);
  *   3. the text settings: each saved setting becomes an attribute, e.g.
  *      {"size":2} → data-read-size="2", which globals.css turns into a size.
+ *   4. (2 Nov 2026) the LANGUAGE bits for the Hindi pieces (lib/lang.ts):
+ *      data-hi-strip = "hi" or "en" → show the first-visit welcome strip
+ *        (until the reader chooses a language or closes it; "hi" = their
+ *        device is set to Hindi, so the strip speaks Hindi first);
+ *      data-prefers-hi = "1" → they chose Hindi (or their device is in Hindi
+ *        and they haven't chosen English): show "also in Hindi" on articles.
  * try/catch: some private-browsing modes block localStorage; then we simply
  * follow the device and use the default text settings.
  */
-export const MODE_SCRIPT = `(function(){var d=document.documentElement;try{var m=localStorage.getItem("${MODE_KEY}");if(m!=="light"&&m!=="dark"){m=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}d.setAttribute("data-mode",m);if(localStorage.getItem("${READING_KEY}")==="1")d.setAttribute("data-reading","1");var r=JSON.parse(localStorage.getItem("${READER_KEY}")||"{}");for(var k in r)d.setAttribute("data-read-"+k,String(r[k]))}catch(e){if(!d.hasAttribute("data-mode"))d.setAttribute("data-mode","light")}})();`;
+export const MODE_SCRIPT = `(function(){var d=document.documentElement;try{var m=localStorage.getItem("${MODE_KEY}");if(m!=="light"&&m!=="dark"){m=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}d.setAttribute("data-mode",m);if(localStorage.getItem("${READING_KEY}")==="1")d.setAttribute("data-reading","1");var r=JSON.parse(localStorage.getItem("${READER_KEY}")||"{}");for(var k in r)d.setAttribute("data-read-"+k,String(r[k]));var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"",hiDev=/^hi\\b/i.test(nl),l=localStorage.getItem("gk-lang");if(!l&&localStorage.getItem("gk-hi-strip")!=="1")d.setAttribute("data-hi-strip",hiDev?"hi":"en");if(l==="hi"||(!l&&hiDev))d.setAttribute("data-prefers-hi","1")}catch(e){if(!d.hasAttribute("data-mode"))d.setAttribute("data-mode","light")}})();`;
 
 /** The mode the page is showing right now. */
 export function currentMode(): Mode {

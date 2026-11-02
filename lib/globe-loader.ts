@@ -51,7 +51,9 @@ export function createGlobeLoader(canvas: HTMLCanvasElement, lines: LoaderLines,
   // moment ("at") to switch on — bright cities early, small towns later.
   const img = new Image();
   img.onload = () => {
-    const W = 1024, H = 512;
+    // 512 × 256 (SPEED, 2 Nov 2026): a quarter of the pixels to read than at
+    // 1024 × 512, and still far more bright spots than the 3,000 lights we keep
+    const W = 512, H = 256;
     const c = document.createElement("canvas");
     c.width = W; c.height = H;
     const g = c.getContext("2d");
@@ -63,8 +65,8 @@ export function createGlobeLoader(canvas: HTMLCanvasElement, lines: LoaderLines,
       const b = clamp((px[(y * W + x) * 4] - 34) / 110);
       if (b > 0) out.push({ lng: ((x + Math.random()) / W) * 360 - 180, lat: 90 - ((y + Math.random()) / H) * 180, b, at: 0.3 + 0.55 * (1 - b) * Math.random() + 0.08 * Math.random(), ph: Math.random() * 6.3 });
     }
-    // At most 4,000 lights, so slower phones keep up
-    lights = out.length > 4000 ? out.filter(() => Math.random() < 4000 / out.length) : out;
+    // At most 3,000 lights, so slower phones keep up
+    lights = out.length > 3000 ? out.filter(() => Math.random() < 3000 / out.length) : out;
   };
   img.src = nightSrc;
 
