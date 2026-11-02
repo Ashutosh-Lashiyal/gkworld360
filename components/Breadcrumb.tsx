@@ -1,3 +1,5 @@
+"use client";
+
 // Breadcrumb — shows the user's location in the content hierarchy.
 // Example: Home > History > Modern India > Revolt of 1857
 //
@@ -7,8 +9,14 @@
 // The `tone` prop switches colours:
 //   "default" → dark text, for use on light backgrounds (normal pages)
 //   "light"   → white text, for use over a dark banner image (topic hero)
+//
+// HINDI (2 Nov 2026, phase 2): on a /hi page the first crumb is "होम" and leads
+// to the Hindi homepage. That's why this is now a browser-side ("use client")
+// component: it reads the page's address (useSiteText) to know the language.
+// One change here fixes the trail on EVERY Hindi page (Atlas, articles, …).
 
 import Link from "next/link";
+import { useSiteText } from "@/lib/use-site-text";
 
 type BreadcrumbItem = {
   label: string;  // display text e.g. "Modern India"
@@ -21,6 +29,7 @@ type BreadcrumbProps = {
 };
 
 export default function Breadcrumb({ items, tone = "default" }: BreadcrumbProps) {
+  const { t, href } = useSiteText(); // "Home" / "होम", and "/" / "/hi"
   // Colour classes depend on whether we're on a light or dark background
   const isLight = tone === "light";
   // REDESIGN PHASE 4 (30 Oct 2026): bold and quiet, like the design's "crumbs"
@@ -38,8 +47,8 @@ export default function Breadcrumb({ items, tone = "default" }: BreadcrumbProps)
 
         {/* Home is always first */}
         <li>
-          <Link href="/" className={linkClass}>
-            Home
+          <Link href={href("/")} className={linkClass}>
+            {t.nav.home}
           </Link>
         </li>
 

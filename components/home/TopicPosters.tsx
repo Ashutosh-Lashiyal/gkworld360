@@ -10,8 +10,8 @@
 // Server component.
 //
 // HINDI HOMEPAGE (2 Nov 2026, lang="hi"): only articles with a Hindi version,
-// with their Hindi titles and summaries, linking to the Hindi article. The
-// "All topics" poster and link are hidden — that page is English-only for now.
+// with their Hindi titles and summaries, linking to the Hindi article.
+// "सभी लेख" and the last poster lead to /hi/topics (phase 2, 2 Nov 2026).
 
 import Link from "next/link";
 import Image from "next/image";
@@ -19,7 +19,7 @@ import SectionHead from "@/components/SectionHead";
 import PosterPin from "@/components/home/PosterPin";
 import { getPopularTopics, getAllTopics } from "@/lib/topics";
 import type { Lang } from "@/lib/lang";
-import { HOME_TEXT } from "@/lib/home-text";
+import { HOME_TEXT, homeHref } from "@/lib/home-text";
 
 export default async function TopicPosters({ lang = "en" }: { lang?: Lang }) {
   const t = HOME_TEXT[lang];
@@ -40,7 +40,7 @@ export default async function TopicPosters({ lang = "en" }: { lang?: Lang }) {
           eyebrow={t.popular.eyebrow}
           title={t.popular.head.title}
           accent={t.popular.head.accent}
-          more={t.popular.all ? { href: "/topics?sort=popular", label: t.popular.all } : undefined}
+          more={t.popular.all ? { href: homeHref(lang, "/topics?sort=popular"), label: t.popular.all } : undefined}
         />
       </div>
 
@@ -68,10 +68,10 @@ export default async function TopicPosters({ lang = "en" }: { lang?: Lang }) {
             </Link>
           );
         })}
-        {/* the last poster — hidden on the Hindi homepage (no Hindi list page yet) */}
+        {/* the last poster: "All topics →" / "सभी लेख →" */}
         {t.popular.all && (
-          <Link href="/topics" className="gk-poster gk-poster--end" data-cursor={t.cursor.all}>
-            <b>All<br />topics →</b>
+          <Link href={homeHref(lang, "/topics")} className="gk-poster gk-poster--end" data-cursor={t.cursor.all}>
+            <b>{t.popular.endCard[0]}<br />{t.popular.endCard[1]}</b>
           </Link>
         )}
       </div>

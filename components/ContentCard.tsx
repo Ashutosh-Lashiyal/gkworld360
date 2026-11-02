@@ -36,6 +36,9 @@ import Image from "next/image";
 // ViewTransition comes from React itself (no extra library). It names the
 // title so it can glide into the article's heading on the next page.
 import { ViewTransition } from "react";
+// "Coming soon" / "जल्द आ रहा है" and the mouse-ring words (lib/page-text.ts, 2 Nov 2026)
+import { PAGE_TEXT } from "@/lib/page-text";
+import type { Lang } from "@/lib/lang";
 import Button from "@/components/Button";
 import ReadTick from "@/components/ReadTick";
 import { titleTransitionName } from "@/lib/view-transition";
@@ -68,6 +71,9 @@ type ContentCardProps = {
   // leads to an empty page. The title still links (the page exists), the
   // image slot does not.
   comingSoon?: boolean;
+  // The page's language (2 Nov 2026): "hi" on Hindi pages — the card's own
+  // small words follow it. The caller passes ctaLabel in that language too.
+  lang?: Lang;
 };
 
 export default function ContentCard({
@@ -85,7 +91,9 @@ export default function ContentCard({
   flat = false,
   stats,
   comingSoon = false,
+  lang = "en",
 }: ContentCardProps) {
+  const words = PAGE_TEXT[lang].card;
   // Fall back to the site's emerald when a card has no subject colour.
   const accentColor = accent ?? "#059669";
   const placeholderBg = hoverBg ?? "#f0ede6";
@@ -105,7 +113,7 @@ export default function ContentCard({
         flat ? "" : "gk-card--lift gk-tilt",
       ].join(" ")}
       // the word in the mouse's ring (components/PointerFx.tsx)
-      data-cursor={comingSoon ? "Soon" : ctaLabel.startsWith("Explore") ? "Explore" : "Read"}
+      data-cursor={comingSoon ? words.cursorSoon : ctaLabel === words.explore ? words.cursorExplore : words.cursorRead}
       // the subject's colour, for the label pill (globals.css mixes it with
       // the page's text colour so it reads on light AND dark pages)
       style={{ ["--signal" as string]: accentColor }}
@@ -190,7 +198,7 @@ export default function ContentCard({
         <div className="mt-auto pt-3 flex gap-2 self-stretch">
           {comingSoon ? (
             <Button variant="disabled" className="flex-1">
-              Coming soon
+              {words.soon}
             </Button>
           ) : hindiHref ? (
             <>

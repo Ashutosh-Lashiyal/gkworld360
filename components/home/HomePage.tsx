@@ -12,7 +12,7 @@
 // What the Hindi homepage does differently (the owner's decisions, 2 Nov 2026):
 //   - articles, quiz, fact, places: only what exists in Hindi, in Hindi;
 //   - headlines: still the English newspapers, tagged "अंग्रेज़ी में";
-//   - "All subjects" / "All topics" / "View all": hidden (English-only pages);
+//   - "सभी विषय" / "सभी लेख" / "सभी देखें" lead to the Hindi list pages (phase 2);
 //   - Recently added: only once there are MORE than 6 Hindi articles (before
 //     that it would just repeat the Popular strip);
 //   - Current affairs: only once a write-up exists in Hindi;
@@ -285,6 +285,7 @@ export default async function HomePage({ lang }: { lang: Lang }) {
   );
 
   // English: the page as it is. Hindi: wrapped so screen readers read it in
-  // Hindi (lang="hi") and the Hindi type rules apply (globals.css, .gk-home--hi).
-  return hi ? <div lang="hi" className="gk-home--hi">{page}</div> : page;
+  // Hindi (lang="hi") and the Hindi type rules apply (globals.css, .gk-hi-page —
+  // shared with every Hindi page since phase 2).
+  return hi ? <div lang="hi" className="gk-hi-page">{page}</div> : page;
 }

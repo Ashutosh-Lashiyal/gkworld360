@@ -11,8 +11,8 @@
 // HINDI HOMEPAGE (2 Nov 2026, lang="hi"): the same six cards, but counting
 // only articles that have a Hindi version, with the Hindi names, the Hindi
 // descriptions (lib/subjects.ts) and the Hindi article titles on the big card.
-// The cards still open the subject's page, which is in English for now (the
-// owner's call) — and "All subjects" is hidden, for the same reason.
+// The cards still open the subject's page, which is in English until phase 3
+// (the owner's call). "सभी विषय" leads to /hi/subjects (phase 2).
 
 import Link from "next/link";
 import Image from "next/image";
@@ -23,7 +23,7 @@ import { getAllTopics } from "@/lib/topics";
 import { getSubjectInfo, SUBJECT_DESCRIPTIONS_HI } from "@/lib/subjects";
 import { SUBJECT_COLORS } from "@/lib/subject-colors";
 import type { Lang } from "@/lib/lang";
-import { HOME_TEXT } from "@/lib/home-text";
+import { HOME_TEXT, homeHref } from "@/lib/home-text";
 
 // 1 → "I", 4 → "IV"… the subject's number, as on the old cards
 const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII"];
@@ -57,7 +57,7 @@ export default async function SubjectBento({ lang = "en" }: { lang?: Lang }) {
         eyebrow={t.subjects.eyebrow}
         title={t.subjects.head.title}
         accent={t.subjects.head.accent}
-        more={t.subjects.all ? { href: "/subjects", label: t.subjects.all } : undefined}
+        more={t.subjects.all ? { href: homeHref(lang, "/subjects"), label: t.subjects.all } : undefined}
       />
 
       <div data-reveal-group className="gk-bento">

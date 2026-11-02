@@ -26,7 +26,10 @@ export function pageLang(pathname: string): Lang {
 // Pages that already have a Hindi twin under /hi. An entry covers the page and
 // everything below it ("/atlas" also covers /atlas/vasco-da-gama-…).
 // "/" is special: it means the homepage only.
-const HINDI_TWINS = ["/", "/atlas"];
+const HINDI_TWINS = [
+  "/", "/atlas", //                                     phase 1 (2 Nov 2026)
+  "/subjects", "/topics", "/search", "/saved", "/about", "/contact", // phase 2 (2 Nov 2026)
+];
 
 /**
  * A link in the page's language: on a Hindi page, "/atlas" → "/hi/atlas";

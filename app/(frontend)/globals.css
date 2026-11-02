@@ -1782,7 +1782,8 @@ a.gk-tl__item:hover .gk-tl__title { color: var(--accent); }
 /* …and on the Hindi homepage the same button says "Read in English →" — in the English font */
 .gk-hi-btn--en { font: 800 16px/1 var(--font-body), sans-serif; }
 
-/* ── THE HINDI HOMEPAGE (components/home/HomePage.tsx with lang="hi", 2 Nov 2026) ──
+/* ── HINDI PAGES (.gk-hi-page — the Hindi homepage since 2 Nov 2026, and every Hindi
+   page of phase 2 on: components/home/HomePage.tsx, components/pages/*) ──
    The same layout as the English homepage; these rules only fit HINDI LETTERS
    into it. Hindi letters come from Noto Sans Devanagari (the backup font —
    see the FONTS note in @theme above). Three things differ from English:
@@ -1795,29 +1796,29 @@ a.gk-tl__item:hover .gk-tl__title { color: var(--accent); }
      3. Letter-spacing pulls apart Hindi letters that should join, so it's
         switched off for every Hindi element (:lang(hi) — elements marked
         lang="en", like the headlines, keep theirs).                                */
-.gk-home--hi { font-synthesis: none; }
+.gk-hi-page { font-synthesis: none; }
 /* (3) is now SITE-WIDE (2 Nov 2026, phase 1): the header, footer and menus on
    every /hi page carry lang="hi" too, and their small capital labels use
    letter-spacing. This rule sits outside any @layer, so it beats Tailwind's
    tracking-[…] classes; English elements (lang="en") keep their spacing. */
 :lang(hi) { letter-spacing: 0; }
 /* the giant motto words around the Earth: जिज्ञासा से / ज्ञान तक */
-.gk-home--hi .gk-giant { font-weight: 700; line-height: 1.2; }
+.gk-hi-page .gk-giant { font-weight: 700; line-height: 1.2; }
 /* section titles ("आज का अभ्यास") — smaller than Anton's: Hindi letters are wider */
-.gk-home--hi .gk-big-title { font-weight: 700; font-size: clamp(40px, 5.6vw, 84px); line-height: 1.2; }
-.gk-home--hi .gk-big-title__accent { font-style: normal; font-weight: 700; font-size: 1em; }
-.gk-home--hi .gk-hero-intro h1 { font-weight: 700; font-size: clamp(38px, 4.4vw, 68px); line-height: 1.2; }
+.gk-hi-page .gk-big-title { font-weight: 700; font-size: clamp(40px, 5.6vw, 84px); line-height: 1.2; }
+.gk-hi-page .gk-big-title__accent { font-style: normal; font-weight: 700; font-size: 1em; }
+.gk-hi-page .gk-hero-intro h1 { font-weight: 700; font-size: clamp(38px, 4.4vw, 68px); line-height: 1.2; }
 /* the moving band */
-.gk-home--hi .gk-band__word { font-weight: 700; font-size: clamp(48px, 7.4vw, 112px); line-height: 1.3; }
-.gk-home--hi .gk-band__word em { font-style: normal; font-weight: 700; }
+.gk-hi-page .gk-band__word { font-weight: 700; font-size: clamp(48px, 7.4vw, 112px); line-height: 1.3; }
+.gk-hi-page .gk-band__word em { font-style: normal; font-weight: 700; }
 /* card titles */
-.gk-home--hi .gk-poster__title { font-weight: 700; font-size: 30px; line-height: 1.25; }
-.gk-home--hi .gk-subj__name { font-weight: 700; line-height: 1.25; }
-.gk-home--hi .gk-subj--big .gk-subj__name { font-size: clamp(48px, 6vw, 96px); line-height: 1.15; }
-.gk-home--hi h2.font-display { font-weight: 700; line-height: 1.2; }
+.gk-hi-page .gk-poster__title { font-weight: 700; font-size: 30px; line-height: 1.25; }
+.gk-hi-page .gk-subj__name { font-weight: 700; line-height: 1.25; }
+.gk-hi-page .gk-subj--big .gk-subj__name { font-size: clamp(48px, 6vw, 96px); line-height: 1.15; }
+.gk-hi-page h2.font-display { font-weight: 700; line-height: 1.2; }
 /* the small mono labels: a touch bigger, so the Hindi stays readable */
-.gk-home--hi .gk-hero-stats { font-size: 14px; }
-.gk-home--hi .gk-ticker__label, .gk-home--hi .gk-tl-label { font-size: 13px; }
+.gk-hi-page .gk-hero-stats { font-size: 14px; }
+.gk-hi-page .gk-ticker__label, .gk-hi-page .gk-tl-label { font-size: 13px; }
 
 /* ── GYAANI (components/Gyaani.tsx — redesign, 2 Nov 2026) ───────────────────
    The chat helper, in the site's chunky style. Every colour is a site token

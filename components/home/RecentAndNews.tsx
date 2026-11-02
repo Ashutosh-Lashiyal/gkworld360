@@ -18,7 +18,7 @@ import { formatAddedTime, type SiteTopic } from "@/lib/topics";
 import { formatNewsDate } from "@/lib/date-utils";
 import type { ContentMeta } from "@/lib/content";
 import type { Lang } from "@/lib/lang";
-import { HOME_TEXT } from "@/lib/home-text";
+import { HOME_TEXT, homeHref } from "@/lib/home-text";
 
 type NewsItem = { url: string; meta: ContentMeta; hindiHref?: string };
 
@@ -46,9 +46,8 @@ export default function RecentAndNews({
               <span className="font-accent italic text-[22px] leading-tight text-accent">{t.recent.eyebrow}</span>
               <h2 className="m-0 font-display text-[40px] leading-none uppercase text-foreground">{t.recent.title}</h2>
             </div>
-            {/* hidden on the Hindi homepage — the list page is English-only for now */}
             {t.recent.viewAll && (
-              <Link href="/topics?sort=recent" className="gk-more font-extrabold text-accent whitespace-nowrap">
+              <Link href={homeHref(lang, "/topics?sort=recent")} className="gk-more font-extrabold text-accent whitespace-nowrap">
                 {t.recent.viewAll} <span aria-hidden="true" className="gk-more__arrow">→</span>
               </Link>
             )}

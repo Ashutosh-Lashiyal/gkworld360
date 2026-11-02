@@ -15,11 +15,12 @@ type ConfirmDialogProps = {
   title: string;
   message: string;
   confirmLabel?: string;
+  cancelLabel?: string; // "Cancel" / "रद्द करें" (2 Nov 2026)
   onConfirm: () => void;
   onCancel: () => void;
 };
 
-export default function ConfirmDialog({ open, title, message, confirmLabel = "Yes, remove", onConfirm, onCancel }: ConfirmDialogProps) {
+export default function ConfirmDialog({ open, title, message, confirmLabel = "Yes, remove", cancelLabel = "Cancel", onConfirm, onCancel }: ConfirmDialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
 
   // Open/close the native dialog when `open` changes. showModal() is what
@@ -45,7 +46,7 @@ export default function ConfirmDialog({ open, title, message, confirmLabel = "Ye
         <h2 className="m-0 font-heading text-xl font-bold text-navy-dark">{title}</h2>
         <p className="m-0 font-body text-sm text-muted leading-relaxed">{message}</p>
         <div className="flex justify-end gap-2 pt-2">
-          <Button variant="ghost" onClick={onCancel}>Cancel</Button>
+          <Button variant="ghost" onClick={onCancel}>{cancelLabel}</Button>
           <Button variant="danger" onClick={onConfirm}>{confirmLabel}</Button>
         </div>
       </div>

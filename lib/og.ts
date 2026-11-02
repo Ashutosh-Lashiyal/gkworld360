@@ -43,3 +43,18 @@ export function pageMetadata(input: {
     twitter: { card: "summary_large_image", title: input.title, description: input.description, images },
   };
 }
+
+/**
+ * The two language versions of a site page, for its metadata (2 Nov 2026,
+ * the whole site in Hindi). Google reads these as
+ * <link rel="alternate" hreflang="hi" href="…/hi/about">, and so does the
+ * header's EN | हिं switch (lib/lang.ts) — that's how हिं on /about lands on
+ * /hi/about. `path` is the English address, e.g. "/about".
+ */
+export function languageAlternates(path: string, lang: "en" | "hi"): NonNullable<Metadata["alternates"]> {
+  const hiPath = path === "/" ? "/hi" : "/hi" + path;
+  return {
+    canonical: absoluteUrl(lang === "hi" ? hiPath : path),
+    languages: { en: absoluteUrl(path), hi: absoluteUrl(hiPath) },
+  };
+}

@@ -1,44 +1,24 @@
-// Search page — /search  (and /search?q=something)
-// Server Component: it builds the search index on the server, reads the ?q=
-// value from the URL, and hands both to the client SearchResults component
-// which does the live filtering in the browser.
+// Search — the address "/search" (English).
+//
+// 2 Nov 2026 (the whole site in Hindi, phase 2): the page itself now lives in
+// components/pages/SearchPage.tsx, shared with the Hindi twin at "/hi/search"
+// (app/(frontend)/hi/search/page.tsx). This file only says WHICH language to
+// show, plus the page's settings (title, description, language versions).
 
 import type { Metadata } from "next";
-import { pageMetadata } from "@/lib/og";
-import { getSearchIndex } from "@/lib/search";
-import SearchResults from "@/components/SearchResults";
-import PageTitle from "@/components/PageTitle";
+import { pageMetadata, languageAlternates } from "@/lib/og";
+import { PAGE_TEXT } from "@/lib/page-text";
+import SearchPage from "@/components/pages/SearchPage";
 
-// Title only — the root layout appends " | GKWorld360". pageMetadata also
-// gives the page its link-preview card (lib/og.ts).
-export const metadata: Metadata = pageMetadata({
-  title: "Search",
-  description:
-    "Search across all subjects and topics on GKWorld360.",
-  label: "Subjects · Topics · Current Affairs",
-  path: "/search",
-});
+const t = PAGE_TEXT.en.search.meta;
 
-export default async function SearchPage({
-  searchParams,
-}: {
-  // In this version of Next.js, searchParams is a Promise — we await it.
-  searchParams: Promise<{ q?: string }>;
-}) {
+export const metadata: Metadata = {
+  ...pageMetadata({ title: t.title, description: t.description, label: t.label, path: "/search" }),
+  alternates: languageAlternates("/search", "en"),
+};
+
+// ?q=… — what was searched (e.g. from the homepage's search box)
+export default async function Page({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q } = await searchParams;
-  const initialQuery = q ?? "";
-
-  // Build the full search index once, on the server
-  const index = await getSearchIndex();
-
-  return (
-    <>
-      {/* PHASE 4 (30 Oct 2026): the big title (components/PageTitle.tsx) */}
-      <PageTitle colors={null} label="Subjects · topics · current affairs" title="Search" />
-      <div className="max-w-[1320px] mx-auto px-4 md:px-8 pt-8 pb-6">
-        {/* The interactive search box + results (client component) */}
-        <SearchResults index={index} initialQuery={initialQuery} />
-      </div>
-    </>
-  );
+  return <SearchPage lang="en" query={q ?? ""} />;
 }

@@ -56,7 +56,11 @@ search dropdown and Gyaani speak Hindi on every /hi page. They read the address 
 → /hi… = Hindi); words in `lib/site-text.ts`. Links go to a page's Hindi twin only when it's listed in
 HINDI_TWINS there — add each new Hindi page (phases 2–4, TODO.md). The footer is split: Footer.tsx
 (server, reads the quote) + FooterBody.tsx (browser, picks the language).
-Next: phase 2 (Hindi Subjects / All topics / Search / Read Later / About / Contact pages); logo concepts.
+**Phase 2 built (2 Nov):** /hi/subjects, /hi/topics, /hi/search, /hi/saved, /hi/about, /hi/contact
++ a bilingual 404. Page bodies in `components/pages/` take a language; words in `lib/page-text.ts`;
+Hindi type rules = `.gk-hi-page` in globals.css (was .gk-home--hi). Breadcrumb.tsx is now a client
+component (reads the address → "होम" on Hindi pages).
+Next: phase 3 (Hindi subject + category pages); phase 4 (news + Hindi headlines); logo concepts.
 How modes work: `lib/mode.ts` + the colour blocks at the top of `app/(frontend)/globals.css`.
 Reading mode is per-article: the `data-article` marker (ArticleLayout) + `data-reading` on <html>.
 Logo: `components/Logo.tsx` (+ files in `public/brand/`). Phases 2–5 are listed in TODO.md.

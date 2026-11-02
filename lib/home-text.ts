@@ -76,7 +76,7 @@ export type HomeText = {
     soon: string;
     topicsIn: (name: string) => string;
   };
-  popular: { eyebrow: string; head: Title; all: string | null };
+  popular: { eyebrow: string; head: Title; all: string | null; endCard: [string, string] }; // the last poster: two lines
   headlines: {
     eyebrow: string;
     head: Title;
@@ -159,7 +159,7 @@ export const HOME_TEXT: Record<Lang, HomeText> = {
       soon: "Coming soon",
       topicsIn: (name) => `Topics in ${name}`,
     },
-    popular: { eyebrow: "Most read", head: { title: "Popular", accent: "topics" }, all: "All topics" },
+    popular: { eyebrow: "Most read", head: { title: "Popular", accent: "topics" }, all: "All topics", endCard: ["All", "topics →"] },
     headlines: {
       eyebrow: "Updated through the day",
       head: { title: "Latest", accent: "headlines" },
@@ -235,14 +235,14 @@ export const HOME_TEXT: Record<Lang, HomeText> = {
     subjects: {
       eyebrow: "किसी विषय से शुरू करें",
       head: { title: "विषय", accent: "चुनें" },
-      all: null, // the subjects page is English-only for now (owner, 2 Nov 2026)
+      all: "सभी विषय", // /hi/subjects exists since phase 2 (2 Nov 2026)
       counts: (c, n) => `${c} श्रेणी · ${n} लेख`, // Hindi doesn't change these words for 1 or many
       none: "अभी कोई लेख नहीं",
       explore: (name) => `${name} पढ़ें →`,
       soon: "जल्द आ रहा है",
       topicsIn: (name) => `${name} के लेख`,
     },
-    popular: { eyebrow: "सबसे ज़्यादा पढ़े गए", head: { title: "लोकप्रिय", accent: "लेख" }, all: null },
+    popular: { eyebrow: "सबसे ज़्यादा पढ़े गए", head: { title: "लोकप्रिय", accent: "लेख" }, all: "सभी लेख", endCard: ["सभी", "लेख →"] },
     headlines: {
       eyebrow: "दिन भर अपडेट",
       head: { title: "ताज़ा", accent: "सुर्खियाँ" },
@@ -263,7 +263,7 @@ export const HOME_TEXT: Record<Lang, HomeText> = {
       nextTitle: "और विषय जुड़ेंगे",
       nextPlace: "जैसे-जैसे उनके लेख लिखे जाएँगे",
     },
-    recent: { eyebrow: "अभी-अभी जुड़े", title: "नए लेख", viewAll: null },
+    recent: { eyebrow: "अभी-अभी जुड़े", title: "नए लेख", viewAll: "सभी देखें" },
     news: { label: "समसामयिकी", read: "पूरा पढ़ें", alsoHindi: "हिन्दी में भी" },
     cursor: { drag: "खींचें", explore: "देखें", soon: "जल्द", read: "पढ़ें", map: "नक्शा", all: "सभी" },
   },

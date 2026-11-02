@@ -187,8 +187,16 @@
           `lib/use-site-text.ts`; footer words in `components/FooterBody.tsx`. ADD each new Hindi page
           to HINDI_TWINS in lib/site-text.ts so every menu link switches to it. Owner will list
           wording changes after everything is built. Leftover for phase 3: page breadcrumbs ("Home ›").
-        - [ ] Phase 2 — /hi/subjects, /hi/topics, /hi/search, /hi/saved, /hi/about (owner approves the
-          Hindi About text), /hi/contact, the not-found page. Then show the links hidden on /hi.
+        - [x] Phase 2 BUILT (2 Nov) — /hi/subjects ("इतिहास विषय उपलब्ध है" — owner's wording),
+          /hi/topics (Hindi articles only), /hi/search (Hindi results first), /hi/saved, /hi/about,
+          /hi/contact, and the 404 page answers in Hindi for /hi/… addresses. Page bodies now live in
+          `components/pages/` (+ NotFoundBody.tsx); words in `lib/page-text.ts`; each English page
+          tells Google its Hindi twin (languageAlternates in lib/og.ts). The breadcrumb ("होम ›") is
+          Hindi on every /hi page. The Hindi homepage's "सभी विषय / सभी लेख / सभी देखें" links are back.
+          Owner will do ONE full Hindi wording check when all phases are done.
+        - [ ] Contact page (owner to decide later): (1) the name box's example is the owner's real
+          name "Ashutosh Lashiyal" — suggest a neutral example; (2) the form sends nothing yet
+          (planned: Resend email) — decide where messages go.
         - [ ] Phase 3 — Hindi subject + category pages (/hi/history, /hi/history/modern-india); Hindi
           names already in /admin. Leftover English labels around articles.
         - [ ] Phase 4 — news: /hi/news in Hindi; HINDI HEADLINES on /hi (homepage, ticker, /hi/pulse),

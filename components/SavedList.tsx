@@ -16,9 +16,15 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import HeadlineThumb from "@/components/HeadlineThumb";
 import { READ_LATER_KEY, readSaved, type SavedHeadline } from "@/components/ReadLaterButton";
 import { SOURCE_ICONS, CATEGORY_COLOR } from "@/lib/pulse-sources";
+// HINDI (2 Nov 2026, phase 2): /hi/saved shows this same list with Hindi words.
+// The list itself is shared — what you save on an English page shows here too.
+import { useSiteText } from "@/lib/use-site-text";
+import { PAGE_TEXT } from "@/lib/page-text";
 
 
 export default function SavedList() {
+  const { lang, href } = useSiteText();
+  const t = PAGE_TEXT[lang].saved;
   const [items, setItems] = useState<SavedHeadline[] | null>(null);
   // Which question is open: clear everything, or remove one link (by its URL)
   const [confirm, setConfirm] = useState<{ kind: "all" } | { kind: "one"; link: string; title: string } | null>(null);
@@ -40,11 +46,11 @@ export default function SavedList() {
     if (!confirm) return;
     if (confirm.kind === "all") {
       write([]);
-      window.dispatchEvent(new CustomEvent("gk-toast", { detail: { message: "Read Later list cleared" } }));
+      window.dispatchEvent(new CustomEvent("gk-toast", { detail: { message: t.cleared } }));
     } else {
       const link = confirm.link;
       write(readSaved().filter((h) => h.link !== link));
-      window.dispatchEvent(new CustomEvent("gk-toast", { detail: { message: "Removed from Read Later" } }));
+      window.dispatchEvent(new CustomEvent("gk-toast", { detail: { message: t.removed } }));
     }
     setConfirm(null);
   }
@@ -55,16 +61,16 @@ export default function SavedList() {
     <>
       <PageTitle
         colors={null}
-        label="Your list · on this device"
-        title="Read Later"
-        description="Articles and headlines you saved. They stay here until you remove them."
+        label={t.label}
+        title={t.title}
+        description={t.description}
       >
         <span className="font-body text-[13px] text-muted">
-          {items === null ? "Loading…" : `${count} saved ${count === 1 ? "item" : "items"}`}
+          {items === null ? t.loading : t.count(count)}
         </span>
         {count > 0 && (
           <Button variant="danger" onClick={() => setConfirm({ kind: "all" })}>
-            Clear all
+            {t.clearAll}
           </Button>
         )}
       </PageTitle>
@@ -72,16 +78,15 @@ export default function SavedList() {
       <div className="max-w-[1320px] mx-auto px-4 md:px-8 pt-10 pb-6">
         {/* The honest note about where this list lives */}
         <p className="m-0 mb-6 max-w-[880px] font-body text-[13px] text-muted border-l-2 border-hairline pl-3">
-          This list is saved in this browser only — your phone and computer each keep their own, and
-          clearing browser data erases it. Accounts, coming soon, will sync it across devices.
+          {t.note}
         </p>
 
         {items === null ? null : items.length === 0 ? (
           <div className="gk-card max-w-[880px] text-center py-14 px-6">
-            <p className="m-0 font-display text-4xl uppercase text-foreground">Nothing saved yet</p>
-            <p className="m-0 font-body text-muted mt-2">Tap Save on any article, or the bookmark on any headline, to keep it here.</p>
+            <p className={`m-0 font-display text-4xl uppercase text-foreground ${lang === "hi" ? "font-bold leading-snug" : ""}`}>{t.emptyTitle}</p>
+            <p className="m-0 font-body text-muted mt-2">{t.emptyText}</p>
             <div className="mt-6">
-              <Button href="/pulse">Browse Latest Headlines →</Button>
+              <Button href={href("/pulse")}>{t.browse}</Button>
             </div>
           </div>
         ) : (
@@ -133,7 +138,7 @@ export default function SavedList() {
                       )}
                       {h.source}
                     </span>
-                    <span className="ml-0.5">Saved {new Date(h.savedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>
+                    <span className="ml-0.5">{t.savedOn(new Date(h.savedAt).toLocaleDateString(t.dateLocale, { day: "numeric", month: "short" }))}</span>
                   </span>
                 </a>
 
@@ -141,8 +146,8 @@ export default function SavedList() {
                 <button
                   type="button"
                   onClick={() => setConfirm({ kind: "one", link: h.link, title: h.title })}
-                  aria-label="Remove from Read Later"
-                  title="Remove"
+                  aria-label={t.removeLabel}
+                  title={t.remove}
                   className="flex items-center justify-center w-11 h-11 rounded-xl border-2 border-hairline bg-surface text-muted hover:border-[#dc2626] hover:text-[#dc2626] transition-colors"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -157,13 +162,10 @@ export default function SavedList() {
 
       <ConfirmDialog
         open={confirm !== null}
-        title={confirm?.kind === "all" ? "Clear your whole list?" : "Remove this from Read Later?"}
-        message={
-          confirm?.kind === "all"
-            ? `All ${count} saved ${count === 1 ? "item" : "items"} will be removed from this device. This cannot be undone.`
-            : `"${confirm?.kind === "one" ? confirm.title : ""}" will be removed from your Read Later list.`
-        }
-        confirmLabel={confirm?.kind === "all" ? "Yes, clear all" : "Yes, remove"}
+        title={confirm?.kind === "all" ? t.confirmAllTitle : t.confirmOneTitle}
+        message={confirm?.kind === "all" ? t.confirmAllText(count) : t.confirmOneText(confirm?.kind === "one" ? confirm.title : "")}
+        confirmLabel={confirm?.kind === "all" ? t.yesAll : t.yesOne}
+        cancelLabel={t.cancel}
         onConfirm={doConfirm}
         onCancel={() => setConfirm(null)}
       />
