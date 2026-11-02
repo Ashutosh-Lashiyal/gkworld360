@@ -214,7 +214,14 @@ export default async function RootLayout({
             the page is drawn, so it never pushes the page down late. */}
         <HindiWelcome />
 
-        <Header topicsBySubject={stats.topicsBySubject} liveSubjects={stats.liveSubjects} totalTopics={stats.topics} />
+        {/* hindi…: the same counts for Hindi pages, where the Subjects menu counts Hindi articles */}
+        <Header
+          topicsBySubject={stats.topicsBySubject}
+          liveSubjects={stats.liveSubjects}
+          totalTopics={stats.topics}
+          hindiTopicsBySubject={stats.hindiTopicsBySubject}
+          hindiTotalTopics={stats.hindi}
+        />
 
         {/* flex-1 makes the main content area grow to fill all available space.
             This ensures the footer always stays at the bottom, even on short pages. */}

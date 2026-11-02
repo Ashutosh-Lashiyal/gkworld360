@@ -37,21 +37,33 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { WaterWord } from "@/lib/water-word";
+// The "Loading" line in the page's language (lib/site-text.ts, 2 Nov 2026)
+import { useSiteText } from "@/lib/use-site-text";
 
-// Names for the site's main pages (anything else uses the link's own words)
+// Names for the site's main pages (anything else uses the link's own words).
+// Hindi pages (/hi/…) have their own names — including the pages that get a
+// Hindi twin in the next phases, so they're ready when those pages arrive.
 const NAMES: Record<string, string> = {
   "/": "Home",
   "/subjects": "Subjects",
   "/topics": "All topics",
   "/atlas": "World360 Atlas",
-  "/hi/atlas": "वर्ल्ड360 एटलस",
-  "/hi": "होम", // the Hindi homepage (2 Nov 2026)
   "/news": "Current Affairs",
   "/pulse": "Headlines",
   "/search": "Search",
   "/saved": "Read Later",
   "/about": "About",
   "/contact": "Contact",
+  "/hi": "होम", // the Hindi homepage (2 Nov 2026)
+  "/hi/subjects": "विषय",
+  "/hi/topics": "सभी लेख",
+  "/hi/atlas": "वर्ल्ड360 एटलस",
+  "/hi/news": "समसामयिकी",
+  "/hi/pulse": "सुर्खियाँ",
+  "/hi/search": "खोज",
+  "/hi/saved": "बाद में पढ़ें",
+  "/hi/about": "हमारे बारे में",
+  "/hi/contact": "संपर्क",
 };
 
 /** The name to show on the curtain for a link. */
@@ -59,7 +71,7 @@ function nameFor(a: HTMLAnchorElement, path: string): string {
   if (NAMES[path]) return NAMES[path];
   // The link's own words, if they make a short title ("The Dutch in India")
   const text = (a.getAttribute("aria-label") || a.innerText || "").split("\n").map((t) => t.trim()).find((t) => t.length > 2) ?? "";
-  if (text && text.length <= 48 && !/^(read|explore|english|हिन्दी|view all|all)\b/i.test(text)) return text.replace(/\s*→\s*$/, "");
+  if (text && text.length <= 48 && !/^(read|explore|english|हिन्दी|view all|all|सभी)\b/i.test(text)) return text.replace(/\s*→\s*$/, "");
   // Otherwise the last part of the address, tidied: "modern-india" → "Modern India"
   const last = path.split("/").filter(Boolean).pop() ?? "";
   return last.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ") || "GKWorld360";
@@ -84,6 +96,7 @@ export default function PageCurtain() {
   const searchParams = useSearchParams();
   const [phase, setPhase] = useState<Phase>("idle");
   const [slow, setSlow] = useState(false);
+  const { t } = useSiteText(); // "Loading" / "लोड हो रहा है"
 
   const box = useRef<HTMLDivElement>(null);
   const percent = useRef<HTMLSpanElement>(null);
@@ -184,7 +197,7 @@ export default function PageCurtain() {
       {/* the next page's name, filling with water (painted by lib/water-word.ts) */}
       <canvas ref={canvas} className="gk-curtain__water" />
       <div className="gk-curtain__bar">
-        <span>{slow ? "Loading · slow connection" : "Loading"}</span>
+        <span>{slow ? t.curtain.slow : t.curtain.loading}</span>
         <span ref={percent} className="tabular-nums">0%</span>
         <div className="gk-curtain__track"><i className="gk-curtain__fill" /><i className="gk-curtain__head" /></div>
       </div>

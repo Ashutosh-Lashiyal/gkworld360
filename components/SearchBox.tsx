@@ -17,6 +17,8 @@ import Link from "next/link";
 import { rankResults, type SearchItem } from "@/lib/search-rank";
 // Lets the results list fade out when it closes (lib/use-presence.ts, 28 Oct 2026)
 import { usePresence } from "@/lib/use-presence";
+// The dropdown's words in the page's language (lib/site-text.ts, 2 Nov 2026)
+import { useSiteText } from "@/lib/use-site-text";
 
 // How many results to show inside the hero dropdown
 const MAX_DROPDOWN_RESULTS = 10;
@@ -41,6 +43,7 @@ export default function SearchBox({
   boxed = false,
 }: SearchBoxProps) {
   const router = useRouter();
+  const { t } = useSiteText(); // "Searching…" / "खोज रहे हैं…" and the rest
 
   const [value, setValue] = useState("");
   const [open, setOpen] = useState(false);          // is the dropdown visible?
@@ -105,8 +108,8 @@ export default function SearchBox({
     total === 0
       ? null
       : total <= MAX_DROPDOWN_RESULTS
-      ? `${total} result${total !== 1 ? "s" : ""}`
-      : `Showing ${MAX_DROPDOWN_RESULTS} of ${total} results`;
+      ? t.search.count(total)
+      : t.search.showing(MAX_DROPDOWN_RESULTS, total);
 
   const trimmed = value.trim();
 
@@ -178,13 +181,13 @@ export default function SearchBox({
         >
           {/* Loading state (only on the very first fetch) */}
           {loading && !loaded && (
-            <p className="font-body text-sm text-muted px-4 py-3">Searching…</p>
+            <p className="font-body text-sm text-muted px-4 py-3">{t.search.searching}</p>
           )}
 
           {/* Loaded, but nothing matched */}
           {loaded && total === 0 && (
             <p className="font-body text-sm text-muted px-4 py-3">
-              No results for &ldquo;{trimmed}&rdquo;
+              {t.search.none(trimmed)}
             </p>
           )}
 
@@ -222,7 +225,7 @@ export default function SearchBox({
                 onClick={() => setOpen(false)}
                 className="block px-4 py-3 font-body text-sm font-semibold text-sapphire hover:bg-mint hover:text-navy-dark transition-colors text-center"
               >
-                View all results →
+                {t.search.viewAll}
               </Link>
             </>
           )}

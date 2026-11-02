@@ -1796,7 +1796,11 @@ a.gk-tl__item:hover .gk-tl__title { color: var(--accent); }
         switched off for every Hindi element (:lang(hi) — elements marked
         lang="en", like the headlines, keep theirs).                                */
 .gk-home--hi { font-synthesis: none; }
-.gk-home--hi :lang(hi) { letter-spacing: 0; }
+/* (3) is now SITE-WIDE (2 Nov 2026, phase 1): the header, footer and menus on
+   every /hi page carry lang="hi" too, and their small capital labels use
+   letter-spacing. This rule sits outside any @layer, so it beats Tailwind's
+   tracking-[…] classes; English elements (lang="en") keep their spacing. */
+:lang(hi) { letter-spacing: 0; }
 /* the giant motto words around the Earth: जिज्ञासा से / ज्ञान तक */
 .gk-home--hi .gk-giant { font-weight: 700; line-height: 1.2; }
 /* section titles ("आज का अभ्यास") — smaller than Anton's: Hindi letters are wider */

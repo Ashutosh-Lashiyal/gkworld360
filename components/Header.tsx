@@ -21,6 +21,11 @@
 //     moment you scroll up.
 // The colours come from globals.css (classes starting with gk-), so the header
 // follows Light / Dark / Reading automatically.
+//
+// HINDI (the whole site in Hindi, phase 1, 2 Nov 2026): on a /hi page every
+// word is Hindi (lib/site-text.ts), "Home" leads to /hi, the Subjects menu
+// shows the Hindi names big and counts Hindi articles, and links go to a page's
+// Hindi twin when it exists (otherwise the English page — the owner's call).
 
 import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
@@ -36,12 +41,10 @@ import { currentMode, setMode } from "@/lib/mode";
 // usePresence keeps a menu on the page for a moment after it closes, so it can
 // fade out instead of vanishing (lib/use-presence.ts, 28 Oct 2026).
 import { usePresence } from "@/lib/use-presence";
-
-// The links after "Subjects" and "Atlas" (menu tidy-up, 29 Oct 2026)
-const OTHER_LINKS = [
-  { label: "Current Affairs", href: "/news" },
-  { label: "Headlines", href: "/pulse" },
-];
+// This page's language and its words (lib/site-text.ts)
+import { useSiteText } from "@/lib/use-site-text";
+// The same sun and moon drawings as the header's Light/Dark button
+import { SunIcon, MoonIcon } from "@/components/ThemeToggle";
 
 // ── small icons ──
 function BookmarkIcon() {
@@ -74,11 +77,11 @@ function ChevronDownIcon({ open }: { open: boolean }) {
     </svg>
   );
 }
-// The small "New" tag next to Atlas
-function NewTag() {
+// The small "New" / "नया" tag next to Atlas
+function NewTag({ label }: { label: string }) {
   return (
     <span className="font-body text-[10px] font-extrabold uppercase tracking-[0.08em] leading-none text-[#04241b] bg-mint rounded-[5px] px-1.5 py-[3px]">
-      New
+      {label}
     </span>
   );
 }
@@ -89,9 +92,18 @@ type HeaderProps = {
   topicsBySubject?: Record<string, number>;
   liveSubjects?: string[]; // subjects that have a page today
   totalTopics?: number;
+  // The same counts for Hindi pages: only topics that have a Hindi version
+  hindiTopicsBySubject?: Record<string, number>;
+  hindiTotalTopics?: number;
 };
 
-export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics = 0 }: HeaderProps) {
+export default function Header({
+  topicsBySubject = {},
+  liveSubjects,
+  totalTopics = 0,
+  hindiTopicsBySubject = {},
+  hindiTotalTopics = 0,
+}: HeaderProps) {
   // A subject is "live" when its page exists. Without the list (shouldn't
   // happen) treat everything as live rather than greying the whole menu.
   const isLive = (slug: string) => !liveSubjects || liveSubjects.includes(slug);
@@ -99,10 +111,15 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
 
   const pathname = usePathname();
   const subjectSlug = getSubjectFromPath(pathname); // on a subject page → "Subjects" shows as active
-  // The Atlas in the reader's language: on a Hindi page, the Hindi Atlas.
-  const hindiPage = pathname === "/hi" || pathname.startsWith("/hi/");
-  const atlasHref = hindiPage ? "/hi/atlas" : "/atlas";
+  // The page's language, its words, and href() — a link to a page's Hindi twin when it has one
+  const { lang, t, href } = useSiteText();
+  const hi = lang === "hi";
+  const atlasHref = href("/atlas"); // the Hindi Atlas on Hindi pages
   const onAtlas = /^\/(hi\/)?atlas(\/|$)/.test(pathname);
+  const onHome = pathname === "/" || pathname === "/hi";
+  // Counts in the page's language (Hindi pages count Hindi articles)
+  const countFor = (slug: string) => (hi ? hindiTopicsBySubject[slug] ?? 0 : topicsBySubject[slug] ?? 0);
+  const total = hi ? hindiTotalTopics : totalTopics;
 
   const [subjectsOpen, setSubjectsOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -161,6 +178,7 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
 
   return (
     <header
+      lang={lang}
       // sticky + top: the pill stays near the top of the screen as you scroll.
       // The extra env(...) keeps it below an iPhone's notch.
       className={`gk-head sticky z-50 mx-3 md:mx-4 mt-2.5 ${away && !mobileMenuOpen ? "is-away" : ""}`}
@@ -169,13 +187,13 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
       <div className="gk-head__pill relative max-w-[1280px] mx-auto h-[58px] md:h-16 rounded-full flex items-center gap-3 lg:gap-4 pl-4 pr-2 md:pl-5 md:pr-2.5">
 
         {/* Logo — the GK letters with the turning Earth, and the name */}
-        <Link href="/" aria-label="GKWorld360 — home" className="flex-none">
+        <Link href={href("/")} aria-label={t.footer.home} className="flex-none">
           <Logo size={38} />
         </Link>
 
         {/* Desktop nav (large screens) — centred in the middle space */}
-        <nav className="hidden lg:flex flex-1 justify-center items-center gap-0.5" aria-label="Main navigation">
-          <Link href="/" className={navLink} aria-current={current(pathname === "/")}>Home</Link>
+        <nav className="hidden lg:flex flex-1 justify-center items-center gap-0.5" aria-label={t.nav.mainNav}>
+          <Link href={href("/")} className={navLink} aria-current={current(onHome)}>{t.nav.home}</Link>
 
           {/* Subjects — hover or click to open; Escape closes */}
           <div
@@ -191,7 +209,7 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
               aria-expanded={subjectsOpen}
               aria-haspopup="true"
             >
-              Subjects
+              {t.nav.subjects}
               <ChevronDownIcon open={subjectsOpen} />
             </button>
 
@@ -214,17 +232,17 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
                 >
                   <div className="flex items-baseline justify-between">
                     <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted">
-                      {liveCount} {liveCount === 1 ? "subject" : "subjects"} · {totalTopics} {totalTopics === 1 ? "topic" : "topics"} · English and Hindi
+                      {t.subjectsMenu.summary(liveCount, total)}
                     </span>
-                    <Link href="/subjects" onClick={() => setSubjectsOpen(false)} className="font-body text-[14px] font-extrabold text-sapphire hover:text-sapphire-dark transition-colors">
-                      All subjects →
+                    <Link href={href("/subjects")} onClick={() => setSubjectsOpen(false)} className="font-body text-[14px] font-extrabold text-sapphire hover:text-sapphire-dark transition-colors">
+                      {t.subjectsMenu.all}
                     </Link>
                   </div>
 
                   <div className="grid grid-cols-3 gap-x-8 gap-y-1">
                     {SUBJECTS.map((subject) => {
                       const live = isLive(subject.slug);
-                      const count = topicsBySubject[subject.slug] ?? 0;
+                      const count = countFor(subject.slug);
                       const inner = (
                         <>
                           <span
@@ -233,19 +251,20 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
                             style={{ backgroundColor: live ? SUBJECT_COLORS[subject.slug]?.accent ?? "var(--accent)" : "var(--line-2)" }}
                           />
                           <span className={`grid grid-cols-[minmax(0,1fr)_auto] gap-3 items-center px-3 py-2.5 rounded-[14px] transition-colors duration-100 ${live ? "group-hover:bg-surface-low" : ""}`}>
+                            {/* the page's language big, the other one small underneath */}
                             <span className="flex flex-col leading-tight">
-                              <span className={`font-heading text-base font-semibold ${live ? "text-foreground" : "text-muted"}`}>{subject.label}</span>
-                              <span lang="hi" className={`font-hindi text-xs ${live ? "text-muted" : "text-muted/70"}`}>{subject.labelHi}</span>
+                              <span className={`font-heading text-base font-semibold ${live ? "text-foreground" : "text-muted"}`}>{hi ? subject.labelHi : subject.label}</span>
+                              <span lang={hi ? "en" : "hi"} className={`${hi ? "font-body" : "font-hindi"} text-xs ${live ? "text-muted" : "text-muted/70"}`}>{hi ? subject.label : subject.labelHi}</span>
                             </span>
                             {/* A real count, or an honest "coming soon" */}
                             <span className={`font-body text-xs font-bold whitespace-nowrap ${live ? "text-muted" : "text-muted/70 italic"}`}>
-                              {live ? `${count} ${count === 1 ? "topic" : "topics"}` : "coming soon"}
+                              {live ? t.subjectsMenu.count(count) : t.subjectsMenu.soon}
                             </span>
                           </span>
                         </>
                       );
                       return live ? (
-                        <Link key={subject.slug} href={`/${subject.slug}`} onClick={() => setSubjectsOpen(false)} className="grid grid-cols-[6px_minmax(0,1fr)] gap-2.5 items-center group">
+                        <Link key={subject.slug} href={href(`/${subject.slug}`)} onClick={() => setSubjectsOpen(false)} className="grid grid-cols-[6px_minmax(0,1fr)] gap-2.5 items-center group">
                           {inner}
                         </Link>
                       ) : (
@@ -258,8 +277,8 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
                   </div>
 
                   <div className="flex items-center justify-between gap-4 pt-4 border-t-2 border-border-subtle">
-                    <span className="font-body text-[14px] text-muted">Not sure where to start? Every subject, with its categories, on one page.</span>
-                    <Button href="/subjects" onClick={() => setSubjectsOpen(false)}>Browse all subjects</Button>
+                    <span className="font-body text-[14px] text-muted">{t.subjectsMenu.hint}</span>
+                    <Button href={href("/subjects")} onClick={() => setSubjectsOpen(false)}>{t.subjectsMenu.browse}</Button>
                   </div>
                 </div>
               </>
@@ -267,10 +286,14 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
           </div>
 
           <Link href={atlasHref} className={navLink} aria-current={current(onAtlas)}>
-            Atlas <NewTag />
+            {t.nav.atlas} <NewTag label={t.nav.newTag} />
           </Link>
-          {OTHER_LINKS.map((link) => (
-            <Link key={link.href} href={link.href} className={navLink} aria-current={current(pathname === link.href)}>
+          {/* The links after "Subjects" and "Atlas" (menu tidy-up, 29 Oct 2026) */}
+          {[
+            { label: t.nav.currentAffairs, path: "/news" },
+            { label: t.nav.headlines, path: "/pulse" },
+          ].map((link) => (
+            <Link key={link.path} href={href(link.path)} className={navLink} aria-current={current(pathname === href(link.path))}>
               {link.label}
             </Link>
           ))}
@@ -279,19 +302,19 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
         {/* Right side: search, Read Later, EN | हिं, Light/Dark, and (phones/tablets) the menu */}
         <div className="ml-auto flex items-center gap-1 min-[400px]:gap-1.5 md:gap-2">
           {/* Search: a wide pill on big screens, a round icon on smaller ones */}
-          <Link href="/search" aria-label="Search" className="gk-icon-btn hidden xl:inline-flex items-center gap-2.5 h-[42px] pl-3.5 pr-4 rounded-full font-body text-sm font-bold text-muted">
-            <SearchIcon /> Search
+          <Link href={href("/search")} aria-label={t.nav.search} className="gk-icon-btn hidden xl:inline-flex items-center gap-2.5 h-[42px] pl-3.5 pr-4 rounded-full font-body text-sm font-bold text-muted">
+            <SearchIcon /> {t.nav.search}
           </Link>
-          <Link href="/search" aria-label="Search" className="gk-icon-btn xl:hidden inline-grid place-items-center w-[38px] h-[38px] md:w-[42px] md:h-[42px] rounded-full">
+          <Link href={href("/search")} aria-label={t.nav.search} className="gk-icon-btn xl:hidden inline-grid place-items-center w-[38px] h-[38px] md:w-[42px] md:h-[42px] rounded-full">
             <SearchIcon />
           </Link>
 
           {/* Read Later — the bookmark */}
           <Link
-            href="/saved"
-            aria-label="Read Later — your saved topics"
-            title="Read Later"
-            aria-current={current(pathname === "/saved")}
+            href={href("/saved")}
+            aria-label={t.nav.readLaterLabel}
+            title={t.nav.readLater}
+            aria-current={current(pathname === href("/saved"))}
             // hidden on phones (2 Nov 2026): the EN | हिं button needed the room;
             // on phones Read Later is in the menu instead
             className="gk-icon-btn hidden sm:inline-grid place-items-center w-[38px] h-[38px] md:w-[42px] md:h-[42px] rounded-full aria-[current=page]:text-sapphire"
@@ -315,7 +338,7 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
               if (!mobileMenuOpen) setModeState(currentMode() === "dark" ? "dark" : "light");
               setMobileMenuOpen(!mobileMenuOpen);
             }}
-            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-label={mobileMenuOpen ? t.nav.closeMenu : t.nav.openMenu}
             aria-expanded={mobileMenuOpen}
             aria-controls="gk-mobile-menu"
           >
@@ -334,17 +357,18 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
           className={`lg:hidden fixed inset-0 -z-10 bg-background overflow-y-auto overscroll-contain ${mobileMenu.closing ? "anim-fade-out" : "anim-fade-in"}`}
           style={{ padding: "calc(92px + env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px)) calc(120px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px))" }}
         >
-          <nav aria-label="Menu" className="max-w-[640px] mx-auto">
+          <nav aria-label={t.nav.menu} className="max-w-[640px] mx-auto">
             {/* Big links, numbered: the numbers are just a reading aid */}
             {[
-              { n: "01", label: "Home", href: "/", on: pathname === "/" },
-              { n: "02", label: "Subjects", href: "", on: !!subjectSlug },
-              { n: "03", label: "Atlas", href: atlasHref, on: onAtlas, isNew: true },
-              { n: "04", label: "Current Affairs", href: "/news", on: pathname === "/news" },
-              { n: "05", label: "Headlines", href: "/pulse", on: pathname === "/pulse" },
-              { n: "06", label: "Read Later", href: "/saved", on: pathname === "/saved" },
+              { n: "01", label: t.nav.home, href: href("/"), on: onHome },
+              { n: "02", label: t.nav.subjects, href: "", on: !!subjectSlug },
+              { n: "03", label: t.nav.atlas, href: atlasHref, on: onAtlas, isNew: true },
+              { n: "04", label: t.nav.currentAffairs, href: href("/news"), on: pathname === href("/news") },
+              { n: "05", label: t.nav.headlines, href: href("/pulse"), on: pathname === href("/pulse") },
+              { n: "06", label: t.nav.readLater, href: href("/saved"), on: pathname === href("/saved") },
             ].map((item, i) => {
-              const cls = `flex items-baseline gap-3 w-full py-2 border-b-2 border-hairline font-display text-[clamp(38px,10vw,56px)] leading-[1.05] uppercase anim-menu-in ${item.on ? "text-sapphire" : "text-foreground"}`;
+              // Hindi: bold (Anton has no Hindi letters; the Hindi font's bold matches its weight)
+              const cls = `flex items-baseline gap-3 w-full py-2 border-b-2 border-hairline font-display text-[clamp(38px,10vw,56px)] ${hi ? "font-bold leading-[1.3]" : "leading-[1.05]"} uppercase anim-menu-in ${item.on ? "text-sapphire" : "text-foreground"}`;
               const num = <small className="font-mono text-xs text-muted min-w-[22px]">{item.n}</small>;
               // "Subjects" opens the list of subjects underneath instead of going somewhere
               if (!item.href) {
@@ -356,23 +380,23 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
                     {mobileSubjectsOpen && (
                       <div className="grid grid-cols-2 gap-1 py-3">
                         {SUBJECTS.map((subject) => isLive(subject.slug) ? (
-                          <Link key={subject.slug} href={`/${subject.slug}`} className="flex items-center gap-2.5 min-h-12 px-2 rounded-[12px] hover:bg-surface-low">
+                          <Link key={subject.slug} href={href(`/${subject.slug}`)} className="flex items-center gap-2.5 min-h-12 px-2 rounded-[12px] hover:bg-surface-low">
                             <span aria-hidden="true" className="w-1.5 h-7 rounded-full flex-shrink-0" style={{ backgroundColor: SUBJECT_COLORS[subject.slug]?.accent ?? "var(--accent)" }} />
                             <span className="flex flex-col leading-tight">
-                              <span className="font-body text-[15px] font-extrabold text-foreground">{subject.label}</span>
-                              <span lang="hi" className="font-hindi text-[11px] text-muted">{subject.labelHi}</span>
+                              <span className="font-body text-[15px] font-extrabold text-foreground">{hi ? subject.labelHi : subject.label}</span>
+                              <span lang={hi ? "en" : "hi"} className={`${hi ? "font-body" : "font-hindi"} text-[11px] text-muted`}>{hi ? subject.label : subject.labelHi}</span>
                             </span>
                           </Link>
                         ) : (
                           <div key={subject.slug} aria-disabled="true" className="flex items-center gap-2.5 min-h-12 px-2 text-muted/70">
                             <span aria-hidden="true" className="w-1.5 h-7 rounded-full flex-shrink-0 bg-surface-mid" />
                             <span className="flex flex-col leading-tight">
-                              <span className="font-body text-[15px] font-bold">{subject.label}</span>
-                              <span className="font-body text-[11px] italic">coming soon</span>
+                              <span className="font-body text-[15px] font-bold">{hi ? subject.labelHi : subject.label}</span>
+                              <span className="font-body text-[11px] italic">{t.subjectsMenu.soon}</span>
                             </span>
                           </div>
                         ))}
-                        <Link href="/subjects" className="col-span-2 pt-2 font-body text-sm font-extrabold text-sapphire">All subjects →</Link>
+                        <Link href={href("/subjects")} className="col-span-2 pt-2 font-body text-sm font-extrabold text-sapphire">{t.subjectsMenu.all}</Link>
                       </div>
                     )}
                   </div>
@@ -380,41 +404,50 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
               }
               return (
                 <Link key={item.n} href={item.href} className={cls} style={{ animationDelay: `${i * 45}ms` }} aria-current={current(item.on)}>
-                  {num}{item.label}{item.isNew && <span className="self-center"><NewTag /></span>}
+                  {num}{item.label}{item.isNew && <span className="self-center"><NewTag label={t.nav.newTag} /></span>}
                 </Link>
               );
             })}
 
-            {/* The Look switch: same as the sun/moon button, with words */}
+            {/* The Look switch: same as the sun/moon button, with words.
+                2 Nov 2026: the ☀ ☾ text characters became the button's own sun and
+                moon drawings (owner: "with the correct logos of them") */}
             <div className="flex items-center justify-between gap-3 mt-6">
-              <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted">Look</span>
-              <div role="group" aria-label="Look" className="grid grid-cols-2 gap-1 p-1 rounded-[14px] bg-surface-low min-w-[220px]">
+              <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted">{t.look.label}</span>
+              <div role="group" aria-label={t.look.label} className="grid grid-cols-2 gap-1 p-1 rounded-[14px] bg-surface-low min-w-[220px]">
                 {(["light", "dark"] as const).map((m) => (
                   <button
                     key={m}
                     type="button"
                     aria-pressed={mode === m}
                     onClick={() => { setMode(m); setModeState(m); }}
-                    className={`py-2 rounded-[10px] font-body text-[13px] font-extrabold ${mode === m ? "bg-surface text-foreground shadow-[0_2px_0_var(--line-2)]" : "text-muted"}`}
+                    className={`inline-flex items-center justify-center gap-2 py-2 rounded-[10px] font-body text-[13px] font-extrabold ${mode === m ? "bg-surface text-foreground shadow-[0_2px_0_var(--line-2)]" : "text-muted"}`}
                   >
-                    {m === "light" ? "☀ Light" : "☾ Dark"}
+                    {m === "light" ? <SunIcon size={16} /> : <MoonIcon size={16} />}
+                    {m === "light" ? t.look.light : t.look.dark}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Smaller links, and the way to the Hindi homepage */}
+            {/* Smaller links, and the way to the other language's homepage */}
             <div className="flex flex-wrap gap-x-5 gap-y-2 mt-6 font-body text-[15px] font-extrabold text-muted">
-              <Link href="/search">Search</Link>
+              <Link href={href("/search")}>{t.nav.search}</Link>
               {/* Read Later lives here on phones (no room for its button in the header) */}
-              <Link href="/saved">Read Later</Link>
-              <Link href="/about">About us</Link>
-              <Link href="/contact">Contact</Link>
-              <Link href="/topics">All topics</Link>
+              <Link href={href("/saved")}>{t.nav.readLater}</Link>
+              <Link href={href("/about")}>{t.smallLinks.about}</Link>
+              <Link href={href("/contact")}>{t.smallLinks.contact}</Link>
+              <Link href={href("/topics")}>{t.smallLinks.allTopics}</Link>
             </div>
-            {/* Hindi, from the menu too: straight to the Hindi homepage */}
-            <Link href="/hi" lang="hi" className="mt-5 inline-flex items-center gap-2 px-4 py-3 rounded-2xl border-2 border-accent bg-accent-soft font-hindi text-base font-bold text-accent">
-              हिन्दी में पढ़ें → <span lang="en" className="font-body text-xs font-extrabold uppercase tracking-[0.08em] text-muted">Read in Hindi</span>
+            {/* The other language, from the menu too: "हिन्दी में पढ़ें →" on English
+                pages, "Read in English →" on Hindi ones — straight to that homepage */}
+            <Link
+              href={t.otherLanguage.href}
+              lang={t.otherLanguage.lang}
+              className={`mt-5 inline-flex items-center gap-2 px-4 py-3 rounded-2xl border-2 border-accent bg-accent-soft text-base font-bold text-accent ${t.otherLanguage.lang === "hi" ? "font-hindi" : "font-body font-extrabold"}`}
+            >
+              {t.otherLanguage.main}
+              {t.otherLanguage.small && <span lang="en" className="font-body text-xs font-extrabold uppercase tracking-[0.08em] text-muted">{t.otherLanguage.small}</span>}
             </Link>
           </nav>
         </div>

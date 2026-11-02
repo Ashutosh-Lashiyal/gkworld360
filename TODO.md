@@ -177,10 +177,25 @@
       - [ ] **NEW LOGO for the new motto (owner, 2 Nov).** The current mark is "G for Grow, K for
         Know" — it no longer matches. Make concepts on a canvas (app-icon test, 16 px, one colour),
         owner picks, THEN change `components/Logo.tsx` + `public/brand/`. Current logo stays until then.
-      - [ ] **Hindi homepage, later steps:** Hindi header + footer (all /hi pages); a Hindi "all
-        articles" page (then show the hidden links); Hindi subject pages; Hindi news feeds (research
-        BBC Hindi, Dainik Bhaskar, Amar Ujala, Navbharat Times, Live Hindustan, PIB Hindi — needs a
-        language column on headlines, dev DB first); search box's dropdown texts in Hindi.
+      - [ ] **THE WHOLE SITE IN HINDI (owner, 2 Nov: "change the whole site to hindi").** Same method
+        as the homepage: every page gets a /hi twin built from the same components, words in word
+        files, each phase = Hindi word list → owner approves → build → owner checks on dev.
+        - [x] Phase 1 BUILT (2 Nov) — header, Subjects menu (Hindi names big, Hindi counts), phone
+          bottom bar + phone menu (लाइट / डार्क with the sun/moon icons — owner's pick), footer (Hindi
+          quote from /admin; author name stays "Kofi Annan"), loader names + "लोड हो रहा है",
+          bookmark pop-ups, search dropdown, Gyaani errors. Words: `lib/site-text.ts`; hook
+          `lib/use-site-text.ts`; footer words in `components/FooterBody.tsx`. ADD each new Hindi page
+          to HINDI_TWINS in lib/site-text.ts so every menu link switches to it. Owner will list
+          wording changes after everything is built. Leftover for phase 3: page breadcrumbs ("Home ›").
+        - [ ] Phase 2 — /hi/subjects, /hi/topics, /hi/search, /hi/saved, /hi/about (owner approves the
+          Hindi About text), /hi/contact, the not-found page. Then show the links hidden on /hi.
+        - [ ] Phase 3 — Hindi subject + category pages (/hi/history, /hi/history/modern-india); Hindi
+          names already in /admin. Leftover English labels around articles.
+        - [ ] Phase 4 — news: /hi/news in Hindi; HINDI HEADLINES on /hi (homepage, ticker, /hi/pulse),
+          same layout. Feeds agreed 2 Nov (tested that day): Amar Ujala + Live Hindustan for
+          National / International / Business / Sports, Amar Ujala alone for Sci-Tech (9 feeds).
+          Needs a "language" field on Headlines — dev DB first, production only with owner's go.
+          Not usable (tested): Jansatta, Dainik Jagran, Navbharat Times, NDTV India, Zee Hindi.
       - [x] **Phase 5 speed check DONE (31 Oct)** — Lighthouse 12.8.2, phone settings, 2 runs each.
         BEFORE = the Vercel site (old design); AFTER = a local production build of feature/redesign.
         Homepage: score 61/73 → 53/73; largest paint 7.4–8.4 s → 5.7–6.5 s (better); blocking time

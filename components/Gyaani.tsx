@@ -66,6 +66,9 @@ const WORDS = {
     readFull: "Read the full article →",
     left: (n: number) => `${n} of ${MAX_QUESTIONS} left today`,
     limit: "Daily limit reached. Come back tomorrow!",
+    companion: "your knowledge companion", // the floating button, read aloud
+    noAnswer: "I could not answer that right now. Please try again.",
+    error: "Something went wrong. Please try again in a moment.",
     // [what the chip says, is it in Hindi?]
     chipsArticle: [["Summarise this article", false], ["Key dates in this article", false], ["इसे हिन्दी में समझाइए", true]] as [string, boolean][],
     chipsOther: [["What can I read on GKWorld360?", false], ["Tell me one GK fact", false]] as [string, boolean][],
@@ -85,6 +88,10 @@ const WORDS = {
     readFull: "पूरा लेख पढ़ें →",
     left: (n: number) => `आज ${n} प्रश्न बाकी (${MAX_QUESTIONS} में से)`,
     limit: "आज के प्रश्न पूरे हो गए। कल फिर आइए!",
+    // the two error messages (owner approved, 2 Nov 2026)
+    companion: "आपका ज्ञान-साथी",
+    noAnswer: "अभी उत्तर नहीं दे सका, कृपया फिर कोशिश करें।",
+    error: "कुछ गड़बड़ हो गई, थोड़ी देर बाद फिर कोशिश करें।",
     chipsArticle: [["इस लेख का सार", true], ["इस लेख की मुख्य तिथियाँ", true], ["Explain in English", false]] as [string, boolean][],
     chipsOther: [["GKWorld360 पर क्या पढ़ें?", true], ["मुझे एक GK तथ्य बताइए", true]] as [string, boolean][],
   },
@@ -346,7 +353,7 @@ export default function Gyaani() {
         {
           id:      `m${nextId.current++}`,
           role:    "gyaani",
-          content:       data.reply ?? "I could not answer that right now. Please try again.",
+          content:       data.reply ?? t.noAnswer,
           warning:       data.success ? (getWarning(newCount, hindi) ?? undefined) : undefined,
           sourceArticle: data.success ? (data.sourceArticle ?? undefined) : undefined,
         },
@@ -360,7 +367,7 @@ export default function Gyaani() {
         {
           id:      `m${nextId.current++}`,
           role:    "gyaani",
-          content: "Something went wrong. Please try again in a moment.",
+          content: t.error,
         },
       ]);
     } finally {
@@ -383,7 +390,7 @@ export default function Gyaani() {
         // phones while one of its cards is open (components/atlas/atlas.css)
         data-gyaani-launcher
         aria-expanded={open}
-        aria-label={open ? t.closeChat : `${t.ask} — your knowledge companion`}
+        aria-label={open ? t.closeChat : `${t.ask} — ${t.companion}`}
         className="gk-gy-launch fixed bottom-6 right-6 z-50"
       >
         <Avatar size={40} />

@@ -6,6 +6,8 @@
 // we track saved/unsaved state with React state + click handlers.
 import { useState, useEffect } from "react";
 import type { Headline } from "@/lib/pulse";
+// The button's words and its pop-up message in the page's language (2 Nov 2026)
+import { useSiteText } from "@/lib/use-site-text";
 
 // The single localStorage key that holds the user's saved list (a JSON array).
 export const READ_LATER_KEY = "gk360_read_later";
@@ -42,6 +44,7 @@ export default function ReadLaterButton({
   //             white with a hairline border; dark fill when saved.
   variant?: "overlay" | "row" | "light";
 }) {
+  const { t, href } = useSiteText();
   const [saved, setSaved] = useState(false);
   // BOOKMARK POP (28 Oct 2026): counts taps. It's used as the icon's `key`
   // below — when a key changes, React draws a fresh icon, which replays the
@@ -74,8 +77,8 @@ export default function ReadLaterButton({
     window.dispatchEvent(
       new CustomEvent("gk-toast", {
         detail: exists
-          ? { message: "Removed from Read Later" }
-          : { message: "Saved to Read Later", actionLabel: "View list", actionHref: "/saved" },
+          ? { message: t.bookmark.removed }
+          : { message: t.bookmark.saved, actionLabel: t.bookmark.viewList, actionHref: href("/saved") },
       })
     );
   };
@@ -84,8 +87,8 @@ export default function ReadLaterButton({
     <button
       type="button"
       onClick={toggle}
-      aria-label={saved ? "Remove from Read Later" : "Save to Read Later"}
-      title={saved ? "Saved — click to remove" : "Read Later"}
+      aria-label={saved ? t.bookmark.remove : t.bookmark.save}
+      title={saved ? t.bookmark.savedTitle : t.bookmark.title}
       className={[
         className,
         "flex items-center justify-center transition-colors",

@@ -36,6 +36,9 @@ export type SiteStats = {
   users?: number;
   // slug → number of topics, for the Subjects menu and subject cards ("2 topics")
   topicsBySubject: Record<string, number>;
+  // the same, counting only topics that have a Hindi version — for the
+  // Subjects menu on Hindi pages ("4 लेख"), 2 Nov 2026
+  hindiTopicsBySubject: Record<string, number>;
   // slug → number of categories that contain a topic, for subject cards
   categoriesBySubject: Record<string, number>;
   // slugs that have a page today — the menu links these, greys out the rest
@@ -46,12 +49,16 @@ async function computeSiteStats(): Promise<SiteStats> {
   const topics = await getAllTopics();
 
   const topicsBySubject: Record<string, number> = {};
+  const hindiTopicsBySubject: Record<string, number> = {};
   const categories = new Set<string>();
   let hindi = 0;
   for (const t of topics) {
     topicsBySubject[t.slug[0]] = (topicsBySubject[t.slug[0]] ?? 0) + 1;
     if (t.slug.length > 2) categories.add(`${t.slug[0]}/${t.slug[1]}`);
-    if (t.hindiHref) hindi += 1;
+    if (t.hindiHref) {
+      hindi += 1;
+      hindiTopicsBySubject[t.slug[0]] = (hindiTopicsBySubject[t.slug[0]] ?? 0) + 1;
+    }
   }
   const categoriesBySubject: Record<string, number> = {};
   for (const key of categories) {
@@ -76,6 +83,7 @@ async function computeSiteStats(): Promise<SiteStats> {
     writeups: newsSlugs.size,
     users: undefined, // ← set this from the users table once login exists
     topicsBySubject,
+    hindiTopicsBySubject,
     categoriesBySubject,
     liveSubjects,
   };
@@ -86,7 +94,9 @@ async function computeSiteStats(): Promise<SiteStats> {
 // every page, so an hourly timer meant the database was woken every hour of
 // every day. The numbers only change when content changes, and lib/refresh.ts
 // clears these tags on every /admin save — so the timer is just a safety net.
-export const getSiteStats = unstable_cache(computeSiteStats, ["site-stats"], {
+// "-v2" (2 Nov 2026): a new cache name, because the answer gained
+// hindiTopicsBySubject — an old saved copy without it would hide the Hindi counts.
+export const getSiteStats = unstable_cache(computeSiteStats, ["site-stats-v2"], {
   revalidate: 21600,
   tags: ["site-stats", "cms-content"],
 });

@@ -51,7 +51,12 @@ now shows every subject (coloured subject chips, subject tags, a "Next" stop) �
 every font stack (@theme in globals.css); `.gk-home--hi` holds the Hindi type rules.
 **New motto (owner, 2 Nov): "जिज्ञासा से ज्ञान तक" / "From curiosity to knowledge"** — everywhere
 (hero, band, footer, About, link previews). A NEW LOGO to match is next (TODO.md); the old one stays till then.
-Next: owner tries the Hindi homepage + new motto on dev; then the logo concepts.
+**Whole site in Hindi — phase 1 built (2 Nov):** header, phone bar/menu, footer, loader, bookmark,
+search dropdown and Gyaani speak Hindi on every /hi page. They read the address (`lib/use-site-text.ts`
+→ /hi… = Hindi); words in `lib/site-text.ts`. Links go to a page's Hindi twin only when it's listed in
+HINDI_TWINS there — add each new Hindi page (phases 2–4, TODO.md). The footer is split: Footer.tsx
+(server, reads the quote) + FooterBody.tsx (browser, picks the language).
+Next: phase 2 (Hindi Subjects / All topics / Search / Read Later / About / Contact pages); logo concepts.
 How modes work: `lib/mode.ts` + the colour blocks at the top of `app/(frontend)/globals.css`.
 Reading mode is per-article: the `data-article` marker (ArticleLayout) + `data-reading` on <html>.
 Logo: `components/Logo.tsx` (+ files in `public/brand/`). Phases 2–5 are listed in TODO.md.

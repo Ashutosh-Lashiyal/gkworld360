@@ -20,6 +20,8 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { getSubjectFromPath } from "@/lib/subject-colors";
 import { useHideOnScroll } from "@/lib/use-hide-on-scroll";
+// The page's language and its words — Hindi pages: होम · सीखें · ज्ञानी · समाचार · एटलस (2 Nov 2026)
+import { useSiteText } from "@/lib/use-site-text";
 
 // Each icon is one simple outline drawing (24 × 24)
 const ICONS = {
@@ -42,13 +44,14 @@ export default function PhoneTabBar() {
   // (lib/use-hide-on-scroll.ts — shared with the article reading bar)
   const away = useHideOnScroll();
 
-  // Which tab is "where you are"
-  const hindi = pathname === "/hi" || pathname.startsWith("/hi/");
-  const atlasHref = hindi ? "/hi/atlas" : "/atlas";
+  const { t, href } = useSiteText();
+  const atlasHref = href("/atlas"); // the Hindi Atlas on Hindi pages
+
+  // Which tab is "where you are" (the /hi versions count too)
   const on = {
-    home: pathname === "/",
-    learn: pathname === "/subjects" || !!getSubjectFromPath(pathname),
-    news: pathname.startsWith("/news") || pathname.startsWith("/pulse"),
+    home: pathname === "/" || pathname === "/hi",
+    learn: /^\/(hi\/)?subjects$/.test(pathname) || !!getSubjectFromPath(pathname),
+    news: /^\/(hi\/)?(news|pulse)(\/|$)/.test(pathname),
     atlas: /^\/(hi\/)?atlas(\/|$)/.test(pathname),
   };
   const tab = "gk-tab relative flex flex-col items-center justify-end gap-1 h-14 font-body text-[11px] font-extrabold tracking-[0.02em]";
@@ -56,26 +59,26 @@ export default function PhoneTabBar() {
 
   return (
     <nav
-      aria-label="Main (phone)"
+      aria-label={t.phone.mainNav}
       // md:hidden — only on phones. fixed + left/right 10px: a floating bar.
       className={`gk-tabbar gk-tabbar--main md:hidden fixed z-40 left-2.5 right-2.5 h-[66px] px-1.5 pb-2 rounded-[24px] grid grid-cols-5 items-end ${away ? "is-away" : ""}`}
     >
-      <Link href="/" className={tab} aria-current={current(on.home)}><TabIcon d={ICONS.home} />Home</Link>
-      <Link href="/subjects" className={tab} aria-current={current(on.learn)}><TabIcon d={ICONS.learn} />Learn</Link>
+      <Link href={href("/")} className={tab} aria-current={current(on.home)}><TabIcon d={ICONS.home} />{t.phone.home}</Link>
+      <Link href={href("/subjects")} className={tab} aria-current={current(on.learn)}><TabIcon d={ICONS.learn} />{t.phone.learn}</Link>
 
       {/* Gyaani, raised in the middle. A button (not a link): it opens the chat. */}
       <button
         type="button"
         onClick={() => window.dispatchEvent(new Event("gk:open-gyaani"))}
-        aria-label="Ask Gyaani"
+        aria-label={t.phone.askGyaani}
         className={`${tab} gk-tab-gyaani text-foreground`}
       >
         <Image src="/images/vivekananda.png" alt="" width={54} height={54} className="w-[54px] h-[54px] -mt-[26px] rounded-full object-cover bg-[#0b0b0d]" />
-        Gyaani
+        {t.phone.gyaani}
       </button>
 
-      <Link href="/news" className={tab} aria-current={current(on.news)}><TabIcon d={ICONS.news} />News</Link>
-      <Link href={atlasHref} className={tab} aria-current={current(on.atlas)}><TabIcon d={ICONS.atlas} />Atlas</Link>
+      <Link href={href("/news")} className={tab} aria-current={current(on.news)}><TabIcon d={ICONS.news} />{t.phone.news}</Link>
+      <Link href={atlasHref} className={tab} aria-current={current(on.atlas)}><TabIcon d={ICONS.atlas} />{t.phone.atlas}</Link>
     </nav>
   );
 }
