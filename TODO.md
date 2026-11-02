@@ -115,6 +115,19 @@
       - [x] **Map borders — owner, 31 Oct: "your recommendation" → coastlines only.** The homepage
         loader no longer draws country borders (public/earth/lines.json now has coastlines only;
         lib/globe-loader.ts). RULE: no country borders on any map until India-compliant data exists.
+      - [ ] **Design round 6 — waiting for the owner's answers (31 Oct).** Preview:
+        https://claude.ai/artifact/RnTGvUSeGe7TZ5jZh7bM7W
+        (1) WATER LOADER (owner: "Home is shown in the teal color — I need it like it is filling up
+        with colored water"): the curtain's page name starts as empty glass letters and fills with
+        water as the page loads; the water level is the progress; deep-teal curtain in both modes.
+        Owner to pick: water only or water + striped bar; mint / gold / sky water.
+        (2) HINDI DISCOVERABILITY (owner: "people should know from the first second the site is in
+        Hindi"; the bell isn't doing it): EN|हिं pill in the header replacing the bell, first-visit
+        bilingual strip (Hindi first for Hindi phones), "हिन्दी में पढ़ें" in the homepage hero,
+        Hindi start page /hi, "यह लेख हिन्दी में भी है" note on English articles.
+        (3) GYAANI REDESIGN: new launcher + chat window, bilingual greeting, page-aware suggestions
+        (Gyaani told which article you're on — small API change), "7 of 10 left today".
+        Proposed order: speed fixes → Hindi → Gyaani → water loader.
       - [x] **Phase 5 speed check DONE (31 Oct)** — Lighthouse 12.8.2, phone settings, 2 runs each.
         BEFORE = the Vercel site (old design); AFTER = a local production build of feature/redesign.
         Homepage: score 61/73 → 53/73; largest paint 7.4–8.4 s → 5.7–6.5 s (better); blocking time
