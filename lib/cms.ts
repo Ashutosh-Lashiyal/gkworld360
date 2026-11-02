@@ -493,7 +493,7 @@ export async function getCMSNewsHindiSlugs(limit = 200): Promise<Set<string>> {
 }
 
 // The published news items that have a Hindi version, WITH their Hindi titles
-// and dates — for the Hindi start page /hi (2 Nov 2026). Same single query as
+// and dates — for the Hindi homepage /hi (2 Nov 2026). Same single query as
 // getCMSNewsHindiSlugs above (all languages, only the columns we need).
 export type CMSHindiNews = { slug: string; title: string; eventDate: string | null; category: string | null };
 export async function getCMSNewsInHindi(limit = 200): Promise<CMSHindiNews[]> {
@@ -551,6 +551,8 @@ export type CMSListedTopic = {
   // by looking for a .hi.mdx file; for CMS articles it comes from the database.
   hindiHref?: string;
   hindiTitle?: string;
+  // The Hindi summary, for the Hindi homepage's posters (2 Nov 2026)
+  hindiDescription?: string;
 };
 
 // The newest published articles across ALL subjects — for the homepage's
@@ -599,6 +601,7 @@ export async function getCMSLatestArticles(limit = 1): Promise<CMSListedTopic[]>
         },
         hindiHref: hasHindi ? "/hi/" + slug.join("/") : undefined,
         hindiTitle: hasHindi ? (title.hi ?? undefined) : undefined,
+        hindiDescription: hasHindi ? (description.hi ?? undefined) : undefined,
       };
     });
   } catch (error) {
@@ -763,6 +766,7 @@ export async function getCMSArticlesInCategory(
         },
         hindiHref: hasHindi ? "/hi/" + slug.join("/") : undefined,
         hindiTitle: hasHindi ? (title.hi ?? undefined) : undefined,
+        hindiDescription: hasHindi ? (description.hi ?? undefined) : undefined,
       };
     });
   } catch (error) {

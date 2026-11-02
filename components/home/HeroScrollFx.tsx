@@ -2,7 +2,8 @@
 
 // HeroScrollFx — the homepage hero "comes apart" as you scroll down
 // (redesign phase 5, 31 Oct 2026, from the approved design):
-//   - KNOW MORE slides off to the left, GROW MORE to the right;
+//   - the top motto word (FROM CURIOSITY / जिज्ञासा से) slides off to the left,
+//     the bottom one (TO KNOWLEDGE / ज्ञान तक) to the right;
 //   - the Earth grows a little and sinks; scrolling also TURNS it
 //     (lib/earth-scene.ts reads the data-spin number we write on it);
 // Draws nothing; it moves the hero's parts with CSS transforms, at most once

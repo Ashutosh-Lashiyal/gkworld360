@@ -162,6 +162,25 @@
         subject tag on each event, a dashed "Next" stop; phones get a downward timeline. Subject
         pages keep the plain version. Files: page.tsx, components/atlas/AtlasTeaser.tsx,
         HeroScrollFx.tsx, globals.css.
+      - [x] **Full Hindi homepage BUILT (2 Nov, owner's "B"; fixes "issue 1" — हिं on the homepage
+        used to leave the homepage for a list page).** `/hi` is now the homepage in Hindi: ONE
+        homepage component (`components/home/HomePage.tsx`) takes a language; `/` and `/hi` just
+        pick one. Every word in `lib/home-text.ts` (owner approved each Hindi line). Hindi version
+        = only Hindi articles/quiz/fact/places; headlines stay English, tagged "अंग्रेज़ी में";
+        "All subjects/topics", "View all" hidden; Recently added appears after 6+ Hindi articles;
+        Current affairs once a write-up has Hindi; header + footer still English. Hindi subject
+        descriptions in `lib/subjects.ts`. Hindi letters: Noto Sans Devanagari is now the backup
+        font behind every English font (@theme in globals.css) + `.gk-home--hi` type rules.
+      - [x] **NEW MOTTO (2 Nov, owner): "जिज्ञासा से ज्ञान तक" / "From curiosity to knowledge"** —
+        replaced "Know more, grow more" everywhere: hero giant words (now 15vw so FROM CURIOSITY
+        fits), the moving band, footer, About label, link-preview image.
+      - [ ] **NEW LOGO for the new motto (owner, 2 Nov).** The current mark is "G for Grow, K for
+        Know" — it no longer matches. Make concepts on a canvas (app-icon test, 16 px, one colour),
+        owner picks, THEN change `components/Logo.tsx` + `public/brand/`. Current logo stays until then.
+      - [ ] **Hindi homepage, later steps:** Hindi header + footer (all /hi pages); a Hindi "all
+        articles" page (then show the hidden links); Hindi subject pages; Hindi news feeds (research
+        BBC Hindi, Dainik Bhaskar, Amar Ujala, Navbharat Times, Live Hindustan, PIB Hindi — needs a
+        language column on headlines, dev DB first); search box's dropdown texts in Hindi.
       - [x] **Phase 5 speed check DONE (31 Oct)** — Lighthouse 12.8.2, phone settings, 2 runs each.
         BEFORE = the Vercel site (old design); AFTER = a local production build of feature/redesign.
         Homepage: score 61/73 → 53/73; largest paint 7.4–8.4 s → 5.7–6.5 s (better); blocking time

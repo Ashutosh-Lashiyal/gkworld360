@@ -2,7 +2,7 @@
 //
 // The owner's point: "people should know from the first second that the site
 // is in Hindi too". Five pieces do that (the header switch, the first-visit
-// strip, the homepage button, the Hindi start page /hi, and the "also in
+// strip, the homepage button, the Hindi homepage /hi, and the "also in
 // Hindi" note on English articles). They share this file:
 //
 //   - LANG_KEY ("gk-lang"): "hi" or "en" once the reader has chosen.
@@ -44,7 +44,7 @@ export function alternateHref(lang: Lang): string | null {
   }
 }
 
-/** Where the switch should take the reader: this page in that language, or the start page. */
+/** Where the switch should take the reader: this page in that language, or that language's homepage. */
 export function destinationFor(lang: Lang): string {
   return alternateHref(lang) ?? (lang === "hi" ? "/hi" : "/");
 }

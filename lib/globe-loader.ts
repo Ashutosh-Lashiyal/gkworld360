@@ -158,7 +158,8 @@ export function createGlobeLoader(canvas: HTMLCanvasElement, lines: LoaderLines,
   return { draw };
 }
 
-/** What the little status line says at each stage of the loader. */
-export function loaderStage(p: number): string {
+/** What the little status line says at each stage of the loader (Hindi on the Hindi homepage). */
+export function loaderStage(p: number, lang: "en" | "hi" = "en"): string {
+  if (lang === "hi") return p < 0.3 ? "मानचित्र बन रहा है" : p < 0.9 ? "शहरों की रोशनी जल रही है" : "बस थोड़ा और";
   return p < 0.3 ? "Drawing the map" : p < 0.9 ? "Switching on the cities" : "Almost there";
 }

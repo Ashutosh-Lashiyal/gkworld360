@@ -1,8 +1,13 @@
 "use client";
 
-// KnowMoreBand — the giant moving band "KNOW MORE ✦ grow MORE ✦" between the
-// homepage's sections (redesign phase 3, 30 Oct 2026): the site's motto in
-// huge Anton letters, alternating outlined and solid, drifting sideways.
+// KnowMoreBand — the giant moving band of the site's motto between the
+// homepage's sections (redesign phase 3, 30 Oct 2026): the motto in huge
+// Anton letters, alternating outlined and solid, drifting sideways.
+//
+// THE NEW MOTTO (owner, 2 Nov 2026): "FROM CURIOSITY ✦ to KNOWLEDGE ✦" in
+// English, "जिज्ञासा से ✦ ज्ञान तक ✦" on the Hindi homepage. It replaced "Know
+// more, grow more"; the file keeps its old name. The words come from
+// lib/home-text.ts (motto.band).
 //
 // PHASE 5 (31 Oct 2026): it now REACTS TO YOUR SCROLLING, as in the design —
 // it drifts slowly by itself, runs faster while you scroll, and flips
@@ -15,8 +20,12 @@
 // be seen. Decoration only (aria-hidden): the motto is already in the footer.
 
 import { useEffect, useRef } from "react";
+import type { Lang } from "@/lib/lang";
+import { HOME_TEXT } from "@/lib/home-text";
 
-export default function KnowMoreBand() {
+export default function KnowMoreBand({ lang = "en" }: { lang?: Lang }) {
+  // [before, ACCENT, after] — the accent word is drawn in the accent colour
+  const { first, second } = HOME_TEXT[lang].motto.band;
   const track = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -48,8 +57,8 @@ export default function KnowMoreBand() {
   // (One list with its own numbers, so React can tell every piece apart.)
   const words = Array.from({ length: 12 }, (_, i) => (
     <span key={i} className="contents">
-      <span className="gk-band__word">Know more ✦</span>
-      <span className="gk-band__word"><em>grow</em> more ✦</span>
+      <span className="gk-band__word">{first} ✦</span>
+      <span className="gk-band__word">{second[0]}<em>{second[1]}</em>{second[2]} ✦</span>
     </span>
   ));
   return (

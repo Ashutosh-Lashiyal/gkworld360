@@ -45,7 +45,7 @@ const NAMES: Record<string, string> = {
   "/topics": "All topics",
   "/atlas": "World360 Atlas",
   "/hi/atlas": "वर्ल्ड360 एटलस",
-  "/hi": "हिन्दी में पढ़ें",
+  "/hi": "होम", // the Hindi homepage (2 Nov 2026)
   "/news": "Current Affairs",
   "/pulse": "Headlines",
   "/search": "Search",

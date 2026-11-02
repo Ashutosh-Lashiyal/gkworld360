@@ -44,7 +44,14 @@ draws it on a canvas; `components/PageCurtain.tsx` runs it), deep-teal curtain, 
 Hero facts box replaced (laptop: one line under GROW MORE with a teal "12 places on the Atlas →";
 phone: "Gold dots: places on the Atlas · Open →" caption under the Earth). "Knowledge on the map"
 now shows every subject (coloured subject chips, subject tags, a "Next" stop) — AtlasTeaser.tsx.
-Next: owner tries the 5 Hindi pieces + Gyaani + water loader on dev, then decides what to remove.
+**Full Hindi homepage (2 Nov, later):** `/hi` is the homepage in Hindi. The homepage now lives in
+`components/home/HomePage.tsx` and takes a language; `app/(frontend)/page.tsx` and
+`app/(frontend)/hi/page.tsx` only choose "en" or "hi". ALL homepage words are in `lib/home-text.ts`
+— change wording there. Hindi letters come from Noto Sans Devanagari, the backup font at the end of
+every font stack (@theme in globals.css); `.gk-home--hi` holds the Hindi type rules.
+**New motto (owner, 2 Nov): "जिज्ञासा से ज्ञान तक" / "From curiosity to knowledge"** — everywhere
+(hero, band, footer, About, link previews). A NEW LOGO to match is next (TODO.md); the old one stays till then.
+Next: owner tries the Hindi homepage + new motto on dev; then the logo concepts.
 How modes work: `lib/mode.ts` + the colour blocks at the top of `app/(frontend)/globals.css`.
 Reading mode is per-article: the `data-article` marker (ArticleLayout) + `data-reading` on <html>.
 Logo: `components/Logo.tsx` (+ files in `public/brand/`). Phases 2–5 are listed in TODO.md.

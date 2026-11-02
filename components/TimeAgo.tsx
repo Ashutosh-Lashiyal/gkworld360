@@ -25,24 +25,15 @@
 // the page open.
 
 import { useSyncExternalStore } from "react";
-
-/** The same wording the server uses, so nothing changes shape when we swap it in. */
-function format(iso?: string): string {
-  if (!iso) return "";
-  const then = new Date(iso).getTime();
-  if (Number.isNaN(then)) return "";
-  const mins = Math.floor((Date.now() - then) / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
-}
+import type { Lang } from "@/lib/lang";
+// The wording ("28m ago" / "28 मिनट पहले") — shared with the server (lib/time-ago.ts)
+import { formatTimeAgo } from "@/lib/time-ago";
 
 type TimeAgoProps = {
   iso?: string;       // when the headline was published (never goes stale)
   fallback?: string;  // what the server rendered — shown until the browser takes over
   className?: string;
+  lang?: Lang;        // "hi" on the Hindi homepage (2 Nov 2026)
 };
 
 // ── The "external store": the clock, read once a minute ──────────────────────
@@ -57,11 +48,11 @@ function subscribeToTheMinute(onChange: () => void): () => void {
 const currentMinute = () => Math.floor(Date.now() / 60_000);
 const serverMinute = () => 0;
 
-export default function TimeAgo({ iso, fallback = "", className }: TimeAgoProps) {
+export default function TimeAgo({ iso, fallback = "", className, lang = "en" }: TimeAgoProps) {
   const minute = useSyncExternalStore(subscribeToTheMinute, currentMinute, serverMinute);
   // minute === 0 means this is the server render (or hydration): keep the string
   // the server already put in the HTML so the two match exactly.
-  const label = minute === 0 ? fallback : format(iso);
+  const label = minute === 0 ? fallback : formatTimeAgo(iso, lang);
 
   // suppressHydrationWarning: on the very first paint the server's string and the
   // browser's may legitimately differ by a minute; that is expected, not a bug.

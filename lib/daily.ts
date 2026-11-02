@@ -18,6 +18,9 @@ import { configPromise } from "@/app/(payload)/config";
 import { getAtlasEntries } from "@/lib/atlas";
 import { splitKeyTakeaways } from "@/lib/cms";
 import type { AtlasEntry } from "@/lib/atlas-shared";
+import type { Lang } from "@/lib/lang";
+// The quiz's two questions, in each language ("When did this happen?" / "यह कब हुआ?")
+import { HOME_TEXT } from "@/lib/home-text";
 
 /** Today's day number in India (UTC + 5:30). */
 export function dayNumber(now = new Date()): number {
@@ -67,7 +70,8 @@ export type QuizQuestion = {
  * A card whose title already contains the answer ("…at Surat", "Revolt of
  * 1857…") is never asked that question — it would give the answer away.
  */
-export function buildQuiz(entries: AtlasEntry[], day: number, count = 3): QuizQuestion[] {
+export function buildQuiz(entries: AtlasEntry[], day: number, lang: Lang = "en", count = 3): QuizQuestion[] {
+  const t = HOME_TEXT[lang].practice;
   if (entries.length < 4) return [];
   const rand = seeded(day * 7919);
   const out: QuizQuestion[] = [];
@@ -93,7 +97,8 @@ export function buildQuiz(entries: AtlasEntry[], day: number, count = 3): QuizQu
     const right = when ? String(e.year) : e.place;
     const options = shuffle([right, ...wrong], rand);
     out.push({
-      question: when ? `When did this happen? ${e.title}.` : `Where did this happen? ${e.title}.`,
+      // Hindi ends a sentence with "।" (the purna viram), English with "."
+      question: `${when ? t.when : t.where} ${e.title}${lang === "hi" ? "।" : "."}`,
       options,
       answer: options.indexOf(right),
       explain: e.hook,
@@ -113,15 +118,19 @@ export function placeOfTheDay(entries: AtlasEntry[], day: number): AtlasEntry | 
 // ── FACT OF THE DAY (from the articles' Key Takeaways) ─────────────────────
 export type DailyFact = { text: string; year: string | null; article: { title: string; href: string } };
 
-// Every Key Takeaway of every published English article. Saved for 6 hours
-// like the Atlas; /admin saves clear it at once (the "cms-content" tag).
-async function loadFacts(): Promise<DailyFact[]> {
+// Every Key Takeaway of every published article, in one language. Saved for
+// 6 hours like the Atlas; /admin saves clear it at once (the "cms-content" tag).
+// HINDI (2 Nov 2026): only articles that HAVE a Hindi version count — we ask for
+// every language at once (locale "all") and skip an article whose Hindi title is
+// empty. (Asking for locale "hi" alone would quietly hand back the English text
+// for those, because missing Hindi falls back to English site-wide.)
+async function loadFacts(lang: Lang): Promise<DailyFact[]> {
   try {
     const payload = await getPayload({ config: await configPromise });
     const res = await payload.find({
       collection: "articles",
       where: { _status: { equals: "published" } },
-      locale: "en",
+      locale: "all",
       depth: 1,
       limit: 500,
       select: { slug: true, title: true, body: true, subject: true, category: true },
@@ -130,11 +139,15 @@ async function loadFacts(): Promise<DailyFact[]> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     for (const d of res.docs as any[]) {
       if (!d.subject?.slug) continue;
-      const href = "/" + [d.subject.slug, d.category?.slug, d.slug].filter(Boolean).join("/");
-      for (const text of splitKeyTakeaways(d.body).points) {
+      // This language's title and text (each field comes back as { en, hi })
+      const title: string = d.title?.[lang]?.trim() ?? "";
+      if (!title) continue; // no version in this language
+      const path = "/" + [d.subject.slug, d.category?.slug, d.slug].filter(Boolean).join("/");
+      const href = lang === "hi" ? "/hi" + path : path;
+      for (const text of splitKeyTakeaways(d.body?.[lang]).points) {
         // The first year in the sentence becomes the big number on the card
         const year = text.match(/\b(1\d{3}|20\d{2})\b/)?.[1] ?? null;
-        out.push({ text, year, article: { title: d.title ?? "", href } });
+        out.push({ text, year, article: { title, href } });
       }
     }
     return out;
@@ -146,20 +159,20 @@ async function loadFacts(): Promise<DailyFact[]> {
 }
 const getFacts = unstable_cache(loadFacts, ["daily-facts"], { revalidate: 21600, tags: ["cms-content"] });
 
-/** Everything the "Today's practice" section needs, in one call. */
-export async function getTodaysPractice() {
+/** Everything the "Today's practice" section needs, in one call — in the page's language. */
+export async function getTodaysPractice(lang: Lang = "en") {
   const day = dayNumber();
-  const [entries, facts] = await Promise.all([getAtlasEntries("en"), getFacts()]);
+  const [entries, facts] = await Promise.all([getAtlasEntries(lang), getFacts(lang)]);
   const place = placeOfTheDay(entries, day);
   // Facts with a year make the best cards (the big number) — prefer them,
   // and not from the same article as today's place (two cards about the
   // same event would be a waste of a card)
   const withYear = facts.filter((f) => f.year);
   let pool = withYear.length > 0 ? withYear : facts;
-  const otherArticle = pool.filter((f) => f.article.href !== place?.article.href.replace(/^\/hi(?=\/)/, ""));
+  const otherArticle = pool.filter((f) => f.article.href !== place?.article.href);
   if (otherArticle.length > 0) pool = otherArticle;
   return {
-    quiz: buildQuiz(entries, day),
+    quiz: buildQuiz(entries, day, lang),
     fact: pool.length > 0 ? pool[(day * 3) % pool.length] : null,
     place,
   };

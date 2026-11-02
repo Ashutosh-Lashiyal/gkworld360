@@ -11,7 +11,7 @@
 // Where it takes you (lib/lang.ts → destinationFor):
 //   - this same page in the other language, when it exists there
 //     (an article, the Atlas, a write-up);
-//   - otherwise the Hindi start page /hi (or the homepage, going to English).
+//   - otherwise the Hindi homepage /hi (or the English homepage, going to English).
 // The choice is remembered, so the "also in Hindi" note and the welcome strip
 // know about it too.
 

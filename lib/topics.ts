@@ -21,7 +21,7 @@ import {
 import { unstable_cache } from "next/cache";
 import { getCMSLatestArticles, type CMSListedTopic } from "@/lib/cms";
 
-export type SiteTopic = CMSListedTopic; // { slug, meta, hindiHref?, hindiTitle? }
+export type SiteTopic = CMSListedTopic; // { slug, meta, hindiHref?, hindiTitle?, hindiDescription? }
 
 /** Every English topic, newest first (by date; undated ones last). */
 // 5 Oct 2026: /topics and /search are rendered per request (they read the URL),
@@ -35,11 +35,13 @@ async function computeAllTopics(): Promise<SiteTopic[]> {
   // 1. MDX topics — add the Hindi link the way the pages do (a .hi.mdx file)
   for (const t of getRecentTopics(999)) {
     const hi = hasTranslation(t.slug, "hi") ? resolveContentFile(t.slug, "hi") : null;
+    const hiMeta = hi ? getContentMeta(hi.filePath) : null; // the Hindi file's title + summary
     byUrl.set(t.slug.join("/"), {
       slug: t.slug,
       meta: t.meta,
       hindiHref: hi ? "/hi/" + t.slug.join("/") : undefined,
-      hindiTitle: hi ? getContentMeta(hi.filePath).title : undefined,
+      hindiTitle: hiMeta?.title,
+      hindiDescription: hiMeta?.description,
     });
   }
 
@@ -70,11 +72,25 @@ export async function getPopularTopics(limit: number): Promise<SiteTopic[]> {
   return (await getAllTopics()).slice(0, limit);
 }
 
-/** "Added today" / "Added 3 days ago" / "Added 12 Sep" for a topic's date. */
-export function formatAddedTime(date?: string): string {
-  if (!date) return "Recently added";
+/** Only the topics that have a Hindi version, newest first — for the Hindi homepage. */
+export async function getHindiTopics(): Promise<SiteTopic[]> {
+  return (await getAllTopics()).filter((t) => t.hindiHref);
+}
+
+/** "Added today" / "Added 3 days ago" / "Added 12 Sep" for a topic's date.
+ *  lang "hi" (2 Nov 2026): "आज जोड़ा गया" / "3 दिन पहले जोड़ा गया" / "12 नव॰ को जोड़ा गया". */
+export function formatAddedTime(date?: string, lang: "en" | "hi" = "en"): string {
+  const hi = lang === "hi";
+  if (!date) return hi ? "हाल ही में जोड़ा गया" : "Recently added";
   const d = new Date(date);
   const diffDays = Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
+  if (hi) {
+    if (diffDays <= 0) return "आज जोड़ा गया";
+    if (diffDays === 1) return "कल जोड़ा गया";
+    if (diffDays < 7) return `${diffDays} दिन पहले जोड़ा गया`;
+    // "hi-IN" asks the browser's/server's date library for Hindi month names
+    return `${d.toLocaleDateString("hi-IN", { day: "numeric", month: "short" })} को जोड़ा गया`;
+  }
   if (diffDays <= 0) return "Added today";
   if (diffDays === 1) return "Added yesterday";
   if (diffDays < 7) return `Added ${diffDays} days ago`;

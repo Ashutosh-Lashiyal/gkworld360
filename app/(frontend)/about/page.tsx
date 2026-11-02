@@ -80,7 +80,7 @@ export default async function AboutPage() {
           The words are unchanged. */}
       <PageTitle
         colors={null}
-        label="Know more, grow more"
+        label="From curiosity to knowledge"
         title="About GKWorld360"
         accent="GKWorld360"
         description="GKWorld360 is a curated educational platform built for students, competitive exam aspirants, and lifelong learners across India. Our mission is simple — make high-quality general knowledge accessible, structured, and easy to navigate for everyone."

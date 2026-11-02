@@ -36,6 +36,19 @@ export const SUBJECTS: Subject[] = [
   { label: "Indian History",       slug: "indian-history", labelHi: "भारतीय इतिहास",         icon: "🇮🇳" },
 ];
 
+// The Hindi versions of the six homepage subjects' descriptions, for the
+// subject cards on the Hindi homepage (/hi). The English ones live in each
+// subject's content/<slug>/overview.mdx. Approved by the owner, 2 Nov 2026.
+// A subject without a line here shows no description on the Hindi homepage.
+export const SUBJECT_DESCRIPTIONS_HI: Record<string, string> = {
+  history: "भारत और विश्व का इतिहास: प्राचीन सभ्यताएँ, मध्यकालीन साम्राज्य, स्वतंत्रता संग्राम और आधुनिक इतिहास, प्रतियोगी परीक्षाओं और सामान्य ज्ञान के लिए।",
+  geography: "भौतिक और विश्व भूगोल: ब्रह्मांड, पृथ्वी, महाद्वीप, महासागर, जलवायु, देश और भूगोल के महत्वपूर्ण शब्द, प्रतियोगी परीक्षाओं के लिए।",
+  physics: "प्रतियोगी परीक्षाओं के लिए भौतिकी: यांत्रिकी, ऊष्मा, प्रकाश, ध्वनि, विद्युत, चुंबकत्व और भौतिकी के महत्वपूर्ण नियम, सरल भाषा में।",
+  chemistry: "प्रतियोगी परीक्षाओं के लिए रसायन विज्ञान: तत्व, धातुएँ, यौगिक, कार्बनिक रसायन, औद्योगिक रसायन, रेडियोधर्मिता और महत्वपूर्ण रासायनिक नियम।",
+  biology: "प्रतियोगी परीक्षाओं के लिए जीव विज्ञान: कोशिका, जीवों का वर्गीकरण, पादप और जंतु जगत, जैविक प्रक्रियाएँ और विकास का सिद्धांत।",
+  "famous-personalities": "महान व्यक्तित्वों के बारे में जानें: भारत और विश्व के नेता, स्वतंत्रता सेनानी, दार्शनिक, अर्थशास्त्री, वैज्ञानिक, खोजकर्ता और प्रेरक महिलाएँ।",
+};
+
 // Given a subject slug like "history", returns the full Subject object.
 // Returns undefined if the slug is not recognised.
 export function getSubjectInfo(slug: string): Subject | undefined {

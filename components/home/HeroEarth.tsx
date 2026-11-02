@@ -21,13 +21,17 @@ import { createGlobeLoader, loaderStage, type LoaderLines } from "@/lib/globe-lo
 // "Can this device run the 3D Earth?" — shared with the Atlas (lib/earth-support.ts)
 import { canRun3D } from "@/lib/earth-support";
 import type { EarthPlace, EarthScene } from "@/lib/earth-scene";
+import type { Lang } from "@/lib/lang";
+// The Earth's few words, in English or Hindi (2 Nov 2026)
+import { HOME_TEXT } from "@/lib/home-text";
 
 // Remembered for this visit only: the loader has played once
 const SEEN_KEY = "gk-earth-seen";
 
 type Stage = "waiting" | "loading" | "sunrise" | "live" | "still";
 
-export default function HeroEarth({ places }: { places: EarthPlace[] }) {
+export default function HeroEarth({ places, lang = "en" }: { places: EarthPlace[]; lang?: Lang }) {
+  const t = HOME_TEXT[lang];
   const box = useRef<HTMLDivElement>(null);
   const loaderCanvas = useRef<HTMLCanvasElement>(null);
   const [stage, setStage] = useState<Stage>("waiting");
@@ -135,7 +139,7 @@ export default function HeroEarth({ places }: { places: EarthPlace[] }) {
         shown += (Math.min(target, timeCap) - shown) * 0.08;
         if (target >= 1 && timeCap >= 1 && shown > 0.995) shown = 1;
         loader?.draw(shown, facing(), now, colours);
-        if (statusText.current) statusText.current.textContent = loaderStage(shown);
+        if (statusText.current) statusText.current.textContent = loaderStage(shown, lang);
         if (statusPercent.current) statusPercent.current.textContent = `${Math.round(shown * 100)}%`;
         if (shown < 1 || !scene) { frame = requestAnimationFrame(step); return; }
 
@@ -159,7 +163,7 @@ export default function HeroEarth({ places }: { places: EarthPlace[] }) {
       if (typeof window.cancelIdleCallback === "function") window.cancelIdleCallback(idle); else clearTimeout(idle);
       scene?.dispose();
     };
-  }, [places]);
+  }, [places, lang]);
 
   return (
     <div
@@ -167,10 +171,10 @@ export default function HeroEarth({ places }: { places: EarthPlace[] }) {
       className={`gk-earth is-${stage} ${dragged ? "is-dragged" : ""}`}
       onPointerDown={() => setDragged(true)}
       // the word in the mouse's ring (components/PointerFx.tsx) — only when it can be spun
-      data-cursor={stage === "still" ? undefined : "Drag"}
+      data-cursor={stage === "still" ? undefined : t.cursor.drag}
       // For screen readers: a short description instead of the moving picture
       role="img"
-      aria-label="The Earth, turning slowly, with places from the World360 Atlas marked in gold"
+      aria-label={t.hero.earthLabel}
     >
       {/* the loader's drawing (shown only while loading and during sunrise) */}
       <canvas ref={loaderCanvas} className="gk-earth__loader" aria-hidden="true" />
@@ -182,10 +186,10 @@ export default function HeroEarth({ places }: { places: EarthPlace[] }) {
 
       {/* "Drawing the map · 42%" */}
       <p className="gk-earth__status" role="status" aria-live="off">
-        <span ref={statusText}>Loading the Earth</span> · <b ref={statusPercent}>0%</b>
+        <span ref={statusText}>{t.hero.earthLoading}</span> · <b ref={statusPercent}>0%</b>
       </p>
       {/* phones and tablets: tell people they can spin it */}
-      <span className="gk-earth__hint" aria-hidden="true">↔ Drag to spin</span>
+      <span className="gk-earth__hint" aria-hidden="true">{t.hero.earthHint}</span>
     </div>
   );
 }

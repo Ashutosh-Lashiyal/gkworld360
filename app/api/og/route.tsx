@@ -75,7 +75,10 @@ export async function GET(req: Request) {
   const lang = searchParams.get("lang") === "hi" ? "hi" : "en";
   const hasDevanagari = /[ऀ-ॿ]/.test(title + label);
 
-  const motto = "Know more, grow more";
+  // The site's motto (owner, 2 Nov 2026 — it replaced "Know more, grow more").
+  // English on every preview: its italic font (Instrument Serif) has no Hindi
+  // letters, and Hindi pages already say "हिन्दी" beside it.
+  const motto = "From curiosity to knowledge";
   const textForFonts = `${title} ${label} ${SITE_NAME} WORLD360 ${motto} English हिन्दी 0123456789·`;
   const [display, hindi, sans, accent] = await Promise.all([
     loadFont("Anton", 400, textForFonts.toUpperCase() + textForFonts),

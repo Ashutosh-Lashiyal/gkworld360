@@ -36,7 +36,7 @@ import "./globals.css";
 // next/font downloads them when the site is BUILT and serves them from our own
 // domain, so visitors never wait on Google and nothing jumps when they load.
 
-// Anton — the GIANT, tall capitals: page titles like "KNOW MORE", the logo's name
+// Anton — the GIANT, tall capitals: page titles like "FROM CURIOSITY", the logo's name
 const anton = Anton({
   variable: "--font-anton",
   subsets: ["latin"],

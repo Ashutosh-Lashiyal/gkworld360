@@ -111,12 +111,19 @@
      font-body    → Nunito            everything else: UI, buttons, captions
      font-display → Anton             GIANT titles and the logo's name
      font-accent  → Instrument Serif  the italic accent word ("Explore *subjects*")
-     font-mono    → Geist Mono        small labels in capitals                    */
-  --font-heading: var(--font-fraunces);
-  --font-body:    var(--font-nunito);
-  --font-display: var(--font-anton);
-  --font-accent:  var(--font-instrument);
-  --font-mono:    var(--font-geist-mono);
+     font-mono    → Geist Mono        small labels in capitals
+
+     HINDI LETTERS (2 Nov 2026, for the Hindi homepage): none of these five
+     fonts has Devanagari letters. So each one ends with Noto Sans Devanagari as
+     a BACKUP: the browser draws each letter with the first font in the list
+     that has it — English letters still come from Anton/Nunito/…, Hindi
+     letters fall through to Noto. (Noto must come LAST: it has English letters
+     too, and would otherwise take them over.)                                   */
+  --font-heading: var(--font-fraunces), var(--font-devanagari);
+  --font-body:    var(--font-nunito), var(--font-devanagari);
+  --font-display: var(--font-anton), var(--font-devanagari);
+  --font-accent:  var(--font-instrument), var(--font-devanagari);
+  --font-mono:    var(--font-geist-mono), var(--font-devanagari);
 
   /* ── COLOURS ─────────────────────────────────────────────────────────────── */
   /* navy-dark: the dark STAGE colour for bands, overlays and the old dark
@@ -983,7 +990,7 @@ body:has([data-article])::after {
   line-height: 1.35;
   color: var(--ink);
 }
-.gk-toc-sheet button::before { counter-increment: gk-toc; content: counter(gk-toc, decimal-leading-zero); font: 500 12px/1 var(--font-geist-mono), monospace; color: var(--faint); }
+.gk-toc-sheet button::before { counter-increment: gk-toc; content: counter(gk-toc, decimal-leading-zero); font: 500 12px/1 var(--font-mono), monospace; color: var(--faint); }
 .gk-toc-sheet button.is-sub { padding-left: 26px; font-size: 15px; }
 .gk-toc-sheet button.is-sub::before { content: "·"; counter-increment: none; }
 .gk-toc-sheet button[aria-current="true"] { background: var(--accent-soft); color: var(--accent); }
@@ -1034,7 +1041,7 @@ body:has([data-article])::after {
   text-wrap: balance;
 }
 .gk-big-title__accent {
-  font-family: var(--font-instrument), Georgia, serif;
+  font-family: var(--font-accent), Georgia, serif;
   font-style: italic;
   font-weight: 400;
   font-size: 1.06em;
@@ -1066,7 +1073,7 @@ body:has([data-article])::after {
 }
 @media (min-width: 768px) { .gk-stage { border-radius: 0 0 36px 36px; } }
 
-/* KNOW MORE (solid) above the Earth, GROW MORE (outlined) below it */
+/* The motto: FROM CURIOSITY (solid) above the Earth, TO KNOWLEDGE (outlined) below it */
 .gk-hero { position: relative; display: flex; flex-direction: column; align-items: center; }
 .gk-giant {
   position: relative;
@@ -1074,7 +1081,10 @@ body:has([data-article])::after {
   width: 100%;
   text-align: center;
   font-family: var(--font-display), Impact, sans-serif;
-  font-size: clamp(76px, 17.2vw, 270px);
+  /* 2 Nov 2026: 17.2vw → 15vw for the new motto. "FROM CURIOSITY" is about
+     6 times as wide as it is tall, so 15% of the screen's width keeps it at
+     ~90% of the screen (17.2vw ran it off both edges). */
+  font-size: clamp(52px, 15vw, 240px);
   line-height: 0.82;
   text-transform: uppercase;
   white-space: nowrap;
@@ -1086,18 +1096,18 @@ body:has([data-article])::after {
 .gk-hero__globe { position: relative; z-index: 2; width: min(84vw, 520px); margin-top: -9vw; }
 /* PHONES AND TABLETS: one caption under the Earth — "● Gold dots: places on
    the Atlas · Open →" (2 Nov 2026). It sits over the bottom edge of the Earth,
-   above GROW MORE, inside the Earth's box so it moves with it on scroll. */
+   above the bottom motto word, inside the Earth's box so it moves with it on scroll. */
 .gk-hero__caption {
-  /* bottom: GROW MORE tucks 9vw up under the Earth (margin-top: -9vw above),
+  /* bottom: the bottom motto word tucks 9vw up under the Earth (margin-top: -9vw above),
      so the caption sits that much higher plus a gap, clear of the letters */
   position: absolute; z-index: 3; left: 50%; bottom: calc(9vw + 14px); transform: translateX(-50%);
   display: inline-flex; align-items: center; gap: 8px; min-height: 44px; box-sizing: border-box; padding: 8px 14px;
   border-radius: 99px; background: rgba(11, 11, 13, 0.8); border: 1px solid var(--stage-line);
   -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
-  color: var(--stage-ink); font: 700 13.5px/1.2 var(--font-nunito), sans-serif; white-space: nowrap;
+  color: var(--stage-ink); font: 700 13.5px/1.2 var(--font-body), sans-serif; white-space: nowrap;
 }
 .gk-hero__caption-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 7px var(--gold); flex: none; }
-/* LAPTOPS AND DESKTOPS: the facts as one quiet line under GROW MORE (2 Nov 2026). */
+/* LAPTOPS AND DESKTOPS: the facts as one quiet line under the bottom motto word (2 Nov 2026). */
 .gk-hero-stats { display: none; }
 .gk-cue { display: none; }
 /* …and from 1024px: the words sit at the top and bottom of a tall stage, the
@@ -1112,7 +1122,7 @@ body:has([data-article])::after {
   .gk-hero-stats {
     position: relative; z-index: 3; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 14px;
     margin: 22px 0 0; padding: 0 24px;
-    font: 500 12.5px/1.4 var(--font-geist-mono), monospace; letter-spacing: 0.12em; text-transform: uppercase; color: var(--stage-muted);
+    font: 500 12.5px/1.4 var(--font-mono), monospace; letter-spacing: 0.12em; text-transform: uppercase; color: var(--stage-muted);
   }
   .gk-hero-stats > span[aria-hidden] { opacity: 0.5; }
   .gk-hero-stats__link { color: var(--mint); text-underline-offset: 4px; }
@@ -1122,7 +1132,7 @@ body:has([data-article])::after {
   .gk-cue {
     position: absolute; z-index: 3; right: max(24px, calc((100% - 1320px) / 2 + 32px)); top: 46%;
     display: flex; flex-direction: column; align-items: center; gap: 10px;
-    font: 500 11px/1 var(--font-geist-mono), monospace; letter-spacing: 0.14em; text-transform: uppercase;
+    font: 500 11px/1 var(--font-mono), monospace; letter-spacing: 0.14em; text-transform: uppercase;
     color: var(--stage-muted); writing-mode: vertical-rl;
   }
   .gk-cue i { width: 1px; height: 60px; background: linear-gradient(var(--stage-ink), transparent); animation: gk-cue 2s var(--ease-out-soft) infinite; }
@@ -1181,7 +1191,7 @@ body:has([data-article])::after {
   position: absolute; z-index: 3; left: 50%; bottom: 10%; transform: translateX(-50%);
   margin: 0; padding: 7px 12px; border-radius: 99px;
   background: rgba(5, 7, 13, 0.6); border: 1px solid var(--stage-line);
-  white-space: nowrap; font: 500 11px/1 var(--font-geist-mono), monospace; letter-spacing: 0.1em; text-transform: uppercase;
+  white-space: nowrap; font: 500 11px/1 var(--font-mono), monospace; letter-spacing: 0.1em; text-transform: uppercase;
   color: var(--stage-muted); transition: opacity 0.4s;
 }
 .gk-earth__status b { color: var(--mint); font-weight: 500; font-variant-numeric: tabular-nums; }
@@ -1191,7 +1201,7 @@ body:has([data-article])::after {
   position: absolute; z-index: 3; left: 50%; bottom: 10%; transform: translateX(-50%);
   display: none; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 99px;
   background: rgba(11, 11, 13, 0.55); border: 1px solid var(--stage-line); color: var(--stage-ink);
-  font: 800 12px/1 var(--font-nunito), sans-serif; pointer-events: none; transition: opacity 0.5s;
+  font: 800 12px/1 var(--font-body), sans-serif; pointer-events: none; transition: opacity 0.5s;
 }
 @media (pointer: coarse) { .gk-earth.is-live .gk-earth__hint { display: inline-flex; } }
 .gk-earth.is-dragged .gk-earth__hint { opacity: 0; }
@@ -1206,7 +1216,7 @@ body:has([data-article])::after {
 .gk-earth__callout-box {
   position: absolute; bottom: 10px; left: 10px; width: max-content; max-width: 220px; padding: 8px 12px; border-radius: 12px;
   background: rgba(8, 12, 22, 0.84); border: 1px solid rgba(242, 181, 107, 0.35);
-  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); color: #eef3f1; font-family: var(--font-nunito), sans-serif;
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); color: #eef3f1; font-family: var(--font-body), sans-serif;
 }
 .gk-earth__callout-box b { display: block; font-size: 12px; font-weight: 800; line-height: 1.2; color: var(--gold); letter-spacing: 0.04em; }
 .gk-earth__callout-box span { display: block; font-size: 13px; margin-top: 3px; }
@@ -1215,7 +1225,7 @@ body:has([data-article])::after {
 .gk-ticker { position: relative; z-index: 3; display: flex; align-items: center; border-top: 1px solid var(--stage-line); overflow: hidden; }
 .gk-ticker__label {
   flex: none; display: flex; align-items: center; gap: 8px; padding: 14px 20px;
-  font: 500 11px/1 var(--font-geist-mono), monospace; letter-spacing: 0.12em; text-transform: uppercase;
+  font: 500 11px/1 var(--font-mono), monospace; letter-spacing: 0.12em; text-transform: uppercase;
   color: var(--mint); background: var(--stage); border-right: 1px solid var(--stage-line);
 }
 /* the red "live" light, pulsing */
@@ -1225,9 +1235,9 @@ body:has([data-article])::after {
 .gk-ticker__window { flex: 1; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
 .gk-ticker__track { display: flex; width: max-content; animation: gk-marquee 80s linear infinite; }
 .gk-ticker:hover .gk-ticker__track, .gk-ticker:focus-within .gk-ticker__track { animation-play-state: paused; }
-.gk-ticker__item { display: inline-flex; align-items: center; gap: 10px; padding: 14px 26px; font: 700 15px/1.2 var(--font-nunito), sans-serif; color: var(--stage-ink); white-space: nowrap; }
+.gk-ticker__item { display: inline-flex; align-items: center; gap: 10px; padding: 14px 26px; font: 700 15px/1.2 var(--font-body), sans-serif; color: var(--stage-ink); white-space: nowrap; }
 .gk-ticker__item:hover { color: var(--mint); }
-.gk-ticker__item b { font: 500 11px/1 var(--font-geist-mono), monospace; letter-spacing: 0.08em; text-transform: uppercase; color: var(--stage-muted); }
+.gk-ticker__item b { font: 500 11px/1 var(--font-mono), monospace; letter-spacing: 0.08em; text-transform: uppercase; color: var(--stage-muted); }
 @keyframes gk-marquee { to { transform: translateX(-50%); } }
 
 /* ── TODAY'S PRACTICE (components/home/TodaysPractice.tsx + QuickQuiz.tsx) ─── */
@@ -1258,7 +1268,7 @@ body:has([data-article])::after {
 /* the answer buttons: chunky; green and red after a tap */
 .gk-opt {
   position: relative; padding: 13px 16px; border-radius: 15px; border: 2px solid var(--line); background: var(--surface);
-  box-shadow: 0 3px 0 var(--line); font: 800 16px/1.3 var(--font-nunito), sans-serif; text-align: left; color: var(--ink);
+  box-shadow: 0 3px 0 var(--line); font: 800 16px/1.3 var(--font-body), sans-serif; text-align: left; color: var(--ink);
   transition: transform 0.08s, border-color 0.2s, background-color 0.2s;
 }
 .gk-opt:hover:not(:disabled) { border-color: var(--accent); }
@@ -1275,7 +1285,7 @@ body:has([data-article])::after {
 .gk-pin { position: absolute; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 2px rgba(5, 7, 13, 0.8); }
 .gk-pin::after { content: ""; position: absolute; inset: -9px; border-radius: 50%; border: 2px solid var(--gold); animation: gk-ping 2s var(--ease-out-soft) infinite; }
 @keyframes gk-ping { from { transform: scale(0.3); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
-.gk-pin-label { position: absolute; transform: translate(14px, -50%); padding: 6px 9px; border-radius: 9px; background: rgba(5, 7, 13, 0.78); color: #fff; font: 800 12px/1 var(--font-nunito), sans-serif; white-space: nowrap; }
+.gk-pin-label { position: absolute; transform: translate(14px, -50%); padding: 6px 9px; border-radius: 9px; background: rgba(5, 7, 13, 0.78); color: #fff; font: 800 12px/1 var(--font-body), sans-serif; white-space: nowrap; }
 
 /* ── SUBJECTS BENTO (components/home/SubjectBento.tsx) ─────────────────────── */
 .gk-bento { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
@@ -1352,8 +1362,8 @@ body:has([data-article])::after {
 .gk-poster:hover .gk-poster__img { transform: scale(1.02); }
 /* a dark fade at the top (for the number) and a deep one at the bottom (for the title) */
 .gk-poster::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5, 7, 13, 0.2), transparent 30%, transparent 45%, rgba(5, 7, 13, 0.92)); }
-.gk-poster__n { position: absolute; z-index: 2; top: 18px; left: 22px; font: 500 12px/1 var(--font-geist-mono), monospace; letter-spacing: 0.1em; }
-.gk-poster__txt { position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; padding: 22px; font-family: var(--font-nunito), sans-serif; }
+.gk-poster__n { position: absolute; z-index: 2; top: 18px; left: 22px; font: 500 12px/1 var(--font-mono), monospace; letter-spacing: 0.1em; }
+.gk-poster__txt { position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; padding: 22px; font-family: var(--font-body), sans-serif; }
 .gk-poster__title { margin: 0 0 8px; font-family: var(--font-display), Impact, sans-serif; font-weight: 400; font-size: 40px; line-height: 0.92; text-transform: uppercase; color: #f4f1ec; }
 /* the summary slides up when you point at the poster */
 .gk-poster__desc { margin: 0; font-size: 14px; line-height: 1.5; color: rgba(244, 241, 236, 0.8); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; max-height: 0; opacity: 0; transition: max-height 0.6s var(--ease-out-soft), opacity 0.4s; }
@@ -1372,7 +1382,7 @@ body:has([data-article])::after {
   padding-right: 0.4em; white-space: nowrap; color: transparent; -webkit-text-stroke: 1.5px var(--ink);
 }
 .gk-band__word:nth-child(2n) { color: var(--ink); -webkit-text-stroke: 0; }
-.gk-band__word em { font: italic 400 1em/1 var(--font-instrument), Georgia, serif; text-transform: none; color: var(--accent); -webkit-text-stroke: 0; }
+.gk-band__word em { font: italic 400 1em/1 var(--font-accent), Georgia, serif; text-transform: none; color: var(--accent); -webkit-text-stroke: 0; }
 
 /* ── HEADLINES card rows, and the "recently added" rows ────────────────────── */
 .gk-hl, .gk-row { transition: background-color 0.2s; }
@@ -1387,7 +1397,7 @@ body:has([data-article])::after {
    (text on dark pages). One set of rules, any number of subjects. */
 
 /* "SUBJECTS ON THE ATLAS" — the small label over the row of subjects */
-.gk-tl-label { margin: 0 0 12px; font: 500 11px/1 var(--font-geist-mono), monospace; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); }
+.gk-tl-label { margin: 0 0 12px; font: 500 11px/1 var(--font-mono), monospace; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); }
 /* a subject chip: filled with a tint of its colour when it has places… */
 .gk-tl-chip {
   display: inline-flex; align-items: center; gap: 9px; min-height: 44px; box-sizing: border-box; padding: 8px 16px;
@@ -1400,7 +1410,7 @@ a.gk-tl-chip:hover { background: color-mix(in srgb, var(--sb) 24%, transparent);
 /* …a dashed outline marked "soon" when it has none yet */
 .gk-tl-chip--soon { border: 2px dashed var(--line-2); background: transparent; color: var(--muted); font-weight: 800; }
 .gk-tl-chip--soon .gk-tl-chip__dot { background: transparent; border: 2.5px solid var(--sb); box-sizing: border-box; }
-.gk-tl-chip--soon .gk-tl-chip__count { font: 500 10.5px/1 var(--font-geist-mono), monospace; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); opacity: 1; }
+.gk-tl-chip--soon .gk-tl-chip__count { font: 500 10.5px/1 var(--font-mono), monospace; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); opacity: 1; }
 /* dark pages: the light shade of each colour, so it reads on near-black */
 :root[data-mode="dark"] .gk-tl-chip:not(.gk-tl-chip--soon), :root[data-mode="reading"] .gk-tl-chip:not(.gk-tl-chip--soon) { color: var(--sd); background: color-mix(in srgb, var(--sb) 20%, transparent); }
 
@@ -1496,7 +1506,7 @@ a.gk-tl__item:hover .gk-tl__title { color: var(--accent); }
   align-items: center;
   padding: 4px 11px;
   border-radius: 999px;
-  font: 800 12px/1.3 var(--font-nunito), sans-serif;
+  font: 800 12px/1.3 var(--font-body), sans-serif;
   color: color-mix(in srgb, var(--signal, var(--accent)) 72%, var(--ink));
   background: color-mix(in srgb, var(--signal, var(--accent)) 14%, transparent);
 }
@@ -1508,7 +1518,7 @@ a.gk-tl__item:hover .gk-tl__title { color: var(--accent); }
 .gk-chip {
   display: inline-flex; align-items: center; flex: none; white-space: nowrap;
   padding: 8px 16px; border-radius: 999px; border: 2px solid var(--line); background: var(--surface);
-  box-shadow: 0 3px 0 var(--line); font: 800 14px/1.2 var(--font-nunito), sans-serif; color: var(--muted);
+  box-shadow: 0 3px 0 var(--line); font: 800 14px/1.2 var(--font-body), sans-serif; color: var(--muted);
   transition: transform 0.12s, color 0.2s, border-color 0.2s, background-color 0.2s;
 }
 .gk-chip:hover { color: var(--ink); border-color: var(--line-2); }
@@ -1567,13 +1577,13 @@ a.gk-tl__item:hover .gk-tl__title { color: var(--accent); }
 .gk-path__bubble {
   position: absolute; left: 50%; bottom: calc(100% + 12px); z-index: 2; transform: translateX(-50%);
   padding: 9px 14px; border-radius: 12px; background: var(--btn); color: var(--on-btn);
-  font: 800 13px/1 var(--font-nunito), sans-serif; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
+  font: 800 13px/1 var(--font-body), sans-serif; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
   box-shadow: 0 3px 0 var(--btn-shadow); animation: gk-bob 1.6s ease-in-out infinite;
 }
 .gk-path__bubble::after { content: ""; position: absolute; left: 50%; top: 100%; margin-left: -7px; border: 7px solid transparent; border-top-color: var(--btn); }
 @keyframes gk-bob { 50% { transform: translateX(-50%) translateY(-6px); } }
-.gk-path__label { max-width: 300px; font-family: var(--font-nunito), sans-serif; }
-.gk-path__label b { display: block; font: italic 400 22px/1 var(--font-instrument), Georgia, serif; color: var(--amber); }
+.gk-path__label { max-width: 300px; font-family: var(--font-body), sans-serif; }
+.gk-path__label b { display: block; font: italic 400 22px/1 var(--font-accent), Georgia, serif; color: var(--amber); }
 .gk-path__label a { display: block; margin-top: 4px; font: 400 30px/1 var(--font-display), Impact, sans-serif; text-transform: uppercase; color: var(--ink); }
 @media (max-width: 639px) {
   .gk-path__label a { font-size: 24px; }
@@ -1627,7 +1637,7 @@ a.gk-tl__item:hover .gk-tl__title { color: var(--accent); }
   position: absolute; left: 50%; bottom: calc(34px + env(safe-area-inset-bottom, 0px));
   width: min(560px, calc(100% - 48px)); transform: translateX(-50%);
   display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; align-items: center;
-  font: 500 12px/1 var(--font-geist-mono), monospace; letter-spacing: 0.12em; text-transform: uppercase;
+  font: 500 12px/1 var(--font-mono), monospace; letter-spacing: 0.12em; text-transform: uppercase;
 }
 .gk-curtain__track { grid-column: 1 / -1; position: relative; height: 12px; border-radius: 99px; background: rgba(255, 255, 255, 0.16); box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.18); }
 /* the fill: diagonal water-blue stripes that keep sliding, so it looks busy even while waiting */
@@ -1694,7 +1704,7 @@ a.gk-tl__item:hover .gk-tl__title { color: var(--accent); }
     pointer-events: none; opacity: 0;
     transition: width 0.3s var(--ease-out-soft), height 0.3s var(--ease-out-soft), margin 0.3s var(--ease-out-soft), background-color 0.3s, border-color 0.3s, opacity 0.3s;
   }
-  .gk-cursor span { font: 800 12px/1 var(--font-nunito), sans-serif; letter-spacing: 0.06em; text-transform: uppercase; color: var(--on-btn); opacity: 0; transition: opacity 0.2s; }
+  .gk-cursor span { font: 800 12px/1 var(--font-body), sans-serif; letter-spacing: 0.06em; text-transform: uppercase; color: var(--on-btn); opacity: 0; transition: opacity 0.2s; }
   .gk-cursor.is-on { opacity: 0.5; }
   .gk-cursor.is-big { width: 84px; height: 84px; margin: -42px 0 0 -42px; background: var(--btn); border-color: var(--btn); opacity: 0.95; }
   .gk-cursor.is-big span { opacity: 1; }
@@ -1721,7 +1731,7 @@ a.gk-tl__item:hover .gk-tl__title { color: var(--accent); }
 
 /* ── THE HEADER SWITCH: EN | हिं (components/LangSwitch.tsx) ───────────────── */
 .gk-lang { padding: 3px; border-radius: 999px; border: 2px solid var(--accent); background: var(--surface); }
-.gk-lang button { border: 0; background: none; padding: 6px 11px; border-radius: 999px; font: 900 13px/1 var(--font-nunito), sans-serif; color: var(--muted); transition: background-color 0.2s, color 0.2s; }
+.gk-lang button { border: 0; background: none; padding: 6px 11px; border-radius: 999px; font: 900 13px/1 var(--font-body), sans-serif; color: var(--muted); transition: background-color 0.2s, color 0.2s; }
 .gk-lang button:hover { color: var(--ink); }
 /* the language you're reading: filled with the button colour */
 .gk-lang button[aria-pressed="true"] { background: var(--btn); color: var(--on-btn); }
@@ -1730,7 +1740,7 @@ a.gk-tl__item:hover .gk-tl__title { color: var(--accent); }
 .gk-lang-one {
   display: inline-grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; border: 0;
   background: var(--btn); color: var(--on-btn); box-shadow: 0 3px 0 var(--btn-shadow);
-  font: 900 12px/1 var(--font-nunito), sans-serif;
+  font: 900 12px/1 var(--font-body), sans-serif;
 }
 .gk-lang-one:active { transform: translateY(3px); box-shadow: none; }
 @media (min-width: 640px) { .gk-lang-one { display: none; } }
@@ -1744,12 +1754,12 @@ a.gk-tl__item:hover .gk-tl__title { color: var(--accent); }
   padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px));
   background: #064e3b; color: #e9fbf3;
 }
-.gk-hi-strip__text { flex: 1 1 220px; min-width: 0; margin: 0; font: 600 14px/1.4 var(--font-nunito), sans-serif; }
+.gk-hi-strip__text { flex: 1 1 220px; min-width: 0; margin: 0; font: 600 14px/1.4 var(--font-body), sans-serif; }
 .gk-hi-strip__text b { display: block; font: 700 16px/1.35 var(--font-devanagari), sans-serif; color: #fff; }
 .gk-hi-strip--hi .gk-hi-strip__text span { font-family: var(--font-devanagari), sans-serif; }
 .gk-hi-strip__yes { border: 0; border-radius: 12px; padding: 10px 16px; background: #6ee7b7; color: #04241b; font: 700 15px/1 var(--font-devanagari), sans-serif; box-shadow: 0 3px 0 #0f766e; }
 .gk-hi-strip__yes:active { transform: translateY(3px); box-shadow: none; }
-.gk-hi-strip__no { border: 1.5px solid rgba(255, 255, 255, 0.45); border-radius: 12px; padding: 9px 13px; background: none; color: #e9fbf3; font: 800 13px/1 var(--font-nunito), sans-serif; }
+.gk-hi-strip__no { border: 1.5px solid rgba(255, 255, 255, 0.45); border-radius: 12px; padding: 9px 13px; background: none; color: #e9fbf3; font: 800 13px/1 var(--font-body), sans-serif; }
 .gk-hi-strip__x { border: 0; background: none; color: rgba(255, 255, 255, 0.75); font-size: 24px; line-height: 1; padding: 0 4px; }
 
 /* ── "यह लेख हिन्दी में भी है" (components/article/AlsoInHindi.tsx) ───────── */
@@ -1768,7 +1778,42 @@ a.gk-tl__item:hover .gk-tl__title { color: var(--accent); }
   font: 700 17px/1 var(--font-devanagari), sans-serif; transition: background-color 0.2s;
 }
 .gk-hi-btn:hover { background: rgba(110, 231, 183, 0.16); }
-.gk-hi-btn small { font: 800 11px/1 var(--font-nunito), sans-serif; letter-spacing: 0.08em; text-transform: uppercase; color: var(--stage-muted); }
+.gk-hi-btn small { font: 800 11px/1 var(--font-body), sans-serif; letter-spacing: 0.08em; text-transform: uppercase; color: var(--stage-muted); }
+/* …and on the Hindi homepage the same button says "Read in English →" — in the English font */
+.gk-hi-btn--en { font: 800 16px/1 var(--font-body), sans-serif; }
+
+/* ── THE HINDI HOMEPAGE (components/home/HomePage.tsx with lang="hi", 2 Nov 2026) ──
+   The same layout as the English homepage; these rules only fit HINDI LETTERS
+   into it. Hindi letters come from Noto Sans Devanagari (the backup font —
+   see the FONTS note in @theme above). Three things differ from English:
+     1. Anton's capitals are tall and narrow and can stack tightly (line-height
+        below 1). Hindi letters hang marks above and below the line, so they
+        need about 1.2, or the lines touch.
+     2. Anton has one weight; Hindi titles use Noto's bold (700).
+        font-synthesis: none stops the browser faking a "bold Anton" for the
+        English letters and numbers that share these titles.
+     3. Letter-spacing pulls apart Hindi letters that should join, so it's
+        switched off for every Hindi element (:lang(hi) — elements marked
+        lang="en", like the headlines, keep theirs).                                */
+.gk-home--hi { font-synthesis: none; }
+.gk-home--hi :lang(hi) { letter-spacing: 0; }
+/* the giant motto words around the Earth: जिज्ञासा से / ज्ञान तक */
+.gk-home--hi .gk-giant { font-weight: 700; line-height: 1.2; }
+/* section titles ("आज का अभ्यास") — smaller than Anton's: Hindi letters are wider */
+.gk-home--hi .gk-big-title { font-weight: 700; font-size: clamp(40px, 5.6vw, 84px); line-height: 1.2; }
+.gk-home--hi .gk-big-title__accent { font-style: normal; font-weight: 700; font-size: 1em; }
+.gk-home--hi .gk-hero-intro h1 { font-weight: 700; font-size: clamp(38px, 4.4vw, 68px); line-height: 1.2; }
+/* the moving band */
+.gk-home--hi .gk-band__word { font-weight: 700; font-size: clamp(48px, 7.4vw, 112px); line-height: 1.3; }
+.gk-home--hi .gk-band__word em { font-style: normal; font-weight: 700; }
+/* card titles */
+.gk-home--hi .gk-poster__title { font-weight: 700; font-size: 30px; line-height: 1.25; }
+.gk-home--hi .gk-subj__name { font-weight: 700; line-height: 1.25; }
+.gk-home--hi .gk-subj--big .gk-subj__name { font-size: clamp(48px, 6vw, 96px); line-height: 1.15; }
+.gk-home--hi h2.font-display { font-weight: 700; line-height: 1.2; }
+/* the small mono labels: a touch bigger, so the Hindi stays readable */
+.gk-home--hi .gk-hero-stats { font-size: 14px; }
+.gk-home--hi .gk-ticker__label, .gk-home--hi .gk-tl-label { font-size: 13px; }
 
 /* ── GYAANI (components/Gyaani.tsx — redesign, 2 Nov 2026) ───────────────────
    The chat helper, in the site's chunky style. Every colour is a site token

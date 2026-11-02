@@ -403,7 +403,7 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
               </div>
             </div>
 
-            {/* Smaller links, and the way to the Hindi start page */}
+            {/* Smaller links, and the way to the Hindi homepage */}
             <div className="flex flex-wrap gap-x-5 gap-y-2 mt-6 font-body text-[15px] font-extrabold text-muted">
               <Link href="/search">Search</Link>
               {/* Read Later lives here on phones (no room for its button in the header) */}
@@ -412,7 +412,7 @@ export default function Header({ topicsBySubject = {}, liveSubjects, totalTopics
               <Link href="/contact">Contact</Link>
               <Link href="/topics">All topics</Link>
             </div>
-            {/* Hindi, from the menu too: straight to the Hindi start page */}
+            {/* Hindi, from the menu too: straight to the Hindi homepage */}
             <Link href="/hi" lang="hi" className="mt-5 inline-flex items-center gap-2 px-4 py-3 rounded-2xl border-2 border-accent bg-accent-soft font-hindi text-base font-bold text-accent">
               हिन्दी में पढ़ें → <span lang="en" className="font-body text-xs font-extrabold uppercase tracking-[0.08em] text-muted">Read in Hindi</span>
             </Link>

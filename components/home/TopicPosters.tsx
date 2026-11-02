@@ -8,15 +8,24 @@
 //
 // "Popular" is still "most recent" until real view counts exist (lib/topics.ts).
 // Server component.
+//
+// HINDI HOMEPAGE (2 Nov 2026, lang="hi"): only articles with a Hindi version,
+// with their Hindi titles and summaries, linking to the Hindi article. The
+// "All topics" poster and link are hidden — that page is English-only for now.
 
 import Link from "next/link";
 import Image from "next/image";
 import SectionHead from "@/components/SectionHead";
 import PosterPin from "@/components/home/PosterPin";
-import { getPopularTopics } from "@/lib/topics";
+import { getPopularTopics, getAllTopics } from "@/lib/topics";
+import type { Lang } from "@/lib/lang";
+import { HOME_TEXT } from "@/lib/home-text";
 
-export default async function TopicPosters() {
-  const topics = await getPopularTopics(6);
+export default async function TopicPosters({ lang = "en" }: { lang?: Lang }) {
+  const t = HOME_TEXT[lang];
+  const hi = lang === "hi";
+  // Hindi: the newest six that exist in Hindi (getAllTopics is newest first)
+  const topics = hi ? (await getAllTopics()).filter((tp) => tp.hindiHref).slice(0, 6) : await getPopularTopics(6);
   if (topics.length === 0) return null;
   const total = String(topics.length).padStart(2, "0");
 
@@ -26,30 +35,45 @@ export default async function TopicPosters() {
           you scroll down; elsewhere it's the normal swipeable strip */}
       <PosterPin>
       <div className="max-w-[1320px] mx-auto px-4 md:px-8">
-        <SectionHead id="popular-title" eyebrow="Most read" title="Popular" accent="topics" more={{ href: "/topics?sort=popular", label: "All topics" }} />
+        <SectionHead
+          id="popular-title"
+          eyebrow={t.popular.eyebrow}
+          title={t.popular.head.title}
+          accent={t.popular.head.accent}
+          more={t.popular.all ? { href: "/topics?sort=popular", label: t.popular.all } : undefined}
+        />
       </div>
 
       {/* The strip. It scrolls sideways by itself (overflow-x), snapping to
           each poster; its left edge lines up with the page's content. */}
       <div className="gk-posters" data-reveal-group>
-        {topics.map((t, i) => (
-          // gk-noimg: a soft glow behind the title when a topic has no picture yet
-          <Link key={t.slug.join("/")} href={"/" + t.slug.join("/")} className={`gk-poster gk-tilt ${t.meta.image ? "" : "gk-noimg"}`} data-cursor="Read">
-            {t.meta.image && <Image src={t.meta.image} alt="" fill sizes="(max-width: 767px) 78vw, 360px" className="gk-poster__img object-cover" />}
-            <span className="gk-poster__n">{String(i + 1).padStart(2, "0")} / {total}</span>
-            <div className="gk-poster__txt">
-              <h3 className="gk-poster__title">{t.meta.title}</h3>
-              {t.meta.description && <p className="gk-poster__desc">{t.meta.description}</p>}
-              <div className="gk-poster__langs">
-                <span>English</span>
-                {t.hindiHref && <span lang="hi" className="font-hindi">हिन्दी</span>}
+        {topics.map((tp, i) => {
+          // The title, summary and address in the page's language
+          const title = hi ? tp.hindiTitle ?? tp.meta.title : tp.meta.title;
+          const description = hi ? tp.hindiDescription : tp.meta.description;
+          const href = hi && tp.hindiHref ? tp.hindiHref : "/" + tp.slug.join("/");
+          return (
+            // gk-noimg: a soft glow behind the title when a topic has no picture yet
+            <Link key={tp.slug.join("/")} href={href} className={`gk-poster gk-tilt ${tp.meta.image ? "" : "gk-noimg"}`} data-cursor={t.cursor.read}>
+              {tp.meta.image && <Image src={tp.meta.image} alt="" fill sizes="(max-width: 767px) 78vw, 360px" className="gk-poster__img object-cover" />}
+              <span className="gk-poster__n">{String(i + 1).padStart(2, "0")} / {total}</span>
+              <div className="gk-poster__txt">
+                <h3 className="gk-poster__title">{title}</h3>
+                {description && <p className="gk-poster__desc">{description}</p>}
+                <div className="gk-poster__langs">
+                  <span lang="en">English</span>
+                  {tp.hindiHref && <span lang="hi" className="font-hindi">हिन्दी</span>}
+                </div>
               </div>
-            </div>
+            </Link>
+          );
+        })}
+        {/* the last poster — hidden on the Hindi homepage (no Hindi list page yet) */}
+        {t.popular.all && (
+          <Link href="/topics" className="gk-poster gk-poster--end" data-cursor={t.cursor.all}>
+            <b>All<br />topics →</b>
           </Link>
-        ))}
-        <Link href="/topics" className="gk-poster gk-poster--end" data-cursor="All">
-          <b>All<br />topics →</b>
-        </Link>
+        )}
       </div>
       {/* how far along the strip you are (shown only while it's pinned) */}
       <div className="gk-posters-progress max-w-[1320px] mx-auto px-4 md:px-8" aria-hidden="true"><span><i /></span></div>

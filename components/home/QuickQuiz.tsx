@@ -8,12 +8,16 @@
 //
 // The questions arrive ready-made from the server (the same for everyone
 // today); this component only handles the tapping.
+// `lang` picks its words (lib/home-text.ts) — the Hindi homepage passes "hi".
 
 import { useState } from "react";
 import Link from "next/link";
 import type { QuizQuestion } from "@/lib/daily";
+import type { Lang } from "@/lib/lang";
+import { HOME_TEXT } from "@/lib/home-text";
 
-export default function QuickQuiz({ questions }: { questions: QuizQuestion[] }) {
+export default function QuickQuiz({ questions, lang = "en" }: { questions: QuizQuestion[]; lang?: Lang }) {
+  const t = HOME_TEXT[lang].practice; // this component's words
   const [index, setIndex] = useState(0);          // which question is showing
   const [chosen, setChosen] = useState<number | null>(null); // the option tapped, or null
   const [results, setResults] = useState<boolean[]>([]);     // right/wrong for each answered question
@@ -41,7 +45,7 @@ export default function QuickQuiz({ questions }: { questions: QuizQuestion[] }) 
     <div className="font-body">
       {/* top row: the label and a progress bar of three pieces */}
       <div className="flex items-center justify-between gap-3">
-        <span className="text-xs font-extrabold uppercase tracking-[0.12em] text-accent">Quick quiz</span>
+        <span className="text-xs font-extrabold uppercase tracking-[0.12em] text-accent">{t.quiz}</span>
         <div className="flex gap-[5px] flex-1 max-w-[160px]" aria-hidden="true">
           {questions.map((_, i) => (
             <i key={i} className={`gk-qbar ${i < results.length ? (results[i] ? "is-right" : "is-wrong") : i === index && !finished ? "is-now" : ""}`} />
@@ -53,15 +57,15 @@ export default function QuickQuiz({ questions }: { questions: QuizQuestion[] }) 
         // ── THE END ──
         <div className="text-center pt-3 pb-1">
           <div className="font-display text-[92px] leading-none text-accent">{score}/{questions.length}</div>
-          <p className="m-0 mt-1.5 mb-4 text-muted">{score === questions.length ? "All right. Brilliant!" : "Good try."} New questions tomorrow.</p>
-          <button type="button" className="gk-tbtn" onClick={again}>Try again</button>
+          <p className="m-0 mt-1.5 mb-4 text-muted">{score === questions.length ? t.allRight : t.goodTry} {t.tomorrow}</p>
+          <button type="button" className="gk-tbtn" onClick={again}>{t.again}</button>
         </div>
       ) : (
         <>
           <h3 className="m-0 mt-3 mb-4 font-heading text-[22px] md:text-2xl font-semibold leading-tight tracking-[-0.01em] text-foreground [text-wrap:balance]">
             {q.question}
           </h3>
-          <div className="grid gap-[9px]" role="group" aria-label="Answers">
+          <div className="grid gap-[9px]" role="group" aria-label={t.answers}>
             {q.options.map((o, i) => {
               // after a tap: the right answer turns green; a wrong tap turns red
               const state = chosen === null ? "" : i === q.answer ? "is-right" : i === chosen ? "is-wrong" : "";
@@ -77,16 +81,16 @@ export default function QuickQuiz({ questions }: { questions: QuizQuestion[] }) 
             {chosen !== null && (
               <>
                 <b className={chosen === q.answer ? "text-accent" : "text-[#dc2626]"}>
-                  {chosen === q.answer ? "Right! " : `It was ${q.options[q.answer]}. `}
+                  {chosen === q.answer ? t.right : t.itWas(q.options[q.answer])}
                 </b>
                 {q.explain}{" "}
-                <Link href={q.more.href} className="font-bold text-accent hover:underline underline-offset-4">Read “{q.more.title}” →</Link>
+                <Link href={q.more.href} className="font-bold text-accent hover:underline underline-offset-4">{t.read(q.more.title)}</Link>
               </>
             )}
           </p>
           {chosen !== null && (
             <button type="button" className="gk-tbtn mt-2.5" onClick={next}>
-              {index < questions.length - 1 ? "Next question →" : "See your score"}
+              {index < questions.length - 1 ? t.next : t.seeScore}
             </button>
           )}
         </>

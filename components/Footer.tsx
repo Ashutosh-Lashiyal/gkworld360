@@ -105,7 +105,8 @@ export default async function Footer() {
         {/* ── THE LOGO, small, above the giant word ── */}
         <div className="mt-12 flex items-center justify-between gap-4 flex-wrap">
           <Link href="/" aria-label="GKWorld360 — home"><Logo size={44} onDark /></Link>
-          <span className="font-accent italic text-[22px] text-on-dark/70">Know more, grow more</span>
+          {/* the site's motto (2 Nov 2026 — it replaced "Know more, grow more") */}
+          <span className="font-accent italic text-[22px] text-on-dark/70">From curiosity to knowledge</span>
         </div>
       </div>
 

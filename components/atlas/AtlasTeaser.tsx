@@ -36,6 +36,10 @@
 // All of it is counted from the Atlas's own list, so when (say) a Chemistry
 // article gets its first Atlas place, Chemistry lights up by itself.
 // On phones the timeline runs DOWN the screen instead of scrolling sideways.
+//
+// HINDI HOMEPAGE (2 Nov 2026, lang="hi"): the Hindi Atlas's places (Hindi
+// titles and place names), Hindi subject names, Hindi labels, and every link
+// goes to the Hindi Atlas (/hi/atlas…). The words: lib/home-text.ts (atlas).
 
 import type { CSSProperties } from "react";
 import Link from "next/link";
@@ -44,12 +48,15 @@ import { getAtlasEntries } from "@/lib/atlas";
 import { getHomepageSubjects } from "@/lib/content";
 import { getSubjectInfo } from "@/lib/subjects";
 import { SUBJECT_COLORS, FRAME_COLORS, type SubjectColors } from "@/lib/subject-colors";
+import type { Lang } from "@/lib/lang";
+import { HOME_TEXT, homeHref } from "@/lib/home-text";
 
 type AtlasTeaserProps = {
   subject?: string; // only this subject's places (e.g. "history")
-  eyebrow?: string;
+  eyebrow?: string; //  left out → the homepage's own words, in `lang`
   title?: string;
   accent?: string;
+  lang?: Lang; //       "hi" on the Hindi homepage
 };
 
 /** A subject's colours as CSS variables, read by the .gk-tl-* rules in globals.css:
@@ -60,13 +67,12 @@ function colourVars(slug: string) {
   return { "--sb": c.border, "--sa": c.accent, "--sd": c.bandAccent, "--sk": c.band } as CSSProperties;
 }
 
-export default async function AtlasTeaser({
-  subject,
-  eyebrow = "New · World360 Atlas",
-  title = "Knowledge",
-  accent = "on the map",
-}: AtlasTeaserProps = {}) {
-  const all = await getAtlasEntries("en");
+export default async function AtlasTeaser({ subject, eyebrow, title, accent, lang = "en" }: AtlasTeaserProps = {}) {
+  const t = HOME_TEXT[lang].atlas;
+  const hi = lang === "hi";
+  // A subject's name in the page's language ("History" / "इतिहास")
+  const subjectName = (slug: string) => (hi ? getSubjectInfo(slug)?.labelHi : getSubjectInfo(slug)?.label) ?? slug;
+  const all = await getAtlasEntries(lang);
   const entries = subject ? all.filter((e) => e.subject === subject) : all;
   if (entries.length === 0) return null;
 
@@ -83,7 +89,7 @@ export default async function AtlasTeaser({
   const six = getHomepageSubjects().map((s) => s.slug);
   const subjects = [...six, ...[...counts.keys()].filter((slug) => !six.includes(slug))].map((slug) => ({
     slug,
-    label: getSubjectInfo(slug)?.label ?? slug,
+    label: subjectName(slug),
     count: counts.get(slug) ?? 0,
   }));
   // The subjects still to come — one dot each on the "Next" stop
@@ -94,37 +100,37 @@ export default async function AtlasTeaser({
     <section aria-labelledby="atlas-title" className="max-w-[1320px] mx-auto px-4 md:px-8 pt-20 md:pt-28">
       <SectionHead
         id="atlas-title"
-        eyebrow={eyebrow}
-        title={title}
-        accent={accent}
+        eyebrow={eyebrow ?? t.eyebrow}
+        title={title ?? t.head.title}
+        accent={accent ?? t.head.accent}
         lede={
           homepage
-            ? "Every subject, one globe. History, geography, science and famous lives: whatever happened somewhere, at some time, gets its place on the map, in time order."
+            ? t.lede
             : "Battles, discoveries, journeys and births, on one globe and in time order. Pick a year to see where it happened."
         }
-        more={{ href: subject ? `/atlas?subject=${subject}` : "/atlas", label: "Open the Atlas" }}
+        more={{ href: homeHref(lang, subject ? `/atlas?subject=${subject}` : "/atlas"), label: t.open }}
       />
 
       {/* THE SUBJECT ROW — homepage only (a subject page is about one subject) */}
       {homepage && (
         <div className="mb-10 md:mb-12">
-          <p className="gk-tl-label">Subjects on the Atlas</p>
+          <p className="gk-tl-label">{t.row}</p>
           <ul className="m-0 p-0 list-none flex flex-wrap gap-2.5">
             {subjects.map((s) => (
               <li key={s.slug} style={colourVars(s.slug)}>
                 {s.count > 0 ? (
                   // Has places: opens the Atlas showing only this subject
-                  <Link href={`/atlas?subject=${s.slug}`} className="gk-tl-chip font-body">
+                  <Link href={homeHref(lang, `/atlas?subject=${s.slug}`)} className="gk-tl-chip font-body">
                     <span className="gk-tl-chip__dot" aria-hidden="true" />
                     {s.label}
-                    <span className="gk-tl-chip__count">{s.count} {s.count === 1 ? "place" : "places"}</span>
+                    <span className="gk-tl-chip__count">{t.places(s.count)}</span>
                   </Link>
                 ) : (
                   // No places yet: a dashed outline, not a link
                   <span className="gk-tl-chip gk-tl-chip--soon font-body">
                     <span className="gk-tl-chip__dot" aria-hidden="true" />
                     {s.label}
-                    <span className="gk-tl-chip__count">soon</span>
+                    <span className="gk-tl-chip__count">{t.soon}</span>
                   </span>
                 )}
               </li>
@@ -138,11 +144,11 @@ export default async function AtlasTeaser({
         <ol data-reveal-group className="gk-tl__list" style={{ ["--n" as string]: n + (showNext ? 1 : 0) }}>
           {picks.map((e) => (
             <li key={e.id} style={colourVars(e.subject)}>
-              <Link href={`/atlas/${e.slug}`} className="gk-tl__item font-body">
+              <Link href={homeHref(lang, `/atlas/${e.slug}`)} className="gk-tl__item font-body">
                 <span className="gk-tl__year">{e.year}</span>
                 <span className="gk-tl__knob" aria-hidden="true" />
                 {/* the subject's tag — on the homepage, where subjects mix */}
-                {homepage && <span className="gk-tl__tag">{getSubjectInfo(e.subject)?.label ?? e.subject}</span>}
+                {homepage && <span className="gk-tl__tag">{subjectName(e.subject)}</span>}
                 <span className="gk-tl__title">{e.title}</span>
                 <span className="gk-tl__place">{e.place}</span>
               </Link>
@@ -152,13 +158,13 @@ export default async function AtlasTeaser({
           {showNext && (
             <li>
               <div className="gk-tl__item gk-tl__item--next font-body">
-                <span className="gk-tl__year">Next</span>
+                <span className="gk-tl__year">{t.next}</span>
                 <span className="gk-tl__knob" aria-hidden="true" />
                 <span className="flex gap-1" aria-hidden="true">
                   {comingSoon.map((s) => <span key={s.slug} className="gk-tl__dot" style={colourVars(s.slug)} />)}
                 </span>
-                <span className="gk-tl__title">More subjects join the map</span>
-                <span className="gk-tl__place">as their articles are written</span>
+                <span className="gk-tl__title">{t.nextTitle}</span>
+                <span className="gk-tl__place">{t.nextPlace}</span>
               </div>
             </li>
           )}
