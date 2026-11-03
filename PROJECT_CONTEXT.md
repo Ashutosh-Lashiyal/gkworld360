@@ -11,11 +11,22 @@
 > - **`TODO.md`** = ⭐ THE task list (Now / Next / Later / Done) — read after this block, every session.
 > - **`SERVICES.md`** = third-party services & billing · **`GIT_NOTES.md`** = git learning notes.
 > - **`IDEAS.md`** = parking lot for raw, undecided ideas (they graduate to the Blueprint or here when decided).
+> - **`docs/GKWORLD360_PAID_FEATURES_PLAN.md`** = ⭐ (3 Nov 2026) the paid-features plan — roles (super admin / teachers / students), highlight → notes or quiz, teacher dashboards, quiz bundles, paid Gyaani, teachers' articles, legal checklist, decision log. Every new idea about paid features goes THERE.
 > Each doc has one lane; keep them in it so they don't drift.
 
 ---
 
-# 🟢 START HERE — status as of 7 Oct 2026
+# 🟢 START HERE — status as of 3 Nov 2026
+
+**In one breath (3 Nov 2026):** branch `feature/redesign` holds the whole redesign (phases 1–5,
+30–31 Oct) and the **whole site in Hindi** (phases 1–4, 2–3 Nov: header/footer, list pages,
+subject/category pages, Hindi headlines + /hi/pulse + /hi/news), plus **Gyaani suggestions on
+every page with a real "Quiz me" quiz card** (3 Nov). All built and checked on **dev**; **none of it
+is on the Vercel site yet** (that still runs `main`). Before deploying: production needs the
+Headlines `language` column first (`npm run dev:prod` once) — see TODO.md. Owner's next reviews:
+the full redesign, then ONE Hindi wording check. Future revenue plan:
+`docs/GKWORLD360_PAID_FEATURES_PLAN.md` (planning only). The laptop disk is ~98% full — free space
+before big builds. Compute: 1.74 CU-hrs on 3 Nov (month resets on the 1st; healthy pace ≈ 0.8/day).
 
 **Three environment names (owner's rule, 18 Sep):** **dev** = the laptop (`localhost:3000`, Neon
 `dev` branch) · **Vercel site** = `gkworld360.vercel.app` (Neon `production` branch, indexing OFF)
@@ -76,7 +87,8 @@ HINDI_TWINS there — add each new Hindi page (phases 2–4, TODO.md). The foote
 + a bilingual 404. Page bodies in `components/pages/` take a language; words in `lib/page-text.ts`;
 Hindi type rules = `.gk-hi-page` in globals.css (was .gk-home--hi). Breadcrumb.tsx is now a client
 component (reads the address → "होम" on Hindi pages).
-Next: phase 3 (Hindi subject + category pages); phase 4 (news + Hindi headlines); logo concepts.
+Phases 3 and 4 were built on 3 Nov (see the lines above). Next: the owner's review of the whole
+redesign, the Hindi wording check, then deploying `feature/redesign`; the new logo is PARKED.
 How modes work: `lib/mode.ts` + the colour blocks at the top of `app/(frontend)/globals.css`.
 Reading mode is per-article: the `data-article` marker (ArticleLayout) + `data-reading` on <html>.
 Logo: `components/Logo.tsx` (+ files in `public/brand/`). Phases 2–5 are listed in TODO.md.

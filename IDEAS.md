@@ -8,6 +8,11 @@
 > so the Blueprint stays clean and trustworthy.
 >
 > **Status legend:** 💡 raw idea · 🤔 considering · ✅ decided (moved to the plan) · ❌ dropped
+>
+> **Paid features have their own plan (3 Nov 2026):** `docs/GKWORLD360_PAID_FEATURES_PLAN.md` —
+> accounts, roles (super admin / teachers / students), highlight → notes or quiz, teacher
+> dashboards, quiz bundles, paid Gyaani, teachers writing articles. Ideas about paying users go
+> THERE, not here.
 
 ---
 
@@ -35,11 +40,15 @@ any paid APIs). Framing: the site is free because of donations — and if donati
   *could* dent donor trust; worth deciding how to frame that (e.g. a modest "supports the creator" line)
   before launch.
 - Likely a **post-MVP** feature (needs real traffic first — donations follow an audience).
+- **3 Nov 2026:** the owner's paid plan (teachers pay, students free —
+  `docs/GKWORLD360_PAID_FEATURES_PLAN.md`) is now the main revenue idea. Donations could still sit
+  alongside it for readers who want to support the free site; Razorpay would serve both.
 
 ---
 
 ## 🤔 User accounts / login (unlocks synced "Read Later" + more)
-**Added:** 14 Jul 2026 · **Status:** 🤔 planned for a later phase
+**Added:** 14 Jul 2026 · **Status:** 🤔 planned for a later phase — now step 2 of the paid-features
+plan (`docs/GKWORLD360_PAID_FEATURES_PLAN.md`, section 5; 3 Nov 2026)
 
 The "Read Later" feature (built 14 Jul 2026) currently uses **browser localStorage** — no login
 needed, but it has two limits we must accept for now:

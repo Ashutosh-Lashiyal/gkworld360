@@ -1,325 +1,385 @@
 # GKWorld360 — Project Structure
 
-**Source of truth:** `docs/GKWORLD360_MASTER_BLUEPRINT.md` and `docs/GKWORLD360_TECH_FOUNDATION.md`
-**Audience:** a non-technical solo founder building with AI assistance
-**Purpose:** define the project's folder structure, explain why each folder exists, and set rules that keep the project simple and clutter-free as it grows.
+> **Updated 3 Nov 2026 to match the code.** (The previous version was from 2 Jul 2026, before
+> the Hindi site, the redesign, the Atlas and the content pipeline.)
 
-> **📌 Doc status (updated 2 Jul 2026):** Reference doc. The **"Current Structure"** section
-> immediately below reflects the project as it is *today*. The diagrams further down (originally
-> written for the MVP plan) predate the Payload migration — their **philosophy and folder rules
-> are still valid**, but for the live layout trust the section below and `PROJECT_CONTEXT.md`.
+**Audience:** the owner — a beginner developer (moving from QA) who learns from these docs.
+**Purpose:** a guide to the project's folders and files: what each one is **for**, and **why it
+lives where it does**. It is not a task list (that is `TODO.md`) and not a status report (that is
+`PROJECT_CONTEXT.md`).
+**The code is the source of truth.** Every file starts with a plain-English comment saying what it
+does — if this doc and a file's header comment ever disagree, trust the file and fix this doc.
+
+> **Read this first:** a "folder structure" is just how the project's files are organised into
+> folders — like rooms in a house. A good structure means you (and the AI) can always find things
+> quickly. This document is the map of the house.
 
 ---
 
-# Current Structure (as of 2 Jul 2026)
+# 1. The big picture
 
-Since the original plan, two big things changed: we adopted **Payload CMS** (so there's now a
-database + admin panel) and split `app/` into two **route groups** — `(frontend)` for the public
-site and `(payload)` for the admin. Route-group folders are wrapped in `( )`, which means **they
-do NOT appear in the URL** — they only tell Next.js "these areas each get their own page shell."
+GKWorld360 has three parts that live in this one project:
+
+1. **The public website** — the pages visitors read (English at `/…`, Hindi at `/hi/…`).
+2. **The admin panel** — `/admin`, where articles, subjects, news, quotes and Atlas entries are
+   written and published. This is **Payload CMS**.
+3. **Helper tools** — scripts, the content pipeline and small API endpoints that keep the site fed
+   with content and fresh headlines.
+
+Where the *content* lives changed a lot since the start:
+
+- **Articles, news, subjects, categories, quotes, Atlas entries, images** → stored in the
+  **database** (Neon, PostgreSQL) and edited through Payload at `/admin`. Images are stored in
+  **Cloudflare R2** (an online file store).
+- **Only a few MDX files remain** in `content/` (the subject and category overview pages). The
+  old MDX articles were deleted once the real articles moved into Payload.
+
+> **Jargon:**
+> - **CMS** (Content Management System) — an admin website for writing and publishing content
+>   without touching code. Ours is **Payload**.
+> - **MDX** — a text file format: Markdown (simple formatted text) that can also contain small
+>   React components. The site's first articles were MDX files.
+> - **Database** — an organised, permanent store of data on a server. Ours is **Neon**, which runs
+>   **PostgreSQL**. It has two "branches": `dev` (used by the laptop) and `production` (used by the
+>   Vercel site).
+
+---
+
+# 2. The whole project at a glance
 
 ```
 gkworld360/
 │
-├── app/
-│   ├── (frontend)/        ← THE PUBLIC WEBSITE (its own <html>: Header, Footer, Gyaani, globals.css)
-│   │   ├── layout.tsx         (site frame)
-│   │   ├── page.tsx           (Homepage)
-│   │   ├── [...slug]/         (every subject / category / topic page)
-│   │   ├── about/ contact/ news/ search/ subjects/ topics/
-│   │   ├── not-found.tsx
-│   │   └── globals.css        (design tokens — note: moved here from app/)
-│   │
-│   ├── (payload)/         ← THE CMS ADMIN (Payload's own <html>)
-│   │   ├── layout.tsx
-│   │   ├── config.ts         (re-exports the built Payload config)
-│   │   ├── importMap.js       (admin client components)
-│   │   ├── admin/[[...segments]]/   (the /admin panel UI)
-│   │   └── api/[...slug]/          (Payload's REST API)
-│   │
-│   ├── api/               ← site APIs (e.g. the Gyaani chatbot)
-│   └── robots.ts, sitemap.ts, llms.txt, favicon.ico, icon.png
+├── app/                    ← THE ROUTES: every address (URL) the site answers
+│   ├── (frontend)/             the public website (English + /hi Hindi)
+│   ├── (payload)/              the /admin panel and Payload's own API
+│   ├── api/                    site endpoints: Gyaani, ingest, link-preview card, search index
+│   └── robots.ts, sitemap.ts, llms.txt/, icon.png, apple-icon.png
 │
-├── payload.config.ts     ← Payload master config (connects Neon + Cloudflare R2 + collections)
-├── collections/          ← CMS content types: Users, Media, Subjects, Categories, Articles, News
-├── blocks/               ← rich-text editor blocks: KeyTakeaways, TopicImage
-├── fields/               ← reusable field configs (e.g. slug.ts)
+├── components/             ← THE BUILDING BLOCKS: pieces of the page (header, cards, homepage sections…)
+│   ├── pages/                  one component per site page, shared by English + Hindi
+│   ├── home/                   the homepage's sections
+│   ├── article/                the article reading tools
+│   ├── atlas/                  the World360 Atlas
+│   ├── cms/                    turning Payload content into pages
+│   └── (many single files)     shared pieces used everywhere
 │
-├── content/              ← LEGACY MDX articles — being migrated into Payload, then removed
-├── components/           ← reusable UI (Header, Footer, cards, Gyaani…)
-├── lib/                  ← helper code (content.ts, search.ts, date-utils.ts…)
-├── public/               ← images, icons
-├── docs/                 ← these documentation files
-├── .env.local            ← private keys: Gemini + Neon (DATABASE_URL) + Cloudflare R2 + PAYLOAD_SECRET
-└── root config: package.json, next.config.ts, tsconfig.json, tailwind
+├── lib/                    ← THE ENGINE ROOM: helper code with no page of its own
+│
+├── collections/            ← PAYLOAD CONTENT TYPES (Articles, News, Subjects…)
+├── blocks/                 ← special boxes an author can insert into an article body
+├── fields/                 ← reusable field settings (the slug)
+├── payload.config.ts       ← Payload's master settings (database, R2, collections, languages)
+│
+├── content/                ← the last MDX files (subject + category overview pages)
+├── data/                   ← daily-quote.mdx (backup quote if the CMS has none)
+├── drafts/                 ← JSON files the content pipeline sends into Payload
+├── scripts/                ← small command-line tools (content pipeline, production console)
+├── types/                  ← extra TypeScript type information
+├── public/                 ← images and files served exactly as they are
+├── docs/                   ← the project's long-form documentation
+│
+├── PROJECT_CONTEXT.md, TODO.md, SERVICES.md, GIT_NOTES.md, IDEAS.md, README.md
+├── AGENTS.md / CLAUDE.md   ← instructions for AI assistants working in this repo
+└── root config: package.json, next.config.ts, tsconfig.json, postcss.config.mjs,
+    eslint.config.mjs, mdx-components.tsx, vercel.json, .gitignore, .env.local (private, never committed)
 ```
 
-**What changed vs. the original plan below:**
-- `app/` is now split into `(frontend)` and `(payload)` route groups (there is intentionally **no** single `app/layout.tsx` — each group is its own root layout).
-- A **database arrived early**: Neon (PostgreSQL) via Payload — the original plan expected it "much later, with Login."
-- New top-level folders: `collections/`, `blocks/`, `fields/`, plus `payload.config.ts`.
-- The database tooling is **Payload's built-in layer (Drizzle under the hood)**, not `prisma/` as the old diagrams guessed.
-- `globals.css` moved from `app/` to `app/(frontend)/`.
-- The `content/` MDX folder still exists but is **legacy** — being migrated into the CMS, then it will be deleted.
-
-Everything below this line is the **original MVP structure plan**. Its rules and philosophy
-still guide us; just read its file trees as historical, not current.
-
-> **Read this first:** A "folder structure" is just how your project's files are organised into folders — like rooms in a house. A good structure means you (and the AI) can always find things quickly, and the project stays tidy even after it grows to thousands of pages. This document is the rulebook for that tidiness.
+Folders you will see but should **never edit by hand**: `node_modules/` (downloaded packages),
+`.next/` and `.next-prod/` (Next.js build output for port 3000 and port 3001), `.git/` (Git's
+history). They are created by tools and are listed in `.gitignore` (except `.git/`, which Git
+manages itself).
 
 ---
 
-# Overview
+# 3. `app/` — the routes (every address the site answers)
 
-The philosophy behind this structure is simple: **start tiny, grow only when forced to.**
+**What it's for:** in Next.js's **App Router**, the folders inside `app/` *are* the website's
+addresses. A folder called `about/` containing `page.tsx` becomes the page at `/about`. That's why
+this folder is special: its layout is dictated by the URLs, not by our taste.
 
-GKWorld360 is built by one person, helped by AI, on a limited budget. That shapes every decision here:
+Three Next.js naming rules you'll see:
 
-- **Simplicity over cleverness.** A structure you can understand at a glance beats a "professional" structure you need a manual to navigate.
-- **Fewer folders, not more.** Every folder you add is one more place to look and one more thing to remember. We keep the count as low as possible.
-- **Content is the product.** Your articles are the most important thing in the project, so they get their own clear home (`content/`), completely separate from the website's code.
-- **AI-friendly.** A small, predictable, conventional layout is exactly what the AI assistant understands best — so it can write and fix code reliably for you.
-- **Grows without reorganising.** New features are *added beside* what already exists, never *on top of* it. You should never have to tear the project apart to add something.
+- **`page.tsx`** = "show a page at this address". **`route.ts`** = "answer this address with data,
+  not a page" (an **API endpoint** — a URL that code calls, rather than a person reads).
+- **`[slug]`** in square brackets = "any value here" (e.g. `/atlas/<any-slug>`).
+  **`[...slug]`** = "any number of path pieces" (a **catch-all**). **`[[...segments]]`** = the same,
+  but also matches nothing at all.
+- **`(frontend)`** in round brackets = a **route group**. The brackets mean the folder name does
+  **not** appear in the URL. Route groups let two areas of one site have completely separate page
+  frames — here the public site and the Payload admin each get their own `<html>`. That is why
+  there is intentionally **no** single `app/layout.tsx`.
 
-The result: on day one the project has just a handful of folders. Years later, after thousands of pages and several new features, it should *still* feel understandable — because folders only ever appeared when there was a real reason for them.
+## `app/(frontend)/` — the public website
+
+```
+app/(frontend)/
+├── layout.tsx            the frame around every public page: fonts, header, footer, Gyaani,
+│                         the Light/Dark/Reading mode script, the Hindi welcome strip
+├── globals.css           the design tokens (colours, fonts, spacing) and site-wide styles
+├── page.tsx              the homepage "/"   (body lives in components/home/HomePage.tsx)
+├── [...slug]/page.tsx    THE CATCH-ALL: every subject, category, topic and news write-up,
+│                         in English AND Hindi (/history, /history/modern-india/…, /hi/history/…,
+│                         /news/<slug>, /hi/news/<slug>)
+├── about/ contact/ news/ pulse/ saved/ search/ subjects/ topics/
+│                         one folder per site page (each page.tsx is a short wrapper — see below)
+├── atlas/page.tsx        /atlas — the World360 Atlas
+├── atlas/[slug]/page.tsx /atlas/<slug> — the Atlas with one card open (the shareable link)
+├── hi/                   THE HINDI TWINS of the pages above: /hi, /hi/about, /hi/atlas,
+│                         /hi/atlas/<slug>, /hi/contact, /hi/news, /hi/pulse, /hi/saved,
+│                         /hi/search, /hi/subjects, /hi/topics
+├── not-found.tsx         the 404 page (answers in Hindi for a missing /hi/… address)
+└── api/
+    ├── health/route.ts      /api/health — "is the site really alive?" (checks the database)
+    └── pulse/sync/route.ts  /api/pulse/sync — fetches fresh news headlines (called by the crons)
+```
+
+**Why the page files are so short.** Since 2 Nov 2026 each page exists in two languages. Instead
+of writing every page twice, the page's body lives once in `components/pages/` (or
+`components/home/`, `components/atlas/`) and takes a `lang` value (`"en"` or `"hi"`). The files in
+`app/(frontend)/` and `app/(frontend)/hi/` are then tiny wrappers that say *which language* to show
+plus the page's title and description for search engines.
+
+**Why `hi/` only has some pages.** Hindi subject/category/article pages (`/hi/history/…`) are
+handled by the catch-all `[...slug]`. A more specific folder (like `hi/atlas/`) wins over the
+catch-all, so only the site's own pages need their own `hi/` folder.
+
+**Why `api/health` and `api/pulse/sync` are inside `(frontend)`** rather than `app/api/`: they
+live alongside the public site's routes (to confirm why they were placed here rather than in
+`app/api/` — the URLs are the same either way, because `(frontend)` doesn't appear in the URL).
+
+## `app/(payload)/` — the admin panel
+
+```
+app/(payload)/
+├── layout.tsx                    Payload's own page frame (required by Payload's admin UI)
+├── config.ts                     passes on the finished payload.config.ts
+├── admin/[[...segments]]/        the /admin panel (page.tsx + not-found.tsx)
+├── admin/importMap.js            list of admin-screen components (generated by `npm run generate:importmap`)
+└── api/[...slug]/route.ts        Payload's REST API at /api/<collection>/…
+```
+
+These files are mostly Payload's standard setup. You rarely change them; you change
+`collections/` and `payload.config.ts` instead.
+
+## `app/api/` — the site's own endpoints
+
+| Route | What it does |
+|---|---|
+| `api/gyaani/route.ts` | The brain of **Gyaani**, the chatbot: sends the question (and the page's article) to Google Gemini, returns the answer; also serves "Quiz me" questions |
+| `api/ingest/route.ts` | **Dev-only** door for the content pipeline: the `scripts/` tools POST drafts here. Answers 404 on Vercel. Prints the database host in every reply |
+| `api/og/route.tsx` | Draws the 1200×630 **link-preview card** WhatsApp/Telegram/X show when a link is pasted |
+| `api/search-index/route.ts` | The full search list as JSON, fetched by the search box the first time it's used |
+
+## Files directly in `app/`
+
+- `robots.ts` → `/robots.txt` (tells crawlers what they may read; blocks everything while indexing is OFF — see `lib/site.ts`).
+- `sitemap.ts` → `/sitemap.xml` (the list of every page, for search engines).
+- `llms.txt/route.ts` → `/llms.txt` (a plain-text guide to the site for AI answer engines).
+- `icon.png`, `apple-icon.png` → the browser-tab and phone home-screen icons.
 
 ---
 
-# Current Folder Structure
+# 4. `components/` — the building blocks
 
-This is everything the project needs **to begin**. Nothing here is optional padding — each folder earns its place from day one.
+**What it's for:** a **component** is a reusable piece of a page (a header, a card, a button)
+written once and used in many places. Keeping them here, apart from `app/`, means a page file only
+has to *arrange* pieces, not build them.
 
-```
-gkworld360/
-│
-├── content/        ← YOUR ARTICLES (the product) — written in simple text files
-│   └── history/
-│       ├── overview.mdx                    ← the "History" subject page
-│       └── indus-valley-civilization.mdx   ← a topic inside History
-│
-├── app/            ← THE WEBSITE ITSELF (the pages people visit)
-│   ├── page.tsx            ← the Homepage
-│   ├── [...slug]/page.tsx  ← shows EVERY subject, category & topic page (one single file)
-│   └── layout.tsx          ← the shared frame (header + footer) wrapped around every page
-│
-├── components/     ← REUSABLE DESIGN PIECES (a Header, a Footer, a Card, a Button…)
-│
-├── lib/            ← BEHIND-THE-SCENES HELPERS
-│   └── content.ts          ← the helper that reads your article files and turns them into pages
-│
-├── public/         ← STATIC FILES served as-is (images, the site icon)
-│
-├── .env.local      ← your private keys (e.g. email key) — never uploaded to the internet
-└── (root config files: package.json, tailwind, tsconfig, next.config — set up once, rarely touched)
-```
+Subfolders appeared only when a group of pieces got big enough to deserve a room of its own:
 
-**What each folder is for:**
+| Folder | What it holds |
+|---|---|
+| `components/pages/` | **One component per site page**: `AboutPage`, `ContactPage`, `NewsPage`, `PulsePage`, `SearchPage`, `SubjectsPage`, `TopicsPage`. Each takes `lang` and is shared by the English page and its `/hi` twin |
+| `components/home/` | The homepage: `HomePage.tsx` (the whole page, takes `lang`) and its sections — `HeroEarth` (3D Earth), `HeroScrollFx`, `HeadlineTicker`, `SubjectBento`, `TopicPosters`, `PosterPin`, `TodaysPractice`, `QuickQuiz`, `PlaceMap`, `KnowMoreBand`, `RecentAndNews` |
+| `components/article/` | The article reading tools: `ArticleTools`, `ReaderSettings`, `ReadingMode`, `PhoneReadingBar`, `Sheet` (phone slide-up panel), `AlsoInHindi` |
+| `components/atlas/` | The World360 Atlas: `AtlasPage` (server side: data + page settings), `AtlasExplorer` (the interactive globe/timeline), `AtlasTeaser` (homepage section), `OnTheMap` (box at the end of an article), `atlas.css` |
+| `components/cms/` | Turning Payload content into pages: `CMSTopicView` (an article), `CMSNewsView` (a news write-up), `CMSRichText` (turns Payload's stored rich text into HTML) |
 
-| Folder | What it holds | In plain words |
+The **single files directly in `components/`** are pieces shared across the whole site. Roughly:
+
+- **Site frame:** `Header`, `Footer`, `FooterBody`, `PhoneTabBar`, `Logo`, `ThemeToggle`, `ModeFallback`, `LanguageToggle`, `LangSwitch`, `HindiWelcome`, `Gyaani` (the chatbot window).
+- **Loading & effects:** `PageCurtain` (the water-word page loader), `NavigationLoader`, `BookLoader`, `ScrollReveal`, `PointerFx`, `CountUp`, `EarthWord`, `ReadingProgress`.
+- **Cards & lists:** `ArticleCard`, `ContentCard`, `SubjectCard`, `TopicCard`, `NewsCard`, `CategoryPath`, `SavedList`, `SearchBox`, `SearchResults`, `LatestHeadlines`, `LatestHeadlinesSection`, `HeadlineRow`, `HeadlineThumb`.
+- **Article pieces:** `ArticleLayout`, `ArticleHeader`, `Breadcrumb`, `TableOfContents`, `TopicNav`, `KeyTakeaways`, `QuickFacts`, `TopicImage`, `NewsArticleView`, `ShareButton`, `ReadLaterButton`, `ReadLaterPeek`, `ReadTick`.
+- **Small UI parts:** `Button`, `Select`, `SortToggle`, `StatPill`, `Toast`, `ConfirmDialog`, `PageTitle`, `SectionHead`, `TimeAgo`, `NotFoundBody`, `JsonLd` (hidden structured data for search engines).
+
+> The project rule is: split a crowded folder into subfolders only when it actually becomes hard to
+> navigate. The flat root of `components/` is now large (~60 files), so grouping more of it may be
+> a future tidy-up — but only if it starts to hurt.
+
+---
+
+# 5. `lib/` — the engine room
+
+**What it's for:** helper code that does work but has no page of its own — reading the database,
+fetching headlines, building SEO tags, holding the words for each language. Keeping it out of page
+and component files keeps those files short and readable.
+
+Two words that matter here:
+- **Server only** — code that runs on the server, never in the visitor's browser (because it uses
+  secrets or the database).
+- **Browser only / client** — code that needs a real screen (canvas, localStorage).
+  A file named `…-shared.ts` holds the parts both sides need, with no database imports.
+
+| Group | Files | What they do |
 |---|---|---|
-| `content/` | Your `.mdx` article files, organised by subject | This is *your* space. You and the AI add articles here. The product lives here. |
-| `app/` | The website's pages and overall layout | This is the website. Each page the visitor sees comes from here. |
-| `components/` | Small reusable building blocks of the design | Build something once (e.g. the Header), reuse it on every page. |
-| `lib/` | Helper code that does background work | The "engine room" — code that reads files, builds SEO tags, etc. You rarely look here; the AI maintains it. |
-| `public/` | Images and other files served directly | Where pictures and the favicon live. |
-
-That's **four working folders** (`content`, `app`, `components`, `lib`) plus `public`. If a folder isn't in this list, it doesn't exist yet — and that's intentional.
-
----
-
-# Folder Creation Philosophy
-
-Three rules govern when a new folder is allowed to exist:
-
-1. **Create a folder only when you have something real to put in it.**
-   Don't make an `articles/` folder "for later." Make it the day you write your first article — not before.
-
-2. **Never leave an empty folder.**
-   An empty folder is a question with no answer ("what was this for?"). It adds confusion and zero value. If a folder has nothing in it, it shouldn't be there.
-
-3. **When in doubt, choose the simpler option.**
-   Fewer folders, shallower nesting, plainer names. You can always add structure later when a real need appears — but you can rarely remove clutter without effort. Starting simple is the safe default.
-
-The test before creating any folder is one question: *"Do I have a file that needs a home right now?"* If the answer is no, don't create the folder.
+| **Content from the CMS** | `cms.ts` | The bridge to Payload: queries the database directly from server code ("Local API") |
+| | `topics.ts` | One list of every topic (for Popular / Recently Added and `/topics`) |
+| | `refresh.ts` | When content is saved in `/admin`, throws away the cached copies so changes show at once |
+| | `ingest.ts` | Turns a bilingual draft JSON (from `drafts/`) into a Payload **draft** article; also Hindi additions, images, Atlas entries, text fixes. Called by `app/api/ingest` |
+| **Older MDX helpers** | `content.ts`, `news.ts` | Read MDX files in `content/`. `content.ts` still serves the overview pages; `news.ts` looks for `content/news/…`, which no longer exists — CMS news comes from `lib/cms.ts` and is merged in by the pages (e.g. `components/pages/NewsPage.tsx`). Whether `news.ts` can be retired is to confirm |
+| **Headlines ("Pulse")** | `pulse.ts`, `pulse-sources.ts` | `pulse.ts` fetches trusted RSS news feeds (English + Hindi papers) and stores 7 days of headlines; `pulse-sources.ts` holds browser-safe source logos and colours |
+| **AI** | `gemini.ts` | The one door to Google Gemini (server only — uses the secret key) |
+| | `gyaani-guard.ts` | Gyaani's guardrails: what he may talk about, rate limits, mode switch |
+| | `quiz.ts`, `quiz-shared.ts` | The **quiz maker**: `quiz.ts` asks Gemini to turn our own article text into questions; `quiz-shared.ts` is the one shape of a quiz question used everywhere |
+| **Today's homepage pieces** | `daily.ts`, `quote.ts` | `daily.ts`: the quick quiz, fact and place of the day (from facts already on the site). `quote.ts`: picks today's quote |
+| **Words in two languages** | `site-text.ts`, `use-site-text.ts`, `home-text.ts`, `page-text.ts`, `lang.ts` | "Word files": every word on the header/footer (`site-text`), homepage (`home-text`) and other pages (`page-text`), in English and Hindi. Layout lives in components; words live here. `lang.ts` remembers the reader's language choice |
+| **World360 Atlas** | `atlas.ts`, `atlas-shared.ts`, `atlas-globe.ts`, `atlas-earth-layer.ts` | Reading entries from the database (`atlas.ts`), shared shapes and labels (`atlas-shared.ts`), the turning globe and the realistic Earth under it (browser only) |
+| **3D Earth & loaders** | `earth-scene.ts`, `earth-support.ts`, `globe-loader.ts`, `water-word.ts` | The homepage 3D Earth (three.js), "can this device run it?", the Earth skeleton loader, the water-filling page-name loader |
+| **Search** | `search.ts`, `search-rank.ts` | Building the search list (server) and ordering results (shared) |
+| **SEO & site settings** | `site.ts`, `og.ts`, `site-stats.ts` | Site URL and the indexing ON/OFF switch (`site.ts`), link-preview card URLs (`og.ts`), the real live numbers shown on the site |
+| **Look & subjects** | `mode.ts`, `use-mode.ts`, `subjects.ts`, `subject-colors.ts`, `image-style.ts` | Light/Dark/Reading mode, the subject list and colours, the house style for image prompts |
+| **Small browser hooks** | `use-stored.ts`, `use-saved.ts`, `use-presence.ts`, `use-hide-on-scroll.ts`, `reading.ts`, `view-transition.ts` | A **hook** is a React function starting with `use…` that gives a component a piece of live state (saved items, scroll direction, closing animations, reader settings) |
+| **Dates** | `date-utils.ts`, `time-ago.ts` | Formatting dates and "28m ago" in English or Hindi |
 
 ---
 
-# Content Structure
+# 6. Payload CMS: `collections/`, `blocks/`, `fields/`, `payload.config.ts`
 
-This is the most important section, because it protects the foundation of the whole platform. There are **two different kinds of content**, and they must never be mixed.
+**What they're for:** together they describe *what kinds of content exist* and how the admin
+panel edits them. Payload reads these files and builds both the database tables and the `/admin`
+screens from them — so adding a field here adds it to the database and the admin form.
 
-## 1. Subject Topics (educational, evergreen)
+> **Jargon — collection:** a **collection** is one type of content, like a table in a spreadsheet
+> where each row is one item. "Articles" is a collection; each article is one entry in it.
 
-These are the core of GKWorld360 — in-depth educational pages that stay relevant for years. They follow the **permanent hierarchy** from the Blueprint:
+| File | Collection / purpose |
+|---|---|
+| `collections/Articles.ts` | The topic pages — the heart of the site. Belongs to a Subject and optionally a Category. English + Hindi, Draft/Publish |
+| `collections/News.ts` | Current-affairs write-ups (dated; shown under `/news`) |
+| `collections/Subjects.ts` | Top level: History, Geography… (name, icon, cover, colours, homepage order) |
+| `collections/Categories.ts` | The optional middle level (e.g. Modern India under History) |
+| `collections/AtlasEntries.ts` | The dots on the World360 Atlas — one event, one place, one date, linked to an article |
+| `collections/Quotes.ts` | Quote of the day (can be pinned to a date) |
+| `collections/Headlines.ts` | A **cache** of RSS news headlines (7 days). Filled automatically, hidden from the admin sidebar |
+| `collections/Media.ts` | Uploaded images (files go to Cloudflare R2) |
+| `collections/Users.ts` | Who can log in to `/admin` |
+| `blocks/KeyTakeaways.ts`, `blocks/TopicImage.ts` | **Blocks**: special boxes an author inserts into an article body (a takeaways box, a captioned image) |
+| `fields/slug.ts` | The shared **slug** field — the permanent, URL-safe part of an address, e.g. `revolt-of-1857`. Defined once so every collection follows the same rules |
+| `payload.config.ts` | The master settings: which database, R2 image storage, the list of collections, English + Hindi |
 
-```
-Home → Subject → (Optional Category) → Topic
-```
+**Why these live at the project root, not inside `app/`:** they are not pages or routes, so they
+don't belong in `app/`. Payload's convention is to keep its config and collections at the top level,
+where both the admin (`app/(payload)/`) and the site's helpers (`lib/cms.ts`) can import them.
 
-**Example with a category:**
-```
-History → Modern India → Revolt of 1857
-```
+---
 
-**Example without a category:**
-```
-Science → Photosynthesis
-```
+# 7. Content, drafts and scripts
 
-Topics live inside their subject's folder in `content/`. A **category is simply an extra folder** you add inside a subject — and only when it genuinely helps organise things. A subject's own intro page is always called `overview.mdx`.
+## `content/` — the last MDX files
 
 ```
 content/
-└── history/
-    ├── overview.mdx                    ← the History subject page
-    ├── indus-valley-civilization.mdx   ← a topic directly under History (no category)
-    └── modern-india/                   ← a CATEGORY (just a folder) — added only when wanted
-        ├── overview.mdx                 ← the "Modern India" category page
-        └── revolt-of-1857.mdx           ← a topic inside the category
+├── biology/overview.mdx
+├── chemistry/overview.mdx
+├── famous-personalities/overview.mdx
+├── geography/overview.mdx
+├── history/overview.mdx
+├── history/modern-india/overview.mdx
+└── physics/overview.mdx
 ```
 
-## 2. Articles (timely, changing)
+Only subject and category **overview** pages remain here. All real articles now live in Payload.
+`data/daily-quote.mdx` is the backup quote used if the Quotes collection is empty.
 
-These are **separate** from topics. They are time-based content such as:
+## `drafts/` — files waiting to go into Payload
 
-- **Current affairs** (timely updates relevant to exams)
-- **Editorial posts** (study tips, opinion pieces)
-- **Announcements** (platform updates)
+JSON files written during the **content pipeline** (book photos → facts → original bilingual
+article → JSON draft → `scripts/` sends it to Payload as a DRAFT → the owner reviews and publishes
+in `/admin`). The file name tells you what it is:
 
-Unlike topics, articles are tied to a date and lose relevance over time. They do **not** belong in the subject hierarchy. They get their **own home**, created the day you start publishing them:
+- `<slug>.json` — a new article draft (English + Hindi)
+- `<slug>.hi.json` — a Hindi version for an existing article
+- `<slug>.images.json` — images to place in an article
+- `<slug>.export.json` — an article exported from one database to import into the other
+- `atlas-catch-up.json`, `quotes.json`, `ncert-fixes-2026-10-29.json` — Atlas entries, quotes, NCERT text corrections
 
-```
-content/
-└── articles/              ← created ONLY when the Articles section begins
-    └── 2026-budget-key-highlights.mdx
-```
+The full pipeline and its rules are in `docs/GKWORLD360_CONTENT_PIPELINE.md`.
 
-## ⚠️ The golden rule: Topic pages are NOT Articles
+## `scripts/` — small command-line tools
 
-Keep these two worlds completely separate, in storage and in the reader's mind:
+Run with `node scripts/<name>.mjs …`. Almost all of them **need the dev server running**, because
+they POST to `/api/ingest` inside it (Payload's loader doesn't work from a plain script under
+Node 26 — see PROJECT_CONTEXT.md). Add `--production` to send to port 3001 (the production
+database) instead of port 3000 (dev). Each one prints the database host so you can see which one
+you touched.
 
-| | **Subject Topics** | **Articles** |
-|---|---|---|
-| Purpose | Deep, lasting education | Timely updates, opinion, announcements |
-| Lifespan | Evergreen (relevant for years) | Time-sensitive (ages quickly) |
-| Lives in | `content/<subject>/...` | `content/articles/` |
-| Follows the hierarchy? | Yes (Subject → Category → Topic) | No |
-| Shown by | the `app/[...slug]` page | its own `app/articles` pages (added later) |
-
-Because they live in different folders and are shown by different pages, the two can never accidentally tangle together. A topic about "The Revolt of 1857" and an article about "this week's budget" are different *types* of things, and the structure keeps them that way forever. To separate different *kinds* of articles (for example Current Affairs vs Study Tips), use **categories or tags inside `content/articles/`** rather than new top-level folders.
+| Script | What it does |
+|---|---|
+| `create-article-draft.mjs` | Sends a draft from `drafts/` into Payload as a DRAFT |
+| `add-hindi.mjs` | Adds a Hindi version to an existing article |
+| `add-images.mjs` | Uploads images and places them in an article |
+| `create-atlas-entries.mjs` | Creates Atlas entries (skips ones that exist; `--replace` remakes drafts) |
+| `add-quote.mjs` | Adds quotes |
+| `fix-text.mjs` | Swaps exact sentences in existing articles (e.g. NCERT date fixes) |
+| `write-prompts.mjs` | Fills the "Image prompts" box for articles |
+| `export-article.mjs` / `import-article.mjs` | Copy an article from one database to the other |
+| `publish-article.mjs` | Publishes an article by id (repairs only — publishing is normally the owner's click) |
+| `delete-article.mjs` | Deletes one article by id |
+| `telegram-inbox.mjs` | Downloads book-page photos sent to the Telegram bot into `~/Desktop/gk-inbox/` (outside the project) |
+| `dev-prod.mjs` | Run by `npm run dev:prod`: starts a second dev server on **port 3001** pointed at the **PRODUCTION** database, with its own build folder `.next-prod/` |
 
 ---
 
-# Future Expansion Philosophy
+# 8. Everything else
 
-Every future feature from the Blueprint can be added **without reorganising anything that already exists.** The reason is the core design idea from the Tech Foundation: **your content is kept separate from the website's features.** Adding a feature means *placing a new folder beside the old ones* — not rebuilding the project.
-
-Here is how each planned feature slots in cleanly:
-
-| Future feature | How it's added | What it touches |
-|---|---|---|
-| **Login / Signup** | New pages `app/login/`, `app/signup/`, plus an auth helper in `lib/`. A database is introduced at this point. | Adds new folders only. Your `content/` and existing pages are untouched. |
-| **Dashboard** | A new `app/dashboard/` folder. | Just a new page area beside the others. |
-| **Notes** | A new `app/notes/` area + a place in the database to store notes. | Additive. No existing page changes. |
-| **Quizzes** | A new `app/quizzes/` area + quiz data in the database. | Additive. |
-| **Bookmarks** | A small addition to the database + a "saved" page. | Additive. |
-| **Premium features / payments** | A `app/pricing/` page + a payment helper in `lib/`. | Additive. |
-
-Notice the pattern: **every new feature is a new folder placed next to the existing ones.** The homepage, the subject pages, and the articles all keep working exactly as before. This is what "scalable without clutter" means in practice — the project grows outward in neat, separate pieces instead of becoming a tangled mess.
-
-When the database arrives (with Login, in a later phase), it brings just one or two new folders of its own (for example, a small `prisma/` folder that describes the data) — again, sitting *beside* everything else, not replacing it.
-
----
-
-# Folder Growth Rules
-
-A short, permanent set of rules to keep GKWorld360 tidy for years:
-
-1. **Create folders only when necessary.** A folder appears the moment a real file needs a home — never "just in case."
-2. **Keep structures shallow.** Prefer two or three folder levels over five or six. Deep nesting makes things hard to find. The content hierarchy (Subject → Category → Topic) is the only place nesting is expected, and even there the category level is optional.
-3. **Avoid unnecessary nesting.** If a folder would contain just one file, ask whether the folder is needed at all. Don't wrap single files in folders for no reason.
-4. **Use clear, plain names.** `overview.mdx`, `components/`, `lib/` — names a non-technical person can understand. Avoid cryptic prefixes and abbreviations.
-5. **Refactor only when complexity actually appears.** Don't tidy a folder that isn't messy yet. For example, only split `components/` into sub-folders once it holds *many* pieces and feels crowded — not before. Solve real clutter, not imagined clutter.
-6. **One purpose per folder.** Each folder should have a single, obvious job. If you can't say in one sentence what a folder is for, it probably shouldn't exist.
+| Item | What it's for |
+|---|---|
+| `public/` | Files served exactly as they are. `public/brand/` = logos, app icons, share image, Earth pictures; `public/earth/` = Earth textures for the 3D globe; `public/images/` = subject, category, topic, news, quote-author and news-source images. (Stray screenshots / AI test images in `public/images/` are git-ignored and not used.) |
+| `types/react-canary.d.ts` | Tells TypeScript about React's newest features (like `<ViewTransition>`). Only read by TypeScript, never sent to the browser |
+| `docs/` | Long-form docs: Master Blueprint (vision), Tech Foundation, this file, Setup Guide, Design System, Content Pipeline, Paid Features Plan (3 Nov 2026 — planning only) |
+| `PROJECT_CONTEXT.md` | Current status and handoff notes — read its START HERE block first |
+| `TODO.md` | THE task list (Now / Next / Later / Done) |
+| `SERVICES.md` | Third-party services and billing |
+| `GIT_NOTES.md` | Git concepts learned, in plain English |
+| `IDEAS.md` | Parking lot for undecided ideas |
+| `README.md` | The short front-door summary |
+| `AGENTS.md`, `CLAUDE.md` | Instructions for AI assistants (e.g. "this Next.js version has breaking changes — read its bundled docs") |
+| `package.json` | The project's packages and its commands (`npm run dev`, `npm run dev:prod`, `npm run build`…) |
+| `next.config.ts` | Next.js settings: MDX support, Payload connection, build folder (`.next` or `.next-prod`), image library fix for Vercel |
+| `mdx-components.tsx` | Required by Next.js for MDX: maps Markdown headings/paragraphs to styled components |
+| `tsconfig.json` | TypeScript settings (incl. the `@/` shortcut that means "project root" in imports) |
+| `postcss.config.mjs`, `eslint.config.mjs` | Tailwind CSS processing and code-style checking |
+| `vercel.json` | Vercel settings: a daily cron (scheduled job) that calls `/api/pulse/sync`. (A second, 2-hourly cron runs on cron-job.org — outside the repo) |
+| `.env.local` | **Private** keys and database addresses. Never committed (`.gitignore` blocks all `.env*` files) and never pasted into docs |
+| `.github/workflows/` | Exists but is empty (no GitHub Actions set up) |
 
 ---
 
-# Final Approved Structure
+# 9. Folder rules (still valid from the original plan)
 
-This is the official structure for GKWorld360. The **left column shows what exists today**; the **"added later" rows show what appears only when a real need arrives.** For every folder: *why it exists*, and *when files go inside it.*
+The original MVP plan (June–July 2026) imagined a much smaller project: MDX articles in
+`content/`, no database until "Login", a `prisma/` folder later. Reality changed — Payload and Neon
+arrived early, the database layer is Payload's built-in one (Drizzle under the hood, no `prisma/`),
+articles moved into the CMS, and the site became bilingual. The old file trees were removed from
+this doc because they no longer matched the code. **The rules behind them still hold:**
 
-```
-gkworld360/
-│
-├── content/        ← exists now
-│   ├── history/                            (a subject)
-│   │   ├── overview.mdx                     (subject intro page)
-│   │   ├── indus-valley-civilization.mdx    (a topic)
-│   │   └── modern-india/                    (a category — only when wanted)
-│   │       ├── overview.mdx
-│   │       └── revolt-of-1857.mdx
-│   └── articles/                           ← added later (when Articles section starts)
-│
-├── app/            ← exists now
-│   ├── page.tsx                 (Homepage)
-│   ├── [...slug]/page.tsx       (every subject / category / topic page)
-│   ├── layout.tsx               (shared header + footer)
-│   ├── about/ contact/ search/  ← added later (one folder each, when built)
-│   ├── articles/                ← added later (the Articles pages)
-│   └── api/                     ← added later (small endpoints, e.g. contact form)
-│
-├── components/     ← exists now (flat; sub-folders only if it gets crowded)
-│
-├── lib/            ← exists now
-│   ├── content.ts               (reads your articles)
-│   ├── seo.ts                   ← added later (builds SEO tags)
-│   └── search.ts                ← added later (powers search)
-│
-├── public/         ← exists now (images, favicon)
-│
-└── root files: package.json, tailwind.config, tsconfig, next.config, .env.local
-```
-
-**Folder-by-folder reference:**
-
-### `content/` — *exists now*
-- **Why it exists:** It is the home of the product — all your educational topics and, later, your articles. It is deliberately separate from the website code so your writing is never at risk when the code changes.
-- **When files go here:** Every time you publish a topic (in a subject folder) or an article (in `articles/`). This is the folder you personally touch most.
-
-### `app/` — *exists now*
-- **Why it exists:** It *is* the website. Every page a visitor sees is produced here.
-- **When files go here:** When you add a brand-new type of page. Note you'll rarely add content pages here — the single `[...slug]` file already handles all subjects and topics. New folders appear here only for distinct sections like About, Contact, Search, or Articles, and only when you build them.
-
-### `components/` — *exists now*
-- **Why it exists:** To hold reusable design pieces (Header, Footer, Card) so they're built once and used everywhere — keeping the look consistent and changes easy.
-- **When files go here:** When you create a visual piece used on more than one page. Keep it flat at first; only split into sub-folders if it ever becomes crowded.
-
-### `lib/` — *exists now*
-- **Why it exists:** The "engine room" for background helper code (reading articles, building SEO tags, search). Separating it keeps the page files clean and readable.
-- **When files go here:** When the AI needs a reusable piece of logic. You'll rarely open this folder yourself — the AI maintains it.
-
-### `public/` — *exists now*
-- **Why it exists:** For files served to visitors exactly as-is — images, the site icon, and special files like `robots.txt` later.
-- **When files go here:** When you add an image or a static asset to the site.
-
-### `content/articles/` — *added later*
-- **Why it exists:** A dedicated, separate home for time-based Articles (current affairs, editorial posts, announcements) so they never mix with evergreen Topics.
-- **When it's created:** The day you publish your first article — not before.
-
-### `app/about/`, `app/contact/`, `app/search/`, `app/articles/` — *added later*
-- **Why they exist:** Each is a distinct section of the site.
-- **When they're created:** Each appears the day you build that specific page.
-
-### `app/api/` — *added later*
-- **Why it exists:** To hold tiny behind-the-scenes endpoints (for example, the one that receives the contact form and emails it to you).
-- **When it's created:** When you build a feature that needs the server to *do* something rather than just *show* a page.
-
-### `prisma/` (or similar) — *added much later, with Login*
-- **Why it exists:** To describe the database that arrives in a later phase (for accounts, notes, quizzes).
-- **When it's created:** Only when you reach the phase that introduces user accounts — never during the content-only MVP.
-
----
+1. **Create a folder only when a real file needs a home.** Never "just in case". No empty folders.
+2. **Keep structures shallow.** Two or three levels beat five or six.
+3. **One purpose per folder.** If you can't say in one sentence what a folder is for, it probably
+   shouldn't exist.
+4. **Use clear, plain names.** `pages/`, `home/`, `article/` — names a beginner can understand.
+5. **Refactor only when complexity actually appears.** `components/pages/`, `components/home/`,
+   `components/article/` were created exactly that way — when a group of files got big enough.
+6. **Grow by adding beside, not rebuilding.** New features arrive as new folders next to the old
+   ones (the Atlas, the Hindi `hi/` pages, the quiz maker in `lib/`) without moving what exists.
+7. **Keep design separate from content.** Layout lives in components + `globals.css`; words live
+   in the `lib/*-text.ts` word files; content lives in Payload. A redesign must never break content,
+   slugs (URLs) or SEO. Slugs are permanent.
 
 ## In one sentence
 
-**Start with five folders, add a new one only when a real file needs a home, keep Topics and Articles in separate places, and grow by adding folders beside the old ones — never by rebuilding.** Follow that, and GKWorld360 will stay simple and clear from its first page to its ten-thousandth.
+**`app/` decides the addresses, `components/` builds the pieces, `lib/` does the background work,
+Payload's `collections/` define the content, and the content itself lives in the database — with
+small, clearly named folders that only appear when a real file needs them.**

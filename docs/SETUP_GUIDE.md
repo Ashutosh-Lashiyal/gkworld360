@@ -2,15 +2,207 @@
 
 **Source of truth:** `docs/GKWORLD360_MASTER_BLUEPRINT.md`, `docs/GKWORLD360_TECH_FOUNDATION.md`, `docs/GKWORLD360_PROJECT_STRUCTURE.md`, `docs/GKWORLD360_DESIGN_SYSTEM.md`
 **Audience:** a non-technical solo founder building with AI assistance
-**Purpose:** a step-by-step, plain-language guide to set up the entire GKWorld360 project from an empty computer to a live website — so anyone (including a future you, or a future AI session) can recreate the foundation correctly.
+**Purpose:** a step-by-step, plain-language guide to set up and run GKWorld360 on a computer — so anyone (including a future you, or a future AI session) can get it working correctly.
 
-> **📌 Doc status (updated 2 Jul 2026):** Reference doc. The steps here — installing Node,
-> creating the Next.js project, Git, GitHub, Vercel — are **still accurate** for the base setup.
-> What this guide does **not yet cover** is the later addition of **Payload CMS + Neon
-> (PostgreSQL) + Cloudflare R2** (done during the CMS migration). Until those steps are folded
-> in here, the authoritative record of that setup is **`PROJECT_CONTEXT.md`** (see its "Payload
-> CMS Setup" section) and the `project_payload_cms` memory note. _Adding a "Part 2: CMS &
-> Database setup" section to this guide is a pending to-do._
+> **📌 Updated 3 Nov 2026 to match the code.** (Previous update: 2 Jul 2026.)
+>
+> This guide now has two parts:
+> - **Part 1 — Set up and run the project TODAY** (just below). The project already exists on
+>   GitHub, with Payload CMS, a Neon database (two branches), Cloudflare R2 images and Gemini.
+>   This is the part to follow.
+> - **Part 2 — How the project was first created (July 2026).** The original "empty folder →
+>   Next.js project" steps, kept as a learning record. Several of its rules (no database, no
+>   CMS) are **out of date** and are marked where they appear.
+>
+> This doc is about **setup and running** only. What the stack is and why: `docs/GKWORLD360_TECH_FOUNDATION.md`.
+> Services, limits and where each key is set: `SERVICES.md`. The task list: `TODO.md`.
+
+---
+
+# Part 1 — Set up and run the project today
+
+## 1.1 Required software
+
+| Tool | Version | What it is / why |
+|---|---|---|
+| **Node.js** | **20.9 or newer** (Next.js 16 needs at least 20.9). An LTS version is the safe choice. | The engine that runs the project's JavaScript on your computer. Download from [nodejs.org](https://nodejs.org). |
+| **npm** | comes with Node | Downloads the project's libraries and runs its commands (`npm run dev`). |
+| **Git** | any recent | Version history; how you get the code. `git --version` to check. |
+| **VS Code** | any recent | The editor. Extensions: ESLint, Tailwind CSS IntelliSense, (optional) Error Lens. |
+| **Claude Code** | optional | The AI developer/teacher this project is built with. |
+
+> **Node 26 note:** the owner's Mac runs Node 26. The website runs fine on it, but two Payload
+> helper commands crash on Node 26 — `npm run generate:types` and `npm run generate:importmap`.
+> Nothing depends on the generated types; the import map has a workaround (see "Gotchas" in
+> `PROJECT_CONTEXT.md`). On an LTS Node these commands may work (to confirm).
+
+You also need **access** (not installs) to the services the site uses, because their keys go in
+`.env.local`: Neon (database), Cloudflare (R2 images), Google AI Studio (Gemini key for Gyaani),
+and — for deploying — GitHub and Vercel. See `SERVICES.md`.
+
+## 1.2 Get the code and install the libraries
+
+```bash
+git clone https://github.com/Ashutosh-Lashiyal/gkworld360.git
+cd gkworld360
+npm install
+```
+
+- `git clone` copies the project (with its full history) from GitHub onto your computer.
+- `cd gkworld360` moves the terminal into that folder — every command below runs from here.
+- `npm install` reads `package.json` and downloads every library into `node_modules/`. Run it again
+  whenever `package.json` changes (e.g. after pulling someone's new work).
+
+## 1.3 Create `.env.local` (the secrets file)
+
+An **environment variable** is a named setting the code reads at run time (`process.env.NAME`),
+usually a secret like a password or API key. Locally they live in a file called **`.env.local`** in
+the project root. It is **never committed** — `.gitignore` blocks every `.env*` file — so a fresh
+clone does not have it. You create it by hand, one `NAME=value` per line, and copy the values from
+the password manager entry "GKWorld360 — keys" (or the service dashboards).
+
+**The names the laptop needs** (values are never written in any doc):
+
+| Variable | What it is for |
+|---|---|
+| `DATABASE_URL` | Neon **dev** branch, pooled connection (the website uses this). Host must contain `raspy-shadow`. |
+| `DATABASE_URL_DIRECT` | Neon **dev** branch, direct connection. |
+| `DATABASE_URL_PRODUCTION` | Neon **production** branch, pooled — read **only** by `npm run dev:prod`. Host contains `sweet-tree`. |
+| `DATABASE_URL_PRODUCTION_DIRECT` | Neon **production** branch, direct — read only by `npm run dev:prod`. |
+| `PAYLOAD_SECRET` | Random string that encrypts `/admin` logins. |
+| `CLOUDFLARE_ACCOUNT_ID` | Builds the R2 address. |
+| `R2_BUCKET_NAME` | The image bucket's name. |
+| `R2_ACCESS_KEY_ID` | R2 access key. |
+| `R2_SECRET_ACCESS_KEY` | R2 secret key. |
+| `GEMINI_API_KEY` | Google Gemini — Gyaani and the quiz maker. Without it Gyaani can't answer; the rest of the site works. |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | Only for `scripts/telegram-inbox.mjs` (pulls book-page photos from the bot). Optional. |
+| `CLOUDFLARE_AI_TOKEN` | For the automated-image test (Cloudflare Workers AI). Optional; still being tested (to confirm). |
+
+**Set only on Vercel, not in `.env.local`:** `CRON_SECRET` (left out locally on purpose so you can
+trigger the headlines sync freely), `NEXT_PUBLIC_SITE_URL` and `SITE_INDEXING_ENABLED` (launch
+settings), and the optional Gyaani switches `GYAANI_MODE` / `GYAANI_MONTHLY_CAP`. On Vercel,
+`DATABASE_URL` / `DATABASE_URL_DIRECT` point at **production** — that is how the Vercel site gets
+the production database.
+
+To check which names you have **without showing any values**:
+
+```bash
+grep -oE '^[A-Z0-9_]+=' .env.local
+```
+
+## 1.4 The safety rule: always know which database you are on
+
+There are two database **branches** (separate copies of the database — see the Tech Foundation
+doc): **dev** (host contains **`raspy-shadow`**) for the laptop, and **production** (host contains
+**`sweet-tree`**) for the Vercel site. The *host* is the server address inside the connection
+string, and it is the quickest way to tell them apart.
+
+> ### 🛑 The rule
+> **Print the database host before running any database script.
+> If you see `sweet-tree` during local (code) work — STOP.** Don't run the script; find out why.
+
+To print just the host of the laptop's database (no password shown):
+
+```bash
+grep '^DATABASE_URL=' .env.local | sed -E 's#.*@([^/]+)/.*#\1#'
+```
+
+It should print something starting `ep-raspy-shadow`. The content scripts and `/api/ingest` also
+print the host in every answer, and `npm run dev:prod` prints it when it starts — read it every time.
+
+## 1.5 Run the website — `npm run dev` (port 3000, DEV database)
+
+```bash
+npm run dev
+```
+
+- Starts a **local development server**: a private copy of the site running only on your computer,
+  reloading as you edit files. It uses Turbopack (the fast bundler built into Next.js 16).
+- Open **http://localhost:3000**. `localhost` means "this computer"; `3000` is the **port** (a
+  numbered door on your computer — two servers can run at once on different ports).
+- It uses `DATABASE_URL` = the **dev** branch. Nothing you do here can touch the Vercel site's data.
+- **Admin panel:** **http://localhost:3000/admin** (log in with your Payload user; a new person needs
+  the owner to add them under Users in `/admin` — to confirm).
+- **Health check:** http://localhost:3000/api/health should answer `200` with `"database":"reachable"`.
+  A green homepage proves nothing — the health check is the real test.
+- Hindi pages: http://localhost:3000/hi.
+- **Schema changes** (new fields in `collections/`) are applied to the dev database automatically when
+  the dev server starts. They do **not** reach production on their own — see 1.7.
+- The dev branch is a **snapshot**: headlines and new content on production don't flow to it. To
+  refresh it: Neon console → Branches → `dev` → **Reset from parent** (throws away local test data).
+- Stop the server with **Ctrl + C**. **Turn dev servers off when you're not working** — while one is
+  running and being used, the free database can't sleep, and the compute allowance is small.
+
+## 1.6 The PRODUCTION console — `npm run dev:prod` (port 3001, PRODUCTION database)
+
+```bash
+npm run dev:prod
+```
+
+This runs `scripts/dev-prod.mjs`, which starts a **second** local server on **port 3001** that reads
+`DATABASE_URL_PRODUCTION` instead — i.e. **the Vercel site's real database**. It builds into its own
+folder (`.next-prod/`) so it can run at the same time as `npm run dev`.
+
+> ### ⚠️ WARNING — this edits the Vercel site's real content
+> - **Use it for content work only** (creating drafts, adding Hindi, images, publishing), and for the
+>   deliberate one-time schema push before a deploy (1.7). Never for trying out code.
+> - When it starts it prints `⚠ PRODUCTION console — database host: …`. **Check that it says
+>   `sweet-tree` — and that you meant to be on production.** Seeing `sweet-tree` should only ever
+>   happen on purpose, never by accident.
+> - Its admin is **http://localhost:3001/admin** — that is the production admin.
+> - Content is created on production as **drafts** (readers can't see drafts); the owner reviews and
+>   presses Publish. See `docs/GKWORLD360_CONTENT_PIPELINE.md` §9c.
+> - Images are shared: dev and production use **one R2 bucket**. Never delete a media item in dev's
+>   admin unless you're sure production doesn't use the file.
+> - Stop it (Ctrl + C) as soon as the content work is done.
+
+**Content scripts** (`node scripts/<name>.mjs …`, e.g. `create-article-draft.mjs`, `add-hindi.mjs`,
+`add-images.mjs`, `publish-article.mjs`) send their work to the running server:
+- without a flag → port 3000 → **dev**;
+- with `--production` → port 3001 → **production** (and the server refuses production writes without
+  that flag).
+So the matching server must be running first. Print and read the host before each run (1.4).
+
+## 1.7 Deploying (short version)
+
+- The Vercel site (`gkworld360.vercel.app`) deploys automatically when `main` is pushed to GitHub.
+  Pushing any other branch only makes a preview.
+- Secrets for the Vercel site are set in **Vercel → Project → Settings → Environment Variables**, and
+  only take effect after a redeploy.
+- **Schema before code:** if a change adds or alters fields, production's database must get them
+  **before** the code goes live — today by starting `npm run dev:prod` once (it applies the schema to
+  production), then pushing. Forgetting this broke the Vercel site on 15 Sep 2026.
+- The full pre-deploy checklist is in `PROJECT_CONTEXT.md` ("Deployment — Pre-flight Checklist");
+  deploys are done as a guided session.
+
+## 1.8 Other useful commands
+
+| Command | What it does |
+|---|---|
+| `npm run build` | Makes a production build locally — a good check before a deploy. |
+| `npm run lint` | Runs ESLint (finds code mistakes). |
+| `npm start` | Runs a finished build (after `npm run build`). |
+| `curl http://localhost:3000/api/pulse/sync` | Pulls fresh headlines into the **dev** database now (no secret needed locally). |
+
+## 1.9 If something goes wrong
+
+- **Wrong `.env.local` loaded / strange "missing secret" errors:** `next.config.ts` sets
+  `turbopack.root` so Next reads the project's own `.env.local` (a stray `package-lock.json` in the
+  home folder once confused it). Don't remove that line.
+- **"Port 3000 is in use":** another dev server is still running — find its terminal and press Ctrl + C.
+- **`/admin` editor fields missing:** the Payload import map (`app/(payload)/admin/importMap.js`) is out
+  of date — see gotcha #3 in `PROJECT_CONTEXT.md`.
+- **Database errors everywhere:** open `/api/health` — its JSON gives the real reason (e.g. a Neon
+  quota limit). See `SERVICES.md`.
+
+---
+
+# Part 2 — How the project was first created (July 2026, kept as a record)
+
+> 🔄 **Historical.** The sections below are how the empty project was first built. You don't need
+> them to run the project today — use Part 1. They're kept because they explain what each tool is.
+> Out-of-date statements (no database, no CMS, MDX-only content, Stitch as the design source) are
+> marked where they appear.
 
 > **Read this first:** This guide does **not** build the website's features. It builds the *workshop* — installing the tools, creating the empty project, and connecting everything so that building can begin. Think of it like setting up a kitchen before you cook: you install the oven, lay out the counters, and check the lights work. Once this guide is finished, the actual cooking — building pages and writing articles — starts. Follow it top to bottom, in order, and don't skip steps.
 
@@ -34,7 +226,12 @@ By the end of this guide you will have:
 
 > **Why a setup guide at all?** Because the single most common way solo founders lose weeks is a messy or half-finished foundation. A clean, documented setup means that if anything ever breaks — or you move to a new computer — you can rebuild the base in an hour, not a month. It also means the AI always knows exactly what world it's working in.
 
-This guide reflects the **approved decisions** for the MVP:
+This guide reflects the **approved decisions** for the MVP (as of July 2026):
+
+> 🔄 **Since changed:** content moved from MDX files to **Payload CMS** + **Neon** database +
+> **Cloudflare R2** images; the design moved on from the Stitch "Academic Clarity" theme to the
+> 2026 redesign (`docs/GKWORLD360_DESIGN_SYSTEM.md`); "Desktop-first" became "all screen sizes
+> equally important". See `docs/GKWORLD360_TECH_FOUNDATION.md` → Current Stack.
 
 | Decision | Choice |
 |---|---|
@@ -48,7 +245,7 @@ This guide reflects the **approved decisions** for the MVP:
 | Core principle | **Content is the product** — content stays separate from code |
 | Development style | **AI-assisted** |
 
-Everything below serves these decisions. Nothing here adds a database, a login system, or an admin panel — those belong to later phases, not the MVP.
+Everything below serves these decisions. Nothing here adds a database, a login system, or an admin panel — those belong to later phases, not the MVP. *(🔄 Out of date: the database and admin panel now exist — Part 1.)*
 
 ---
 
@@ -144,6 +341,8 @@ git --version
 
 **How to check it worked:** Claude Code can describe a real value from your Stitch project (for example, that the primary brand colour is Deep Navy `#0f172a`).
 
+> 🔄 **Out of date (kept for the record):** today you also need the keys for Neon, Cloudflare R2 and Gemini — see Part 1. No database *software* is installed locally, though; Neon runs it online.
+>
 > **You do not need anything else.** No database software, no separate backend tools, no CMS. The MVP deliberately avoids them. If a tutorial ever tells you to install a database for GKWorld360's MVP, that tutorial is solving a different problem than yours.
 
 ---
@@ -169,6 +368,8 @@ Skip, for now: anything that adds heavy features you won't use in the MVP (datab
 ---
 
 # 4. Create the Next.js project
+
+> 🔄 **Historical — don't run this today.** The project already exists; clone it instead (Part 1.2).
 
 This step creates the empty website project itself. You run **one command**, answer a few questions, and Next.js builds the entire starting skeleton for you.
 
@@ -372,6 +573,10 @@ This is exactly the workflow your Tech Foundation describes — and it's what le
 
 # 9. Environment variables
 
+> 🔄 **The real list of variables is in Part 1.3.** The `RESEND_API_KEY` example below is from the
+> original plan — the contact form is not wired up yet, so that key does not exist today, and there
+> is no `.env.example` file (the names are listed in Part 1.3 and `SERVICES.md`).
+
 An **environment variable** is a private setting — usually a **secret key** — that your project needs but that must **never** be shown publicly in your code. The classic example for GKWorld360's MVP is the key for the email service that sends you the contact-form messages (Resend).
 
 ### `.env.local`
@@ -413,10 +618,10 @@ These rules keep GKWorld360 simple, focused, and true to its plan as it grows. T
 1. **Do not create unnecessary folders.**
    A folder appears only when a real file needs a home — never "just in case," and never left empty. Start with `content/`, `components/`, and `lib/` (plus the `app/`, `public/`, and `docs/` that already exist). Everything else waits for a genuine need.
 
-2. **Do not add a database during the MVP.**
+2. **Do not add a database during the MVP.** *(🔄 Reversed mid-2026 — the owner chose Payload + Neon. Kept for the record.)*
    The MVP has no logins, no user data, nothing that needs storing. Your content lives as MDX files, and the contact form sends an email instead of saving rows. A database (PostgreSQL) arrives only in Phase 2, when user features begin.
 
-3. **Do not add authentication during the MVP.**
+3. **Do not add authentication during the MVP.** *(✅ Still true for readers — only the owner logs in, to `/admin`. Accounts are planned; see `docs/GKWORLD360_PAID_FEATURES_PLAN.md` once written.)*
    There are no accounts, logins, or signups in the MVP. Building auth now would be effort with no payoff — and security is easy to get subtly wrong. It's added additively in Phase 2, alongside the database.
 
 4. **Do not create extra architecture documents.**
@@ -426,13 +631,16 @@ These rules keep GKWorld360 simple, focused, and true to its plan as it grows. T
    This guide ends the planning era. Once the foundation runs, move straight into building — the design system, the layout shell, then your most important page (the Topic page). Don't keep polishing the setup; the value is in the pages and the content.
 
 6. **Content remains separate from code.**
-   This is the principle that makes everything else possible. Your articles live in `content/`, completely apart from the website's code in `app/`, `components/`, and `lib/`. Because of this separation, you can redesign the site, change colours or fonts, or even swap how content is stored later — all **without disturbing your articles, URLs, or SEO.** Never mix content into the code, and never let code reach into and rewrite your content's meaning.
+   This is the principle that makes everything else possible. Your articles live in `content/` *(today: in the Payload CMS database)*, completely apart from the website's code in `app/`, `components/`, and `lib/`. Because of this separation, you can redesign the site, change colours or fonts, or even swap how content is stored later — all **without disturbing your articles, URLs, or SEO.** Never mix content into the code, and never let code reach into and rewrite your content's meaning.
 
 > **In one sentence:** Install the tools, create the project with the approved settings, add only the three starting folders, get it running and backed up and deploying — then stop setting up and start building, keeping content and code forever separate.
 
 ---
 
 ## You're ready
+
+> 🔄 This is the original July 2026 checklist. For today, "ready" means: Part 1 done,
+> `npm run dev` shows the site on port 3000, `/api/health` says reachable, and the host check prints `raspy-shadow`.
 
 When you can tick all of these, setup is complete and building begins:
 

@@ -286,6 +286,9 @@
       - [ ] Laptop disk is 99% full (1.7 GB free later on 30 Oct; the dev server again served an old stylesheet in phase 2) — the dev server's cache failed to save
         and served an old stylesheet. Owner to free space; deleting `.next` (1.3 GB, rebuilt
         automatically) is safe while the dev server is stopped.
+        **3 Nov: the disk FILLED UP completely mid-session** (commands could not run at all); the
+        owner freed some — 5.2 GB free, still 98% full. Needs a proper clear-out (System Settings →
+        General → Storage) before the next big build.
         Waiting for the owner's pick → refine → final files
         (light/dark/reading logo, favicon, app icon, share image) → goes in with phase 1.
         Then: owner's yes on the build plan → git branch → phases 1–5.
@@ -390,18 +393,11 @@
 - [ ] **Brainstorm: accounts → highlights → quiz** — design conversation first (who logs in,
       what a highlight is, where quiz questions come from, email vs Google), then a branch with
       the schema pushed via `npm run dev:prod` before deploying. *(agreed 18 Sep)*
-      **OWNER'S VISION (3 Nov 2026 — "near future"; plan for it, don't build it yet):** three roles —
-      SUPER ADMIN (owner, everything), ADMIN (teachers/coaching centres — they PAY; select text in
-      an article → "Make notes" / "Make a quiz", send quizzes to their students, see their students'
-      results on their own dashboard), STUDENT (free; solves quizzes). Paid users may also get more
-      Gyaani (e.g. 50/day — not "unlimited": every question costs Gemini money). Open questions
-      (see chat 3 Nov): which admin customer (tutor / centre / school), free highlight-and-save notes
-      for students vs paid AI notes, how students join (class code / link), DPDP Act 2023 —
-      parental consent for under-18s (collect as little as possible), teacher quizzes public or
-      private, official "GKWorld360 checked" sets kept separate, pricing. Suggested order: live site →
-      student accounts + notes → free pilot with 3–5 teachers → payments (Razorpay/UPI, GST) →
-      super-admin tools. BUILD NOW SO NOTHING CLASHES: one quiz shape and one quiz-maker function
-      shared by Gyaani, the homepage quiz and (later) highlight → quiz.
+      **THE WHOLE PAID-FEATURES PLAN NOW LIVES IN `docs/GKWORLD360_PAID_FEATURES_PLAN.md`** (3 Nov
+      2026): roles (super admin / editor / paying teachers / free students), highlight → notes or
+      quiz, teacher dashboards and results, quiz bundles, paid Gyaani tier, teachers writing public
+      articles (drafts → owner reviews), legal checklist (DPDP Act for under-18s), open questions,
+      suggested order, decision log. Add every new idea or decision THERE, with its date.
 - [ ] **Telegram "draft ready" ping + approve-from-phone** — pipeline piece 9, one bot
       (`@Gkworld360_bot`) via a webhook on Vercel; creates drafts on the Vercel site's database;
       both guards (facts list in the message + confirmation tap). Removes the laptop from the
@@ -440,7 +436,17 @@
       and after. Nothing inside an article's reading column animates. *(28 Oct)*
 - [ ] `/topics` page restyle to board 9 (approved 16 Sep; data already fixed, look still old). *(16 Sep)*
 - [ ] `/about` page onto the page system (still white/rounded/emoji cards). *(18 Sep)*
+- [ ] Small tidy (found while refreshing the docs, 3 Nov): a few code COMMENTS describe the old
+      look — the `.font-hindi` / Noto Sans Devanagari notes in globals.css still name Source Serif 4 /
+      Inter, and the top of `components/Button.tsx` describes the 16 Sep buttons. `lib/news.ts` reads
+      a `content/news/` folder that no longer exists — check whether it can be retired. The top
+      comment of `lib/refresh.ts` says pages are cached for "an HOUR" (the code uses 6 hours).
+      Consider a `.env.example` (variable NAMES only, no values) so a fresh setup knows what to
+      fill in — the Setup Guide lists the names for now. *(3 Nov)*
 - [ ] Hindi names for Subjects and Categories in the CMS — labels on Hindi pages read English. *(17 Sep)*
+      **Partly done 3 Nov:** Categories have a Hindi `name` field and Modern India has "आधुनिक भारत"
+      on dev AND production; Hindi pages show only categories with a Hindi name. Subjects' Hindi
+      names still come from `lib/subjects.ts` (labelHi), not the CMS.
 - [ ] Seed the 18 subjects into the CMS (11 show "coming soon"); decide the 18th. *(pipeline piece 2, 14 Sep)*
 - [ ] `reviewNotes` admin-only field on Articles (facts-to-verify list stored in the CMS, not in the
       draft file) — schema change, batch with the accounts schema. *(pipeline piece 3, 14 Sep)*

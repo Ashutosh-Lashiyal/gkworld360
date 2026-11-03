@@ -72,6 +72,13 @@ The project is well past planning and is in **active development**.
   and **Cloudflare R2** for images.
 - A CMS admin panel is live at `/admin`, and content is mid-migration from MDX files into Payload.
 
+> **Update (3 Nov 2026):** articles now live in Payload (only subject/category overview files
+> remain as MDX). The site has been fully redesigned (Oct 2026: Light / Dark / Reading modes),
+> the **whole site exists in Hindi** at `/hi/...` (Nov 2026; rule: never English and Hindi mixed
+> on one page), and there is a World360 Atlas, the Gyaani chatbot (with page-aware suggestions and
+> quizzes) and Hindi + English news headlines. These are on the `feature/redesign` branch, tested
+> on the laptop, not yet on the Vercel site.
+
 _For the precise, up-to-the-task current state, always check `PROJECT_CONTEXT.md`._
 
 ---
@@ -235,6 +242,11 @@ Potential future features include:
 
 These features are not finalized and may evolve.
 
+> **Update (3 Nov 2026):** the owner has a detailed plan for the paid side — notes, quizzes,
+> quiz sharing, teacher accounts and subscriptions. It lives in
+> **`docs/GKWORLD360_PAID_FEATURES_PLAN.md`** (planning, not built). Reading Mode from this list
+> is already built (Oct 2026).
+
 ---
 
 # User Roles
@@ -250,6 +262,12 @@ Introduced in later phases.
 ### Admin
 
 Administrative capabilities introduced post-MVP.
+
+> **Update (3 Nov 2026) — the planned roles in detail** (see `docs/GKWORLD360_PAID_FEATURES_PLAN.md`):
+> **Super admin** = the owner (everything) · **Editor** (proposed) = trusted helpers who review
+> and publish · **Admin** = paying teachers / coaching centres (make notes and quizzes from
+> articles, send quizzes to their students, see results, write articles as drafts for review) ·
+> **Student** = free (solves quizzes, sees own scores) · **Guest** = anyone not logged in.
 
 ---
 
@@ -496,7 +514,7 @@ Advanced Features
 
 ## Phase 4
 
-Premium Ecosystem
+Premium Ecosystem — detailed plan and suggested order in `docs/GKWORLD360_PAID_FEATURES_PLAN.md` (3 Nov 2026).
 
 The roadmap may evolve over time.
 

@@ -3,36 +3,187 @@
 **Reviewed against:** `docs/GKWORLD360_MASTER_BLUEPRINT.md` (the source of truth)
 **Role:** Senior Software Architect
 **Lens:** one non-technical founder + AI, limited budget, content-is-the-product, minimal future rewrites
-**Status:** Recommendation for founder approval — no application code generated.
+**Status:** Original recommendation (Jun 2026), now kept as a record. The "Current Stack" section below is what is actually in use.
 
-> **📌 Doc status (updated 2 Jul 2026):** Reference doc. The **"Current Stack"** section just
-> below states what we *actually* use today. The detailed 21 recommendations that follow are the
-> **original architectural reasoning** — most still hold, but a few decisions have since changed
-> (database, ORM, content storage). Where they differ, the "Current Stack" section and
-> `PROJECT_CONTEXT.md` win.
+> **📌 Updated 3 Nov 2026 to match the code.** (Previous update: 2 Jul 2026.)
+>
+> **How to read this doc:**
+> - **"Current Stack" (just below)** = what the project *actually* uses today, checked against
+>   `package.json`, `payload.config.ts`, `next.config.ts`, `vercel.json`, `app/` and `lib/`.
+> - **Part A onwards** = the **original architectural reasoning** from June 2026. It is kept
+>   because the *why* is still useful, but each recommendation now carries a status tag:
+>   - ✅ **Adopted** — we did exactly this.
+>   - 🔄 **Changed** — we went a different way (the tag says what and why).
+>   - 🔮 **Still future** — not built yet; still the plan (or to be re-decided).
+> - Where this doc and the code disagree, **the code wins**, then `PROJECT_CONTEXT.md`.
+> - This doc is about the **tech stack** only. How to install and run the project is in
+>   `docs/SETUP_GUIDE.md`; the task list is `TODO.md`; services, limits and keys are in `SERVICES.md`.
 
 ---
 
-## Current Stack (what we actually use today — 2 Jul 2026)
+## Current Stack (what we actually use today — 3 Nov 2026)
 
-| Layer | Original recommendation | **What we use now** |
+### At a glance
+
+| Layer | Original recommendation (Jun 2026) | **What we use now** |
 |---|---|---|
-| Frontend framework | Next.js (App Router) | ✅ Next.js 16 (unchanged) |
-| Separate backend | None (use Next.js) | ✅ None (unchanged) |
-| Hosting | Vercel | ✅ Vercel (unchanged) |
-| **Content storage** | MDX files (no DB in MVP) | 🔄 **Payload CMS** (migrating off MDX) |
-| **Database** | None in MVP; PostgreSQL "in Phase 2" | 🔄 **Neon (PostgreSQL)** — added now, not later |
-| **Database tooling / ORM** | Prisma (in Phase 2) | 🔄 **Payload's built-in layer (Drizzle under the hood)** — not Prisma |
-| **Images** | Local `public/` folder | 🔄 **Cloudflare R2** (object storage, via Payload) |
-| **Admin/CMS** | None in MVP | 🔄 **Payload CMS admin at `/admin`** |
-| Styling | Tailwind CSS | ✅ Tailwind CSS v4 (unchanged) |
-| AI chatbot (Gyaani) | — | Google Gemini 2.5 Flash |
+| Frontend framework | Next.js (App Router) | ✅ **Next.js 16.2** (App Router, Turbopack) + React 19.2 |
+| Separate backend | None (use Next.js) | ✅ None — Next.js route handlers in `app/api/` and `app/(frontend)/api/` |
+| Language | TypeScript | ✅ TypeScript 5 |
+| Styling | Tailwind CSS | ✅ Tailwind CSS v4 + our own design tokens in `app/(frontend)/globals.css` |
+| Hosting | Vercel | ✅ Vercel (pushing to `main` auto-deploys) |
+| **Content storage** | MDX files (no DB in MVP) | 🔄 **Payload CMS v3** — articles, news, quotes, Atlas entries live in the database. A few `overview.mdx` files remain for subject/category intros |
+| **Article editor** | none (write files by hand) | 🔄 **Lexical** rich-text editor inside Payload, with Draft → Publish |
+| **Database** | None in MVP; PostgreSQL "in Phase 2" | 🔄 **Neon (PostgreSQL)**, split into two branches since 15 Sep 2026 (`dev` and `production`) |
+| **Database tooling / ORM** | Prisma (in Phase 2) | 🔄 **Payload's own database layer** (`@payloadcms/db-postgres`, Drizzle under the hood) — not Prisma |
+| **Images** | Local `public/` folder → Cloudinary later | 🔄 **Cloudflare R2** for uploaded images (shared by both database branches); `public/images/` still holds site graphics (logo, source icons) |
+| **Admin/CMS** | None in MVP | 🔄 **Payload admin at `/admin`** |
+| AI chatbot (Gyaani) + quiz maker | — (not in the original plan) | ➕ **Google Gemini 2.5 Flash** (`lib/gemini.ts`, `lib/quiz.ts`) |
+| Headlines feed (Pulse) | — | ➕ **rss-parser** reading English + Hindi newspaper RSS feeds |
+| Scheduled jobs | — | ➕ **cron-job.org** calls `/api/pulse/sync` every 2 hours (+ a once-a-day Vercel cron as backup) |
+| Languages | English only | ➕ **English + Hindi** — Payload localization + `/hi/...` addresses |
+| 3D / maps | — | ➕ **three.js** (homepage Earth), **d3-geo + topojson-client + world-atlas** (the `/atlas` globe) |
+| Analytics | Google Analytics + Search Console | 🔄 **Vercel Analytics + Speed Insights** (`@vercel/analytics`, `@vercel/speed-insights`). Search Console waits for the real domain |
+| Accounts / login for readers | Auth.js in Phase 2 | 🔮 **Not built.** Only the owner logs in (to `/admin`) |
+| Payments | Razorpay in Phase 4 | 🔮 **Not built.** See the paid-features plan (below) |
+
+(➕ = something the original plan didn't have at all.)
 
 **Why the database/CMS arrived earlier than the original plan:** the founder chose to move to a
 proper CMS (Payload) while content was still small, rather than migrate hundreds of files later.
 The architecture principle below — *content as data, separate from the website code* — is
 **unchanged**; Payload + Neon is simply a more capable home for that data than flat files.
-See `PROJECT_CONTEXT.md` for the full rationale and setup.
+
+### Each piece, in plain English
+
+**Next.js 16 (App Router + Turbopack).** Next.js is the framework the whole website is built on.
+The *App Router* means "the folder structure inside `app/` decides the web addresses" — e.g.
+`app/(frontend)/atlas/page.tsx` is the page at `/atlas`. *Turbopack* is the fast "bundler" (the
+tool that packages our code for the browser) and is the default in Next.js 16.
+⚠️ **This version of Next.js has breaking changes compared with older tutorials and older AI
+knowledge** (see `AGENTS.md`). The correct, version-matched documentation ships inside the
+project at `node_modules/next/dist/docs/` — read that before trusting a blog post.
+The app is split into two **route groups** (folders in brackets, which don't appear in the address):
+`app/(frontend)/` = the public website, `app/(payload)/` = the admin panel. Each has its own
+layout, which is how two different `<html>` shells live in one app.
+
+**Payload CMS v3 + Lexical + drafts.** A CMS ("content management system") is the back-office
+where content is typed in and stored. Payload runs *inside* our Next.js app (no second server),
+configured in `payload.config.ts`. Its **collections** are the content types — think "tables":
+Users, Media, Subjects, Categories, Articles, News, Headlines, Quotes, Atlas entries (code in
+`collections/`). The article editor is **Lexical**, which works like Google Docs, extended with
+our own blocks (Key Takeaways, Topic Image) and tables. Articles, News and Atlas entries have
+**drafts** turned on (`versions.drafts`): a new item is a *draft* that readers can't see until
+the owner presses **Publish**, and Payload keeps a version history so a bad edit can be undone.
+
+**Neon PostgreSQL — two database branches.** PostgreSQL is the database (where all the text,
+titles, dates and settings are stored). Neon hosts it for us. A **database branch** is a
+separate copy of the database that starts identical to its parent but then lives its own
+life — like making a photocopy you can scribble on without touching the original. Since
+15 Sep 2026 there are two:
+
+| Branch | Host name contains | Used by |
+|---|---|---|
+| `production` | **`sweet-tree`** | the Vercel site (`gkworld360.vercel.app`) |
+| `dev` | **`raspy-shadow`** | the laptop (`npm run dev`) |
+
+The *host* is the server address inside the database connection string; it is the quickest way to
+tell the two apart. Content is created on **production** as drafts (via `npm run dev:prod` — see
+`docs/SETUP_GUIDE.md` and `docs/GKWORLD360_CONTENT_PIPELINE.md` §9c); `dev` is for code work.
+Neon's free plan has three separate limits (storage, compute hours, network transfer) — the
+compute-hours limit is the one that has bitten us, which is why the caching rules below exist.
+Details: `SERVICES.md` and the "Sep–Oct 2026 compute saga" section of `PROJECT_CONTEXT.md`.
+
+**Cloudflare R2 — images.** R2 is *object storage*: a big online folder for files. Every image
+uploaded in `/admin` goes to R2 automatically (Payload's `@payloadcms/storage-s3` plugin; R2
+speaks the same language as Amazon S3). Uploads are resized and converted to WebP by `sharp`.
+⚠️ **R2 is NOT branched** — dev and production share one bucket, so the image *file* is shared
+but the *record* about it lives in whichever database you uploaded through. Rules for this are in
+`docs/GKWORLD360_CONTENT_PIPELINE.md` §9c.
+
+**Vercel — hosting.** Vercel builds and runs the site. GitHub is connected, so **pushing to
+`main` deploys automatically**; pushing to any other branch only makes a preview. Secret keys
+for the live site are set in Vercel's dashboard (Environment Variables), not in the code.
+
+**Google Gemini 2.5 Flash — Gyaani and the quiz maker.** Gemini is Google's AI model; we call
+it over the internet with a secret key (`GEMINI_API_KEY`).
+- `lib/gemini.ts` is the **one door** to Gemini — the model address and the "if Gemini is busy,
+  wait 3 seconds and try once more" rule live there.
+- **Gyaani** (the floating chatbot) talks to Gemini through `app/api/gyaani/route.ts`, with
+  guardrails in `lib/gyaani-guard.ts` (rate limits, monthly cap, `GYAANI_MODE`).
+- **The quiz maker** (`lib/quiz.ts`, since 3 Nov 2026) turns *our own* article text into
+  multiple-choice questions for Gyaani's "Quiz me". Gemini may use only the text we give it, and
+  code checks every question before a reader sees it. All quizzes share one shape
+  (`lib/quiz-shared.ts`), so the future teachers' quizzes can reuse it. Nothing is stored yet.
+- The key is on Google's free tier with no billing, so going over the limit means "refused",
+  not "charged" (`SERVICES.md`).
+
+**rss-parser — the Headlines (Pulse) feed.** RSS is a simple public "latest stories" list that
+news sites publish. `lib/pulse.ts` reads English feeds (The Hindu, Indian Express, LiveMint) and,
+since 3 Nov 2026, Hindi feeds (Amar Ujala, Live Hindustan). It saves only headline + snippet +
+source + link into the Headlines collection (a rolling 7-day window) — readers click through to
+the original paper. Each headline records its `language`, so English pages show English papers
+and Hindi pages show Hindi papers, never mixed.
+
+**cron-job.org — the scheduled refresh.** A **cron** is a robot with a calendar: it does a job at
+set times whether or not anyone is using the site. cron-job.org calls
+`/api/pulse/sync` **every 2 hours** with a secret header (`CRON_SECRET`), which fetches the feeds and
+saves new headlines. The route answers immediately and does the work afterwards (Next's `after()`),
+because cron-job.org gives up after 30 seconds. `vercel.json` also has a once-a-day Vercel cron
+on the same address as a backup. Page visits never sync headlines (that kept the database awake).
+
+**Page caching — how pages stay fast and the database gets to sleep.** Most pages are built once
+and then served from a saved copy (this is Next.js's *revalidate* / ISR — "incremental static
+regeneration": rebuild a page in the background after a set time).
+- Content pages, the homepage(s), `/news`, `/atlas`, the sitemap, `llms.txt` and the search index
+  use `revalidate = 21600` (**6 hours**). The 6 hours is only a safety net.
+- Freshness actually comes from **refresh-on-save hooks**: when something is saved or deleted in
+  `/admin`, the collection's hook calls `refreshContent()` in `lib/refresh.ts`, which marks the
+  saved copies stale (`revalidateTag` for shared answers such as `cms-content`, `site-stats`;
+  `revalidatePath` for the list pages, including the Hindi ones). The next visitor gets a fresh page.
+- The headlines cron does the same for headline pages after each sync.
+- `/pulse`, `/hi/pulse`, `/admin` and the API routes are always fresh (`force-dynamic`), but every
+  database read behind them is cached behind a tag, so even they don't hit the database per visit.
+- Link-preview pictures (`/api/og`) are cached for a day.
+- Why all this matters: see the compute saga in `PROJECT_CONTEXT.md` — pages re-asking the database
+  on every bot visit (and a 5-minute health monitor) once used the whole month's free compute.
+  Two rules from it: *never cache anything derived from the current time*, and *never point a
+  frequent monitor at an endpoint that queries a sleep-when-idle database*.
+  (Note: one older comment at the top of `lib/refresh.ts` still says "an HOUR"; the page files say
+  6 hours, which is current.)
+
+**Bilingual routing — English and Hindi.** Payload's **localization** stores an English and a
+Hindi value for every field marked `localized` (one article = one record holding both languages;
+missing Hindi falls back to English inside the CMS). On the website, English pages live at
+`/...` and Hindi pages at `/hi/...` with the **same slug** (the permanent, URL-friendly name of a
+page, e.g. `revolt-of-1857`). Specific Hindi pages have their own folders in `app/(frontend)/hi/`
+(homepage, subjects, topics, search, saved, about, contact, news, pulse, atlas); subject, category
+and article pages go through the shared catch-all route `app/(frontend)/[...slug]/page.tsx`.
+Every page tells Google about its other-language twin with **hreflang** tags. The owner's rule:
+**no English and Hindi mixed on one page** — a Hindi page lists only things that exist in Hindi.
+Fonts: Noto Sans Devanagari is the Hindi fallback in every font stack. Interface words live in
+`lib/site-text.ts`, `lib/page-text.ts` and `lib/home-text.ts`.
+
+**Other pieces worth knowing:** `/api/health` (is the database reachable, and are headlines still
+arriving?), `/api/og` (branded link-preview images), `/api/search-index`, `app/sitemap.ts`,
+`app/robots.ts`, `app/llms.txt` (for AI crawlers). `/api/ingest` is a **dev-only** door the content
+scripts in `scripts/` use; it answers 404 on Vercel. Search indexing is **off** until the real
+domain is bought (`SITE_INDEXING_ENABLED`, `NEXT_PUBLIC_SITE_URL` — launch checklist).
+
+**Being tested (to confirm):** automated article images via Cloudflare Workers AI
+(`CLOUDFLARE_AI_TOKEN` exists in `.env.local`; see `TODO.md`). Telegram is used today only by
+`scripts/telegram-inbox.mjs` (pulls book-page photos sent to the bot); a Telegram "draft ready"
+ping is planned, not built.
+
+### Still future (not built)
+- **Reader accounts / login, teacher (admin) and student roles, saved notes and quizzes, and
+  payments.** The owner's paid-features plan will live in
+  **`docs/GKWORLD360_PAID_FEATURES_PLAN.md`** (not written yet — until then, the "accounts →
+  highlights → quiz" item in `TODO.md`). The auth/payment recommendations in Part A (#7, Part D
+  Phase 2–4) are the original thinking and will be re-decided there.
+- A database-migration step (today a schema change reaches production by running
+  `npm run dev:prod` once before deploying — see `PROJECT_CONTEXT.md`).
+- A separate dev image bucket, and caching inside `/api/health` before frequent monitoring returns.
 
 > **The single most important architectural idea for you:** treat **content as data, kept separate from the website code**. If your articles live in their own simple files (or later, a database), then the website that displays them, the search, the SEO, even a future login system — all become things you *add around* the content without ever disturbing the content itself. This one principle is what lets GKWorld360 grow from 10 pages to 10,000, and from "just reading" to "accounts and quizzes," **without rewrites**. Every recommendation below serves it.
 
@@ -43,18 +194,24 @@ See `PROJECT_CONTEXT.md` for the full rationale and setup.
 For each: **what**, then *why · solo-founder fit · AI-assisted fit · alternatives rejected*.
 
 ### 1. Frontend Framework → **Next.js (App Router, React)**
+> ✅ **Adopted.** Next.js 16.2 with the App Router and Turbopack. (Newer than the version this was written for — see `AGENTS.md`.)
+
 - **Why:** It renders pages on the server, so Google and AI crawlers receive fully-formed content (essential for your #1 and #2 priorities, SEO and AI SEO). Its folder = URL system maps perfectly onto your permanent hierarchy (Home → Subject → Category → Topic).
 - **Solo-founder fit:** One tool covers pages *and* the little bit of backend you need (contact form, search). One thing to learn, one thing to deploy.
 - **AI-assisted fit:** It's the most heavily documented React framework in existence, so I (and any AI) can generate, explain, and debug it extremely reliably.
 - **Alternatives rejected:** **Astro** is genuinely *excellent* for a pure-content MVP (even faster, ships zero JavaScript by default) — but your roadmap explicitly heads toward dashboards, quizzes, and logins (Phase 2–4). Those are "app" features Next.js handles natively; choosing Astro now would risk a front-end rewrite later, violating your "minimal rewrites" rule. **WordPress** rejected: plugin-heavy, slower over time, harder to make truly custom, and you'd learn PHP/plugin-wrangling instead of transferable skills. **Plain React (Vite)** rejected: no built-in SEO rendering — the one thing you can't compromise on. **Gatsby** rejected: declining ecosystem.
 
 ### 2. Backend Framework → **None separate; use Next.js itself (Server Components + Route Handlers + Server Actions)**
+> ✅ **Adopted.** No separate server. Even the CMS (Payload) runs inside the same Next.js app.
+
 - **Why:** A content MVP barely needs a backend. The few server tasks (handle the contact form, power search) live inside Next.js. No second server to build, host, or secure.
 - **Solo-founder fit:** Avoids the classic trap of running two apps (frontend + backend) — half the things to break, half the cost.
 - **AI-assisted fit:** Everything is in one codebase, so AI sees the whole picture when helping you.
 - **Alternatives rejected:** **Express / NestJS / Django / FastAPI** as a separate service — all add a deployment, a language/runtime, and network plumbing (CORS) for zero MVP benefit. This is exactly the microservice-style complexity the Blueprint says to avoid.
 
 ### 3. Database → **None for the MVP. (Phase 2: PostgreSQL on a managed host such as Neon or Supabase.)**
+> 🔄 **Changed (earlier than planned).** PostgreSQL on **Neon** arrived with the CMS in mid-2026, not in Phase 2. Since 15 Sep 2026 it has two branches: `dev` (laptop) and `production` (Vercel site). See "Current Stack".
+
 - **Why:** Your MVP has no logins, no user data, no comments — nothing that *needs* a database. Your content can live as files (item #15). The contact form sends an email instead of storing rows. **No database = less cost, less to secure, less to break, faster pages.**
 - **Solo-founder fit:** One of the biggest sources of complexity and bills, removed entirely until you actually need it.
 - **AI-assisted fit:** Fewer moving parts to reason about while you're learning.
@@ -62,68 +219,92 @@ For each: **what**, then *why · solo-founder fit · AI-assisted fit · alternat
 - **Alternatives rejected:** **MongoDB** — your data is highly relational (users↔notes↔quizzes), PostgreSQL fits better and is more future-proof. **Firebase/Firestore** — fast to start but proprietary lock-in and awkward for relational/SEO data. **SQLite** — fine for tiny/local, but doesn't suit serverless hosting well at scale.
 
 ### 4. ORM (the friendly translator between code and database) → **None for MVP. (Phase 2: Prisma.)**
+> 🔄 **Changed.** No Prisma. Payload's own database adapter (`@payloadcms/db-postgres`, built on Drizzle) talks to the database for us.
+
 - **Why:** No database in MVP means no ORM yet. When the DB arrives, Prisma lets you work with data in plain, readable code instead of raw database language, and it auto-completes and catches mistakes.
 - **Solo-founder fit:** The most beginner-friendly, best-documented option; reads almost like English.
 - **AI-assisted fit:** AI knows Prisma extremely well and its type-safety means AI-written queries are checked automatically.
 - **Alternatives rejected:** **Drizzle** (great, but slightly more SQL knowledge expected — Prisma is gentler for you). **TypeORM/Sequelize** (clunkier, weaker AI support). Raw SQL (error-prone for a beginner).
 
 ### 5. Styling Framework → **Tailwind CSS**
+> ✅ **Adopted.** Tailwind CSS v4, plus our own colour/spacing tokens (`app/(frontend)/globals.css`, `docs/GKWORLD360_DESIGN_SYSTEM.md`).
+
 - **Why:** You style by adding small, named classes directly to elements (`text-lg`, `p-4`) instead of maintaining separate stylesheets. Fast, consistent, and it makes a clean "Wikipedia/Britannica-calm" reading design easy to keep uniform.
 - **Solo-founder fit:** No separate CSS files to organize or accidentally break; design tokens (colors, spacing, fonts) live in one config you change once.
 - **AI-assisted fit:** The most common styling system in modern AI training data — AI produces correct Tailwind instantly and can restyle anything on request.
 - **Alternatives rejected:** **Plain CSS / CSS Modules** (more files to manage, easy to create inconsistencies). **Styled-components** (extra runtime, more concepts). **MUI / Chakra / Bootstrap** (impose their own look; harder to achieve a distinctive editorial reading experience; heavier).
 
 ### 6. State Management → **Minimal: React's built-in tools (Server Components + `useState`/Context). No external library.**
+> ✅ **Adopted.** No Redux/Zustand. Small browser-side memories (Read Later list, mode, language choice) use `localStorage` through helpers such as `lib/use-stored.ts`.
+
 - **Why:** A reading-focused content site has almost no "interactive state." Most pages are static content. Don't install machinery you won't use.
 - **Solo-founder fit:** One fewer big concept to learn during MVP.
 - **AI-assisted fit:** Built-in React patterns are the best-understood by AI.
 - **Alternatives rejected:** **Redux** (heavy, ceremony-laden — massive overkill here). **Zustand/Jotai** (lightweight and good — but add them in Phase 2 *if* dashboards/notes actually need shared client state; not before).
 
 ### 7. Authentication → **None in MVP. (Phase 2: Auth.js (NextAuth) — or Clerk if you prefer fully-managed.)**
+> 🔮 **Still future, to be re-decided.** Only the owner logs in, to `/admin`, using Payload's built-in login (the Users collection). Reader/teacher/student accounts are planned — see `docs/GKWORLD360_PAID_FEATURES_PLAN.md` (written 3 Nov 2026). Payload's own auth may replace the Auth.js idea below (to confirm).
+
 - **Why:** The Blueprint excludes login/signup from MVP, so there's nothing to authenticate yet. Building auth now would be effort with no MVP payoff.
 - **Solo-founder fit:** Auth is one of the easiest things to get subtly wrong (security); deferring it until needed is the safe, simple choice.
 - **AI-assisted fit:** When the time comes, Auth.js is purpose-built for Next.js and well-known to AI; **Clerk** is even simpler (a managed service — drop-in login UI) at the cost of a subscription as you grow.
 - **Alternatives rejected (for later):** **Building your own auth** — never recommended; security risk. **Firebase Auth** — ties you to Firebase.
 
 ### 8. API Architecture → **Server Components fetch content directly; a few simple Route Handlers for contact + search. REST-style, minimal.**
+> ✅ **Adopted, grown a little.** Pages read content directly. Route handlers today: `/api/gyaani`, `/api/pulse/sync`, `/api/health`, `/api/search-index`, `/api/og`, `/api/ingest` (dev-only), plus Payload's own `/api/...`. The contact form is not wired up yet.
+
 - **Why:** Pages read content directly at build/render time (no API call needed for articles). Only genuinely dynamic actions (submitting the contact form, running a search) get a small endpoint.
 - **Solo-founder fit:** The least possible API surface = least to maintain.
 - **AI-assisted fit:** Standard, predictable patterns AI generates reliably.
 - **Alternatives rejected:** **GraphQL** (powerful but heavy; pointless for a content MVP). **tRPC** (lovely with TypeScript — consider in Phase 2 when there's a real client↔server app; unnecessary now).
 
 ### 9. Folder Structure → *(see Part C below — a content-first Next.js layout)*
+> 🔄 **Changed.** The real, current layout is in `docs/GKWORLD360_PROJECT_STRUCTURE.md`. Part C below is the original day-one plan.
+
 
 ### 10. Deployment → **Vercel** (alternatives: Netlify, Cloudflare Pages)
+> ✅ **Adopted.** Pushing to `main` auto-deploys. The Vercel site is `gkworld360.vercel.app` (search indexing off until the real domain is bought).
+
 - **Why:** You connect your code repository once; thereafter every saved change auto-publishes in ~a minute. Global CDN (fast in India), automatic HTTPS, free custom domain, generous free tier. Made by the Next.js team, so zero config friction.
 - **Solo-founder fit:** No servers to manage, no DevOps. "Save → it's live."
 - **AI-assisted fit:** The default deployment target in virtually all Next.js guidance.
 - **Alternatives rejected:** **Netlify / Cloudflare Pages** (both excellent and viable; Cloudflare is cheapest at scale — but Vercel + Next.js is the smoothest pairing for a beginner). **VPS / AWS / DigitalOcean droplet** (you'd become a sysadmin — exactly what to avoid).
 
 ### 11. Environment Variables (where secrets live) → **`.env.local` on your computer (never uploaded) + Vercel dashboard for production + a committed `.env.example` template**
+> ✅ **Adopted, except the template.** Secrets are in `.env.local` and Vercel. There is **no `.env.example`** file; the list of variable names lives in `SERVICES.md` and `docs/SETUP_GUIDE.md` instead.
+
 - **Why:** Secret keys (e.g., the email-sending key) must never sit in your public code. This standard split keeps them safe while documenting *which* keys are needed.
 - **Solo-founder fit:** A simple, memorable rule: secrets go in `.env.local` and Vercel, never in the code.
 - **AI-assisted fit:** A universal convention AI will set up and respect automatically.
 - **Alternatives rejected:** Hard-coding keys in code (a security leak). Dedicated secret managers like Vault (enterprise overkill).
 
 ### 12. Image Handling → **Next.js `<Image>` component + images in the repo's `/public` for MVP; graduate to Cloudinary (free tier) if volume grows**
+> 🔄 **Changed.** `next/image` is used, but uploaded images go to **Cloudflare R2** (not Cloudinary), via Payload. `public/images/` keeps site graphics only.
+
 - **Why:** `next/image` auto-converts to modern formats (WebP), resizes per device, lazy-loads, and prevents layout "jump" — directly serving your performance and premium-quality goals. For ~2 images/day, simply keeping optimized files in the project is the simplest possible system.
 - **Solo-founder fit:** No third-party account needed at first; alt-text is enforced as a required field so SEO/accessibility stay correct.
 - **AI-assisted fit:** AI can wire up `next/image` and later Cloudinary in minutes.
 - **Alternatives rejected:** Plain `<img>` tags (no optimization → slow). Self-hosting an image server (needless complexity). Starting with Cloudinary immediately (fine, but an extra account before you need it).
 
 ### 13. Package Manager (the tool that installs code libraries) → **npm**
+> ✅ **Adopted.**
+
 - **Why:** It comes built-in with Node.js — nothing extra to install or understand. For a non-technical beginner, fewer concepts wins.
 - **Solo-founder fit:** The default in nearly every tutorial you'll follow, so instructions "just match."
 - **AI-assisted fit:** Universal; no ambiguity in AI instructions.
 - **Alternatives rejected:** **pnpm** (faster and more disk-efficient — a great choice technically, and easy to switch to later — but it's one more thing to install/learn now). **Yarn** (no real advantage for you today).
 
 ### 14. TypeScript → **Yes, from day one — used gently**
+> ✅ **Adopted.**
+
 - **Why:** TypeScript is JavaScript that labels what kind of data each thing is (text, number, an article). It catches mistakes *as you type* instead of as broken pages later. Counter-intuitively, it makes life **easier** for a beginner because the editor guides you.
 - **Solo-founder fit:** Fewer silent bugs; your editor autocompletes and warns you.
 - **AI-assisted fit:** This is the big one — types let AI write far more correct code, because the AI (and the compiler) can verify the data shapes. AI-assisted development is markedly more reliable in TypeScript.
 - **Alternatives rejected:** **Plain JavaScript** — simpler on the surface, but you lose the safety net and the superior AI assistance exactly when you, a learner, need them most.
 
 ### 15. Content Management → **File-based MDX for the MVP (no database, no admin panel)** — *this is the pivotal decision; see note*
+> 🔄 **Changed — this is the big one.** The owner chose **Payload CMS** (mid-2026) instead of MDX files or Sanity. Content is typed in `/admin` (Lexical editor), saved as drafts, and published by the owner. Only a few `overview.mdx` intro files remain; `withMDX` in `next.config.ts` goes once they move into the CMS. The reasoning below is the original June view.
+
 - **What it means:** Each article is a file written in **MDX** (Markdown — simple text with `#` for headings, `**bold**`, etc. — plus the ability to drop in rich components like tables, timelines, and maps when needed). The files live in a `/content` folder organized by your hierarchy. Next.js turns each file into a fast, SEO-perfect page automatically.
 - **Why it fits the Blueprint precisely:** The Blueprint **excludes an Admin Panel and has no database in MVP**, and prizes simplicity, low cost, SEO, and scalability-to-thousands. File-based content needs *none* of those excluded things, produces the fastest possible pages, and scales to thousands of articles for free. Your content also gets free version history (every change is tracked).
 - **Solo-founder + AI-assisted fit (this is the key insight):** Your workflow becomes **"paste your book notes to me → I format them into a correct MDX article file → you publish."** The AI *is* your content tool. No CMS to learn, no admin to build or maintain.
@@ -133,34 +314,51 @@ For each: **what**, then *why · solo-founder fit · AI-assisted fit · alternat
 - **Alternatives rejected for MVP:** **Payload/Strapi** (require DB + hosting + are essentially the excluded admin panel). **WordPress** (the whole separate-CMS-stack you're moving away from). **Plain Markdown without MDX** (can't embed the tables/timelines/maps your Topic pages need).
 
 ### 16. SEO Strategy → **built into the architecture, not bolted on**
+> ✅ **Adopted.** Metadata per page, `app/sitemap.ts`, `app/robots.ts`, breadcrumbs, link-preview images (`/api/og`), plus **hreflang** tags linking English and Hindi twins. Indexing is switched off until the real domain is live.
+
 - Server-rendered/static pages (crawlers see full content); **clean URLs that mirror the hierarchy** (`/history/modern-india/revolt-of-1857`); per-page meta titles & descriptions via Next.js's Metadata feature; **auto-generated `sitemap.xml` and `robots.txt`**; **structured data** (Article, BreadcrumbList, FAQ, and education-specific schema) so Google can show rich results; breadcrumbs + **Related / Previous / Next** internal links (already in your Topic page spec) to build topical authority; semantic HTML and one clear `<h1>` per page.
 - *Why this stack:* Next.js makes every one of these straightforward; the file/URL structure gives you correct, stable URLs for free.
 
 ### 17. AI SEO (GEO) → **be discoverable and quotable by ChatGPT, Claude, Gemini, Perplexity**
+> ✅ **Adopted.** `app/llms.txt` exists; AI crawlers are courted (see `docs/GKWORLD360_MASTER_BLUEPRINT.md`).
+
 - **Allow AI crawlers** in `robots.txt` (GPTBot, ClaudeBot/anthropic-ai, PerplexityBot, Google-Extended, Bingbot) — you can't be cited if you block them. Add an **`llms.txt`** pointing AI to your best content.
 - **Write citation-friendly content:** clear definition-first opening lines, dated facts, your "Important Points" boxes, tables, and FAQ blocks — the formats AI engines lift and cite.
 - **Entity & trust signals (E-E-A-T):** an About page establishing who curates the content, consistent naming, internal links, and `Organization`/`Person` schema. Strong traditional SEO doubles as AI SEO, since several engines lean on existing search indexes.
 
 ### 18. Testing Strategy → **light and proportionate for MVP**
+> 🔄 **Partly adopted.** TypeScript + ESLint (`npm run lint`) + manual QA. No Prettier config and no automated test suite yet (to confirm whether Prettier runs only in the editor).
+
 - **MVP:** TypeScript + **ESLint** (catches code mistakes) + **Prettier** (auto-formats) + **Lighthouse** checks (performance/SEO/accessibility scores) + manual review. Optionally **Vitest** for any tricky helper functions (e.g., reading-time calc).
 - **Phase 2+ (when there's logic to protect):** add **Playwright** for end-to-end tests of flows like login/quiz.
 - *Why:* Heavy test suites on a content site that's mostly text would be effort without payoff. Test more as real logic appears.
 - **Rejected for now:** full unit/integration test coverage (overkill for static content), complex CI testing pipelines.
 
 ### 19. Performance Strategy → **static-first**
+> ✅ **Adopted, with a twist.** Pages are cached for 6 hours and refreshed the moment content is saved (`lib/refresh.ts`). This is as much about letting the free database sleep as about speed — see "Current Stack → Page caching".
+
 - Pre-build pages so they're served instantly from the CDN; `next/image` for optimized images; optimized web-font loading; minimal JavaScript (a content site needs very little); aim for green Core Web Vitals (LCP/CLS/INP). Static pages on a CDN are about as fast as the web gets.
 
 ### 20. Scalability Considerations → **scales on three axes without rewrites**
+> ✅ **Still the plan.** Search is still a simple self-built index (`lib/search.ts`, `/api/search-index`); Algolia/Meilisearch only if content grows a lot.
+
 - **More pages (→ thousands):** static generation + **Incremental Static Regeneration** (build/refresh pages on demand rather than all at once) + a **sitemap index** keep build times and crawlability healthy. The CDN serves any traffic volume.
 - **More features (→ accounts, quizzes):** added *additively* in Phase 2 — drop in PostgreSQL + Auth.js + new routes; the existing content pages are untouched.
 - **Bigger search:** start with a simple static/client-side index; upgrade to a dedicated search service (e.g., Algolia/Meilisearch) only when content volume demands it — the search box UI stays the same.
 
 ### 21. Future-Proofing → **the content/presentation split + stable hierarchy**
+> ✅ **Adopted — and proven.** The move from MDX files to Payload, and the full redesign, both happened without changing slugs or content. See `docs/GKWORLD360_DESIGN_SYSTEM.md`.
+
 - Because content is separate data and the **Home → Subject → (Category) → Topic** hierarchy is fixed, you can later swap *how* content is stored (files → CMS → database) **without changing the pages that display it**, and add user features around it. This is the concrete mechanism that delivers the Blueprint's "future features without major rewrites" promise.
 
 ---
 
 ## Part B — Architecture Explanation (the big picture, plainly)
+
+> 🔄 **Original June 2026 picture (MDX files, no database).** Today the left-hand box is
+> **Payload `/admin` → Neon database (+ R2 for images)** instead of a `/content` folder, and
+> Gyaani/Gemini, the headlines cron and the `/hi` pages sit alongside. The "Current Stack"
+> section above describes the real setup.
 
 ```
         You + AI                         A reader (or an AI crawler)
@@ -191,6 +389,10 @@ For each: **what**, then *why · solo-founder fit · AI-assisted fit · alternat
 ---
 
 ## Part C — Suggested Folder Structure (simplified for a solo founder)
+
+> 🔄 **Original day-one plan.** The project has grown well past this (route groups
+> `(frontend)`/`(payload)`, `collections/`, `blocks/`, `scripts/`, many `lib/` files). The
+> current layout is documented in `docs/GKWORLD360_PROJECT_STRUCTURE.md`.
 
 **Guiding rule:** start with the fewest folders possible, and create a new folder **only when you actually have something to put in it.** Nothing is set up "just in case."
 
@@ -262,6 +464,13 @@ The shape still mirrors your Blueprint: `content/` is the product, the single `[
 
 ## Part D — Development Roadmap (technical, aligned to the Blueprint's phases)
 
+> **Status (3 Nov 2026):** Phase 1 is largely done and running on the Vercel site — except the
+> contact form (not wired to Resend yet) and connecting a real domain (not bought yet). The
+> CMS/admin from Phase 2 arrived early (Payload). Gyaani's "Quiz me" is an early taste of
+> Phase 3. 🔮 Accounts, dashboards, saved notes, teacher quizzes and payments are still future —
+> the plan for them will live in `docs/GKWORLD360_PAID_FEATURES_PLAN.md`; the specific tools
+> named below (Prisma, Auth.js, Razorpay) are the original suggestions, to be re-decided there.
+
 **Phase 1 — MVP (content platform)**
 1. Project setup: Next.js + TypeScript + Tailwind + ESLint/Prettier (guided install of Node, the editor, and Git).
 2. Design system: colors, fonts (a clean reading typeface), spacing — the calm Wikipedia/Britannica feel.
@@ -281,6 +490,8 @@ The shape still mirrors your Blueprint: `content/` is the product, the single `[
 ---
 
 ## Part E — Technologies Intentionally Rejected (summary)
+
+> Note (3 Nov 2026): one row has since been reversed — **Payload CMS was adopted** (see #15).
 
 | Rejected | In favor of | Why rejected |
 |---|---|---|
@@ -314,6 +525,9 @@ The shape still mirrors your Blueprint: `content/` is the product, the single `[
 
 ## The one decision to confirm
 
+> ✅ **Resolved (mid-2026):** neither of the two options below — the owner chose **Payload CMS**
+> (with Neon + R2). Kept for the record.
+
 Everything above is firm except the pivotal content fork:
 
 > **Recommended: File-based MDX content for the MVP** (no database, no admin panel — you paste book notes, the AI turns them into article files, you publish). The main alternative is a **headless CMS like Sanity** (a friendlier web editor, at the cost of another service). The website is built identically either way, so this is low-risk and reversible.
@@ -323,6 +537,9 @@ Everything above is firm except the pivotal content fork:
 ---
 
 ## Final Recommended Tech Stack (at a glance)
+
+> This is the **original June 2026** table. For what is actually used, see **"Current Stack"** at
+> the top of this doc.
 
 | Layer | MVP choice | Phase 2+ addition |
 |---|---|---|

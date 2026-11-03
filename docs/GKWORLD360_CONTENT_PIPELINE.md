@@ -87,6 +87,13 @@ If the subject or category does not yet exist in Payload, Claude says so and ask
 creating it. (As of 14 Sep 2026 Payload holds **1 subject and 1 category** — `history` /
 `modern-india` — so a one-time seed of all 18 blueprint subjects is a build item, §9.)
 
+**Every NEW category gets its Hindi name at the same time as its English one (3 Nov 2026).**
+The Hindi site shows a category only when it has a Hindi name (`/admin` → Categories → the
+category → Locale: हिन्दी → Name). Without it, the category's Hindi articles have no Hindi
+category page. Modern India has "आधुनिक भारत" on both dev and production. Claude can set it with
+the ingest action `category-hindi` (dev by default; production only with the owner's go, via
+`npm run dev:prod` and `"production": true`).
+
 ---
 
 ## 5. The writing template — rules every article follows
@@ -335,3 +342,7 @@ check — every find should now report "found 0 times".
 | 14 Sep | Photos never enter the project folder | Copyrighted pages must not reach git |
 | 29 Oct | **NCERT is the source of truth for facts and dates.** Where NCERT states a fact, NCERT wins (with NCERT's precision — "May 1498", no day); where NCERT is silent, the book's fact stays | Readers are exam learners, for whom NCERT is the standard |
 | 29 Oct | Atlas cards: one hook per card, every hook fact in the article, file = master copy | Cards tease the article; one source of truth for corrections |
+| 2 Nov | **Never English and Hindi mixed on one page.** A Hindi page shows only what exists in Hindi | Owner's rule for the whole Hindi site |
+| 3 Nov | A new category gets its Hindi name together with its English one | The Hindi site hides categories without a Hindi name |
+| 3 Nov | Gyaani's "Quiz me" makes questions ONLY from published article text (`lib/quiz.ts`) | So every published article's accuracy now also decides the quiz's accuracy — one more reason the review step matters |
+| 3 Nov | Future: teachers may write public articles as drafts; the owner reviews and publishes (`docs/GKWORLD360_PAID_FEATURES_PLAN.md` §3.6) | Same draft → review → Publish flow as this pipeline; copyright and NCERT checks apply to them too |

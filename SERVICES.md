@@ -138,8 +138,11 @@ the live database.
 
 ---
 
-### Google AI Studio — Gyaani Chatbot
-- **What it does:** Powers the Gyaani AI chatbot using Gemini 2.5 Flash model
+### Google AI Studio — Gyaani Chatbot (and the quiz maker)
+- **What it does:** Powers the Gyaani AI chatbot using Gemini 2.5 Flash model. Since 3 Nov 2026
+  it also powers the **quiz maker** (`lib/quiz.ts` — Gyaani's "Quiz me" questions, made only from
+  our own article text). Both go through one file, `lib/gemini.ts`. A quiz counts as one of a
+  visitor's 10 daily questions, so it doesn't raise the volume beyond the existing limits.
 - **Free tier:** 15 requests per minute, limited daily quota
 - **Paid plan:** Pay-as-you-go (very small cost per 1000 questions)
 - **Card added:** No
@@ -161,6 +164,12 @@ the live database.
 - **Free tier:** Free for this usage
 - **Card added:** No
 - **Schedule:** every 2 hours (15 min → 30 min on 28 Aug 2026 → 2 hours on 21 Sep 2026, to let the database sleep — see the compute note above)
+- **The feeds it reads (no account, no cost — publishers' public RSS feeds, listed in `lib/pulse.ts`):**
+  English pages: The Hindu, Indian Express, LiveMint (10 feeds). Hindi pages, since 3 Nov 2026:
+  **Amar Ujala** (5 feeds) and **Live Hindustan** (4 feeds). We show only the headline, a short
+  snippet and a link to the publisher; their small logos (favicons) sit next to their name for
+  attribution only (`public/images/sources/`). Each stored headline has a `language` field
+  (en / hi) so English and Hindi pages never mix.
 
 > ### ⚠️ 7 OCT 2026 — the job had been OFF since the September suspension
 > Headlines were only being written once a day, by Vercel's own daily cron. The cron-job.org

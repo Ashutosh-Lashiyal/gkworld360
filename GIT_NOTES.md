@@ -269,3 +269,53 @@ git remote set-url origin https://github.com/Ashutosh-Lashiyal/gkworld360.git
 - **`git remote`** = the nickname (`origin`) + address where your code is pushed/pulled.
 - **`set-url`** = change that saved address. Here we just corrected the capitalisation.
 - Check it anytime with **`git remote -v`** (`-v` = verbose, shows the full addresses).
+
+## Fixing your LAST commit's message — `git commit --amend` (3 Nov 2026)
+
+The Hindi phase 3 commit went in as *"These files were worked upon for converting the site
+into hindi"*. That says **which files** were touched, but a useful message says **what
+changed**, because a year from now `git log` is how you find things. (See "Writing good commit
+messages" above.)
+
+```bash
+git commit --amend -m "Whole site in Hindi, phase 3: Hindi subject and category pages"
+```
+- **`--amend`** replaces your last commit with a corrected copy. The files stay the same;
+  only the message changes (it can also add files you forgot, if you `git add` them first).
+- **Only amend BEFORE pushing.** Once a commit is on GitHub, rewording it rewrites history,
+  and anyone else who already has the old one gets confused. After a push, leave it, or make
+  a new commit.
+- How to tell whether you've pushed: `git status -sb`. If the first line shows a remote
+  (e.g. `## feature/redesign...origin/feature/redesign [ahead 2]`), "ahead 2" = 2 commits not
+  pushed yet. If it shows only the branch name, the branch has never been pushed.
+
+## What `??` means in `git status --short` (3 Nov 2026)
+
+`git status --short` (or `-s`) prints one line per file with a two-letter code:
+- **` M`** = **M**odified: Git knows this file and it has changed.
+- **`??`** = **untracked**: a brand-new file Git has never seen (e.g. `lib/quiz.ts` the day it was made).
+- **`A `** = **A**dded: staged with `git add`, ready to commit.
+- **` D`** = **D**eleted.
+
+That's why `git add -A` was the right command for the Hindi phase 4 and Gyaani commits: it
+stages modified files AND the new `??` ones (and deletions). Naming files one by one would
+be easy to get wrong when there are 25 of them.
+
+## Splitting work into separate commits (3 Nov 2026)
+
+Each piece of work got its own commit: the language loader (d29af74), Hindi phase 3, Hindi
+phase 4 (c826048), then the Gyaani quiz work. **Why bother:** if one piece breaks something,
+you can see, undo or skip exactly that piece without touching the others. Doing it is simple:
+commit one piece before starting the next.
+
+## Not git, but met on the same day: `du`, `rm -rf` and a full disk (3 Nov 2026)
+
+The laptop's disk filled up completely mid-session, and no command could run until space was
+freed.
+- **`du -sh <folder>`** = **d**isk **u**sage, **s**ummarised, in **h**uman sizes (e.g. "1.3G").
+  It only looks; it changes nothing. Always run it before deleting.
+- **`rm -rf <folder>`** deletes a folder and everything inside it, **with no undo** (no Trash).
+  Use it only on things that rebuild themselves, like the build caches `.next` and `.next-prod`
+  (the dev server recreates them). Never on your own work.
+- Build caches are not in git (they're in `.gitignore`), so deleting them never shows up in
+  `git status`.
