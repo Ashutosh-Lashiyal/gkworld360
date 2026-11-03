@@ -9,15 +9,31 @@
 // The questions arrive ready-made from the server (the same for everyone
 // today); this component only handles the tapping.
 // `lang` picks its words (lib/home-text.ts) — the Hindi homepage passes "hi".
+//
+// ONE QUIZ CARD FOR THE WHOLE SITE (3 Nov 2026): Gyaani's "Quiz me" shows its
+// quiz with this same card, at a smaller size (variant="chat"). Every quiz on
+// the site uses the one question shape in lib/quiz-shared.ts, so this card can
+// show any of them — and the owner's later plan (teachers' quizzes, "Save",
+// "Send to my class") adds buttons here instead of a second card.
 
 import { useState } from "react";
 import Link from "next/link";
-import type { QuizQuestion } from "@/lib/daily";
+import type { QuizQuestion } from "@/lib/quiz-shared";
 import type { Lang } from "@/lib/lang";
 import { HOME_TEXT } from "@/lib/home-text";
 
-export default function QuickQuiz({ questions, lang = "en" }: { questions: QuizQuestion[]; lang?: Lang }) {
+type QuickQuizProps = {
+  questions: QuizQuestion[];
+  lang?: Lang;
+  // "home" = the homepage card (big type); "chat" = inside Gyaani's window (smaller)
+  variant?: "home" | "chat";
+  label?: string; //   the small label at the top (default: "Quick quiz")
+  endNote?: string; // the line under the score (default: "New questions tomorrow.")
+};
+
+export default function QuickQuiz({ questions, lang = "en", variant = "home", label, endNote }: QuickQuizProps) {
   const t = HOME_TEXT[lang].practice; // this component's words
+  const chat = variant === "chat";
   const [index, setIndex] = useState(0);          // which question is showing
   const [chosen, setChosen] = useState<number | null>(null); // the option tapped, or null
   const [results, setResults] = useState<boolean[]>([]);     // right/wrong for each answered question
@@ -45,7 +61,7 @@ export default function QuickQuiz({ questions, lang = "en" }: { questions: QuizQ
     <div className="font-body">
       {/* top row: the label and a progress bar of three pieces */}
       <div className="flex items-center justify-between gap-3">
-        <span className="text-xs font-extrabold uppercase tracking-[0.12em] text-accent">{t.quiz}</span>
+        <span className="text-xs font-extrabold uppercase tracking-[0.12em] text-accent">{label ?? t.quiz}</span>
         <div className="flex gap-[5px] flex-1 max-w-[160px]" aria-hidden="true">
           {questions.map((_, i) => (
             <i key={i} className={`gk-qbar ${i < results.length ? (results[i] ? "is-right" : "is-wrong") : i === index && !finished ? "is-now" : ""}`} />
@@ -56,13 +72,13 @@ export default function QuickQuiz({ questions, lang = "en" }: { questions: QuizQ
       {finished ? (
         // ── THE END ──
         <div className="text-center pt-3 pb-1">
-          <div className="font-display text-[92px] leading-none text-accent">{score}/{questions.length}</div>
-          <p className="m-0 mt-1.5 mb-4 text-muted">{score === questions.length ? t.allRight : t.goodTry} {t.tomorrow}</p>
+          <div className={`font-display leading-none text-accent ${chat ? "text-[48px]" : "text-[92px]"}`}>{score}/{questions.length}</div>
+          <p className="m-0 mt-1.5 mb-4 text-muted">{score === questions.length ? t.allRight : t.goodTry} {endNote ?? t.tomorrow}</p>
           <button type="button" className="gk-tbtn" onClick={again}>{t.again}</button>
         </div>
       ) : (
         <>
-          <h3 className="m-0 mt-3 mb-4 font-heading text-[22px] md:text-2xl font-semibold leading-tight tracking-[-0.01em] text-foreground [text-wrap:balance]">
+          <h3 className={`m-0 mt-3 mb-4 font-heading font-semibold leading-tight tracking-[-0.01em] text-foreground [text-wrap:balance] ${chat ? "text-[17px]" : "text-[22px] md:text-2xl"}`}>
             {q.question}
           </h3>
           <div className="grid gap-[9px]" role="group" aria-label={t.answers}>

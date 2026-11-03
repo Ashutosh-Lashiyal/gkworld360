@@ -38,6 +38,10 @@ everything once the whole site is redesigned, not phase by phase.
 catch-all route, `getHindiSubject()` decides what exists in Hindi). OWNER'S RULE: no English and
 Hindi mixed on one page — Hindi pages show only subjects/categories/articles that exist in Hindi;
 a category needs its Hindi name in /admin → Categories. Words: `lib/page-text.ts`.
+**3 Nov — Gyaani: suggestions on every page + "Quiz me":** a real quiz card in the chat (the
+homepage's `QuickQuiz`, `variant="chat"`), questions made by the shared quiz maker `lib/quiz.ts`
+from OUR article text only, in the one quiz shape `lib/quiz-shared.ts` (built so the owner's later
+teachers' quizzes reuse it — see TODO "accounts → highlights → quiz"). Gemini calls: `lib/gemini.ts`.
 **3 Nov — Hindi phase 4 built (dev):** Hindi pages show HINDI headlines (Amar Ujala, Live
 Hindustan — 9 feeds in `lib/pulse.ts`); Headlines has a new `language` field and every reader asks
 for one language. New /hi/pulse and /hi/news (`components/pages/PulsePage.tsx`, `NewsPage.tsx`).

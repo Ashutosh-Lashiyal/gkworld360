@@ -21,6 +21,8 @@ import type { AtlasEntry } from "@/lib/atlas-shared";
 import type { Lang } from "@/lib/lang";
 // The quiz's two questions, in each language ("When did this happen?" / "यह कब हुआ?")
 import { HOME_TEXT } from "@/lib/home-text";
+// The one quiz-question shape shared by every quiz on the site
+import type { QuizQuestion } from "@/lib/quiz-shared";
 
 /** Today's day number in India (UTC + 5:30). */
 export function dayNumber(now = new Date()): number {
@@ -53,13 +55,10 @@ function shuffle<T>(items: T[], rand: () => number): T[] {
 }
 
 // ── THE QUICK QUIZ ───────────────────────────────────────────────────────────
-export type QuizQuestion = {
-  question: string;
-  options: string[];
-  answer: number;      // which option is right (its position)
-  explain: string;     // the card's hook, shown after answering
-  more: { title: string; href: string }; // the article to read
-};
+// The question shape lives in lib/quiz-shared.ts since 3 Nov 2026 — ONE shape
+// for every quiz on the site (this one, Gyaani's, and the teachers' quizzes
+// planned for later). Re-exported here so older imports keep working.
+export type { QuizQuestion };
 
 /**
  * Three questions from the Atlas cards, two kinds:

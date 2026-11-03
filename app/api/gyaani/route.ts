@@ -8,6 +8,11 @@
 //
 // The article content is read fresh on every request (fine for now — can be
 // cached later when the site has hundreds of articles).
+//
+// QUIZZES (3 Nov 2026): a request with `quiz: { path, name }` gets a quiz
+// instead of a chat answer — 3 questions made from our own articles by the
+// quiz maker (lib/quiz.ts), in the one quiz shape (lib/quiz-shared.ts). It
+// counts as one of the day's questions, like any other.
 
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
@@ -23,6 +28,8 @@ import {
   MAX_MESSAGE_CHARS,
   MAX_HISTORY_MESSAGES,
 } from "@/lib/gyaani-guard";
+import { askGemini } from "@/lib/gemini";
+import { findQuizSource, makeQuiz } from "@/lib/quiz";
 
 // ── CONTENT EXTRACTOR ─────────────────────────────────────────────────────────
 // Reads an MDX file and converts it to plain readable text for Gyaani's context.
@@ -206,10 +213,8 @@ function pageNote(article: SourceEntry | undefined, readerHindi: boolean): strin
   return lines.length > 0 ? `\n\n## Where the reader is\n${lines.join("\n")}` : "";
 }
 
-// ── GEMINI API ENDPOINT ───────────────────────────────────────────────────────
-// Using gemini-2.5-flash — latest stable model available on this account
-const GEMINI_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+// The Gemini address and its retry rule live in lib/gemini.ts (3 Nov 2026),
+// shared with the quiz maker.
 
 export async function POST(req: NextRequest) {
   // ── GUARDRAILS (lib/gyaani-guard.ts) ──────────────────────────────────────
@@ -218,7 +223,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ reply: "Gyaani is resting at the moment. The articles are all still here to read — come back soon.", success: false });
   }
 
-  let payload: { message?: unknown; history?: unknown; page?: unknown };
+  let payload: { message?: unknown; history?: unknown; page?: unknown; quiz?: unknown };
   try {
     payload = await req.json();
   } catch {
@@ -265,6 +270,46 @@ export async function POST(req: NextRequest) {
   const readerHindi = page === "/hi" || page.startsWith("/hi/");
   const englishPath = readerHindi ? page.slice(3) || "/" : page;
 
+  // ── A QUIZ REQUEST (3 Nov 2026) ───────────────────────────────────────────
+  // `quiz.path` says what the quiz is about — an English address (an article,
+  // a category, a subject) or "random". Like `page`, only a sensible-looking
+  // value is accepted. `quiz.name` is the page's own name for it ("Modern
+  // India"), used only as the quiz's label.
+  const quizAsk = payload.quiz as { path?: unknown; name?: unknown } | undefined;
+  if (quizAsk && typeof quizAsk === "object") {
+    const path =
+      typeof quizAsk.path === "string" && /^(random|\/[\w\-/]{1,200})$/.test(quizAsk.path) ? quizAsk.path : "random";
+    const name = typeof quizAsk.name === "string" ? quizAsk.name.slice(0, 80) : undefined;
+    const lang = readerHindi ? "hi" : "en";
+    try {
+      const source = await findQuizSource(path, lang, name);
+      if (!source) {
+        return NextResponse.json({
+          reply: readerHindi
+            ? "इस पर अभी क्विज़ नहीं बन सकी — यहाँ अभी पर्याप्त लेख नहीं हैं।"
+            : "I can't make a quiz on this yet — there isn't enough on the site about it.",
+          success: false,
+        });
+      }
+      const quiz = await makeQuiz(source, lang, 3);
+      return NextResponse.json({
+        // The line above the quiz card. It also goes back in the chat history,
+        // so "Tell me more" afterwards knows what the quiz was about.
+        reply: readerHindi
+          ? `“${source.title}” पर ${quiz.length} सवाल। सही उत्तर चुनिए।`
+          : `${quiz.length} questions on “${source.title}”. Tap an answer.`,
+        success: true,
+        quiz,
+      });
+    } catch (err) {
+      console.error("Gyaani quiz error:", err);
+      return NextResponse.json({
+        reply: readerHindi ? "अभी क्विज़ नहीं बन सकी, कृपया फिर कोशिश करें।" : "I couldn't make the quiz just now. Please try again.",
+        success: false,
+      });
+    }
+  }
+
   // Build Gyaani's knowledge from site articles + personality prompt
   const [siteContext, sourceIndex] = await Promise.all([getSiteContext(), getSourceIndex()]);
   const reading = page ? sourceIndex.find((t) => t.href === englishPath) : undefined;
@@ -282,34 +327,18 @@ export async function POST(req: NextRequest) {
     { role: "user", parts: [{ text: message }] },
   ];
 
-  // ── GEMINI CALL WITH ONE RETRY ────────────────────────────────────────────
-  // gemini-2.5-flash occasionally returns 503 when it's under high load.
-  // We retry once after a short wait before giving up.
-  const body = JSON.stringify({
+  // ── THE GEMINI CALL (one retry on "busy" — lib/gemini.ts) ─────────────────
+  const body = {
     system_instruction: { parts: [{ text: systemPrompt }] },
     contents,
     generationConfig: {
       maxOutputTokens: 500,
       temperature: 0.7,
     },
-  });
-
-  async function callGemini(): Promise<Response> {
-    return fetch(`${GEMINI_URL}?key=${apiKey}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body,
-    });
-  }
+  };
 
   try {
-    let response = await callGemini();
-
-    // If temporarily overloaded (503), wait 3 seconds and try once more
-    if (response.status === 503) {
-      await new Promise(r => setTimeout(r, 3000));
-      response = await callGemini();
-    }
+    const response = await askGemini(apiKey, body);
 
     if (!response.ok) {
       const errText = await response.text();

@@ -147,6 +147,20 @@
         which article "this article" is; on Hindi pages the source card opens the Hindi article.
         Article headings carry data-article-title (ArticleHeader.tsx). Tested with real questions,
         EN + HI, light + dark, laptop + phone. Old "setState in effect" lint error gone.
+      - [x] **Gyaani suggestions on every page + "Quiz me" BUILT (3 Nov, owner's yes to everything in
+        https://claude.ai/artifact/BgF9Hrjg6Ac88Gucfnq9K7).** Suggestions for 7 kinds of page
+        (article, write-up, subject, category, Atlas place, search, everything else), EN + HI, in
+        components/Gyaani.tsx (`readPageContext` reads the page's own headings). "Quiz me" = a real
+        quiz card in the chat: the homepage's QuickQuiz card (new `variant="chat"`), questions from
+        the shared quiz maker `lib/quiz.ts` (Gemini structured JSON, ONLY our own article text,
+        every answer checked by code, options shuffled) in the ONE quiz shape `lib/quiz-shared.ts`
+        — ready for the teachers' quizzes later. Follow-ups after every answer: "Tell me more" /
+        "Quiz me on this" (→ "Another quiz on this" after a quiz). Gemini address + retry now in
+        `lib/gemini.ts` (shared). Nothing stored; a quiz counts as 1 of the 10 daily questions.
+        Tested on dev: EN article quiz, HI category quiz (3 articles mixed), quiz card + follow-ups
+        in the browser, suggestions on every kind of page in both languages (incl. moving between
+        pages with the chat open — fixed a missing-name bug). New Hindi/English wording → owner's
+        final wording check.
       - [x] **Water loader BUILT (2 Nov):** the page name on the curtain is drawn as empty glass
         letters filling with sky-blue water (level = the bar's %), deep-teal curtain in both modes,
         striped bar kept in the water's blue. Drawing in `lib/water-word.ts`, used by
@@ -376,6 +390,18 @@
 - [ ] **Brainstorm: accounts → highlights → quiz** — design conversation first (who logs in,
       what a highlight is, where quiz questions come from, email vs Google), then a branch with
       the schema pushed via `npm run dev:prod` before deploying. *(agreed 18 Sep)*
+      **OWNER'S VISION (3 Nov 2026 — "near future"; plan for it, don't build it yet):** three roles —
+      SUPER ADMIN (owner, everything), ADMIN (teachers/coaching centres — they PAY; select text in
+      an article → "Make notes" / "Make a quiz", send quizzes to their students, see their students'
+      results on their own dashboard), STUDENT (free; solves quizzes). Paid users may also get more
+      Gyaani (e.g. 50/day — not "unlimited": every question costs Gemini money). Open questions
+      (see chat 3 Nov): which admin customer (tutor / centre / school), free highlight-and-save notes
+      for students vs paid AI notes, how students join (class code / link), DPDP Act 2023 —
+      parental consent for under-18s (collect as little as possible), teacher quizzes public or
+      private, official "GKWorld360 checked" sets kept separate, pricing. Suggested order: live site →
+      student accounts + notes → free pilot with 3–5 teachers → payments (Razorpay/UPI, GST) →
+      super-admin tools. BUILD NOW SO NOTHING CLASHES: one quiz shape and one quiz-maker function
+      shared by Gyaani, the homepage quiz and (later) highlight → quiz.
 - [ ] **Telegram "draft ready" ping + approve-from-phone** — pipeline piece 9, one bot
       (`@Gkworld360_bot`) via a webhook on Vercel; creates drafts on the Vercel site's database;
       both guards (facts list in the message + confirmation tap). Removes the laptop from the
