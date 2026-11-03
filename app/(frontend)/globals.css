@@ -1310,6 +1310,10 @@ body:has([data-article])::after {
 /* THE BIG CARD: two columns wide, two rows tall, the picture filling it, the
    words on a dark fade at the bottom */
 @media (min-width: 640px) { .gk-subj--big { grid-column: span 2; grid-row: span 2; } }
+/* The ONLY card in the grid (the Hindi homepage while History is the one
+   subject in Hindi, 3 Nov 2026): the whole width, so no empty gap beside it.
+   SubjectBento.tsx adds gk-subj--solo when there's just one card. */
+@media (min-width: 640px) { .gk-subj--solo { grid-column: 1 / -1; } }
 .gk-subj--big { position: relative; min-height: 420px; }
 .gk-subj--big .gk-subj__pic { position: absolute; inset: 0; aspect-ratio: auto; }
 .gk-subj--big .gk-subj__pic::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 25%, rgba(5, 7, 13, 0.92)); }
@@ -1496,6 +1500,22 @@ a.gk-tl__item:hover .gk-tl__title { color: var(--accent); }
   /* a thin light edge, so dark parts of the picture still read as letters */
   -webkit-text-stroke: 1px rgba(243, 241, 237, 0.18);
   filter: var(--img-filter);
+}
+/* The Hindi subject page (/hi/history, 3 Nov 2026): Anton has no Hindi
+   letters, and its tight 0.8 line height would cut off the marks above and
+   below Devanagari letters (ि ी ु ू …). So: the Hindi font, bold, with room
+   above and below. Still filled with the picture, like the English title. */
+.gk-fill-word--hi {
+  font-family: var(--font-devanagari), sans-serif;
+  font-weight: 800;
+  line-height: 1.2;
+  /* The picture only fills the title's own box. Hindi's curls (the top of ि,
+     the tail of इ) reach outside the letters' line, so the box gets extra
+     room above and below — otherwise they'd show as empty outlines. */
+  padding-block: 0.22em 0.18em;
+  margin-block: -0.12em -0.32em;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 /* ── CARDS (components/ContentCard.tsx) ────────────────────────────────────── */

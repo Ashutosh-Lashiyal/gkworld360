@@ -106,7 +106,11 @@ export default async function AtlasTeaser({ subject, eyebrow, title, accent, lan
         lede={
           homepage
             ? t.lede
-            : "Battles, discoveries, journeys and births, on one globe and in time order. Pick a year to see where it happened."
+            : hi
+              // the Hindi subject page (/hi/history, 3 Nov 2026) — new Hindi,
+              // not on the phase 3 word list: for the owner's final wording check
+              ? "युद्ध, खोजें, यात्राएँ और जन्म — एक ग्लोब पर, समय के क्रम में। कोई वर्ष चुनें और देखें कि वह कहाँ हुआ।"
+              : "Battles, discoveries, journeys and births, on one globe and in time order. Pick a year to see where it happened."
         }
         more={{ href: homeHref(lang, subject ? `/atlas?subject=${subject}` : "/atlas"), label: t.open }}
       />

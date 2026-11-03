@@ -12,7 +12,7 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
 import { getAllSlugs, slugToFilePath, getContentMeta } from "@/lib/content";
-import { getCMSSearchEntries } from "@/lib/cms";
+import { getCMSSearchEntries, getCMSCategoriesInHindi } from "@/lib/cms";
 import { getAtlasEntries } from "@/lib/atlas";
 
 // Rebuilt at most once an hour, so an article published in /admin appears in
@@ -57,11 +57,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // separate pages, each indexable), deduplicated against any MDX twin.
   const seen = new Set(contentPages.map((p) => p.url));
   const cmsPages: MetadataRoute.Sitemap = [];
-  for (const e of await getCMSSearchEntries()) {
+  const searchEntries = await getCMSSearchEntries();
+  for (const e of searchEntries) {
     const url = `${SITE_URL}${e.url}`;
     if (seen.has(url)) continue;
     seen.add(url);
     cmsPages.push({ url, lastModified: now, changeFrequency: "weekly", priority: 0.8 });
+  }
+
+  // HINDI SUBJECT AND CATEGORY PAGES (3 Nov 2026, phase 3): /hi/history and
+  // /hi/history/modern-india exist only when they have Hindi articles — and a
+  // category only when it also has a Hindi name in /admin (the same rules as
+  // the pages themselves, app/(frontend)/[...slug]/page.tsx).
+  // A Hindi article's address is /hi/<subject>/<category>/<article>, so the
+  // list of Hindi articles tells us which subjects and categories to add.
+  const hindiArticles = searchEntries
+    .map((e) => e.url.split("/").filter(Boolean)) // "/hi/history/x/y" → ["hi","history","x","y"]
+    .filter((parts) => parts[0] === "hi" && parts.length >= 3 && parts[1] !== "news");
+  for (const subject of new Set(hindiArticles.map((parts) => parts[1]))) {
+    cmsPages.push({ url: `${SITE_URL}/hi/${subject}`, lastModified: now, changeFrequency: "weekly", priority: 0.7 });
+    const hindiNames = await getCMSCategoriesInHindi(subject);
+    const categories = new Set(hindiArticles.filter((parts) => parts[1] === subject && parts.length === 4).map((parts) => parts[2]));
+    for (const category of categories) {
+      if (!hindiNames.has(category)) continue; // no Hindi name → no Hindi page
+      cmsPages.push({ url: `${SITE_URL}/hi/${subject}/${category}`, lastModified: now, changeFrequency: "weekly", priority: 0.7 });
+    }
   }
 
   // The World360 Atlas (29 Oct 2026): the page in both languages, and every

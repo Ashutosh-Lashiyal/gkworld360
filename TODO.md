@@ -198,13 +198,31 @@
         - [ ] Contact page (owner to decide later): (1) the name box's example is the owner's real
           name "Ashutosh Lashiyal" — suggest a neutral example; (2) the form sends nothing yet
           (planned: Resend email) — decide where messages go.
-        - [ ] Phase 3 — Hindi subject + category pages (/hi/history, /hi/history/modern-india); Hindi
-          names already in /admin. Leftover English labels around articles. Word list (39 rows):
+        - [x] **Phase 3 BUILT (3 Nov)** — Hindi subject + category pages (/hi/history,
+          /hi/history/modern-india), checked on dev. Word list (39 rows):
           https://claude.ai/artifact/CHtWZ9Q33Qh92m8GtiCykE. OWNER'S DECISIONS (2 Nov):
           RULE: never English and Hindi mixed on one page. Q1 an article with no Hindi version →
           hidden on Hindi pages (owner: it shouldn't happen, both languages are written together).
           Q2 a subject with no Hindi articles → no Hindi page, not shown on Hindi pages.
           Q3 a category with no Hindi description → show nothing under the title.
+          What changed: words in lib/page-text.ts (subjectPage, categoryPage, article, share);
+          getHindiSubject() in app/(frontend)/[...slug]/page.tsx; getCMSCategoriesInHindi() in
+          lib/cms.ts; every subject added to HINDI_TWINS; Hindi pages (subjects page, homepage,
+          header menu) list ONLY subjects with Hindi articles and drop the small English names;
+          Hindi article breadcrumb/pill/"मिनट में पढ़ें"/Hindi date; share menu in Hindi; sitemap +
+          refresh list include the Hindi pages. A category needs a HINDI NAME in /admin to appear
+          on Hindi pages (dev: "आधुनिक भारत" saved 3 Nov via the new ingest action category-hindi).
+        - [ ] **BEFORE the Vercel site gets Phase 3:** type "आधुनिक भारत" as Modern India's Hindi
+          name in the PRODUCTION /admin (Categories → Modern India → Hindi tab → Name). Without it
+          the Vercel site's /hi/history shows no category. Owner does this (production = owner's go).
+        - [ ] Content pipeline rule: every NEW category gets its Hindi name in /admin at the same
+          time as its English one (or it won't appear on Hindi pages).
+        - [ ] Later, small: picture captions/alt text in /admin → Media have ONE language (English),
+          so Hindi articles hide the cover caption and in-body pictures keep English alt text
+          (invisible, read by screen readers). Fix = make Media alt/caption localized.
+        - [ ] Owner's Hindi wording check (end of all phases) — also covers two NEW lines not on the
+          word list: the Atlas line on /hi/history ("युद्ध, खोजें, यात्राएँ और जन्म — …") and the
+          Previous/Next screen-reader label "और लेख".
         - [x] **Loader when switching language (owner, 2 Nov: "it is taking time") — BUILT 3 Nov.**
           Cause: the header EN | हिं switch (components/LangSwitch.tsx) changed page with router.push
           from a button, and both loaders (PageCurtain, NavigationLoader) only listen for LINK

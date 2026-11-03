@@ -17,8 +17,9 @@
 //       | { "action": "add-images", "images": { slug, cover?, images: [{ file, alt, caption, afterHeading }] } }
 //       | { "action": "create-atlas-entries", "entries": [ …see drafts/atlas-catch-up.json… ], "replace"?: true }
 //       | { "action": "fix-text", "fixes": { articles: [{ slug, locale, fixes: [{ find, replace }] }], media?: […] } }
+//       | { "action": "category-hindi", "category": { slug, name } }   (a category's Hindi name, 3 Nov 2026)
 
-import { createArticleDraft, deleteArticle, addHindiToArticle, addImagesToArticle, importArticle, createQuote, writeImagePrompts, publishArticle, createAtlasEntries, fixArticleText, type AtlasEntryInput, type TextFixFile, type ArticleDraft, type HindiAddition, type ImageAddition, type ArticleExport, type QuoteInput } from "@/lib/ingest";
+import { createArticleDraft, deleteArticle, addHindiToArticle, addImagesToArticle, importArticle, createQuote, writeImagePrompts, publishArticle, createAtlasEntries, fixArticleText, setCategoryHindiName, type CategoryHindi, type AtlasEntryInput, type TextFixFile, type ArticleDraft, type HindiAddition, type ImageAddition, type ArticleExport, type QuoteInput } from "@/lib/ingest";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,7 @@ export async function POST(req: Request) {
   }
 
   const host = dbHost();
-  let body: { action?: string; draft?: ArticleDraft; hindi?: HindiAddition; images?: ImageAddition; article?: ArticleExport; quote?: QuoteInput; entries?: AtlasEntryInput[]; replace?: boolean; fixes?: TextFixFile; slug?: string; force?: boolean; id?: number; production?: boolean };
+  let body: { action?: string; draft?: ArticleDraft; hindi?: HindiAddition; images?: ImageAddition; article?: ArticleExport; quote?: QuoteInput; entries?: AtlasEntryInput[]; replace?: boolean; fixes?: TextFixFile; category?: CategoryHindi; slug?: string; force?: boolean; id?: number; production?: boolean };
   try {
     body = await req.json();
   } catch {
@@ -71,6 +72,10 @@ export async function POST(req: Request) {
     }
     if (body.action === "fix-text" && body.fixes) {
       const result = await fixArticleText(body.fixes);
+      return Response.json({ ok: true, host, ...result });
+    }
+    if (body.action === "category-hindi" && body.category) {
+      const result = await setCategoryHindiName(body.category);
       return Response.json({ ok: true, host, ...result });
     }
     if (body.action === "write-prompts") {

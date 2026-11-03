@@ -414,6 +414,24 @@ export async function createQuote(q: QuoteInput): Promise<{ id: number | string 
   return { id: created.id };
 }
 
+// ── A category's Hindi name ───────────────────────────────────────────────────
+// Added 3 Nov 2026 for the Hindi subject and category pages (/hi/history/…).
+// The owner's rule is "no English and Hindi mixed on one page", so a category
+// with no Hindi name can't appear on a Hindi page at all. This fills the Hindi
+// `name` (the same box as /admin → Categories → the Hindi language tab).
+// Only the Hindi value is written; the English name is left alone.
+export type CategoryHindi = { slug: string; name: string };
+export async function setCategoryHindiName(c: CategoryHindi): Promise<{ id: number | string; name: unknown }> {
+  const payload = await getPayload({ config: configPromise });
+  const found = await payload.find({ collection: "categories", where: { slug: { equals: c.slug } }, limit: 1, depth: 0 });
+  const category = found.docs[0];
+  if (!category) throw new Error(`No category with the slug "${c.slug}".`);
+  await payload.update({ collection: "categories", id: category.id, locale: "hi", data: { name: c.name } });
+  // Read it back in BOTH languages, so the script can show what is saved now
+  const check = await payload.findByID({ collection: "categories", id: category.id, locale: "all", depth: 0 });
+  return { id: category.id, name: check.name };
+}
+
 // ── Writing image prompts for articles that pre-date the field ───────────────
 // The prompts are normally written by the save hook, which only runs on save.
 // Articles written before 18 Sep 2026 have an empty box until touched; this

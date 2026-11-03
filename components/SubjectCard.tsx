@@ -39,8 +39,9 @@ export default async function SubjectCard({ title, description, slug, image, ind
   const colors = SUBJECT_COLORS[slug];
   const hi = lang === "hi";
   const words = PAGE_TEXT[lang];
-  // The small tag shows the subject's name in the OTHER language: "I · इतिहास" / "I · History"
-  const otherName = hi ? getSubjectInfo(slug)?.label : getSubjectInfo(slug)?.labelHi;
+  // The small tag: on English pages the Hindi name too ("I · इतिहास"). On Hindi
+  // pages just the number — no English on Hindi pages (owner's rule, 3 Nov 2026).
+  const otherName = hi ? undefined : getSubjectInfo(slug)?.labelHi;
   const numeral = index !== undefined ? ROMAN[index] : undefined;
 
   // Real counts (17 Sep 2026, owner's friend's suggestion): categories and
@@ -57,7 +58,8 @@ export default async function SubjectCard({ title, description, slug, image, ind
     <ContentCard
       title={title}
       description={description}
-      href={`/${slug}`}
+      // Hindi pages open the subject's Hindi page (/hi/history, phase 3)
+      href={hi ? `/hi/${slug}` : `/${slug}`}
       image={image}
       label={[numeral, otherName].filter(Boolean).join(" · ") || undefined}
       hoverBg={colors?.bg}

@@ -11,8 +11,12 @@
 // HINDI HOMEPAGE (2 Nov 2026, lang="hi"): the same six cards, but counting
 // only articles that have a Hindi version, with the Hindi names, the Hindi
 // descriptions (lib/subjects.ts) and the Hindi article titles on the big card.
-// The cards still open the subject's page, which is in English until phase 3
-// (the owner's call). "सभी विषय" leads to /hi/subjects (phase 2).
+// "सभी विषय" leads to /hi/subjects (phase 2).
+//
+// PHASE 3 (3 Nov 2026, owner's rule: no English on Hindi pages): the Hindi
+// homepage shows ONLY the subjects that have Hindi articles — no greyed
+// "coming soon" cards — each opening its Hindi page (/hi/history), and the
+// small tag shows just the number, without the English name.
 
 import Link from "next/link";
 import Image from "next/image";
@@ -44,11 +48,14 @@ export default async function SubjectBento({ lang = "en" }: { lang?: Lang }) {
     hi
       ? new Set(topics.filter((tp) => tp.slug[0] === slug && tp.slug.length > 2).map((tp) => tp.slug[1])).size
       : stats.categoriesBySubject[slug] ?? 0;
+  // Hindi: only the subjects with something to read in Hindi
+  const shown = hi ? subjects.filter((s) => count(s.slug) > 0) : subjects;
+  if (shown.length === 0) return null;
   // The big card: the subject with the most topics (History, for now)
-  const big = subjects.reduce((best, s) => (count(s.slug) > count(best.slug) ? s : best), subjects[0]);
+  const big = shown.reduce((best, s) => (count(s.slug) > count(best.slug) ? s : best), shown[0]);
   const bigTopics = topics.filter((tp) => tp.slug[0] === big.slug).slice(0, 6);
   // The big card first, then the rest in their usual order
-  const ordered = [big, ...subjects.filter((s) => s !== big)];
+  const ordered = [big, ...shown.filter((s) => s !== big)];
 
   return (
     <section aria-labelledby="subjects-title" className="max-w-[1320px] mx-auto px-4 md:px-8 pt-20 md:pt-28">
@@ -74,8 +81,8 @@ export default async function SubjectBento({ lang = "en" }: { lang?: Lang }) {
           return (
             <Link
               key={s.slug}
-              href={`/${s.slug}`}
-              className={`gk-card gk-card--lift gk-tilt gk-subj ${isBig ? "gk-subj--big" : ""} ${n === 0 ? "gk-subj--wait" : ""}`}
+              href={hi ? `/hi/${s.slug}` : `/${s.slug}`}
+              className={`gk-card gk-card--lift gk-tilt gk-subj ${isBig ? "gk-subj--big" : ""} ${ordered.length === 1 ? "gk-subj--solo" : ""} ${n === 0 ? "gk-subj--wait" : ""}`}
               data-cursor={n > 0 ? t.cursor.explore : t.cursor.soon}
               // the subject's two colours: a dark one for light pages, a light one for dark pages
               style={{ ["--cl" as string]: colours?.accent ?? "#047857", ["--cd" as string]: colours?.bandAccent ?? "#6ee7b7" }}
@@ -84,9 +91,9 @@ export default async function SubjectBento({ lang = "en" }: { lang?: Lang }) {
                 {s.meta.image && <Image src={s.meta.image} alt="" fill sizes={isBig ? "(max-width: 767px) 100vw, 820px" : "(max-width: 767px) 100vw, 420px"} className="object-cover" />}
               </div>
               <div className="gk-subj__txt font-body">
-                {/* the small tag shows the OTHER language's name: "I · इतिहास" / "I · History" */}
+                {/* the small tag: English page "I · इतिहास"; Hindi page just "I" (no English, 3 Nov 2026) */}
                 <span className="gk-subj__tag">
-                  {number} · {hi ? <span lang="en">{info?.label}</span> : <span lang="hi" className="font-hindi">{info?.labelHi}</span>}
+                  {number}{!hi && <> · <span lang="hi" className="font-hindi">{info?.labelHi}</span></>}
                 </span>
                 <h3 className="gk-subj__name">{name}</h3>
                 {description && <p className="gk-subj__desc">{description}</p>}

@@ -23,6 +23,7 @@ import {
 import type { SubjectColors } from "@/lib/subject-colors";
 import { formatNewsDate } from "@/lib/date-utils";
 import OnTheMap from "@/components/atlas/OnTheMap";
+import { PAGE_TEXT } from "@/lib/page-text";
 
 export default function CMSTopicView({
   article,
@@ -31,6 +32,7 @@ export default function CMSTopicView({
   lang = "en",
   enHref,
   hiHref,
+  label,
 }: {
   article: CMSArticle;
   breadcrumbs: { label: string; href: string }[];
@@ -42,14 +44,26 @@ export default function CMSTopicView({
   // exist, so an English-only article simply shows no toggle.
   enHref?: string;
   hiHref?: string;
+  // The subject pill's words, e.g. "इतिहास · आधुनिक भारत". The Hindi page passes
+  // it (3 Nov 2026): the CMS has no Hindi SUBJECT names, so article.subject.name
+  // would say "History" on a Hindi page. Left out → the CMS names, as before.
+  label?: string;
 }) {
+  const hi = lang === "hi";
+  const w = PAGE_TEXT[lang].article;
   const subjectLabel = article.subject?.name ?? "";
   const categoryLabel = article.category?.name ?? "";
-  // "2 min read" → "2 मिनट का पाठ" on the Hindi page
-  const readingTimeEn = estimateReadingTime(article.body);
-  const readingTime = lang === "hi" ? readingTimeEn.replace(/(\d+) min read/, "$1 मिनट का पाठ") : readingTimeEn;
+  // "8 min read" / "8 मिनट में पढ़ें" (owner's word list A2, 3 Nov 2026):
+  // estimateReadingTime gives "8 min read" — we keep only the number
+  const minutes = estimateReadingTime(article.body).match(/\d+/)?.[0] ?? "1";
+  const readingTime = w.minutes(minutes);
   // Show the published date if set, otherwise the last-updated date.
   const dateStr = article.publishedDate ?? article.updatedAt ?? null;
+  // THE COVER'S CAPTION: the picture's words live on the picture itself in
+  // /admin → Media, which has ONE language (English). On a Hindi page they'd
+  // be English under a Hindi title, so the Hindi page shows no caption and
+  // describes the picture with the Hindi title instead (3 Nov 2026).
+  const coverWords = hi ? undefined : article.coverImage?.alt ?? undefined;
   // Key Takeaways come out of the body and go to the top.
   const { points, body } = splitKeyTakeaways(article.body);
   // The h2/h3 headings, for the Contents rail.
@@ -62,13 +76,13 @@ export default function CMSTopicView({
       header={
         <ArticleHeader
           breadcrumbs={breadcrumbs}
-          label={[subjectLabel, categoryLabel].filter(Boolean).join(" · ")}
+          label={label ?? [subjectLabel, categoryLabel].filter(Boolean).join(" · ")}
           title={article.title}
           summary={article.description ?? undefined}
-          metaItems={[readingTime, ...(dateStr ? [`${lang === "hi" ? "प्रकाशित" : "Published"} ${formatNewsDate(dateStr)}`] : [])]}
+          metaItems={[readingTime, ...(dateStr ? [w.published(formatNewsDate(dateStr, lang))] : [])]}
           coverUrl={article.coverImage?.url ?? undefined}
-          coverAlt={article.coverImage?.alt ?? article.title}
-          coverCaption={article.coverImage?.alt ?? undefined}
+          coverAlt={coverWords ?? article.title}
+          coverCaption={coverWords}
           lang={lang}
           enHref={enHref}
           hiHref={hiHref}

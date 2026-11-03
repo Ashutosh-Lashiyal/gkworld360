@@ -781,3 +781,54 @@ export async function getCMSArticlesInCategory(
     return [];
   }
 }
+
+// ── A SUBJECT'S CATEGORIES, IN HINDI ─────────────────────────────────────────
+// Added 3 Nov 2026 (the whole site in Hindi, phase 3) for the Hindi subject and
+// category pages (/hi/history, /hi/history/modern-india) and the Hindi
+// article's breadcrumb ("होम › इतिहास › आधुनिक भारत").
+//
+// The category's ENGLISH name and description still come from its overview.mdx
+// file (content/<subject>/<category>/overview.mdx), as before. Its HINDI name
+// and Hindi description come from /admin → Categories (the Hindi language tab).
+//
+// The owner's rule (2 Nov 2026): never English and Hindi mixed on one page. So:
+//   - no Hindi name        → the category isn't shown on Hindi pages at all;
+//   - no Hindi description → nothing under the title (owner's answer Q3).
+//
+// Returns a Map: category slug → { name, description } in Hindi (only the
+// categories that HAVE a Hindi name). One query for the whole subject.
+export type CMSCategoryHindi = { name: string; description: string | null };
+export async function getCMSCategoriesInHindi(subjectSlug: string): Promise<Map<string, CMSCategoryHindi>> {
+  const out = new Map<string, CMSCategoryHindi>();
+  try {
+    const payload = await getClient();
+    const result = await payload.find({
+      collection: "categories",
+      // Filter in the database (the Neon lesson from August — never fetch all
+      // and filter in JavaScript)
+      where: { "subject.slug": { equals: subjectSlug } },
+      // `locale: "all"` → each localized field comes back as { en, hi }, so we
+      // can see whether the Hindi is REALLY there (Payload's fallback would
+      // otherwise quietly hand us the English name)
+      locale: "all",
+      depth: 0,
+      limit: 100,
+      select: { slug: true, name: true, overview: true },
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for (const d of result.docs as any[]) {
+      const name = (d.name ?? {}) as Partial<Record<CMSLocale, string | null>>;
+      const overview = (d.overview ?? {}) as Partial<Record<CMSLocale, unknown>>;
+      const nameHi = name.hi?.trim();
+      if (!d.slug || !nameHi) continue; // no Hindi name → not on Hindi pages
+      // The description is rich text in /admin; a listing needs plain words
+      const descriptionHi = lexicalToPlainText(overview.hi).replace(/\s+/g, " ").trim();
+      out.set(d.slug, { name: nameHi, description: descriptionHi || null });
+    }
+  } catch (error) {
+    // Database unreachable: no Hindi names → the Hindi pages show no
+    // categories rather than crashing. /api/health reports the real problem.
+    cmsUnavailable("getCMSCategoriesInHindi", subjectSlug, error);
+  }
+  return out;
+}

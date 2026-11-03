@@ -2,6 +2,10 @@
 // Subjects, All topics, Search, Read Later, About, Contact and "page not found"
 // (the whole site in Hindi, phase 2, 2 Nov 2026 — the owner approved the Hindi
 // and will do a full wording check once everything is built).
+// Phase 3 (3 Nov 2026) added a SUBJECT page (/history, /hi/history), a
+// CATEGORY page (/history/modern-india, /hi/history/modern-india), the small
+// words on ARTICLES, and the SHARE menu. Their Hindi is the owner's word list:
+// https://claude.ai/artifact/CHtWZ9Q33Qh92m8GtiCykE (row numbers S1…, C1…, A1…).
 //
 // Same idea as lib/home-text.ts (the homepage) and lib/site-text.ts (header,
 // footer): each page is ONE component that takes a language, and its words
@@ -109,6 +113,57 @@ export type PageText = {
     afterList: string[];
   };
   notFound: { title: string; accent: string; text: string; home: string; browse: string };
+  // ── phase 3 (3 Nov 2026) ──
+  subjectPage: {
+    crumb: string; //                         S1  the breadcrumb: "Subjects"
+    label: string; //                         S2  the small line above the name
+    categories: (n: number) => string; //     S3  the number box: "Category" / "Categories"
+    topics: (n: number) => string; //         S4  "Topic" / "Topics"
+    inHindi: string; //                       S5  (English page only — on a Hindi page every article is Hindi)
+    browse: string; //                        S6
+    pick: Title; //                           S7
+    order: string; //                         S8
+    count: (n: number) => string; //          S9  a category card's label: "4 topics"
+    allTopics: Title; //                      S11 a subject with no categories
+    soon: string; //                          S12 nothing yet
+    soonText: (subject: string) => string;
+    newTo: string; //                         S13
+    start: Title; //                          S14
+    startLede: string; //                     S15
+    read: string; //                          S16 a "Start here" card with no category name
+    atlasEyebrow: (subject: string) => string; // S17
+    atlas: Title; //                          S18
+    fresh: string; //                         S19
+    recent: Title; //                         S20
+    all: string; //                           S21
+    seoLabel: string; //                      the link-preview picture's label
+  };
+  categoryPage: {
+    path: string; //                          C2 the two view buttons
+    grid: string;
+    progress: (done: number, total: number) => string; // C3 "2 of 4 read"
+    device: string; //                        C4
+    start: string; //                         C5
+    next: string;
+    soon: string; //                          C8
+    soonText: string;
+    seoLabel: (subject: string) => string; // A10 "History · Category"
+  };
+  article: {
+    minutes: (n: string) => string; //        A2 "8 min read"
+    published: (date: string) => string; //   A3
+    previous: string; //                      A4
+    next: string;
+    more: string; //                          the Previous/Next links, read aloud
+    related: string; //                       A5
+  };
+  share: {
+    copy: string; //                          A6
+    email: string;
+    copied: string; //                        A7
+    failed: string; //                        A8
+    label: string; //                         A9 read aloud
+  };
 };
 
 export const PAGE_TEXT: Record<Lang, PageText> = {
@@ -269,6 +324,56 @@ export const PAGE_TEXT: Record<Lang, PageText> = {
       home: "Go to homepage",
       browse: "Browse subjects",
     },
+    subjectPage: {
+      crumb: "Subjects",
+      label: "Subject",
+      categories: (n) => (n === 1 ? "Category" : "Categories"),
+      topics: (n) => (n === 1 ? "Topic" : "Topics"),
+      inHindi: "In Hindi",
+      browse: "Browse by category",
+      pick: { title: "Pick a", accent: "category" },
+      order: "In reading order.",
+      count: (n) => `${n} ${n === 1 ? "topic" : "topics"}`,
+      allTopics: { title: "All", accent: "topics" },
+      soon: "Coming soon",
+      soonText: (subject) => `${subject} articles are being written and checked.`,
+      newTo: "New to the subject?",
+      start: { title: "Start", accent: "here" },
+      startLede: "Read these in order. Each one picks up where the last stopped.",
+      read: "Read",
+      atlasEyebrow: (subject) => `${subject} on the Atlas`,
+      atlas: { title: "Where it", accent: "happened" },
+      fresh: "Fresh from the desk",
+      recent: { title: "Recently", accent: "added" },
+      all: "All topics",
+      seoLabel: "Subject",
+    },
+    categoryPage: {
+      path: "Learning path",
+      grid: "Grid",
+      progress: (done, total) => `${done} of ${total} read`,
+      device: "Your progress, on this device",
+      start: "Start",
+      next: "Next",
+      soon: "Coming soon",
+      soonText: "Topics are being written and checked. Check back later.",
+      seoLabel: (subject) => `${subject} · Category`,
+    },
+    article: {
+      minutes: (n) => `${n} min read`,
+      published: (date) => `Published ${date}`,
+      previous: "← Previous",
+      next: "Next →",
+      more: "More topics",
+      related: "Related topics",
+    },
+    share: {
+      copy: "Copy link",
+      email: "Email",
+      copied: "Link copied",
+      failed: "Couldn't copy — long-press the address bar instead",
+      label: "Share this page",
+    },
   },
 
   // ── हिन्दी (approved by the owner, 2 Nov 2026) ───────────────────────────────
@@ -416,6 +521,56 @@ export const PAGE_TEXT: Record<Lang, PageText> = {
       text: "आप जो पेज ढूँढ रहे हैं, वह मौजूद नहीं है या कहीं और चला गया है। हमारे विषय देखें या जो चाहिए उसे खोजें।",
       home: "होम पेज पर जाएँ",
       browse: "विषय देखें",
+    },
+    subjectPage: {
+      crumb: "विषय", //                                         S1
+      label: "विषय", //                                         S2
+      categories: (n) => (n === 1 ? "श्रेणी" : "श्रेणियाँ"), //     S3
+      topics: () => "लेख", //                                   S4 (the same word for one or many)
+      inHindi: "हिन्दी में", //                                  S5
+      browse: "श्रेणी के अनुसार देखें", //                         S6
+      pick: { title: "एक श्रेणी", accent: "चुनें" }, //             S7
+      order: "पढ़ने के क्रम में।", //                              S8
+      count: (n) => `${n} लेख`, //                              S9
+      allTopics: { title: "सभी", accent: "लेख" }, //              S11
+      soon: "जल्द आ रहा है", //                                  S12
+      soonText: (subject) => `${subject} के लेख लिखे और जाँचे जा रहे हैं।`,
+      newTo: "इस विषय में नए हैं?", //                            S13
+      start: { title: "यहाँ से", accent: "शुरू करें" }, //          S14
+      startLede: "इन्हें क्रम से पढ़ें। हर लेख वहीं से आगे बढ़ता है, जहाँ पिछला रुका था।", // S15
+      read: "पढ़ें", //                                          S16
+      atlasEyebrow: (subject) => `एटलस पर ${subject}`, //         S17
+      atlas: { title: "यह कहाँ", accent: "हुआ" }, //              S18
+      fresh: "ताज़ा लेख", //                                      S19
+      recent: { title: "हाल ही में", accent: "जोड़े गए" }, //       S20
+      all: "सभी लेख", //                                        S21
+      seoLabel: "विषय",
+    },
+    categoryPage: {
+      path: "सीखने का क्रम", //                                  C2
+      grid: "ग्रिड",
+      progress: (done, total) => `${total} में से ${done} पढ़े`, //  C3
+      device: "आपकी प्रगति, इसी डिवाइस पर", //                     C4
+      start: "शुरू करें", //                                      C5
+      next: "अगला",
+      soon: "जल्द आ रहा है", //                                  C8
+      soonText: "लेख लिखे और जाँचे जा रहे हैं। कुछ समय बाद फिर देखें।",
+      seoLabel: (subject) => `${subject} · श्रेणी`, //           A10
+    },
+    article: {
+      minutes: (n) => `${n} मिनट में पढ़ें`, //                    A2
+      published: (date) => `प्रकाशित: ${date}`, //                A3
+      previous: "← पिछला", //                                    A4
+      next: "अगला →",
+      more: "और लेख",
+      related: "संबंधित लेख", //                                  A5
+    },
+    share: {
+      copy: "लिंक कॉपी करें", //                                  A6 (WhatsApp, Telegram, X keep their names)
+      email: "ईमेल",
+      copied: "लिंक कॉपी हो गया", //                              A7
+      failed: "कॉपी नहीं हो सका। एड्रेस बार को देर तक दबाकर कॉपी करें।", // A8
+      label: "यह पेज शेयर करें", //                               A9
     },
   },
 };

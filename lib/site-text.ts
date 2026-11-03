@@ -17,6 +17,7 @@
 // Plain data only — safe to import from server AND client components.
 
 import type { Lang } from "@/lib/lang";
+import { SUBJECTS } from "@/lib/subjects";
 
 /** The language of a page, read from its address. */
 export function pageLang(pathname: string): Lang {
@@ -26,9 +27,16 @@ export function pageLang(pathname: string): Lang {
 // Pages that already have a Hindi twin under /hi. An entry covers the page and
 // everything below it ("/atlas" also covers /atlas/vasco-da-gama-…).
 // "/" is special: it means the homepage only.
+//
+// Phase 3 (3 Nov 2026) adds EVERY SUBJECT ("/history" covers /history/modern-india
+// and its articles too). That's safe because of the owner's rule — no English on
+// Hindi pages: Hindi pages only ever show subjects, categories and articles that
+// exist in Hindi, so every link they make to one of them has a Hindi twin. A
+// mistyped /hi/physics simply gets the Hindi "page not found".
 const HINDI_TWINS = [
   "/", "/atlas", //                                     phase 1 (2 Nov 2026)
   "/subjects", "/topics", "/search", "/saved", "/about", "/contact", // phase 2 (2 Nov 2026)
+  ...SUBJECTS.map((s) => `/${s.slug}`), //               phase 3 (3 Nov 2026)
 ];
 
 /**

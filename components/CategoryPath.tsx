@@ -13,18 +13,29 @@
 // A ring at the top says "2 of 4 read". A switch shows the usual card grid
 // instead (the cards are drawn by the server and handed in as `grid`).
 // The reader's choice of view and their read list stay in this browser.
+//
+// HINDI (3 Nov 2026, phase 3): on a Hindi category page (/hi/history/…) every
+// word is Hindi (lib/page-text.ts → categoryPage) and the small "EN · हिन्दी"
+// tag under each title is left out — on a Hindi page every article IS Hindi,
+// and the owner's rule is no English on Hindi pages.
 
 import { useLayoutEffect, useRef, type ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useStored, writeStored } from "@/lib/use-stored";
 import { READ_KEY } from "@/lib/reading";
+// The page's language (from the address) and its words
+import { useSiteText } from "@/lib/use-site-text";
+import { PAGE_TEXT } from "@/lib/page-text";
 
 export type PathTopic = { title: string; href: string; image?: string; hindiHref?: string; note?: string };
 
 const VIEW_KEY = "gk-category-view";
 
 export default function CategoryPath({ topics, grid }: { topics: PathTopic[]; grid: ReactNode }) {
+  const { lang } = useSiteText();
+  const hi = lang === "hi";
+  const w = PAGE_TEXT[lang].categoryPage;
   const view = useStored(VIEW_KEY) === "grid" ? "grid" : "path";
   const raw = useStored(READ_KEY);
   let readList: string[] = [];
@@ -75,7 +86,7 @@ export default function CategoryPath({ topics, grid }: { topics: PathTopic[]; gr
               onClick={() => writeStored(VIEW_KEY, v)}
               className="gk-view-btn px-4 py-2 rounded-xl text-sm font-extrabold"
             >
-              {v === "path" ? "Learning path" : "Grid"}
+              {v === "path" ? w.path : w.grid}
             </button>
           ))}
         </div>
@@ -88,8 +99,8 @@ export default function CategoryPath({ topics, grid }: { topics: PathTopic[]; gr
               style={{ transition: "stroke-dashoffset 1s var(--ease-out-soft)" }} />
           </svg>
           <div>
-            {done} of {topics.length} read
-            <small className="block text-[13px] font-bold text-muted">Your progress, on this device</small>
+            {w.progress(done, topics.length)}
+            <small className="block text-[13px] font-bold text-muted">{w.device}</small>
           </div>
         </div>
       </div>
@@ -105,15 +116,19 @@ export default function CategoryPath({ topics, grid }: { topics: PathTopic[]; gr
               return (
                 <li key={t.href} className={`gk-path__node ${isRead ? "is-done" : ""}`} style={{ ["--i" as string]: i }}>
                   <Link href={t.href} className="gk-path__disc" aria-label={t.title}>
-                    {next === t && <span className="gk-path__bubble">{done === 0 ? "Start" : "Next"}</span>}
+                    {next === t && <span className="gk-path__bubble">{done === 0 ? w.start : w.next}</span>}
                     {t.image ? <Image src={t.image} alt="" fill sizes="108px" className="object-cover rounded-full" /> : <span className="gk-noimg absolute inset-0 rounded-full" />}
                   </Link>
                   <div className="gk-path__label">
                     <b>{String(i + 1).padStart(2, "0")}</b>
                     <Link href={t.href}>{t.title}</Link>
-                    <small>
-                      {t.note ? `${t.note} · ` : ""}EN{t.hindiHref && <> · <span lang="hi" className="font-hindi">हिन्दी</span></>}
-                    </small>
+                    {/* English page: which languages the article is in. Hindi page: nothing (all Hindi). */}
+                    {(!hi || t.note) && (
+                      <small>
+                        {t.note}
+                        {!hi && <>{t.note ? " · " : ""}EN{t.hindiHref && <> · <span lang="hi" className="font-hindi">हिन्दी</span></>}</>}
+                      </small>
+                    )}
                   </div>
                 </li>
               );

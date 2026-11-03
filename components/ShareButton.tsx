@@ -8,11 +8,19 @@
 //
 // The button is the site's one Button (ghost variant) so it matches the
 // language toggle it sits beside.
+//
+// HINDI (3 Nov 2026, phase 3): on Hindi pages (/hi/…) the menu, the messages
+// and the read-aloud label are in Hindi — the words live in lib/page-text.ts
+// (share). The page's language comes from its address, like the header's.
+// WhatsApp, Telegram and X keep their own names (they're brand names).
 
 import { useEffect, useRef, useState } from "react";
 import Button from "@/components/Button";
 // Lets the menu fade out when it closes (lib/use-presence.ts, 28 Oct 2026)
 import { usePresence } from "@/lib/use-presence";
+// The page's language, read from the address (/hi/… = Hindi), and the words
+import { useSiteText } from "@/lib/use-site-text";
+import { PAGE_TEXT } from "@/lib/page-text";
 
 type ShareButtonProps = {
   title: string;
@@ -67,6 +75,9 @@ export default function ShareButton({ title, url, text, appearance = "button", l
   const [alignRight, setAlignRight] = useState(false);
   // EASED MENU (28 Oct 2026): fades in on open, out on close
   const menu = usePresence(open, 150);
+  // "Copy link" / "लिंक कॉपी करें" and friends, in the page's language
+  const { lang } = useSiteText();
+  const w = PAGE_TEXT[lang].share;
 
   // Close the menu on outside click / Escape
   useEffect(() => {
@@ -127,9 +138,9 @@ export default function ShareButton({ title, url, text, appearance = "button", l
   async function copy() {
     try {
       await navigator.clipboard.writeText(url);
-      toast("Link copied");
+      toast(w.copied);
     } catch {
-      toast("Couldn't copy — long-press the address bar instead");
+      toast(w.failed);
     }
     setOpen(false);
   }
@@ -147,7 +158,7 @@ export default function ShareButton({ title, url, text, appearance = "button", l
     { label: "WhatsApp", icon: Icons.whatsapp, href: `https://wa.me/?text=${enc(`${message}\n${url}`)}` },
     { label: "Telegram", icon: Icons.telegram, href: `https://t.me/share/url?url=${enc(url)}&text=${enc(message)}` },
     { label: "X", icon: Icons.x, href: `https://twitter.com/intent/tweet?text=${enc(message)}&url=${enc(url)}` },
-    { label: "Email", icon: Icons.mail, href: `mailto:?subject=${enc(title)}&body=${enc(`${message}\n\n${url}`)}` },
+    { label: w.email, icon: Icons.mail, href: `mailto:?subject=${enc(title)}&body=${enc(`${message}\n\n${url}`)}` },
   ];
 
   return (
@@ -159,7 +170,7 @@ export default function ShareButton({ title, url, text, appearance = "button", l
           <span>{label}</span>
         </button>
       ) : (
-        <Button variant="ghost" onClick={share} aria-label="Share this page" aria-expanded={open}>
+        <Button variant="ghost" onClick={share} aria-label={w.label} aria-expanded={open}>
           {shareIcon}
           {label}
         </Button>
@@ -175,7 +186,7 @@ export default function ShareButton({ title, url, text, appearance = "button", l
         >
           <button type="button" role="menuitem" onClick={copy} className="w-full flex items-center gap-3 text-left px-4 py-2.5 font-body text-sm text-foreground hover:bg-accent-soft transition-colors">
             <span className="text-muted">{Icons.link}</span>
-            Copy link
+            {w.copy}
           </button>
           {links.map((l) => (
             <a

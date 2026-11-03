@@ -3,21 +3,29 @@
 //
 // Every subject as a card (same 3-column layout as the homepage). On the Hindi
 // page: the Hindi names and descriptions (lib/subjects.ts), Hindi counts, and
-// "देखें →". The cards still open the English subject page until the subject
-// pages get their Hindi twin (phase 3). Server component.
+// "देखें →". Server component.
+//
+// PHASE 3 (3 Nov 2026, owner's rule: no English on Hindi pages): the Hindi
+// page lists ONLY the subjects that have Hindi articles, and each card opens
+// the subject's Hindi page (/hi/history). The others appear by themselves
+// once their first Hindi article is published.
 
 import SubjectCard from "@/components/SubjectCard";
 import PageTitle from "@/components/PageTitle";
 import { getAllSubjects } from "@/lib/content";
+import { getSiteStats } from "@/lib/site-stats";
 import { getSubjectInfo, SUBJECT_DESCRIPTIONS_HI } from "@/lib/subjects";
 import { PAGE_TEXT } from "@/lib/page-text";
 import { localHref } from "@/lib/site-text";
 import type { Lang } from "@/lib/lang";
 
-export default function SubjectsPage({ lang }: { lang: Lang }) {
+export default async function SubjectsPage({ lang }: { lang: Lang }) {
   const t = PAGE_TEXT[lang].subjects;
   const hi = lang === "hi";
-  const subjects = getAllSubjects();
+  // Hindi: only the subjects with at least one Hindi article (the counts
+  // come from the same cached site stats the header uses)
+  const stats = await getSiteStats();
+  const subjects = getAllSubjects().filter((s) => !hi || (stats.hindiTopicsBySubject[s.slug] ?? 0) > 0);
 
   const body = (
     <>

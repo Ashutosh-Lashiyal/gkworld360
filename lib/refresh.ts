@@ -34,6 +34,13 @@ export function refreshContent(paths: string[] = []) {
     revalidatePath("/topics");
     revalidatePath("/news");
     revalidatePath("/subjects");
+    // The Hindi list pages (3 Nov 2026). They're their own routes, so the
+    // catch-all line below doesn't cover them. Without these, a subject's first
+    // Hindi article could take hours to appear on the Hindi homepage and the
+    // Hindi Subjects page.
+    revalidatePath("/hi");
+    revalidatePath("/hi/topics");
+    revalidatePath("/hi/subjects");
     revalidatePath("/sitemap.xml");
     revalidatePath("/llms.txt");
     revalidatePath("/api/search-index");

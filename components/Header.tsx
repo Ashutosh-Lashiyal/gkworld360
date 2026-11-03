@@ -120,6 +120,12 @@ export default function Header({
   // Counts in the page's language (Hindi pages count Hindi articles)
   const countFor = (slug: string) => (hi ? hindiTopicsBySubject[slug] ?? 0 : topicsBySubject[slug] ?? 0);
   const total = hi ? hindiTotalTopics : totalTopics;
+  // THE SUBJECTS IN THE MENU (3 Nov 2026, owner's rule: no English on Hindi
+  // pages). English pages: all of them (greyed "coming soon" when they have no
+  // page yet). Hindi pages: ONLY the subjects with Hindi articles — the others
+  // have no Hindi page, so they aren't shown at all.
+  const menuSubjects = hi ? SUBJECTS.filter((s) => countFor(s.slug) > 0) : SUBJECTS;
+  const menuCount = hi ? menuSubjects.length : liveCount;
 
   const [subjectsOpen, setSubjectsOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -232,7 +238,7 @@ export default function Header({
                 >
                   <div className="flex items-baseline justify-between">
                     <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted">
-                      {t.subjectsMenu.summary(liveCount, total)}
+                      {t.subjectsMenu.summary(menuCount, total)}
                     </span>
                     <Link href={href("/subjects")} onClick={() => setSubjectsOpen(false)} className="font-body text-[14px] font-extrabold text-sapphire hover:text-sapphire-dark transition-colors">
                       {t.subjectsMenu.all}
@@ -240,7 +246,7 @@ export default function Header({
                   </div>
 
                   <div className="grid grid-cols-3 gap-x-8 gap-y-1">
-                    {SUBJECTS.map((subject) => {
+                    {menuSubjects.map((subject) => {
                       const live = isLive(subject.slug);
                       const count = countFor(subject.slug);
                       const inner = (
@@ -251,10 +257,11 @@ export default function Header({
                             style={{ backgroundColor: live ? SUBJECT_COLORS[subject.slug]?.accent ?? "var(--accent)" : "var(--line-2)" }}
                           />
                           <span className={`grid grid-cols-[minmax(0,1fr)_auto] gap-3 items-center px-3 py-2.5 rounded-[14px] transition-colors duration-100 ${live ? "group-hover:bg-surface-low" : ""}`}>
-                            {/* the page's language big, the other one small underneath */}
+                            {/* English page: the English name big, the Hindi one small underneath.
+                                Hindi page: the Hindi name only (no English on Hindi pages, 3 Nov 2026). */}
                             <span className="flex flex-col leading-tight">
                               <span className={`font-heading text-base font-semibold ${live ? "text-foreground" : "text-muted"}`}>{hi ? subject.labelHi : subject.label}</span>
-                              <span lang={hi ? "en" : "hi"} className={`${hi ? "font-body" : "font-hindi"} text-xs ${live ? "text-muted" : "text-muted/70"}`}>{hi ? subject.label : subject.labelHi}</span>
+                              {!hi && <span lang="hi" className={`font-hindi text-xs ${live ? "text-muted" : "text-muted/70"}`}>{subject.labelHi}</span>}
                             </span>
                             {/* A real count, or an honest "coming soon" */}
                             <span className={`font-body text-xs font-bold whitespace-nowrap ${live ? "text-muted" : "text-muted/70 italic"}`}>
@@ -379,12 +386,13 @@ export default function Header({
                     </button>
                     {mobileSubjectsOpen && (
                       <div className="grid grid-cols-2 gap-1 py-3">
-                        {SUBJECTS.map((subject) => isLive(subject.slug) ? (
+                        {menuSubjects.map((subject) => isLive(subject.slug) ? (
                           <Link key={subject.slug} href={href(`/${subject.slug}`)} className="flex items-center gap-2.5 min-h-12 px-2 rounded-[12px] hover:bg-surface-low">
                             <span aria-hidden="true" className="w-1.5 h-7 rounded-full flex-shrink-0" style={{ backgroundColor: SUBJECT_COLORS[subject.slug]?.accent ?? "var(--accent)" }} />
                             <span className="flex flex-col leading-tight">
                               <span className="font-body text-[15px] font-extrabold text-foreground">{hi ? subject.labelHi : subject.label}</span>
-                              <span lang={hi ? "en" : "hi"} className={`${hi ? "font-body" : "font-hindi"} text-[11px] text-muted`}>{hi ? subject.label : subject.labelHi}</span>
+                              {/* the Hindi name small underneath — English pages only (3 Nov 2026) */}
+                              {!hi && <span lang="hi" className="font-hindi text-[11px] text-muted">{subject.labelHi}</span>}
                             </span>
                           </Link>
                         ) : (

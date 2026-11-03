@@ -63,7 +63,8 @@ export default function PageTitle({ colors, breadcrumbs, label, title, titleHi, 
             {breadcrumbs && <Breadcrumb items={breadcrumbs} tone="light" />}
             {label && <span className="block font-accent italic text-[22px] leading-tight text-mint">{label}</span>}
             {/* background-clip: text — the picture shows only through the letters */}
-            <h1 className="gk-fill-word" style={{ backgroundImage: `url("${image}")`, fontSize: size }}>
+            {/* A Hindi name (/hi/history) gets the Hindi-font version of the filled letters */}
+            <h1 className={`gk-fill-word ${/[ऀ-ॿ]/.test(title) ? "gk-fill-word--hi" : ""}`} style={{ backgroundImage: `url("${image}")`, fontSize: size }}>
               {title}
             </h1>
             {titleHi && (

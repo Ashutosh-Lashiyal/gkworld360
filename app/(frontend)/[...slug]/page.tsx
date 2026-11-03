@@ -6,6 +6,17 @@
 //   /history/modern-india/revolt-1857 → Topic page (shows the article)
 //   /human-body                       → Subject page with no categories (shows topics directly)
 
+//
+// HINDI SUBJECT & CATEGORY PAGES (3 Nov 2026, the whole site in Hindi, phase 3):
+//   /hi/history                 → the History page in Hindi
+//   /hi/history/modern-india    → the Modern India page in Hindi
+// The owner's rule: NEVER English and Hindi mixed on one page. So a Hindi
+// subject/category page lists ONLY the articles that exist in Hindi, only the
+// categories that have a Hindi name (in /admin → Categories), and a subject or
+// category with nothing in Hindi has no Hindi page at all (Hindi "not found").
+// The words come from lib/page-text.ts (subjectPage, categoryPage).
+
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import {
@@ -33,7 +44,10 @@ import { ogImages as buildOgImages } from "@/lib/og";
 import StatPill from "@/components/StatPill";
 import { formatAddedTime } from "@/lib/topics";
 import Link from "next/link";
-import { getSubjectInfo } from "@/lib/subjects";
+import { getSubjectInfo, SUBJECT_DESCRIPTIONS_HI } from "@/lib/subjects";
+// The page words in English and Hindi, and "a link in the page's language"
+import { PAGE_TEXT } from "@/lib/page-text";
+import { localHref } from "@/lib/site-text";
 import ArticleLayout from "@/components/ArticleLayout";
 import ContentCard from "@/components/ContentCard";
 import TableOfContents from "@/components/TableOfContents";
@@ -50,6 +64,7 @@ import {
   getCMSArticle,
   getCMSArticleLanguages,
   getCMSArticlesInCategory,
+  getCMSCategoriesInHindi,
   getCMSNews,
   getCMSNewsLanguages,
   type CMSListedTopic,
@@ -109,6 +124,40 @@ function cmsMetadata(
       images,
     },
   };
+}
+
+// ── SEO TAGS FOR A HINDI SUBJECT OR CATEGORY PAGE (3 Nov 2026) ────────────────
+// /hi/history → "इतिहास", /hi/history/modern-india → "आधुनिक भारत", with the
+// Hindi description (none when /admin has none — owner's answer Q3), a Hindi
+// link-preview picture ("इतिहास · श्रेणी", word list A10), and the hreflang
+// pair pointing at the English page. Returns null when the page has no Hindi
+// version — the English page uses that answer too, to decide whether to
+// announce a Hindi twin.
+async function hindiListingMetadata(contentSlug: string[]): Promise<Metadata | null> {
+  const subject = contentSlug[0];
+  const hindi = await getHindiSubject(subject);
+  if (hindi.all.length === 0) return null;
+  const subjectHi = getSubjectInfo(subject)?.labelHi ?? subject;
+  const w = PAGE_TEXT.hi;
+
+  let title = subjectHi;
+  let description: string | undefined = SUBJECT_DESCRIPTIONS_HI[subject];
+  let label = w.subjectPage.seoLabel;
+  if (contentSlug.length === 2) {
+    const cat = hindi.categories.find((c) => c.slug === contentSlug[1]);
+    if (!cat) return null;
+    title = cat.title;
+    description = cat.description ?? undefined;
+    label = w.categoryPage.seoLabel(subjectHi);
+  }
+
+  const hiUrl = absoluteUrl("/hi/" + contentSlug.join("/"));
+  const meta = cmsMetadata(title, description, label, hiUrl, "hi");
+  meta.alternates = {
+    canonical: hiUrl,
+    languages: { en: absoluteUrl("/" + contentSlug.join("/")), hi: hiUrl },
+  };
+  return meta;
 }
 
 // ── SEO METADATA ──────────────────────────────────────────────────────────────
@@ -184,6 +233,15 @@ export async function generateMetadata({
       }
     }
 
+    // HINDI SUBJECT / CATEGORY PAGE (3 Nov 2026): /hi/history or
+    // /hi/history/modern-india. There's no Hindi FILE for these (their Hindi
+    // words come from lib/subjects.ts and /admin), so they land here. They get
+    // Hindi tags only when the page really exists in Hindi.
+    if (metaLang === "hi" && contentSlug.length <= 2 && resolveContentFile(contentSlug, "en")?.isOverview) {
+      const hiTags = await hindiListingMetadata(contentSlug);
+      if (hiTags) return hiTags;
+    }
+
     return {}; // genuinely nothing here — Next will 404 the page itself
   }
 
@@ -205,6 +263,11 @@ export async function generateMetadata({
     languages["en"] = absoluteUrl("/" + contentSlug.join("/"));
   }
   if (hasTranslation(contentSlug, "hi")) {
+    languages["hi"] = absoluteUrl("/hi/" + contentSlug.join("/"));
+  }
+  // An English SUBJECT or CATEGORY page whose Hindi version exists (3 Nov 2026).
+  // This link is also how the header's EN | हिं switch finds the Hindi page.
+  if (contentSlug.length <= 2 && contentSlug[0] !== "news" && !languages["hi"] && (await hindiListingMetadata(contentSlug))) {
     languages["hi"] = absoluteUrl("/hi/" + contentSlug.join("/"));
   }
 
@@ -254,6 +317,56 @@ function mergeTopics(mdx: ListedTopic[], cms: ListedTopic[]): ListedTopic[] {
     return a.meta.title.localeCompare(b.meta.title);
   });
 }
+
+// ── HINDI VERSION OF A LISTED TOPIC ───────────────────────────────────────────
+// A CMS topic already knows its Hindi link and title (hindiHref, hindiTitle).
+// An MDX topic has a Hindi version when a ".hi.mdx" file sits next to it.
+// Returns the topic WITH its Hindi details filled in, or null when it has no
+// Hindi version (then a Hindi page leaves it out — owner's answer Q1).
+function withHindi(t: ListedTopic): ListedTopic | null {
+  if (t.hindiHref) return t;
+  const hiFile = resolveContentFile(t.slug, "hi");
+  if (!hiFile) return null;
+  const hiMeta = getContentMeta(hiFile.filePath);
+  return { ...t, hindiHref: "/hi/" + t.slug.join("/"), hindiTitle: hiMeta.title, hindiDescription: hiMeta.description };
+}
+
+// ── A SUBJECT, AS IT EXISTS IN HINDI ──────────────────────────────────────────
+// Everything a Hindi subject or category page shows, worked out once:
+//   categories — only those with a Hindi name AND at least one Hindi article,
+//                each with its Hindi name, Hindi description (or null) and
+//                its Hindi articles in reading order;
+//   loose      — Hindi articles of a subject that has no categories;
+//   all        — every Hindi article above, in one list.
+// Empty `all` = this subject has no Hindi page.
+//
+// `cache()` (from React) remembers the answer for the rest of ONE page build,
+// so the page and its SEO tags (generateMetadata) share a single set of
+// database queries instead of asking twice.
+type HindiCategory = { slug: string; title: string; description: string | null; image?: string; topics: ListedTopic[] };
+type HindiSubject = { categories: HindiCategory[]; loose: ListedTopic[]; all: ListedTopic[] };
+const getHindiSubject = cache(async (subject: string): Promise<HindiSubject> => {
+  const mdxCategories = getCategoriesInSubject(subject);
+  const hindiNames = await getCMSCategoriesInHindi(subject);
+  const keepHindi = (list: ListedTopic[]) => list.map(withHindi).filter((t): t is ListedTopic => t !== null);
+
+  const categories: HindiCategory[] = [];
+  for (const cat of mdxCategories) {
+    const hindi = hindiNames.get(cat.slug);
+    if (!hindi) continue; // no Hindi name → not on Hindi pages
+    const topics = keepHindi(
+      mergeTopics(getTopicsInCategory(subject, cat.slug), await getCMSArticlesInCategory(subject, cat.slug))
+    );
+    if (topics.length === 0) continue; // nothing to read in Hindi yet
+    categories.push({ slug: cat.slug, title: hindi.name, description: hindi.description, image: cat.meta.image, topics });
+  }
+  // A subject with no categories lists its articles directly
+  const loose =
+    mdxCategories.length === 0
+      ? keepHindi(mergeTopics(getTopicsInSubject(subject), await getCMSArticlesInCategory(subject, null)))
+      : [];
+  return { categories, loose, all: [...categories.flatMap((c) => c.topics), ...loose] };
+});
 
 // ── BREADCRUMB BUILDER ────────────────────────────────────────────────────────
 // Converts a slug array into breadcrumb items.
@@ -348,9 +461,27 @@ export default async function ContentPage({
         // Breadcrumbs come from the CMS record here, not from MDX frontmatter —
         // there may be no file to read. buildBreadcrumbs() prettifies any segment
         // we don't supply a title for, so the parent crumbs still read correctly.
-        const cmsBreadcrumbs = buildBreadcrumbs(contentSlug, {
+        let cmsBreadcrumbs = buildBreadcrumbs(contentSlug, {
           [contentSlug[contentSlug.length - 1]]: cmsArticle.title,
         });
+        // HINDI ARTICLE (3 Nov 2026, word list A1): "होम › इतिहास › आधुनिक भारत",
+        // each link opening the HINDI subject/category page. The subject's
+        // Hindi name is in lib/subjects.ts; the category's is in /admin. A
+        // category with no Hindi name has no Hindi page, so it's left out of
+        // the trail rather than shown in English.
+        let hindiLabel: string | undefined;
+        if (lang === "hi") {
+          const subjectHi = getSubjectInfo(contentSlug[0])?.labelHi;
+          const categoryHi =
+            contentSlug.length > 2 ? (await getHindiSubject(contentSlug[0])).categories.find((c) => c.slug === contentSlug[1])?.title : undefined;
+          cmsBreadcrumbs = [
+            ...(subjectHi ? [{ label: subjectHi, href: `/hi/${contentSlug[0]}` }] : []),
+            ...(categoryHi ? [{ label: categoryHi, href: `/hi/${contentSlug[0]}/${contentSlug[1]}` }] : []),
+            { label: cmsArticle.title, href: "/" + slug.join("/") },
+          ];
+          // The subject pill: "इतिहास · आधुनिक भारत"
+          hindiLabel = [subjectHi, categoryHi].filter(Boolean).join(" · ");
+        }
         // The toggle needs a link to each version that exists. A CMS article's
         // languages come from the database, not from .mdx files on disk.
         const cmsEnHref = cmsLangs.en ? "/" + contentSlug.join("/") : undefined;
@@ -363,18 +494,26 @@ export default async function ContentPage({
             lang={lang}
             enHref={cmsEnHref}
             hiHref={cmsHiHref}
+            label={hindiLabel}
           />
         );
       }
     }
   }
 
-  // Find the file that matches this slug + language
-  const resolved = resolveContentFile(contentSlug, lang);
+  const pageType = getPageType(slug);
+
+  // Find the file that matches this slug + language.
+  // A HINDI SUBJECT OR CATEGORY page (3 Nov 2026) has no Hindi file — it uses
+  // the English folder's overview.mdx only for its picture, and its Hindi words
+  // come from lib/subjects.ts and /admin (see the subject and category pages
+  // below, which also send a subject with nothing in Hindi to "not found").
+  const resolved =
+    resolveContentFile(contentSlug, lang) ??
+    (lang === "hi" && pageType !== "topic" ? resolveContentFile(contentSlug, "en") : null);
   if (!resolved) notFound();
 
   const meta = getContentMeta(resolved!.filePath);
-  const pageType = getPageType(slug);
 
   // Build breadcrumbs from the CONTENT path (never the "hi" prefix), so the
   // crumbs read "Home › History › Modern India › …" in both languages.
@@ -408,30 +547,55 @@ export default async function ContentPage({
   // card floating on it → light section of category cards → dark "Recently
   // added" band → footer. Strict light/dark alternation; no subject-tinted page
   // background any more (the signal colour never sits below the band).
+  //
+  // HINDI (3 Nov 2026, phase 3): the SAME page at /hi/<subject>, built from
+  // getHindiSubject() — only what exists in Hindi — with the words from
+  // lib/page-text.ts (subjectPage). Nothing in Hindi → Hindi "not found".
   if (pageType === "subject") {
-    const categories = getCategoriesInSubject(slug[0]);
-    const subjectInfo = getSubjectInfo(slug[0]); // English + Hindi names
+    const subject = contentSlug[0];
+    const hi = lang === "hi";
+    const w = PAGE_TEXT[lang].subjectPage;
+    const card = PAGE_TEXT[lang].card; //       "Explore →" / "देखें →" and friends
+    const subjectInfo = getSubjectInfo(subject); // English + Hindi names
+    const subjectName = (hi ? subjectInfo?.labelHi : meta.title) ?? meta.title;
 
-    // Every topic in the subject, from BOTH sources (MDX folder + CMS), grouped
-    // by category so we can show counts, "Start here" and "Recently added".
-    // One CMS query per category; subject pages are generated statically, so
-    // this runs at build/revalidate time, not on every visit.
-    const topicsByCategory = new Map<string, ListedTopic[]>();
-    if (categories.length === 0) {
-      topicsByCategory.set(
-        "",
-        mergeTopics(getTopicsInSubject(slug[0]), await getCMSArticlesInCategory(slug[0], null))
-      );
+    // THE CATEGORY CARDS and the LOOSE TOPICS (a subject with no categories),
+    // each category with its topics in reading order.
+    //   English: every category folder, its topics from BOTH sources (MDX
+    //            folder + CMS). One CMS query per category; subject pages are
+    //            generated statically, so this runs at build/revalidate time.
+    //   Hindi:   only the categories and topics that exist in Hindi.
+    let categoryCards: HindiCategory[];
+    let looseTopics: ListedTopic[];
+    if (hi) {
+      const hindi = await getHindiSubject(subject);
+      if (hindi.all.length === 0) notFound(); // owner's answer Q2: no Hindi → no Hindi page
+      categoryCards = hindi.categories;
+      looseTopics = hindi.loose;
     } else {
+      const categories = getCategoriesInSubject(subject);
+      categoryCards = [];
       for (const cat of categories) {
-        topicsByCategory.set(
-          cat.slug,
-          mergeTopics(getTopicsInCategory(slug[0], cat.slug), await getCMSArticlesInCategory(slug[0], cat.slug))
-        );
+        categoryCards.push({
+          slug: cat.slug,
+          title: cat.meta.title,
+          description: cat.meta.description ?? null,
+          image: cat.meta.image,
+          topics: mergeTopics(getTopicsInCategory(subject, cat.slug), await getCMSArticlesInCategory(subject, cat.slug)),
+        });
       }
+      looseTopics =
+        categories.length === 0
+          ? mergeTopics(getTopicsInSubject(subject), await getCMSArticlesInCategory(subject, null))
+          : [];
     }
-    const allTopics = Array.from(topicsByCategory.values()).flat();
-    const looseTopics = topicsByCategory.get("") ?? [];
+    const allTopics = [...categoryCards.flatMap((c) => c.topics), ...looseTopics];
+
+    // A topic's title, summary and link in the page's language. On a Hindi
+    // page every listed topic HAS a Hindi version (getHindiSubject made sure).
+    const titleOf = (t: ListedTopic) => (hi ? t.hindiTitle ?? t.meta.title : t.meta.title);
+    const summaryOf = (t: ListedTopic) => (hi ? t.hindiDescription ?? "" : t.meta.description);
+    const hrefOf = (t: ListedTopic) => (hi && t.hindiHref ? t.hindiHref : `/${t.slug.join("/")}`);
 
     // "Start here": the first topics in reading order (already sorted by mergeTopics).
     const startHere = allTopics.slice(0, 3);
@@ -446,9 +610,9 @@ export default async function ContentPage({
       })
       .slice(0, 4);
 
-    // Pretty category name for a topic's small caption, e.g. "Modern India"
+    // Pretty category name for a topic's small caption, e.g. "Modern India" / "आधुनिक भारत"
     const categoryTitle = (t: ListedTopic) =>
-      categories.find((c) => c.slug === t.slug[1])?.meta.title ?? "";
+      categoryCards.find((c) => c.slug === t.slug[1])?.title ?? "";
 
     // A row for the "Start here" / "Recently added" lists — numbered, quiet
     const topicRow = (t: ListedTopic, i: number, tone: "signal" | "muted", meta: string) => {
@@ -457,15 +621,19 @@ export default async function ContentPage({
         <li key={t.slug.join("/")}>
           {/* gk-row: tints on hover, the arrow slides in (globals.css) */}
           <Link
-            href={`/${t.slug.join("/")}`}
+            href={hrefOf(t)}
             className="gk-row group grid grid-cols-[44px_minmax(0,1fr)_auto] gap-3.5 items-center px-3.5 py-3.5 rounded-2xl font-body"
           >
             <span className={`font-display text-[28px] leading-none ${tone === "signal" ? "text-accent" : "text-line-2"}`}>
               {String(i + 1).padStart(2, "0")}
             </span>
             <span className="flex flex-col gap-0.5 min-w-0">
-              <span className="text-base font-bold leading-snug text-foreground group-hover:text-accent transition-colors">{t.meta.title}</span>
-              <span className="text-[13px] font-semibold text-faint">{meta} · {hindi ? <>EN · <span lang="hi" className="font-hindi">हिन्दी</span></> : "EN"}</span>
+              <span className="text-base font-bold leading-snug text-foreground group-hover:text-accent transition-colors">{titleOf(t)}</span>
+              {/* English page: which languages it's in. Hindi page: no "EN" (it's all Hindi). */}
+              <span className="text-[13px] font-semibold text-faint">
+                {meta}
+                {!hi && <> · {hindi ? <>EN · <span lang="hi" className="font-hindi">हिन्दी</span></> : "EN"}</>}
+              </span>
             </span>
             <span aria-hidden="true" className="gk-row__arrow font-extrabold text-accent">→</span>
           </Link>
@@ -473,50 +641,57 @@ export default async function ContentPage({
       );
     };
 
-    const hindiCount = allTopics.filter((t) => t.hindiHref || getHindiInfo(t.slug)).length;
+    // "In Hindi": only on the English page — on the Hindi page it would just
+    // repeat the topics number, since every article listed there IS Hindi.
+    const hindiCount = hi ? 0 : allTopics.filter((t) => t.hindiHref || getHindiInfo(t.slug)).length;
 
     // REDESIGN PHASE 4 (30 Oct 2026): the subject's name on the dark stage,
     // FILLED with its own picture → its categories → "Start here" as three
     // numbered steps → the subject's places on the World360 Atlas (a
     // timeline) → recently added.
-    return (
+    const body = (
       <>
         <PageTitle
           colors={colors}
-          breadcrumbs={[{ label: "Subjects", href: "/subjects" }]}
-          label="Subject"
-          title={meta.title}
-          titleHi={subjectInfo?.labelHi}
-          description={meta.description}
+          breadcrumbs={[{ label: w.crumb, href: localHref(lang, "/subjects") }]}
+          label={w.label}
+          title={subjectName}
+          // English page: the Hindi name in gold under the English one.
+          // Hindi page: the Hindi name only (no English on Hindi pages).
+          titleHi={hi ? undefined : subjectInfo?.labelHi}
+          // Hindi: lib/subjects.ts's Hindi description, or nothing
+          description={hi ? SUBJECT_DESCRIPTIONS_HI[subject] : meta.description}
           image={meta.image}
         >
-          {categories.length > 0 && (
-            <StatPill tone="dark" value={categories.length} label={categories.length === 1 ? "Category" : "Categories"} />
+          {categoryCards.length > 0 && (
+            <StatPill tone="dark" value={categoryCards.length} label={w.categories(categoryCards.length)} />
           )}
-          <StatPill tone="dark" value={allTopics.length} label={allTopics.length === 1 ? "Topic" : "Topics"} />
-          <StatPill tone="dark" value={hindiCount} label="In Hindi" />
+          <StatPill tone="dark" value={allTopics.length} label={w.topics(allTopics.length)} />
+          {!hi && <StatPill tone="dark" value={hindiCount} label={w.inHindi} />}
         </PageTitle>
 
         {/* ── CATEGORIES (or loose topics) ────────────────────────────────── */}
-        <section id={categories.length > 0 ? "categories" : "topics"} className="max-w-[1320px] mx-auto px-4 md:px-8 pt-16 md:pt-24">
-          {categories.length > 0 ? (
+        <section id={categoryCards.length > 0 ? "categories" : "topics"} className="max-w-[1320px] mx-auto px-4 md:px-8 pt-16 md:pt-24">
+          {categoryCards.length > 0 ? (
             <>
-              <SectionHead eyebrow="Browse by category" title="Pick a" accent="category" lede="In reading order." />
+              <SectionHead eyebrow={w.browse} title={w.pick.title} accent={w.pick.accent} lede={w.order} />
               <div data-reveal-group className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {categories.map((cat) => {
-                  const count = topicsByCategory.get(cat.slug)?.length ?? 0;
+                {categoryCards.map((cat) => {
+                  const count = cat.topics.length;
                   return (
                     <ContentCard
                       key={cat.slug}
-                      title={cat.meta.title}
-                      description={cat.meta.description}
-                      label={`${count} ${count === 1 ? "topic" : "topics"}`}
-                      href={`/${slug[0]}/${cat.slug}`}
+                      title={cat.title}
+                      // Hindi with no Hindi description in /admin → nothing (owner's answer Q3)
+                      description={cat.description ?? undefined}
+                      label={w.count(count)}
+                      href={localHref(lang, `/${subject}/${cat.slug}`)}
                       hoverBg={colors?.bg}
                       accent={colors?.accent}
-                      image={cat.meta.image}
-                      ctaLabel="Explore →"
+                      image={cat.image}
+                      ctaLabel={card.explore}
                       comingSoon={count === 0}
+                      lang={lang}
                     />
                   );
                 })}
@@ -524,7 +699,7 @@ export default async function ContentPage({
             </>
           ) : looseTopics.length > 0 ? (
             <>
-              <SectionHead eyebrow={meta.title} title="All" accent="topics" />
+              <SectionHead eyebrow={subjectName} title={w.allTopics.title} accent={w.allTopics.accent} />
               <div data-reveal-group className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {looseTopics.map((topic) => {
                   const hindi = topic.hindiHref
@@ -533,24 +708,28 @@ export default async function ContentPage({
                   return (
                     <ContentCard
                       key={topic.slug.join("/")}
-                      title={topic.meta.title}
-                      description={topic.meta.description}
-                      href={`/${topic.slug.join("/")}`}
+                      title={titleOf(topic)}
+                      description={summaryOf(topic)}
+                      href={hrefOf(topic)}
                       hoverBg={colors?.bg}
                       accent={colors?.accent}
                       image={topic.meta.image}
-                      hindiHref={hindi?.href}
-                      hindiTitle={hindi?.title}
+                      // English page: the "English | हिन्दी" buttons. Hindi page: one "पढ़ें →".
+                      hindiHref={hi ? undefined : hindi?.href}
+                      hindiTitle={hi ? undefined : hindi?.title}
+                      ctaLabel={card.read}
+                      lang={lang}
                     />
                   );
                 })}
               </div>
             </>
           ) : (
-            // Nothing yet — empty state
+            // Nothing yet — empty state (English only: a Hindi page with
+            // nothing in it doesn't exist, see notFound() above)
             <div className="gk-card py-14 px-6 text-center">
-              <p className="m-0 font-display text-4xl uppercase text-foreground">Coming soon</p>
-              <p className="m-0 mt-2 font-body text-muted">{meta.title} articles are being written and checked.</p>
+              <p className="m-0 font-display text-4xl uppercase text-foreground">{w.soon}</p>
+              <p className="m-0 mt-2 font-body text-muted">{w.soonText(subjectName)}</p>
             </div>
           )}
         </section>
@@ -558,16 +737,16 @@ export default async function ContentPage({
         {/* ── START HERE — three numbered steps ───────────────────────────── */}
         {startHere.length > 0 && (
           <section className="max-w-[1320px] mx-auto px-4 md:px-8 pt-16 md:pt-24">
-            <SectionHead eyebrow="New to the subject?" title="Start" accent="here" lede="Read these in order. Each one picks up where the last stopped." />
+            <SectionHead eyebrow={w.newTo} title={w.start.title} accent={w.start.accent} lede={w.startLede} />
             <ol data-reveal-group className="grid grid-cols-1 md:grid-cols-3 gap-[18px] m-0 p-0 list-none">
               {startHere.map((t, i) => (
                 <li key={t.slug.join("/")}>
-                  <Link href={`/${t.slug.join("/")}`} className="gk-card gk-card--lift gk-tilt flex flex-col items-start gap-2.5 h-full p-[22px] font-body" data-cursor="Read">
+                  <Link href={hrefOf(t)} className="gk-card gk-card--lift gk-tilt flex flex-col items-start gap-2.5 h-full p-[22px] font-body" data-cursor={card.cursorRead}>
                     <span className="font-display text-[54px] leading-none text-accent">{String(i + 1).padStart(2, "0")}</span>
-                    <span className="font-heading text-[22px] font-semibold leading-tight text-foreground">{t.meta.title}</span>
-                    {t.meta.description && <span className="text-sm text-muted line-clamp-3">{t.meta.description}</span>}
+                    <span className={`text-[22px] font-semibold leading-tight text-foreground ${hi ? "font-hindi" : "font-heading"}`}>{titleOf(t)}</span>
+                    {summaryOf(t) && <span className="text-sm text-muted line-clamp-3">{summaryOf(t)}</span>}
                     <span className="gk-more mt-auto pt-1 font-extrabold text-accent">
-                      {categoryTitle(t) || "Read"} <span aria-hidden="true" className="gk-more__arrow">→</span>
+                      {categoryTitle(t) || w.read} <span aria-hidden="true" className="gk-more__arrow">→</span>
                     </span>
                   </Link>
                 </li>
@@ -577,39 +756,67 @@ export default async function ContentPage({
         )}
 
         {/* ── THIS SUBJECT ON THE WORLD360 ATLAS (draws nothing if it has no places) */}
-        <AtlasTeaser subject={slug[0]} eyebrow={`${meta.title} on the Atlas`} title="Where it" accent="happened" />
+        <AtlasTeaser subject={subject} eyebrow={w.atlasEyebrow(subjectName)} title={w.atlas.title} accent={w.atlas.accent} lang={lang} />
 
         {/* ── RECENTLY ADDED ──────────────────────────────────────────────── */}
         {recentlyAdded.length > 0 && (
           <section className="max-w-[1320px] mx-auto px-4 md:px-8 pt-16 md:pt-24 pb-6">
-            <SectionHead eyebrow="Fresh from the desk" title="Recently" accent="added" more={{ href: "/topics?sort=recent", label: "All topics" }} />
+            <SectionHead eyebrow={w.fresh} title={w.recent.title} accent={w.recent.accent} more={{ href: localHref(lang, "/topics?sort=recent"), label: w.all }} />
             <ol className="gk-card m-0 p-2.5 list-none">
-              {recentlyAdded.map((t, i) => topicRow(t, i, "muted", [categoryTitle(t), formatAddedTime(t.meta.date)].filter(Boolean).join(" · ")))}
+              {recentlyAdded.map((t, i) => topicRow(t, i, "muted", [categoryTitle(t), formatAddedTime(t.meta.date, lang)].filter(Boolean).join(" · ")))}
             </ol>
           </section>
         )}
       </>
     );
+    // Hindi pages are wrapped like every other Hindi page (Phase 2): the
+    // language for screen readers, and gk-hi-page for the Hindi fonts.
+    return hi ? <div lang="hi" className="gk-hi-page">{body}</div> : body;
   }
 
   // ── CATEGORY PAGE (folder with topic files, no sub-folders) ───────────────
   // REDESIGN 16 Sep 2026 (board 4): compact band, then the topic cards.
+  // HINDI (3 Nov 2026, phase 3): the same page at /hi/<subject>/<category>,
+  // with only the Hindi articles, the category's Hindi name from /admin, its
+  // Hindi description (or nothing — owner's answer Q3). A category with no
+  // Hindi name or no Hindi article → Hindi "not found".
   if (pageType === "category") {
-    // Could be a subject with no categories, or an actual category inside a subject
-    // Topics from BOTH sources — the .mdx folder and the CMS — merged, CMS wins
-    // on a clash, sorted by reading order. Without the CMS half, an article
-    // written in /admin rendered at its URL but was listed NOWHERE (fixed 16 Sep).
-    const mdxTopics =
-      slug.length === 1
-        ? getTopicsInSubject(slug[0])           // subject with no categories
-        : getTopicsInCategory(slug[0], slug[1]); // category inside a subject
-    const cmsTopics = await getCMSArticlesInCategory(slug[0], slug.length === 1 ? null : slug[1]);
-    const topics = mergeTopics(mdxTopics, cmsTopics);
+    const subject = contentSlug[0];
+    const hi = lang === "hi";
+    const w = PAGE_TEXT[lang];
+    const subjectInfo = getSubjectInfo(subject);
 
-    // Breadcrumb trail WITHOUT the current page (the title block IS the page)
-    const parentCrumbs = breadcrumbs.slice(0, -1);
+    let topics: ListedTopic[];
+    let title = meta.title;
+    let description: string | undefined = meta.description;
+    if (hi) {
+      const cat = (await getHindiSubject(subject)).categories.find((c) => c.slug === contentSlug[1]);
+      if (!cat || contentSlug.length !== 2) notFound();
+      topics = cat!.topics;
+      title = cat!.title;
+      description = cat!.description ?? undefined;
+    } else {
+      // Could be a subject with no categories, or an actual category inside a subject
+      // Topics from BOTH sources — the .mdx folder and the CMS — merged, CMS wins
+      // on a clash, sorted by reading order. Without the CMS half, an article
+      // written in /admin rendered at its URL but was listed NOWHERE (fixed 16 Sep).
+      const mdxTopics =
+        contentSlug.length === 1
+          ? getTopicsInSubject(subject)                  // subject with no categories
+          : getTopicsInCategory(subject, contentSlug[1]); // category inside a subject
+      const cmsTopics = await getCMSArticlesInCategory(subject, contentSlug.length === 1 ? null : contentSlug[1]);
+      topics = mergeTopics(mdxTopics, cmsTopics);
+    }
 
-    return (
+    // The subject's name in the page's language, and the trail WITHOUT the
+    // current page (the title block IS the page)
+    const subjectName = (hi ? subjectInfo?.labelHi : subjectInfo?.label) ?? breadcrumbs[0]?.label;
+    const parentCrumbs = hi ? [{ label: subjectName, href: `/hi/${subject}` }] : breadcrumbs.slice(0, -1);
+    // A topic's title and link in the page's language
+    const titleOf = (t: ListedTopic) => (hi ? t.hindiTitle ?? t.meta.title : t.meta.title);
+    const hrefOf = (t: ListedTopic) => (hi && t.hindiHref ? t.hindiHref : `/${t.slug.join("/")}`);
+
+    const body = (
       <>
         {/* REDESIGN PHASE 4 (30 Oct 2026): the big title, then the topics as a
             LEARNING PATH (round pictures in a zig-zag, a "2 of 4 read" ring)
@@ -617,9 +824,9 @@ export default async function ContentPage({
         <PageTitle
           colors={colors}
           breadcrumbs={parentCrumbs}
-          label={[getSubjectInfo(slug[0])?.label ?? breadcrumbs[0]?.label, `${topics.length} ${topics.length === 1 ? "topic" : "topics"}`].filter(Boolean).join(" · ")}
-          title={meta.title}
-          description={meta.description}
+          label={[subjectName, w.subjectPage.count(topics.length)].filter(Boolean).join(" · ")}
+          title={title}
+          description={description}
         />
 
         <section className="max-w-[1320px] mx-auto px-4 md:px-8 pt-10 md:pt-12 pb-6">
@@ -628,8 +835,8 @@ export default async function ContentPage({
               topics={topics.map((topic) => {
                 const hindi = topic.hindiHref ? { href: topic.hindiHref } : getHindiInfo(topic.slug);
                 return {
-                  title: topic.meta.title,
-                  href: `/${topic.slug.join("/")}`,
+                  title: titleOf(topic),
+                  href: hrefOf(topic),
                   image: topic.meta.image,
                   hindiHref: hindi?.href,
                 };
@@ -644,15 +851,18 @@ export default async function ContentPage({
                     return (
                       <ContentCard
                         key={topic.slug.join("/")}
-                        title={topic.meta.title}
-                        description={topic.meta.description}
-                        label={`${meta.title} · ${String(i + 1).padStart(2, "0")}`}
-                        href={`/${topic.slug.join("/")}`}
+                        title={titleOf(topic)}
+                        description={hi ? topic.hindiDescription ?? "" : topic.meta.description}
+                        label={`${title} · ${String(i + 1).padStart(2, "0")}`}
+                        href={hrefOf(topic)}
                         hoverBg={colors?.bg}
                         accent={colors?.accent}
                         image={topic.meta.image}
-                        hindiHref={hindi?.href}
-                        hindiTitle={hindi?.title}
+                        // English page: the "English | हिन्दी" buttons. Hindi page: one "पढ़ें →".
+                        hindiHref={hi ? undefined : hindi?.href}
+                        hindiTitle={hi ? undefined : hindi?.title}
+                        ctaLabel={w.card.read}
+                        lang={lang}
                       />
                     );
                   })}
@@ -661,13 +871,14 @@ export default async function ContentPage({
             />
           ) : (
             <div className="gk-card py-14 px-6 text-center">
-              <p className="m-0 font-display text-4xl uppercase text-foreground">Coming soon</p>
-              <p className="m-0 mt-2 font-body text-muted">Topics are being written and checked. Check back later.</p>
+              <p className="m-0 font-display text-4xl uppercase text-foreground">{w.categoryPage.soon}</p>
+              <p className="m-0 mt-2 font-body text-muted">{w.categoryPage.soonText}</p>
             </div>
           )}
         </section>
       </>
     );
+    return hi ? <div lang="hi" className="gk-hi-page">{body}</div> : body;
   }
 
   // NOTE: the Payload-first CMS lookup for articles used to live HERE. It moved
@@ -819,7 +1030,11 @@ export default async function ContentPage({
             label={[subjectLabel, categoryLabel].filter(Boolean).join(" · ")}
             title={meta.title}
             summary={meta.description}
-            metaItems={[readingTime, ...(meta.date ? [`Published ${formatNewsDate(meta.date)}`] : [])]}
+            // "8 min read · Published 17-Sep-2026" / "8 मिनट में पढ़ें · प्रकाशित: 17 सितंबर 2026"
+            metaItems={[
+              PAGE_TEXT[lang].article.minutes(readingTime.match(/\d+/)?.[0] ?? "1"),
+              ...(meta.date ? [PAGE_TEXT[lang].article.published(formatNewsDate(meta.date, lang))] : []),
+            ]}
             coverUrl={meta.image}
             coverAlt={meta.imageCaption ?? meta.title}
             coverCaption={meta.imageCaption}
@@ -832,7 +1047,7 @@ export default async function ContentPage({
           />
         }
         // Previous / Next navigation stays inside the reading column
-        after={<TopicNav previous={previous} next={next} />}
+        after={<TopicNav previous={previous} next={next} lang={lang} />}
         // MDX articles carry their Key Takeaways inside the text; the rail
         // still works from the headings. (Quick facts move into the column.)
         rail={headings.length >= 2 ? <TableOfContents headings={headings} lang={lang} /> : undefined}
@@ -841,8 +1056,8 @@ export default async function ContentPage({
           relatedTopics.length > 0 && (
             <section className="mt-16">
               {/* Anton capitals, like every big section title in the redesign */}
-              <h2 className="m-0 mb-6 font-display text-4xl md:text-5xl leading-none uppercase text-foreground">
-                Related topics
+              <h2 className={`m-0 mb-6 text-4xl md:text-5xl text-foreground ${lang === "hi" ? "font-hindi font-bold leading-tight" : "font-display leading-none uppercase"}`}>
+                {PAGE_TEXT[lang].article.related}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {relatedTopics.map((topic) => {

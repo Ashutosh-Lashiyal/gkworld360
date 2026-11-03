@@ -12,8 +12,10 @@ import { getAtlasEntries } from "@/lib/atlas";
 import { atlasBase, type AtlasLang } from "@/lib/atlas-shared";
 
 const WORDS = {
-  en: { heading: "On the map", lede: (n: number) => `${n === 1 ? "One place" : `${n} places`} from this article on the World360 Atlas.`, open: "Open the World360 Atlas →" },
-  hi: { heading: "मानचित्र पर", lede: (n: number) => `इस लेख के ${n} स्थान वर्ल्ड360 एटलस पर।`, open: "वर्ल्ड360 एटलस खोलें →" },
+  // eyebrow: the small italic line above the heading — Hindi since 3 Nov 2026
+  // (it said "World360 Atlas" in English on Hindi articles too)
+  en: { eyebrow: "World360 Atlas", heading: "On the map", lede: (n: number) => `${n === 1 ? "One place" : `${n} places`} from this article on the World360 Atlas.`, open: "Open the World360 Atlas →" },
+  hi: { eyebrow: "वर्ल्ड360 एटलस", heading: "मानचित्र पर", lede: (n: number) => `इस लेख के ${n} स्थान वर्ल्ड360 एटलस पर।`, open: "वर्ल्ड360 एटलस खोलें →" },
 };
 
 export default async function OnTheMap({ articlePath, lang }: { articlePath: string; lang: AtlasLang }) {
@@ -34,7 +36,7 @@ export default async function OnTheMap({ articlePath, lang }: { articlePath: str
       className={`gk-onmap mt-12 overflow-hidden rounded-card border-2 border-[var(--stage-line)] bg-navy-dark text-on-dark ${lang === "hi" ? "font-hindi" : "font-body"}`}
     >
       <div className="px-6 pt-[22px] pb-2">
-        <span className="font-accent italic text-[22px] leading-tight text-mint">World360 Atlas</span>
+        <span className="font-accent italic text-[22px] leading-tight text-mint">{w.eyebrow}</span>
         {/* text-on-dark! — the "!" wins over the article page's own heading
             colour, which would otherwise paint this dark-on-dark */}
         <h2 id="on-the-map" className={`m-0 mt-1.5 text-on-dark! ${lang === "hi" ? "font-hindi text-[28px] font-bold leading-snug" : "font-display text-[34px] leading-none uppercase"}`}>
