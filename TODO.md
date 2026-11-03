@@ -212,9 +212,9 @@
           Hindi article breadcrumb/pill/"मिनट में पढ़ें"/Hindi date; share menu in Hindi; sitemap +
           refresh list include the Hindi pages. A category needs a HINDI NAME in /admin to appear
           on Hindi pages (dev: "आधुनिक भारत" saved 3 Nov via the new ingest action category-hindi).
-        - [ ] **BEFORE the Vercel site gets Phase 3:** type "आधुनिक भारत" as Modern India's Hindi
-          name in the PRODUCTION /admin (Categories → Modern India → Hindi tab → Name). Without it
-          the Vercel site's /hi/history shows no category. Owner does this (production = owner's go).
+        - [x] **Production Hindi category name DONE (3 Nov, owner's "go")** — "आधुनिक भारत" saved as
+          Modern India's Hindi name on PRODUCTION (sweet-tree, id 1) via `npm run dev:prod` + the
+          ingest action category-hindi with "production": true. English name unchanged.
         - [ ] Content pipeline rule: every NEW category gets its Hindi name in /admin at the same
           time as its English one (or it won't appear on Hindi pages).
         - [ ] Later, small: picture captions/alt text in /admin → Media have ONE language (English),
