@@ -190,7 +190,8 @@ export async function generateMetadata({
       if (langs[metaLang]) {
         const news = await getCMSNews(contentSlug[1], metaLang);
         if (news) {
-          const meta = cmsMetadata(news.title, news.description, ["Current Affairs", news.category].filter(Boolean).join(" · "), url, metaLang);
+          // the small label on the link-preview card: "Current Affairs · …" / "समसामयिकी · …" (phase 4, 3 Nov 2026)
+          const meta = cmsMetadata(news.title, news.description, [PAGE_TEXT[metaLang].news.crumb, news.category].filter(Boolean).join(" · "), url, metaLang);
           if (langs.en && langs.hi) {
             meta.alternates = {
               ...meta.alternates,

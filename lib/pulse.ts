@@ -17,9 +17,17 @@
 //
 // Only headline + snippet + source + link are kept — clicking sends the reader to
 // the ORIGINAL source (copyright-safe aggregation, the "Zerodha Pulse" model).
+//
+// TWO LANGUAGES (3 Nov 2026, the whole site in Hindi, phase 4): English
+// newspapers feed the English pages, Hindi newspapers (Amar Ujala, Live
+// Hindustan) feed the Hindi pages. Every stored headline remembers its language
+// (the `language` field on Headlines), and every reader below asks for ONE
+// language — so a page never mixes the two (the owner's rule).
 import Parser from "rss-parser";
 import { getPayload } from "payload";
+import type { Where } from "payload";
 import { configPromise } from "@/app/(payload)/config";
+import type { Lang } from "@/lib/lang";
 
 // One normalised headline — the shape our UI uses, whatever feed it came from.
 export type Headline = {
@@ -31,20 +39,40 @@ export type Headline = {
   isoDate: string; // for sorting
   timeAgo: string; // "2h ago"
   image?: string; // thumbnail, only when the feed provides one
+  lang?: Lang; // "hi" for the Hindi newspapers; missing = English (3 Nov 2026)
 };
 
 // Category-specific feeds, ~2 sources per category. Verified 14 Jul 2026.
-const FEEDS: { source: string; category: string; url: string }[] = [
-  { source: "The Hindu", category: "National", url: "https://www.thehindu.com/news/national/feeder/default.rss" },
-  { source: "Indian Express", category: "National", url: "https://indianexpress.com/section/india/feed/" },
-  { source: "The Hindu", category: "International", url: "https://www.thehindu.com/news/international/feeder/default.rss" },
-  { source: "Indian Express", category: "International", url: "https://indianexpress.com/section/world/feed/" },
-  { source: "The Hindu", category: "Sci-Tech", url: "https://www.thehindu.com/sci-tech/feeder/default.rss" },
-  { source: "Indian Express", category: "Sci-Tech", url: "https://indianexpress.com/section/technology/feed/" },
-  { source: "LiveMint", category: "Business", url: "https://www.livemint.com/rss/economy" },
-  { source: "The Hindu", category: "Business", url: "https://www.thehindu.com/business/feeder/default.rss" },
-  { source: "The Hindu", category: "Sports", url: "https://www.thehindu.com/sport/feeder/default.rss" },
-  { source: "Indian Express", category: "Sports", url: "https://indianexpress.com/section/sports/feed/" },
+// `lang` says which pages a feed is for: "en" = the English pages, "hi" = the
+// Hindi pages. The category stays in English for both — it's the key the filter
+// chips use; Hindi pages SHOW it in Hindi (categoryLabel in lib/pulse-sources.ts).
+const FEEDS: { source: string; category: string; url: string; lang: Lang }[] = [
+  { source: "The Hindu", category: "National", url: "https://www.thehindu.com/news/national/feeder/default.rss", lang: "en" },
+  { source: "Indian Express", category: "National", url: "https://indianexpress.com/section/india/feed/", lang: "en" },
+  { source: "The Hindu", category: "International", url: "https://www.thehindu.com/news/international/feeder/default.rss", lang: "en" },
+  { source: "Indian Express", category: "International", url: "https://indianexpress.com/section/world/feed/", lang: "en" },
+  { source: "The Hindu", category: "Sci-Tech", url: "https://www.thehindu.com/sci-tech/feeder/default.rss", lang: "en" },
+  { source: "Indian Express", category: "Sci-Tech", url: "https://indianexpress.com/section/technology/feed/", lang: "en" },
+  { source: "LiveMint", category: "Business", url: "https://www.livemint.com/rss/economy", lang: "en" },
+  { source: "The Hindu", category: "Business", url: "https://www.thehindu.com/business/feeder/default.rss", lang: "en" },
+  { source: "The Hindu", category: "Sports", url: "https://www.thehindu.com/sport/feeder/default.rss", lang: "en" },
+  { source: "Indian Express", category: "Sports", url: "https://indianexpress.com/section/sports/feed/", lang: "en" },
+
+  // THE HINDI NEWSPAPERS (3 Nov 2026, the whole site in Hindi, phase 4) — the
+  // 9 feeds the owner agreed on 2 Nov, re-checked 3 Nov (40–50 fresh items each).
+  // Amar Ujala + Live Hindustan for four categories; Sci-Tech is Amar Ujala
+  // alone (Live Hindustan's science feed is empty). Not usable when tested:
+  // Jansatta, Dainik Jagran, Navbharat Times, NDTV India, Zee Hindi.
+  // Amar Ujala's feeds carry no pictures — the /pulse rows show their number instead.
+  { source: "Amar Ujala", category: "National", url: "https://www.amarujala.com/rss/india-news.xml", lang: "hi" },
+  { source: "Live Hindustan", category: "National", url: "https://api.livehindustan.com/feeds/rss/national/rssfeed.xml", lang: "hi" },
+  { source: "Amar Ujala", category: "International", url: "https://www.amarujala.com/rss/world-news.xml", lang: "hi" },
+  { source: "Live Hindustan", category: "International", url: "https://api.livehindustan.com/feeds/rss/international/rssfeed.xml", lang: "hi" },
+  { source: "Amar Ujala", category: "Sci-Tech", url: "https://www.amarujala.com/rss/technology.xml", lang: "hi" },
+  { source: "Amar Ujala", category: "Business", url: "https://www.amarujala.com/rss/business.xml", lang: "hi" },
+  { source: "Live Hindustan", category: "Business", url: "https://api.livehindustan.com/feeds/rss/business/rssfeed.xml", lang: "hi" },
+  { source: "Amar Ujala", category: "Sports", url: "https://www.amarujala.com/rss/sports.xml", lang: "hi" },
+  { source: "Live Hindustan", category: "Sports", url: "https://api.livehindustan.com/feeds/rss/sports/rssfeed.xml", lang: "hi" },
 ];
 
 // The agencies' small marks live in lib/pulse-sources.ts (browser-safe); re-exported here.
@@ -52,10 +80,29 @@ export { SOURCE_ICONS } from "@/lib/pulse-sources";
 
 // The filter chips on /pulse are built from the feed list above, so adding a
 // feed automatically adds its chip. (Redesign, 16 Sep 2026.)
+// Both languages have the same five categories, so one list serves both pages.
 export const HEADLINE_CATEGORIES: string[] = Array.from(new Set(FEEDS.map((f) => f.category)));
-export const HEADLINE_SOURCES: { source: string; feeds: number }[] = Array.from(
-  FEEDS.reduce((m, f) => m.set(f.source, (m.get(f.source) ?? 0) + 1), new Map<string, number>())
-).map(([source, feeds]) => ({ source, feeds }));
+
+/** The newspapers of ONE language, with how many feeds each — the source chips
+ *  and the "Sources" card on /pulse (English) and /hi/pulse (Hindi). */
+export function headlineSources(lang: Lang = "en"): { source: string; feeds: number }[] {
+  return Array.from(
+    FEEDS.filter((f) => f.lang === lang).reduce(
+      (m, f) => m.set(f.source, (m.get(f.source) ?? 0) + 1),
+      new Map<string, number>()
+    )
+  ).map(([source, feeds]) => ({ source, feeds }));
+}
+// The English list, under its old name (kept so nothing that used it breaks)
+export const HEADLINE_SOURCES = headlineSources("en");
+
+/** The database filter for ONE language. English also matches rows with NO
+ *  language: everything saved before 3 Nov 2026 came from the English papers. */
+function languageWhere(lang: Lang): Where {
+  return lang === "hi"
+    ? { language: { equals: "hi" } }
+    : { or: [{ language: { equals: "en" } }, { language: { exists: false } }] };
+}
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -105,7 +152,7 @@ function cleanText(s?: string): string {
 // ── LIVE RSS FETCH ────────────────────────────────────────────────────────────
 const FEED_TIMEOUT_MS = 8000; // give up on a single slow feed after 8s
 
-async function fetchLiveFeed(source: string, category: string, url: string): Promise<Headline[]> {
+async function fetchLiveFeed(source: string, category: string, url: string, lang: Lang): Promise<Headline[]> {
   // AbortController is the standard way to cancel a fetch. We start an 8s timer;
   // if the feed hasn't responded by then, we abort it so one slow source can't
   // stall (or get silently abandoned in) the whole sync.
@@ -131,7 +178,13 @@ async function fetchLiveFeed(source: string, category: string, url: string): Pro
     return (feed.items || [])
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .map((item: any) => {
-        const iso = item.isoDate || item.pubDate || "";
+        let iso = item.isoDate || item.pubDate || "";
+        // A time IN THE FUTURE becomes "now" (3 Nov 2026). Amar Ujala stamps a
+        // few stories hours ahead (seen: 12:56 when it was 11:14). Kept as-is,
+        // they'd sit at the top of every list saying "अभी" (just now) until that
+        // time came. 5 minutes of leeway covers a clock that's slightly off.
+        const when = new Date(iso).getTime();
+        if (!Number.isNaN(when) && when > Date.now() + 5 * 60_000) iso = new Date().toISOString();
         return {
           title: cleanText(item.title),
           link: item.link || "",
@@ -141,6 +194,7 @@ async function fetchLiveFeed(source: string, category: string, url: string): Pro
           isoDate: iso,
           timeAgo: timeAgo(iso),
           image: extractImage(item),
+          lang,
         } as Headline;
       })
       .filter((h: Headline) => h.title && h.link);
@@ -155,17 +209,20 @@ async function fetchLiveFeed(source: string, category: string, url: string): Pro
   }
 }
 
-async function fetchAllLive(): Promise<Headline[]> {
+// `lang` left out = every feed (the sync); "en"/"hi" = one language's feeds
+// (the live fallbacks below, used when the database can't be reached).
+async function fetchAllLive(lang?: Lang): Promise<Headline[]> {
+  const feeds = lang ? FEEDS.filter((f) => f.lang === lang) : FEEDS;
   // allSettled (not all): even if one feed rejects, we keep every feed that
   // succeeded. `all` would throw away everything the moment one feed failed.
   const settled = await Promise.allSettled(
-    FEEDS.map((f) => fetchLiveFeed(f.source, f.category, f.url))
+    feeds.map((f) => fetchLiveFeed(f.source, f.category, f.url, f.lang))
   );
   const perFeed = settled.map((s) => (s.status === "fulfilled" ? s.value : []));
   // A one-line summary in the terminal so we can SEE each sync working.
   console.log(
     "[pulse] fetched:",
-    FEEDS.map((f, i) => `${f.source}/${f.category}=${perFeed[i].length}`).join("  ")
+    feeds.map((f, i) => `${f.source}/${f.category}=${perFeed[i].length}`).join("  ")
   );
   return perFeed.flat();
 }
@@ -199,9 +256,14 @@ async function syncHeadlines(): Promise<SyncResult> {
   // list of URLs, then threw ~99% of those bytes away. Running every 15 minutes,
   // that alone burned through the whole 5 GB/month free allowance in two weeks
   // (14 Aug 2026 outage). Selecting one field cuts it to roughly a tenth.
+  // 3 Nov 2026: 2000 → 4000. The Hindi newspapers roughly double the rows kept
+  // in the 7-day window; with 2000, older-but-still-in-the-feed links would
+  // fall outside this list and be tried again (the database refuses the
+  // duplicate, but each refusal wastes one of the run's insert slots). Still
+  // only the link column, so it stays small (~0.4 MB).
   const existing = await payload.find({
     collection: "headlines",
-    limit: 2000,
+    limit: 4000,
     sort: "-publishedAt",
     depth: 0,
     select: { link: true }, // ONLY the de-duplication key — no other columns
@@ -229,11 +291,19 @@ async function syncHeadlines(): Promise<SyncResult> {
   // run finishes. Insert the FRESHEST first so the newest news lands first.
   // Keep each run well under Vercel's 60s limit. The 15-min cadence means we
   // never need many per run; the freshest are inserted first (sorted below).
+  //
+  // 3 Nov 2026: the cap is PER LANGUAGE (20 English + 20 Hindi). One shared cap
+  // would let whichever language publishes more take every slot, and the other
+  // language's pages would go stale. English behaves exactly as before.
   const MAX_INSERTS_PER_SYNC = 20;
-  if (newItems.length > MAX_INSERTS_PER_SYNC) {
-    newItems.sort((a, b) => new Date(b.isoDate).getTime() - new Date(a.isoDate).getTime());
-    newItems = newItems.slice(0, MAX_INSERTS_PER_SYNC);
-  }
+  const freshestFirst = (a: Headline, b: Headline) =>
+    new Date(b.isoDate).getTime() - new Date(a.isoDate).getTime();
+  newItems = (["en", "hi"] as const).flatMap((lang) =>
+    newItems
+      .filter((h) => (h.lang ?? "en") === lang)
+      .sort(freshestFirst)
+      .slice(0, MAX_INSERTS_PER_SYNC)
+  );
 
   // Insert in small parallel batches instead of one-at-a-time. Sequential inserts
   // meant a big catch-up (hundreds of new items) could take over a minute and hit
@@ -254,6 +324,7 @@ async function syncHeadlines(): Promise<SyncResult> {
             category: h.category,
             image: h.image,
             publishedAt: h.isoDate || new Date().toISOString(),
+            language: h.lang ?? "en", // which pages it's for (3 Nov 2026)
           },
         })
       )
@@ -351,12 +422,13 @@ function startSync(): Promise<SyncResult> {
 //
 // `select` lists the columns we genuinely use below. Anything not listed is
 // never sent by the database, which keeps the response small.
-async function getStoredHeadlines(limit = 300): Promise<Headline[]> {
+async function getStoredHeadlines(limit = 300, lang: Lang = "en"): Promise<Headline[]> {
   let res;
   try {
     const payload = await getClient();
     res = await payload.find({
       collection: "headlines",
+      where: languageWhere(lang), // one language only (3 Nov 2026)
       limit,
       sort: "-publishedAt",
       depth: 0,
@@ -389,6 +461,7 @@ async function getStoredHeadlines(limit = 300): Promise<Headline[]> {
     isoDate: d.publishedAt || "",
     timeAgo: timeAgo(d.publishedAt),
     image: d.image || undefined,
+    lang,
   }));
 }
 
@@ -412,11 +485,12 @@ async function getStoredHeadlines(limit = 300): Promise<Headline[]> {
 
 // THE HOMEPAGE TEASER: read the freshest headlines from the store, refresh it in
 // the background, and return the top `limit` in STRICT newest-first order.
-export async function getLatestHeadlines(limit = 30): Promise<Headline[]> {
+// `lang`: "en" for the English homepage, "hi" for the Hindi one (3 Nov 2026).
+export async function getLatestHeadlines(limit = 30, lang: Lang = "en"): Promise<Headline[]> {
   // Ask the database for exactly as many as we're going to show. The database
   // already sorts by publishedAt (newest first), so the newest `limit` rows are
   // precisely the ones we want — no need to over-fetch and slice in JavaScript.
-  let items = await getStoredHeadlines(limit);
+  let items = await getStoredHeadlines(limit, lang);
 
   // 5 Oct 2026: page renders NO LONGER trigger a sync. They used to call
   // ensureFresh() after the response, which woke the database on every visit.
@@ -425,7 +499,7 @@ export async function getLatestHeadlines(limit = 30): Promise<Headline[]> {
     // Cold start or an outage: the store is empty, so show live feeds rather
     // than an empty section. These fetches are cacheable (see fetchLiveFeed),
     // so this path no longer forces the page to be rendered per request.
-    items = await fetchAllLive();
+    items = await fetchAllLive(lang);
   }
 
   // Strict newest-first (latest at the top), then take the top `limit`.
@@ -446,7 +520,8 @@ export type HeadlinePage = {
 // 1-based, so page 1 is always the freshest 50.
 // Optional filters for /pulse's chips. Only exact values from the lists above
 // are accepted (checked by the page), so these go straight into the query.
-export type HeadlineFilters = { category?: string; source?: string };
+// `lang` (3 Nov 2026): which language's headlines — /pulse "en", /hi/pulse "hi".
+export type HeadlineFilters = { category?: string; source?: string; lang?: Lang };
 
 // /pulse asks for a page of headlines — read live, for the reasons in the block
 // above getLatestHeadlines.
@@ -463,9 +538,13 @@ export async function getHeadlinesPage(
     res = await payload.find({
       collection: "headlines",
       // Filter in the database, not in JavaScript (the August lesson).
+      // `and` = every condition must hold: the language, plus any chip
       where: {
-        ...(filters.category ? { category: { equals: filters.category } } : {}),
-        ...(filters.source ? { source: { equals: filters.source } } : {}),
+        and: [
+          languageWhere(filters.lang ?? "en"),
+          ...(filters.category ? [{ category: { equals: filters.category } }] : []),
+          ...(filters.source ? [{ source: { equals: filters.source } }] : []),
+        ],
       },
       limit: perPage,
       page,
@@ -500,7 +579,7 @@ export async function getHeadlinesPage(
     // Measured 28 Aug 2026: the feeds carry ~1,120 items, ~760 of them within
     // 7 days — roughly 16 pages. So this is a genuinely useful archive, not a stub.
     try {
-      const live = await fetchAllLive();
+      const live = await fetchAllLive(filters.lang ?? "en");
 
       // De-duplicate by link: the same story often appears in two feeds
       // (e.g. National AND International).
@@ -558,6 +637,7 @@ export async function getHeadlinesPage(
     isoDate: d.publishedAt || "",
     timeAgo: timeAgo(d.publishedAt),
     image: d.image || undefined,
+    lang: filters.lang ?? "en",
   }));
 
   return {

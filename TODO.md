@@ -222,7 +222,9 @@
           (invisible, read by screen readers). Fix = make Media alt/caption localized.
         - [ ] Owner's Hindi wording check (end of all phases) — also covers two NEW lines not on the
           word list: the Atlas line on /hi/history ("युद्ध, खोजें, यात्राएँ और जन्म — …") and the
-          Previous/Next screen-reader label "और लेख".
+          Previous/Next screen-reader label "और लेख". PLUS all of phase 4's Hindi (new, not on a
+          word list): lib/page-text.ts → pulse + news; category names राष्ट्रीय / अंतरराष्ट्रीय /
+          विज्ञान-तकनीक / व्यापार / खेल and source names in lib/pulse-sources.ts.
         - [x] **Loader when switching language (owner, 2 Nov: "it is taking time") — BUILT 3 Nov.**
           Cause: the header EN | हिं switch (components/LangSwitch.tsx) changed page with router.push
           from a button, and both loaders (PageCurtain, NavigationLoader) only listen for LINK
@@ -230,11 +232,27 @@
           signal; the water curtain plays for it (book overlay in Reading mode / less motion).
           Used by LangSwitch and the welcome strip's "हिन्दी में पढ़ें" (HindiWelcome.tsx). Checked
           on dev: EN→हिं, हिं→EN, Reading mode. Rule: any BUTTON that changes page uses goWithLoader.
-        - [ ] Phase 4 — news: /hi/news in Hindi; HINDI HEADLINES on /hi (homepage, ticker, /hi/pulse),
-          same layout. Feeds agreed 2 Nov (tested that day): Amar Ujala + Live Hindustan for
-          National / International / Business / Sports, Amar Ujala alone for Sci-Tech (9 feeds).
-          Needs a "language" field on Headlines — dev DB first, production only with owner's go.
-          Not usable (tested): Jansatta, Dainik Jagran, Navbharat Times, NDTV India, Zee Hindi.
+        - [x] **Phase 4 BUILT (3 Nov, dev)** — Hindi news. 9 Hindi feeds in `lib/pulse.ts` (Amar
+          Ujala + Live Hindustan; Sci-Tech = Amar Ujala technology.xml — LH science feed is empty).
+          New `language` field on Headlines (dev DB got the column automatically; old rows = no
+          value = English). Every headline reader takes a language; insert cap is 20 PER LANGUAGE.
+          Future-dated feed items (Amar Ujala stamps some hours ahead) are saved as "now".
+          Hindi homepage ticker + Latest headlines = Hindi papers (no "अंग्रेज़ी में" tag); new
+          /hi/pulse and /hi/news (shared `components/pages/PulsePage.tsx`, `NewsPage.tsx`); a
+          Hindi write-up page has Hindi breadcrumb/label/date/reading time; Read Later box + saved
+          list show Hindi category/source names (`categoryLabel`/`sourceLabel` in
+          lib/pulse-sources.ts). /hi/news shows "no Hindi write-ups yet" + the 6 newest Hindi
+          headlines until the first Hindi write-up exists. Also fixed: English /pulse said
+          "Refreshed every 30 minutes" (it's every 2 hours); Hindi homepage posters showed an
+          "English · हिन्दी" tag (now English homepage only); the Hindi homepage's Current
+          affairs card looked at only the newest write-up.
+        - [ ] **BEFORE the Vercel site gets Phase 4 (deploy step, owner's go needed):** the
+          production database must get the new `language` column FIRST — run `npm run dev:prod`
+          once with the new code (Payload adds the column), check the host says sweet-tree, stop
+          it, THEN push. If the code goes live without the column, every headline save fails
+          and the news stops updating.
+        - [ ] Hindi write-up page (/hi/news/<slug>) is untested — there is no Hindi write-up yet.
+          Check it when the first one is published.
       - [x] **Phase 5 speed check DONE (31 Oct)** — Lighthouse 12.8.2, phone settings, 2 runs each.
         BEFORE = the Vercel site (old design); AFTER = a local production build of feature/redesign.
         Homepage: score 61/73 → 53/73; largest paint 7.4–8.4 s → 5.7–6.5 s (better); blocking time

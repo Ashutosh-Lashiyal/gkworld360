@@ -21,3 +21,10 @@ export function formatNewsDate(date?: string, lang: "en" | "hi" = "en"): string 
                   "Jul","Aug","Sep","Oct","Nov","Dec"];
   return `${d.getDate()}-${months[d.getMonth()]}-${d.getFullYear()}`;
 }
+
+// "May 2026" / "मई 2026" — a month heading, e.g. on Current Affairs
+// (3 Nov 2026, phase 4). `month` counts from 0 (0 = January), like JavaScript's Date.
+export function formatMonthYear(year: number, month: number, lang: "en" | "hi" = "en"): string {
+  if (lang === "hi") return `${HINDI_MONTHS[month]} ${year}`;
+  return new Date(year, month, 1).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+}

@@ -12,6 +12,7 @@ import {
   splitKeyTakeaways,
 } from "@/lib/cms";
 import type { ContentMeta } from "@/lib/content";
+import { PAGE_TEXT } from "@/lib/page-text";
 
 export default function CMSNewsView({
   news,
@@ -44,6 +45,11 @@ export default function CMSNewsView({
   // Key Takeaways go to the top of the page (editorial layout, 17 Sep 2026)
   const { points, body } = splitKeyTakeaways(news.body);
 
+  // "3 min read" / "3 मिनट में पढ़ें" (3 Nov 2026, phase 4). estimateReadingTime
+  // gives the English sentence — we keep only the number, same as CMSTopicView.
+  const minutes = estimateReadingTime(news.body).match(/\d+/)?.[0] ?? "1";
+  const readingTime = PAGE_TEXT[lang].article.minutes(minutes);
+
   return (
     <NewsArticleView
       meta={meta}
@@ -51,7 +57,7 @@ export default function CMSNewsView({
       enHref={enHref}
       hiHref={hiHref}
       url={lang === "hi" ? `/hi/news/${news.slug}` : `/news/${news.slug}`}
-      readingTime={estimateReadingTime(news.body)}
+      readingTime={readingTime}
       recent={[]} // "More News" list — left empty for now (wired up later)
       headings={extractHeadingsFromLexical(body)}
       takeaways={points}

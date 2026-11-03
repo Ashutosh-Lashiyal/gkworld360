@@ -1,20 +1,15 @@
-// The /news listing page ("Current Affairs") — shows all current-affairs items,
-// grouped by month (newest month first). Merges TWO sources during the CMS
-// migration: items written in the Payload CMS AND the old MDX files, so nothing
-// disappears. (Individual items are rendered by the catch-all route.)
+// The /news listing page ("Current Affairs"), in English.
+//
+// 3 Nov 2026 (the whole site in Hindi, phase 4): the page itself now lives in
+// components/pages/NewsPage.tsx, shared with the Hindi twin at "/hi/news"
+// (app/(frontend)/hi/news/page.tsx). This file only says WHICH language to
+// show, plus the page's settings (title, description, language versions).
+// (Individual write-ups are rendered by the catch-all route.)
+
 import type { Metadata } from "next";
-import { pageMetadata } from "@/lib/og";
-import NewsCard from "@/components/NewsCard";
-import PageTitle from "@/components/PageTitle";
-import { getSubjectColors } from "@/lib/subject-colors";
-import { getAllNews } from "@/lib/news";
-import {
-  hasTranslation,
-  resolveContentFile,
-  getContentMeta,
-  type ContentMeta,
-} from "@/lib/content";
-import { getCMSNewsList, getCMSNewsHindiSlugs } from "@/lib/cms";
+import { pageMetadata, languageAlternates } from "@/lib/og";
+import { PAGE_TEXT } from "@/lib/page-text";
+import NewsPage from "@/components/pages/NewsPage";
 
 // Re-generate at most once an HOUR. Was 60 s until 21 Sep 2026 — every crawler
 // visit after a minute re-asked the database, which never got to sleep and
@@ -24,152 +19,15 @@ import { getCMSNewsList, getCMSNewsHindiSlugs } from "@/lib/cms";
 // (lib/refresh.ts), not from this timer — it is only a safety net.
 export const revalidate = 21600;
 
+const t = PAGE_TEXT.en.news.meta;
+
 // Title only — the root layout appends " | GKWorld360". pageMetadata also
 // gives the page its link-preview card (lib/og.ts).
-export const metadata: Metadata = pageMetadata({
-  title: "Current Affairs",
-  description:
-    "In-depth current affairs for competitive exams — national, international, economy, sports and more, written clearly and concisely.",
-  label: "Explained for exams",
-  path: "/news",
-});
-
-// One item in the listing (compatible with NewsCard's props).
-type NewsListItem = {
-  key: string; // the article slug — used to de-duplicate MDX vs CMS
-  url: string;
-  meta: ContentMeta;
-  hindiHref?: string;
-  hindiTitle?: string;
+export const metadata: Metadata = {
+  ...pageMetadata({ title: t.title, description: t.description, label: t.label, path: "/news" }),
+  alternates: languageAlternates("/news", "en"),
 };
 
-// "2026-05-22" → "2026-05" (the sortable key we group by).
-function monthKey(date?: string | null): string {
-  if (!date) return "0000-00";
-  const d = new Date(date);
-  if (Number.isNaN(d.getTime())) return "0000-00";
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
-
-// "2026-05" → "May 2026" (the heading shown to readers).
-function monthLabel(key: string): string {
-  if (key === "0000-00") return "Undated";
-  const [y, m] = key.split("-").map(Number);
-  return new Date(y, m - 1, 1).toLocaleDateString("en-GB", {
-    month: "long",
-    year: "numeric",
-  });
-}
-
-export default async function NewsListingPage() {
-  // ── Source 1: legacy MDX news ──
-  const mdxItems: NewsListItem[] = getAllNews().map((item) => {
-    const hindiResolved = hasTranslation(item.slug, "hi")
-      ? resolveContentFile(item.slug, "hi")
-      : null;
-    return {
-      key: item.slug[item.slug.length - 1],
-      url: item.url,
-      meta: item.meta,
-      hindiHref: hindiResolved ? "/hi/" + item.slug.join("/") : undefined,
-      hindiTitle: hindiResolved
-        ? getContentMeta(hindiResolved.filePath).title
-        : undefined,
-    };
-  });
-
-  // ── Source 2: CMS (Payload) news ──
-  // Which CMS items also have a Hindi version? One query for the whole list
-  // (never one per item) — the CMS equivalent of the .hi.mdx check above.
-  const cmsHindi = await getCMSNewsHindiSlugs();
-  const cmsItems: NewsListItem[] = (await getCMSNewsList()).map((n) => ({
-    key: n.slug,
-    url: `/news/${n.slug}`,
-    hindiHref: cmsHindi.has(n.slug) ? `/hi/news/${n.slug}` : undefined,
-    meta: {
-      title: n.title,
-      description: n.description ?? "",
-      category: n.category ?? undefined,
-      date: n.eventDate ?? undefined,
-      image: n.coverImage?.url ?? undefined,
-      imageWidth: n.coverImage?.width ?? undefined,
-      imageHeight: n.coverImage?.height ?? undefined,
-      imageCaption: n.coverImageCaption ?? undefined,
-    } as ContentMeta,
-  }));
-
-  // Merge — if the same article slug exists in both, the CMS version wins.
-  const byKey = new Map<string, NewsListItem>();
-  for (const it of mdxItems) byKey.set(it.key, it);
-  for (const it of cmsItems) byKey.set(it.key, it);
-  const all = Array.from(byKey.values());
-
-  // Group by month, newest month first.
-  const groups = new Map<string, NewsListItem[]>();
-  for (const it of all) {
-    const k = monthKey(it.meta.date);
-    if (!groups.has(k)) groups.set(k, []);
-    groups.get(k)!.push(it);
-  }
-  const monthKeys = Array.from(groups.keys()).sort().reverse();
-  // Within each month, newest first.
-  for (const arr of groups.values()) {
-    arr.sort(
-      (a, b) =>
-        new Date(b.meta.date ?? 0).getTime() - new Date(a.meta.date ?? 0).getTime()
-    );
-  }
-
-  // 17 Sep 2026: the same centred title block every listing page has (board 11),
-  // in the Current Affairs signal colour, then the month-by-month grid.
-  const colors = getSubjectColors("current-affairs");
-
-  return (
-    <>
-    <PageTitle
-      colors={colors}
-      label="Current Affairs · समसामयिकी"
-      title="Current Affairs"
-      description="In-depth, exam-focused write-ups — organised by month, in English and Hindi."
-    >
-      <span className="font-body text-[13px] text-muted">
-        {all.length} {all.length === 1 ? "write-up" : "write-ups"} · newest first
-      </span>
-    </PageTitle>
-
-    <div className="max-w-[1320px] mx-auto px-4 md:px-8 pt-12 md:pt-16 pb-6">
-
-      {all.length > 0 ? (
-        <div className="space-y-14">
-          {monthKeys.map((k) => (
-            <section key={k}>
-              {/* Month heading (e.g. "May 2026") */}
-              {/* PHASE 4 (30 Oct 2026): the month in big Anton capitals */}
-              <h2 data-reveal className="m-0 mb-6 pb-3 border-b-2 border-hairline font-display text-[40px] md:text-[54px] font-normal leading-none uppercase text-foreground">
-                {monthLabel(k)}
-              </h2>
-              <div data-reveal-group className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {groups.get(k)!.map((item) => (
-                  <NewsCard
-                    key={item.url}
-                    url={item.url}
-                    meta={item.meta}
-                    hindiHref={item.hindiHref}
-                    hindiTitle={item.hindiTitle}
-                  />
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      ) : (
-        <div className="py-16 text-center">
-          <p className="font-body text-lg text-muted">
-            No current affairs published yet. Check back soon.
-          </p>
-        </div>
-      )}
-    </div>
-    </>
-  );
+export default function Page() {
+  return <NewsPage lang="en" />;
 }

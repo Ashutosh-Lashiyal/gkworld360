@@ -1,6 +1,12 @@
 // NewsArticleView — layout for a single news article (MDX or CMS — CMSNewsView
 // feeds this same component). Band on top, reading column + sticky sidebar
 // below; the sidebar's Contents list appears only when there are 2+ headings.
+//
+// HINDI (3 Nov 2026, the whole site in Hindi, phase 4): on /hi/news/<slug> the
+// breadcrumb ("समसामयिकी" → /hi/news), the small label, the date ("17 सितंबर
+// 2026") and "और समसामयिकी" are in Hindi (lib/page-text.ts, news). The cover
+// picture's caption is English-only in /admin for now, so a Hindi page leaves
+// it out (same as Hindi articles since phase 3).
 
 import Link from "next/link";
 import ArticleHeader from "@/components/ArticleHeader";
@@ -16,6 +22,8 @@ import { type NewsItem } from "@/lib/news";
 import { formatNewsDate } from "@/lib/date-utils";
 import { SITE_URL, SITE_NAME, absoluteUrl } from "@/lib/site";
 import type { ContentMeta, TocHeading } from "@/lib/content";
+import { PAGE_TEXT } from "@/lib/page-text";
+import { localHref } from "@/lib/site-text";
 
 type NewsArticleViewProps = {
   meta: ContentMeta;
@@ -42,10 +50,14 @@ export default function NewsArticleView({
   takeaways,
   children,
 }: NewsArticleViewProps) {
+  const t = PAGE_TEXT[lang].news;
+  const hi = lang === "hi";
   const breadcrumbs = [
-    { label: "Current Affairs", href: "/news" },
+    { label: t.crumb, href: localHref(lang, "/news") },
     { label: meta.title, href: url },
   ];
+  // English only in /admin, so a Hindi page doesn't show it (see the top note)
+  const caption = hi ? undefined : meta.imageCaption;
 
   // Only show the Table of Contents sidebar when there are at least 2 headings.
   // A single heading doesn't need a TOC — it adds no navigation value.
@@ -79,13 +91,13 @@ export default function NewsArticleView({
         header={
           <ArticleHeader
             breadcrumbs={breadcrumbs}
-            label={["Current Affairs", meta.category].filter(Boolean).join(" · ")}
+            label={[t.crumb, meta.category].filter(Boolean).join(" · ")}
             title={meta.title}
             summary={meta.description}
-            metaItems={[...(meta.date ? [formatNewsDate(meta.date)] : []), readingTime]}
+            metaItems={[...(meta.date ? [formatNewsDate(meta.date, lang)] : []), readingTime]}
             coverUrl={meta.image}
-            coverAlt={meta.imageCaption ?? meta.title}
-            coverCaption={meta.imageCaption}
+            coverAlt={caption ?? meta.title}
+            coverCaption={caption}
             lang={lang}
             enHref={enHref}
             hiHref={hiHref}
@@ -100,14 +112,14 @@ export default function NewsArticleView({
           recent.length > 0 && (
             <section className="mt-16">
               <div className="flex items-end justify-between mb-6">
-                <h2 className="m-0 font-display text-4xl md:text-5xl leading-none uppercase text-foreground">More current affairs</h2>
-                <Link href="/news" className="font-body text-sm font-extrabold text-accent hover:underline underline-offset-4">
-                  View all →
+                <h2 className="m-0 font-display text-4xl md:text-5xl leading-none uppercase text-foreground">{t.more}</h2>
+                <Link href={localHref(lang, "/news")} className="font-body text-sm font-extrabold text-accent hover:underline underline-offset-4">
+                  {t.viewAll}
                 </Link>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {recent.map((item) => (
-                  <NewsCard key={item.url} url={item.url} meta={item.meta} />
+                  <NewsCard key={item.url} url={item.url} meta={item.meta} lang={lang} />
                 ))}
               </div>
             </section>

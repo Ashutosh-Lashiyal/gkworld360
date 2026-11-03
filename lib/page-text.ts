@@ -6,6 +6,9 @@
 // CATEGORY page (/history/modern-india, /hi/history/modern-india), the small
 // words on ARTICLES, and the SHARE menu. Their Hindi is the owner's word list:
 // https://claude.ai/artifact/CHtWZ9Q33Qh92m8GtiCykE (row numbers S1…, C1…, A1…).
+// Phase 4 (3 Nov 2026) added the HEADLINES page (/pulse, /hi/pulse) and
+// CURRENT AFFAIRS (/news, /hi/news, and a write-up's own small words). That
+// Hindi is NEW — not on a word list yet — for the owner's final wording check.
 //
 // Same idea as lib/home-text.ts (the homepage) and lib/site-text.ts (header,
 // footer): each page is ONE component that takes a language, and its words
@@ -163,6 +166,45 @@ export type PageText = {
     copied: string; //                        A7
     failed: string; //                        A8
     label: string; //                         A9 read aloud
+  };
+  // ── PHASE 4 (3 Nov 2026) ──
+  pulse: {
+    meta: { title: string; description: string; label: string };
+    label: string; //                         the small line above the title
+    title: string;
+    // "<b>412</b> Headlines from the last 7 days": the words BEFORE and AFTER
+    // the bold number (Hindi puts the number in the middle of the sentence)
+    count: (filtered: boolean) => [string, string];
+    newest: string;
+    tap: [string, string]; //                 the words before and after the bookmark icon
+    readLater: string; //                     the button to the Read Later page
+    all: string; //                           the first filter chip
+    empty: (filtered: boolean) => string;
+    newer: string;
+    older: string;
+    pageOf: (total: number) => [string, string]; // around the bold page number
+    perPage: (n: number) => string;
+    pagination: string; //                    the page buttons, read aloud
+    credit: string; //                        the copyright line under the list
+    sources: string;
+    feeds: (n: number) => string;
+    refreshed: string;
+    open: string; //                          on a row, when you point at it
+    // the "Read Later" box in the sidebar (components/ReadLaterPeek.tsx)
+    peek: { title: (n: number) => string; empty: string; open: string };
+  };
+  news: {
+    meta: { title: string; description: string; label: string };
+    label: string;
+    title: string;
+    description: string;
+    count: (n: number) => string;
+    undated: string;
+    empty: string;
+    emptyLink: string | null; //              Hindi: a link to the Hindi headlines
+    crumb: string; //                         a write-up's breadcrumb + small label
+    more: string; //                          "More current affairs"
+    viewAll: string;
   };
 };
 
@@ -374,6 +416,57 @@ export const PAGE_TEXT: Record<Lang, PageText> = {
       failed: "Couldn't copy — long-press the address bar instead",
       label: "Share this page",
     },
+    pulse: {
+      meta: {
+        title: "Latest Headlines",
+        description:
+          "Fresh current-affairs headlines from trusted Indian news sources, curated for competitive-exam aspirants and general-knowledge learners.",
+        label: "Current Affairs · from trusted Indian sources",
+      },
+      label: "Aggregated from trusted Indian sources · kept for about a week",
+      title: "Latest Headlines",
+      count: (filtered) => ["", ` Headlines from the last 7 days${filtered ? " matching your filter" : ""}`],
+      newest: "Newest first",
+      tap: ["Tap the bookmark", "to save one to Read Later"],
+      readLater: "Read Later",
+      all: "All",
+      empty: (filtered) => `No headlines ${filtered ? "match that filter" : "right now"}. Check back soon.`,
+      newer: "← Newer",
+      older: "Older →",
+      pageOf: (total) => ["Page ", ` of ${total}`],
+      perPage: (n) => ` · ${n} per page`,
+      pagination: "Headlines pagination",
+      credit:
+        "Headlines are aggregated from publishers' public RSS feeds and link to the original articles. GKWorld360 does not host this content — all credit and copyright belong to the respective sources.",
+      sources: "Sources",
+      feeds: (n) => `${n} ${n === 1 ? "feed" : "feeds"}`,
+      // 3 Nov 2026: said "every 30 minutes" — the sync has run every 2 hours since 5 Oct
+      refreshed: "Refreshed every 2 hours.",
+      open: "Open ↗",
+      peek: {
+        title: (n) => `Read Later · ${n} saved`,
+        empty: "Tap the bookmark on any headline to keep it here beyond the week.",
+        open: "Open your list →",
+      },
+    },
+    news: {
+      meta: {
+        title: "Current Affairs",
+        description:
+          "In-depth current affairs for competitive exams — national, international, economy, sports and more, written clearly and concisely.",
+        label: "Explained for exams",
+      },
+      label: "Current Affairs · समसामयिकी",
+      title: "Current Affairs",
+      description: "In-depth, exam-focused write-ups — organised by month, in English and Hindi.",
+      count: (n) => `${n} ${n === 1 ? "write-up" : "write-ups"} · newest first`,
+      undated: "Undated",
+      empty: "No current affairs published yet. Check back soon.",
+      emptyLink: null,
+      crumb: "Current Affairs",
+      more: "More current affairs",
+      viewAll: "View all →",
+    },
   },
 
   // ── हिन्दी (approved by the owner, 2 Nov 2026) ───────────────────────────────
@@ -571,6 +664,58 @@ export const PAGE_TEXT: Record<Lang, PageText> = {
       copied: "लिंक कॉपी हो गया", //                              A7
       failed: "कॉपी नहीं हो सका। एड्रेस बार को देर तक दबाकर कॉपी करें।", // A8
       label: "यह पेज शेयर करें", //                               A9
+    },
+    // Phase 4 (3 Nov 2026) — new Hindi, for the owner's final wording check
+    pulse: {
+      meta: {
+        title: "ताज़ा सुर्खियाँ",
+        description:
+          "भरोसेमंद हिन्दी अख़बारों की ताज़ा सुर्खियाँ — प्रतियोगी परीक्षाओं की तैयारी करने वालों और सामान्य ज्ञान सीखने वालों के लिए।",
+        label: "समसामयिकी · भरोसेमंद हिन्दी अख़बारों से",
+      },
+      label: "भरोसेमंद हिन्दी अख़बारों से · लगभग एक हफ़्ते तक",
+      title: "ताज़ा सुर्खियाँ",
+      count: (filtered) => ["पिछले 7 दिनों की ", ` सुर्खियाँ${filtered ? " (आपके चुने फ़िल्टर के अनुसार)" : ""}`],
+      newest: "सबसे नई पहले",
+      tap: ["बुकमार्क", "दबाकर किसी सुर्खी को “बाद में पढ़ें” में रखें"],
+      readLater: "बाद में पढ़ें",
+      all: "सभी",
+      empty: (filtered) =>
+        filtered ? "इस फ़िल्टर से कोई सुर्खी नहीं मिली। कुछ देर बाद फिर देखें।" : "अभी कोई सुर्खी नहीं है। कुछ देर बाद फिर देखें।",
+      newer: "← नई",
+      older: "पुरानी →",
+      pageOf: (total) => ["पेज ", ` / ${total}`],
+      perPage: (n) => ` · हर पेज पर ${n}`,
+      pagination: "सुर्खियों के पेज",
+      credit:
+        "सुर्खियाँ अख़बारों की सार्वजनिक फ़ीड से ली गई हैं और मूल ख़बर से जुड़ी हैं। GKWorld360 यह सामग्री अपने यहाँ नहीं रखता — पूरा श्रेय और कॉपीराइट संबंधित अख़बारों का है।",
+      sources: "स्रोत",
+      feeds: (n) => `${n} फ़ीड`,
+      refreshed: "हर 2 घंटे में ताज़ा होती हैं।",
+      open: "खोलें ↗",
+      peek: {
+        title: (n) => `बाद में पढ़ें · ${n} सहेजी गईं`,
+        empty: "किसी भी सुर्खी पर बुकमार्क दबाएँ — वह एक हफ़्ते के बाद भी यहाँ रहेगी।",
+        open: "अपनी सूची खोलें →",
+      },
+    },
+    news: {
+      meta: {
+        title: "समसामयिकी",
+        description:
+          "प्रतियोगी परीक्षाओं के लिए समसामयिकी — राष्ट्रीय, अंतरराष्ट्रीय, अर्थव्यवस्था, खेल और बहुत कुछ, सरल और संक्षिप्त भाषा में।",
+        label: "परीक्षा के लिए समझाया गया",
+      },
+      label: "समसामयिकी",
+      title: "समसामयिकी",
+      description: "परीक्षा के लिए विस्तार से लिखे लेख — महीने के क्रम में।",
+      count: (n) => `${n} लेख · सबसे नए पहले`,
+      undated: "बिना तारीख़",
+      empty: "समसामयिकी के लेख अभी हिन्दी में नहीं आए हैं। तब तक हिन्दी अख़बारों की ताज़ा सुर्खियाँ पढ़ें।",
+      emptyLink: "सभी सुर्खियाँ →",
+      crumb: "समसामयिकी",
+      more: "और समसामयिकी",
+      viewAll: "सभी देखें →",
     },
   },
 };

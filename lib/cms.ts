@@ -495,7 +495,18 @@ export async function getCMSNewsHindiSlugs(limit = 200): Promise<Set<string>> {
 // The published news items that have a Hindi version, WITH their Hindi titles
 // and dates — for the Hindi homepage /hi (2 Nov 2026). Same single query as
 // getCMSNewsHindiSlugs above (all languages, only the columns we need).
-export type CMSHindiNews = { slug: string; title: string; eventDate: string | null; category: string | null };
+// 3 Nov 2026 (phase 4, the Hindi Current Affairs page /hi/news): also the Hindi
+// summary and the cover picture, so a Hindi card looks like an English one.
+// Only Hindi text is ever returned — a Hindi page never borrows the English
+// summary or category (the owner's rule: no English and Hindi on one page).
+export type CMSHindiNews = {
+  slug: string;
+  title: string;
+  eventDate: string | null;
+  category: string | null;
+  description: string | null;
+  image: { url: string; width?: number; height?: number } | null;
+};
 export async function getCMSNewsInHindi(limit = 200): Promise<CMSHindiNews[]> {
   try {
     const payload = await getClient();
@@ -503,23 +514,28 @@ export async function getCMSNewsInHindi(limit = 200): Promise<CMSHindiNews[]> {
       collection: "news",
       where: { _status: { equals: "published" } },
       locale: "all",
-      depth: 0,
+      depth: 1, // 1 = fill in the cover picture's details (its address and size)
       limit,
       sort: "-eventDate",
-      select: { slug: true, title: true, eventDate: true, category: true },
+      select: { slug: true, title: true, eventDate: true, category: true, description: true, coverImage: true },
     });
     const out: CMSHindiNews[] = [];
+    // A localized field comes back as { en, hi } — this picks the Hindi one, or null
+    const hindiOf = (v: unknown) =>
+      (typeof v === "object" && v !== null ? (v as Partial<Record<CMSLocale, string | null>>).hi?.trim() : null) || null;
     for (const d of result.docs) {
-      const title = d.title as unknown as Partial<Record<CMSLocale, string | null>>;
-      const hi = title?.hi?.trim();
-      if (!hi) continue;
-      // `category` may also come back per language — take the Hindi one if there is one
-      const cat = d.category as unknown as string | Partial<Record<CMSLocale, string | null>> | null;
+      const hi = hindiOf(d.title);
+      if (!hi) continue; // no Hindi title = no Hindi version
+      const cover = d.coverImage as unknown as { url?: string | null; width?: number | null; height?: number | null } | null;
       out.push({
         slug: d.slug as string,
         title: hi,
         eventDate: (d.eventDate as string | null) ?? null,
-        category: typeof cat === "string" ? cat : cat?.hi ?? cat?.en ?? null,
+        category: hindiOf(d.category),
+        description: hindiOf(d.description),
+        image: cover && typeof cover === "object" && cover.url
+          ? { url: cover.url, width: cover.width ?? undefined, height: cover.height ?? undefined }
+          : null,
       });
     }
     return out;

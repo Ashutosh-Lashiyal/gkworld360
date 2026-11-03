@@ -79,7 +79,10 @@ export default async function HomePage({ lang }: { lang: Lang }) {
   // HINDI: the newest write-up that has a Hindi version, or none.
   let news: { url: string; meta: ContentMeta; hindiHref?: string } | null = null;
   if (hi) {
-    const [first] = await getCMSNewsInHindi(1);
+    // 3 Nov 2026: was getCMSNewsInHindi(1) — that looked at only the newest
+    // write-up, so if THAT one had no Hindi the card vanished even when an older
+    // one had Hindi. Look at the newest 20 and take the first Hindi one.
+    const [first] = await getCMSNewsInHindi(20);
     if (first) {
       news = {
         url: `/hi/news/${first.slug}`,

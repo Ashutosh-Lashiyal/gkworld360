@@ -38,6 +38,11 @@ everything once the whole site is redesigned, not phase by phase.
 catch-all route, `getHindiSubject()` decides what exists in Hindi). OWNER'S RULE: no English and
 Hindi mixed on one page — Hindi pages show only subjects/categories/articles that exist in Hindi;
 a category needs its Hindi name in /admin → Categories. Words: `lib/page-text.ts`.
+**3 Nov — Hindi phase 4 built (dev):** Hindi pages show HINDI headlines (Amar Ujala, Live
+Hindustan — 9 feeds in `lib/pulse.ts`); Headlines has a new `language` field and every reader asks
+for one language. New /hi/pulse and /hi/news (`components/pages/PulsePage.tsx`, `NewsPage.tsx`).
+**Deploy rule:** production needs the `language` column before the code goes live
+(`npm run dev:prod` once, then push) — see TODO.md.
 **3 Nov:** the EN | हिं switch now shows the water curtain while the other-language page loads
 (`goWithLoader` in `components/PageCurtain.tsx`; any button that changes page should use it, not
 `router.push`, or no loader plays).

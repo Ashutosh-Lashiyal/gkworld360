@@ -8,16 +8,18 @@
 // The second copy is hidden from screen readers and keyboards, so nothing is
 // read or tabbed through twice.
 // Server component — the movement is pure CSS (globals.css, .gk-ticker).
-// On the Hindi homepage the label reads "सुर्खियाँ · अंग्रेज़ी में" — the
-// headlines themselves are English (lib/home-text.ts, hero.ticker).
+// On the Hindi homepage (3 Nov 2026, phase 4) the ticker carries HINDI
+// headlines from the Hindi newspapers, with Hindi category names, under the
+// label "सुर्खियाँ" (lib/home-text.ts, hero.ticker).
 
 import { getLatestHeadlines } from "@/lib/pulse";
 import type { Headline } from "@/lib/pulse";
+import { categoryLabel } from "@/lib/pulse-sources";
 import type { Lang } from "@/lib/lang";
 import { HOME_TEXT } from "@/lib/home-text";
 
 export default async function HeadlineTicker({ lang = "en" }: { lang?: Lang }) {
-  const items = await getLatestHeadlines(12);
+  const items = await getLatestHeadlines(12, lang); // this language's newspapers only
   if (items.length === 0) return null;
 
   const row = (copy: boolean) =>
@@ -30,9 +32,9 @@ export default async function HeadlineTicker({ lang = "en" }: { lang?: Lang }) {
         // the second copy: not for screen readers, not reachable with Tab
         {...(copy ? { "aria-hidden": true, tabIndex: -1 } : {})}
         className="gk-ticker__item"
-        lang="en"
+        lang={lang}
       >
-        <b>{h.category}</b>
+        <b>{categoryLabel(h.category, lang)}</b>
         {h.title}
       </a>
     ));

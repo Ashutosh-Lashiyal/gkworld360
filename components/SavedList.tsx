@@ -15,7 +15,8 @@ import Button from "@/components/Button";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import HeadlineThumb from "@/components/HeadlineThumb";
 import { READ_LATER_KEY, readSaved, type SavedHeadline } from "@/components/ReadLaterButton";
-import { SOURCE_ICONS, CATEGORY_COLOR } from "@/lib/pulse-sources";
+// categoryLabel / sourceLabel: "खेल", "अमर उजाला" on Hindi pages (3 Nov 2026, phase 4)
+import { SOURCE_ICONS, CATEGORY_COLOR, categoryLabel, sourceLabel } from "@/lib/pulse-sources";
 // HINDI (2 Nov 2026, phase 2): /hi/saved shows this same list with Hindi words.
 // The list itself is shared — what you save on an English page shows here too.
 import { useSiteText } from "@/lib/use-site-text";
@@ -128,7 +129,7 @@ export default function SavedList() {
                           backgroundColor: `color-mix(in srgb, ${CATEGORY_COLOR[h.category] ?? "#4a6460"} 14%, transparent)`,
                         }}
                       >
-                        {h.category}
+                        {categoryLabel(h.category, lang)}
                       </span>
                     )}
                     <span className="inline-flex items-center gap-1.5 font-semibold text-faint">
@@ -136,7 +137,7 @@ export default function SavedList() {
                         /* eslint-disable-next-line @next/next/no-img-element -- tiny local favicon */
                         <img src={SOURCE_ICONS[h.source]} alt="" width={14} height={14} className="w-3.5 h-3.5" />
                       )}
-                      {h.source}
+                      {sourceLabel(h.source, lang)}
                     </span>
                     <span className="ml-0.5">{t.savedOn(new Date(h.savedAt).toLocaleDateString(t.dateLocale, { day: "numeric", month: "short" }))}</span>
                   </span>

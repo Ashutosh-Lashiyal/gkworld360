@@ -60,10 +60,15 @@ export default async function TopicPosters({ lang = "en" }: { lang?: Lang }) {
               <div className="gk-poster__txt">
                 <h3 className="gk-poster__title">{title}</h3>
                 {description && <p className="gk-poster__desc">{description}</p>}
-                <div className="gk-poster__langs">
-                  <span lang="en">English</span>
-                  {tp.hindiHref && <span lang="hi" className="font-hindi">हिन्दी</span>}
-                </div>
+                {/* Which languages the article is in — English homepage only. On
+                    the Hindi homepage every poster is in Hindi, and the English
+                    word broke the owner's rule (no English on a Hindi page; 3 Nov 2026). */}
+                {!hi && (
+                  <div className="gk-poster__langs">
+                    <span lang="en">English</span>
+                    {tp.hindiHref && <span lang="hi" className="font-hindi">हिन्दी</span>}
+                  </div>
+                )}
               </div>
             </Link>
           );

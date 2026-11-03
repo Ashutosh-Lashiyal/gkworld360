@@ -13,15 +13,20 @@
 // PHASE 4 (30 Oct 2026): rows inside one chunky card; rounded thumbnails; the
 // category as a soft round pill (its colour mixed with the page's text colour,
 // so it reads in Dark mode too); a hover tint and "Open ↗".
+//
+// HINDI (3 Nov 2026, phase 4): `lang="hi"` on /hi/pulse — the headline is from a
+// Hindi newspaper, and the category, source, time and "खोलें ↗" are in Hindi.
 
 import HeadlineThumb from "@/components/HeadlineThumb";
 import ReadLaterButton from "@/components/ReadLaterButton";
 import type { Headline } from "@/lib/pulse";
-import { SOURCE_ICONS, CATEGORY_COLOR } from "@/lib/pulse-sources";
+import { SOURCE_ICONS, CATEGORY_COLOR, categoryLabel, sourceLabel } from "@/lib/pulse-sources";
 import TimeAgo from "@/components/TimeAgo";
+import type { Lang } from "@/lib/lang";
+import { PAGE_TEXT } from "@/lib/page-text";
+import { formatTimeAgo } from "@/lib/time-ago";
 
-
-export default function HeadlineRow({ headline, index }: { headline: Headline; index: number }) {
+export default function HeadlineRow({ headline, index, lang = "en" }: { headline: Headline; index: number; lang?: Lang }) {
   const h = headline;
   return (
     <li className="gk-hl grid grid-cols-[64px_minmax(0,1fr)_44px] md:grid-cols-[72px_minmax(0,1fr)_44px] gap-3.5 md:gap-4 items-center p-3 md:p-3.5 rounded-2xl">
@@ -62,7 +67,7 @@ export default function HeadlineRow({ headline, index }: { headline: Headline; i
                 backgroundColor: `color-mix(in srgb, ${CATEGORY_COLOR[h.category] ?? "#4a6460"} 14%, transparent)`,
               }}
             >
-              {h.category}
+              {categoryLabel(h.category, lang)}
             </span>
           )}
           <span className="inline-flex items-center gap-1.5">
@@ -70,10 +75,11 @@ export default function HeadlineRow({ headline, index }: { headline: Headline; i
               /* eslint-disable-next-line @next/next/no-img-element -- tiny local favicon, no optimisation needed */
               <img src={SOURCE_ICONS[h.source]} alt="" width={14} height={14} className="w-3.5 h-3.5" />
             )}
-            {h.source}
+            {sourceLabel(h.source, lang)}
           </span>
-          <TimeAgo iso={h.isoDate} fallback={h.timeAgo} />
-          <span className="gk-hl__go text-accent" aria-hidden="true">Open ↗</span>
+          {/* Hindi: the server writes the Hindi "… पहले" itself; English keeps the feed's own text */}
+          <TimeAgo iso={h.isoDate} fallback={lang === "hi" ? formatTimeAgo(h.isoDate, "hi") : h.timeAgo} lang={lang} />
+          <span className="gk-hl__go text-accent" aria-hidden="true">{PAGE_TEXT[lang].pulse.open}</span>
         </span>
       </a>
 

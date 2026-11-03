@@ -28,6 +28,10 @@ export function pageLang(pathname: string): Lang {
 // everything below it ("/atlas" also covers /atlas/vasco-da-gama-…).
 // "/" is special: it means the homepage only.
 //
+// Phase 4 (3 Nov 2026) adds "/news" and "/pulse". "/news" also covers each
+// write-up (/news/<slug>) — safe for the same reason as the subjects below:
+// Hindi pages only ever link to write-ups that exist in Hindi.
+//
 // Phase 3 (3 Nov 2026) adds EVERY SUBJECT ("/history" covers /history/modern-india
 // and its articles too). That's safe because of the owner's rule — no English on
 // Hindi pages: Hindi pages only ever show subjects, categories and articles that
@@ -37,6 +41,7 @@ const HINDI_TWINS = [
   "/", "/atlas", //                                     phase 1 (2 Nov 2026)
   "/subjects", "/topics", "/search", "/saved", "/about", "/contact", // phase 2 (2 Nov 2026)
   ...SUBJECTS.map((s) => `/${s.slug}`), //               phase 3 (3 Nov 2026)
+  "/news", "/pulse", //                                 phase 4 (3 Nov 2026)
 ];
 
 /**

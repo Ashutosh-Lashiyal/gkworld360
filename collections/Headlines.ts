@@ -24,5 +24,13 @@ export const Headlines: CollectionConfig = {
     { name: "image", type: "text" }, // the source image URL (we don't store the file)
     // When the story was published — used for sorting and the 7-day prune.
     { name: "publishedAt", type: "date", index: true },
+    // The headline's LANGUAGE (3 Nov 2026, the whole site in Hindi, phase 4):
+    // "en" for the English newspapers, "hi" for the Hindi ones (Amar Ujala,
+    // Live Hindustan). English pages show only "en" headlines, Hindi pages only
+    // "hi" ones — never a mix on one page (the owner's rule).
+    // Rows saved before this field existed have NO value; the readers in
+    // lib/pulse.ts count a missing value as English, so nothing old disappears.
+    // `index` because every headline read now filters on it.
+    { name: "language", type: "text", defaultValue: "en", index: true },
   ],
 };

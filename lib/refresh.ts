@@ -41,6 +41,7 @@ export function refreshContent(paths: string[] = []) {
     revalidatePath("/hi");
     revalidatePath("/hi/topics");
     revalidatePath("/hi/subjects");
+    revalidatePath("/hi/news"); //  phase 4 (3 Nov 2026) — Hindi Current Affairs
     revalidatePath("/sitemap.xml");
     revalidatePath("/llms.txt");
     revalidatePath("/api/search-index");

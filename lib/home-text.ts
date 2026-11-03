@@ -208,7 +208,7 @@ export const HOME_TEXT: Record<Lang, HomeText> = {
       earthLabel: "धीरे-धीरे घूमती पृथ्वी, जिस पर वर्ल्ड360 एटलस के स्थान सुनहरे बिंदुओं से दिखाए गए हैं",
       earthLoading: "पृथ्वी लोड हो रही है",
       earthHint: "↔ घुमाने के लिए खींचें",
-      ticker: "सुर्खियाँ · अंग्रेज़ी में",
+      ticker: "सुर्खियाँ", // 3 Nov 2026: was "सुर्खियाँ · अंग्रेज़ी में" — the headlines are Hindi now
     },
     practice: {
       eyebrow: "दो मिनट की आदत",
@@ -246,10 +246,11 @@ export const HOME_TEXT: Record<Lang, HomeText> = {
     headlines: {
       eyebrow: "दिन भर अपडेट",
       head: { title: "ताज़ा", accent: "सुर्खियाँ" },
-      lede: "ये सुर्खियाँ अभी अंग्रेज़ी अख़बारों से हैं। बुकमार्क दबाकर किसी सुर्खी को “बाद में पढ़ें” में रखें; सुर्खियाँ लगभग एक हफ़्ते बाद हट जाती हैं।",
+      // 3 Nov 2026: the first sentence ("ये सुर्खियाँ अभी अंग्रेज़ी अख़बारों से हैं।") is gone — they're Hindi now
+      lede: "बुकमार्क दबाकर किसी सुर्खी को “बाद में पढ़ें” में रखें; सुर्खियाँ लगभग एक हफ़्ते बाद हट जाती हैं।",
       all: "सभी सुर्खियाँ",
       open: "खोलें ↗",
-      inEnglish: "अंग्रेज़ी में",
+      inEnglish: null, // 3 Nov 2026: no longer needed — the Hindi homepage shows Hindi headlines
     },
     atlas: {
       eyebrow: "नया · वर्ल्ड360 एटलस",

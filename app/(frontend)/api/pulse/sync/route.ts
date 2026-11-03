@@ -34,7 +34,7 @@ export async function GET(request: Request) {
 
   // ── ANSWER FIRST, WORK AFTER (7 Oct 2026) ─────────────────────────────────
   // WHY: cron-job.org's free plan stops waiting after 30 seconds. A full sync
-  // fetches 10 RSS feeds, de-duplicates and writes to the database — and since
+  // fetches 19 RSS feeds (10 until 3 Nov 2026), de-duplicates and writes to the database — and since
   // 5 Oct it must also WAKE a sleeping database first — so it regularly took
   // longer than that. The work completed fine on our side, but the caller
   // recorded a "timeout" failure. That matters: enough failed runs and
@@ -65,6 +65,12 @@ export async function GET(request: Request) {
       // rebuild reads the database directly, so it cannot pick up a stale copy.
       revalidatePath("/");
       revalidatePath("/pulse");
+      // The Hindi pages with headlines (3 Nov 2026, phase 4): the Hindi homepage,
+      // Hindi Pulse, and Hindi Current Affairs (it shows Hindi headlines until
+      // the first Hindi write-up exists)
+      revalidatePath("/hi");
+      revalidatePath("/hi/pulse");
+      revalidatePath("/hi/news");
 
       // ── WARM THE PAGES (8 Oct 2026) ─────────────────────────────────────
       // Marking a page "out of date" above does NOT rebuild it. Next rebuilds it
@@ -78,7 +84,8 @@ export async function GET(request: Request) {
       // is already waiting by the time a real person arrives.
       const warm = () =>
         Promise.allSettled(
-          ["/", "/pulse"].map((path) =>
+          // "/hi" added 3 Nov 2026 — the Hindi homepage has Hindi headlines now
+          ["/", "/pulse", "/hi"].map((path) =>
             // no-store so we always reach the origin instead of being handed an
             // edge-cached copy (which would not trigger the rebuild).
             fetch(absoluteUrl(path), { cache: "no-store" })
@@ -96,6 +103,9 @@ export async function GET(request: Request) {
       await new Promise((resolve) => setTimeout(resolve, 5000));
       revalidatePath("/");
       revalidatePath("/pulse");
+      revalidatePath("/hi");
+      revalidatePath("/hi/pulse");
+      revalidatePath("/hi/news");
       await warm();
 
       console.log(`[pulse] sync finished in ${Date.now() - started}ms:`, JSON.stringify(result));
