@@ -14,20 +14,27 @@
 //   - otherwise the Hindi homepage /hi (or the English homepage, going to English).
 // The choice is remembered, so the "also in Hindi" note and the welcome strip
 // know about it too.
+//
+// THE LOADER (3 Nov 2026): the owner noticed switching felt frozen — this is
+// a button, and the page loaders only listened for LINK clicks. Now it goes
+// through goWithLoader, so the water curtain rises (with the page's name, or
+// "हिन्दी" / "English") while the other-language page loads.
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { chooseLanguage, destinationFor, type Lang } from "@/lib/lang";
+import { goWithLoader } from "@/components/PageCurtain";
 
 export default function LangSwitch() {
   const pathname = usePathname();
-  const router = useRouter();
   // The language of the page you're on: Hindi pages live under /hi
   const current: Lang = pathname === "/hi" || pathname.startsWith("/hi/") ? "hi" : "en";
   const other: Lang = current === "hi" ? "en" : "hi";
 
   const go = (lang: Lang) => {
     chooseLanguage(lang);
-    if (lang !== current) router.push(destinationFor(lang));
+    // The curtain shows the page's own name when it knows it ("होम",
+    // "वर्ल्ड360 एटलस"); for an article it shows the language you chose.
+    if (lang !== current) goWithLoader(destinationFor(lang), lang === "hi" ? "हिन्दी" : "English");
   };
 
   return (

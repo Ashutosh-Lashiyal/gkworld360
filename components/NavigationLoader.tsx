@@ -20,7 +20,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import BookLoader from "@/components/BookLoader";
-import { curtainWillPlay } from "@/components/PageCurtain";
+import { curtainWillPlay, GO_EVENT, type GoDetail } from "@/components/PageCurtain";
 
 export default function NavigationLoader() {
   const pathname = usePathname();
@@ -56,11 +56,25 @@ export default function NavigationLoader() {
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(() => setTarget(null), 8000); // never stuck
     };
+    // 3 Nov 2026: page changes started by a BUTTON (the EN | हिं switch) send
+    // the "gk-go" signal instead of being a link click (see goWithLoader in
+    // PageCurtain.tsx). When the curtain won't play for it — Reading mode,
+    // less motion — this book overlay is the loader instead.
+    const onGo = (e: Event) => {
+      const url = new URL((e as CustomEvent<GoDetail>).detail.href, window.location.href);
+      if (curtainWillPlay(url)) return; // the curtain has it
+      setTarget(`${url.pathname}${url.search}`);
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => setTarget(null), 8000); // never stuck
+    };
+
     // Capture phase (`true`): we see the click BEFORE Next.js's link handler,
     // which marks it as handled — in the normal phase we'd never hear it.
     document.addEventListener("click", onClick, true);
+    window.addEventListener(GO_EVENT, onGo);
     return () => {
       document.removeEventListener("click", onClick, true);
+      window.removeEventListener(GO_EVENT, onGo);
       if (timer.current) clearTimeout(timer.current);
     };
   }, []);

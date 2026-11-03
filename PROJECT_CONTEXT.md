@@ -34,6 +34,9 @@ Phase 3 built (homepage: 3D Earth hero `components/home/HeroEarth.tsx` + `lib/ea
 `components/home/`). Phase 4 built (all other pages: PageTitle, ContentCard, CategoryPath learning
 path, Atlas follows Light/Dark). Phase 5 effects built (curtain, scroll effects, tilt, cursor ring). Atlas fully redesigned 31 Oct (realistic Earth layer `lib/atlas-earth-layer.ts` under `lib/atlas-globe.ts`); it follows Light/Dark, only the Earth panel is always dark. Owner reviews
 everything once the whole site is redesigned, not phase by phase.
+**3 Nov:** the EN | हिं switch now shows the water curtain while the other-language page loads
+(`goWithLoader` in `components/PageCurtain.tsx`; any button that changes page should use it, not
+`router.push`, or no loader plays).
 **2 Nov:** speed fixes built (512 px logo pictures, footer Earth loads late, homepage Earth starts
 when the page is idle); Hindi discoverability, all 5 pieces (`lib/lang.ts`, `components/LangSwitch.tsx`,
 `HindiWelcome.tsx`, `article/AlsoInHindi.tsx`, Hindi start page `app/(frontend)/hi/page.tsx`; the

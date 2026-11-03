@@ -174,9 +174,10 @@
       - [x] **NEW MOTTO (2 Nov, owner): "जिज्ञासा से ज्ञान तक" / "From curiosity to knowledge"** —
         replaced "Know more, grow more" everywhere: hero giant words (now 15vw so FROM CURIOSITY
         fits), the moving band, footer, About label, link-preview image.
-      - [ ] **NEW LOGO for the new motto (owner, 2 Nov).** The current mark is "G for Grow, K for
-        Know" — it no longer matches. Make concepts on a canvas (app-icon test, 16 px, one colour),
-        owner picks, THEN change `components/Logo.tsx` + `public/brand/`. Current logo stays until then.
+      - [x] **NEW LOGO — PARKED (owner, 2 Nov).** Five concepts shown on a canvas
+        (https://claude.ai/artifact/2LSUdM69176rmoCTtiaUJY: diya, spark ?, ज्ञ, ?-with-Earth, ?+!).
+        Owner liked none: "right now I am ok with the logo we have". The Day & Night GK logo STAYS.
+        Revisit only if the owner raises it (moved to Later).
       - [ ] **THE WHOLE SITE IN HINDI (owner, 2 Nov: "change the whole site to hindi").** Same method
         as the homepage: every page gets a /hi twin built from the same components, words in word
         files, each phase = Hindi word list → owner approves → build → owner checks on dev.
@@ -198,7 +199,19 @@
           name "Ashutosh Lashiyal" — suggest a neutral example; (2) the form sends nothing yet
           (planned: Resend email) — decide where messages go.
         - [ ] Phase 3 — Hindi subject + category pages (/hi/history, /hi/history/modern-india); Hindi
-          names already in /admin. Leftover English labels around articles.
+          names already in /admin. Leftover English labels around articles. Word list (39 rows):
+          https://claude.ai/artifact/CHtWZ9Q33Qh92m8GtiCykE. OWNER'S DECISIONS (2 Nov):
+          RULE: never English and Hindi mixed on one page. Q1 an article with no Hindi version →
+          hidden on Hindi pages (owner: it shouldn't happen, both languages are written together).
+          Q2 a subject with no Hindi articles → no Hindi page, not shown on Hindi pages.
+          Q3 a category with no Hindi description → show nothing under the title.
+        - [x] **Loader when switching language (owner, 2 Nov: "it is taking time") — BUILT 3 Nov.**
+          Cause: the header EN | हिं switch (components/LangSwitch.tsx) changed page with router.push
+          from a button, and both loaders (PageCurtain, NavigationLoader) only listen for LINK
+          clicks. Fix: `goWithLoader(href, name)` in components/PageCurtain.tsx sends a "gk-go"
+          signal; the water curtain plays for it (book overlay in Reading mode / less motion).
+          Used by LangSwitch and the welcome strip's "हिन्दी में पढ़ें" (HindiWelcome.tsx). Checked
+          on dev: EN→हिं, हिं→EN, Reading mode. Rule: any BUTTON that changes page uses goWithLoader.
         - [ ] Phase 4 — news: /hi/news in Hindi; HINDI HEADLINES on /hi (homepage, ticker, /hi/pulse),
           same layout. Feeds agreed 2 Nov (tested that day): Amar Ujala + Live Hindustan for
           National / International / Business / Sports, Amar Ujala alone for Sci-Tech (9 feeds).
@@ -376,6 +389,9 @@
       turn them into the checklist Claude follows and the owner reviews against). *(14 Sep)*
 
 ## 🟡 Later (agreed, no date)
+
+- [ ] **A new logo for the motto "From curiosity to knowledge"** — only if the owner brings it up.
+      None of the 5 concepts of 2 Nov were liked; the Day & Night GK logo stays for now. *(2 Nov)*
 
 - [ ] **World360 Atlas** (`/atlas` + `/hi/atlas`) — agreed 28 Oct. Was "History Atlas"; widened the same
       day to EVERY subject (owner's idea: a chemistry discovery has a place and a date too). **No globe

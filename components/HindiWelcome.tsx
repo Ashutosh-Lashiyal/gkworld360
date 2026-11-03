@@ -16,15 +16,17 @@
 // reader chooses — they most likely want Hindi. Either choice is remembered.
 // Not shown on Hindi pages (the reader is already reading Hindi).
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { chooseLanguage, closeStrip, destinationFor } from "@/lib/lang";
+// Go with the water-curtain loader, like a link click (3 Nov 2026) — a plain
+// router.push from a button showed no loader, so the page looked frozen.
+import { goWithLoader } from "@/components/PageCurtain";
 
 export default function HindiWelcome() {
   const pathname = usePathname();
-  const router = useRouter();
   if (pathname === "/hi" || pathname.startsWith("/hi/") || pathname.startsWith("/admin")) return null;
 
-  const readHindi = () => { chooseLanguage("hi"); router.push(destinationFor("hi")); };
+  const readHindi = () => { chooseLanguage("hi"); goWithLoader(destinationFor("hi"), "हिन्दी"); };
 
   return (
     <>

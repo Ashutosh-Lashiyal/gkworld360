@@ -33,6 +33,14 @@
 // NO CURTAIN for: filters and sorting on the same page (only the "?…" part
 // changes), links inside the page (#…), new tabs, other websites, Reading
 // mode (nothing showy while reading), and readers who asked for less motion.
+//
+// NOT ONLY LINKS (3 Nov 2026): some page changes start from a BUTTON, not a
+// link — the header's EN | हिं switch. A button click isn't a link click, so
+// the curtain never heard it and the reader stared at a frozen page. Such
+// buttons now call goWithLoader(address, name) below: it sends a small
+// "please go here" signal (a browser event called "gk-go"), and the curtain
+// plays exactly as it does for a link. In Reading mode / less motion the book
+// overlay (NavigationLoader) hears the same signal and shows instead.
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -90,6 +98,22 @@ export function curtainWillPlay(url: URL): boolean {
   return document.documentElement.dataset.mode !== "reading";
 }
 
+// The name of the "please go here" signal. A "CustomEvent" is a message any
+// part of the page can send on `window`; anything listening for that name
+// hears it — like a walkie-talkie channel. The address (and the name to show
+// on the curtain) travel inside it, in `detail`.
+export const GO_EVENT = "gk-go";
+export type GoDetail = { href: string; name: string };
+
+/**
+ * Go to another page FROM CODE (a button, not a link), with the loader.
+ * Use this instead of router.push wherever a click changes page — otherwise
+ * no loader plays. `name` is the word the curtain fills with water.
+ */
+export function goWithLoader(href: string, name: string) {
+  window.dispatchEvent(new CustomEvent<GoDetail>(GO_EVENT, { detail: { href, name } }));
+}
+
 export default function PageCurtain() {
   const router = useRouter();
   const pathname = usePathname();
@@ -116,29 +140,13 @@ export default function PageCurtain() {
   }, [pathname, searchParams]);
 
   useEffect(() => {
-    const onClick = (e: MouseEvent) => {
-      // Only plain left-clicks on our own links to ANOTHER page
-      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-      const el = e.target as Element | null;
-      const a = el?.closest?.("a[href]") as HTMLAnchorElement | null;
-      if (!a || a.target === "_blank" || a.hasAttribute("download") || a.hasAttribute("data-no-nav-loader")) return;
-      // A button inside a link (a bookmark on a card) does its own thing
-      if (el?.closest("button, [role='button']") && a.contains(el.closest("button, [role='button']"))) return;
-      const url = new URL(a.href, window.location.href);
-      if (url.origin !== window.location.origin) return;
-      if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/admin")) return;
-      // Same page (filters, sorting, #sections), less motion, Reading mode: no curtain
-      if (!curtainWillPlay(url)) return;
-
-      // We take over this click: stop the browser AND Next.js's own link handling
-      e.preventDefault();
-      e.stopPropagation();
-
-      const dest = `${url.pathname}${url.search}${url.hash}`;
+    // PLAY: raise the curtain with `pageName`, go to `dest`, and lift the
+    // curtain when the page has arrived. Shared by link clicks (onClick) and
+    // the "please go here" signal from buttons (onGo, 3 Nov 2026).
+    const play = (dest: string, pageName: string) => {
       from.current = `${window.location.pathname}${window.location.search}`;
       arrived.current = false;
       const id = ++job.current;
-      const pageName = nameFor(a, url.pathname);
       // A fresh, empty word on the canvas
       if (canvas.current && !water.current) water.current = new WaterWord(canvas.current);
       water.current?.setWord(pageName);
@@ -183,9 +191,47 @@ export default function PageCurtain() {
       };
       requestAnimationFrame(step);
     };
+
+    const onClick = (e: MouseEvent) => {
+      // Only plain left-clicks on our own links to ANOTHER page
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const el = e.target as Element | null;
+      const a = el?.closest?.("a[href]") as HTMLAnchorElement | null;
+      if (!a || a.target === "_blank" || a.hasAttribute("download") || a.hasAttribute("data-no-nav-loader")) return;
+      // A button inside a link (a bookmark on a card) does its own thing
+      if (el?.closest("button, [role='button']") && a.contains(el.closest("button, [role='button']"))) return;
+      const url = new URL(a.href, window.location.href);
+      if (url.origin !== window.location.origin) return;
+      if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/admin")) return;
+      // Same page (filters, sorting, #sections), less motion, Reading mode: no curtain
+      if (!curtainWillPlay(url)) return;
+
+      // We take over this click: stop the browser AND Next.js's own link handling
+      e.preventDefault();
+      e.stopPropagation();
+      play(`${url.pathname}${url.search}${url.hash}`, nameFor(a, url.pathname));
+    };
+
+    // The "please go here" signal from a button (goWithLoader above)
+    const onGo = (e: Event) => {
+      const { href, name } = (e as CustomEvent<GoDetail>).detail;
+      const url = new URL(href, window.location.href);
+      if (curtainWillPlay(url)) {
+        play(`${url.pathname}${url.search}${url.hash}`, NAMES[url.pathname] ?? name);
+      } else {
+        // No curtain (Reading mode / less motion): just go. The book overlay
+        // heard the same signal and shows itself if the page is slow.
+        router.push(href);
+      }
+    };
+
     // Capture phase (`true`): we see the click BEFORE Next.js's link handler.
     document.addEventListener("click", onClick, true);
-    return () => document.removeEventListener("click", onClick, true);
+    window.addEventListener(GO_EVENT, onGo);
+    return () => {
+      document.removeEventListener("click", onClick, true);
+      window.removeEventListener(GO_EVENT, onGo);
+    };
   }, [router]);
 
   return (
