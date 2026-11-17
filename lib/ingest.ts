@@ -130,8 +130,18 @@ export async function deleteArticle(id: number): Promise<{ id: number; title: st
 // the English stays published until the owner presses Publish.
 
 export type HindiAddition = {
+  // Which collection the English original lives in. Articles by default;
+  // "news" added 5 Nov 2026 so news write-ups get Hindi the same way.
+  collection?: "articles" | "news";
   slug: string;
-  hi: { title: string; description?: string; map: Record<string, string> };
+  hi: {
+    title: string;
+    description?: string;
+    // Other short localized text boxes, written as they are — e.g. a news
+    // write-up's `category` ("आंतरिक सुरक्षा") and `coverImageCaption`.
+    fields?: Record<string, string>;
+    map: Record<string, string>;
+  };
 };
 
 // Joins the visible text of a node's children (paragraph, heading, cell…)
@@ -195,27 +205,79 @@ function translateNode(node: any, map: Record<string, string>, missing: string[]
  *  NOTE: on a PUBLISHED article this makes the latest state a draft, so the
  *  public site hides the article until the owner presses Publish again. That
  *  is deliberate here (new Hindi needs review) — tell the owner. */
-export async function addHindiToArticle(input: HindiAddition): Promise<{ id: number | string; missing: string[] }> {
+export async function addHindiToArticle(input: HindiAddition): Promise<{ id: number | string; collection: string; missing: string[] }> {
   const payload = await getPayload({ config: configPromise });
-  const doc = (await payload.find({ collection: "articles", where: { slug: { equals: input.slug } }, limit: 1, locale: "en", depth: 0, draft: true })).docs[0];
-  if (!doc) throw new Error(`No article with slug "${input.slug}".`);
+  const collection = input.collection ?? "articles";
+  if (collection !== "articles" && collection !== "news") throw new Error(`Hindi can't be added to "${collection}" this way.`);
+  const doc = (await payload.find({ collection, where: { slug: { equals: input.slug } }, limit: 1, locale: "en", depth: 0, draft: true })).docs[0];
+  if (!doc) throw new Error(`No ${collection} item with slug "${input.slug}".`);
 
   const missing: string[] = [];
+  // The article's text is stored as { root: { children: [...paragraphs] } }.
+  // We must start translating at `root` — the outer object has no `type` and
+  // no `children`, so translateNode would hand it back untouched. (Bug found
+  // 5 Nov 2026: that is exactly what happened, and the English text was saved
+  // as the "Hindi" version of the Revolt of 1857 with no warning.)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const body = translateNode((doc as any).body, input.hi.map, missing);
+  const enBody = (doc as any).body;
+  if (!enBody?.root) throw new Error(`Article "${input.slug}" has no body to translate.`);
+  const body = { ...enBody, root: translateNode(enBody.root, input.hi.map, missing) };
+  // Second safety net: if NOTHING changed, the map matched nothing — refuse
+  // rather than save English text as Hindi.
+  if (JSON.stringify(body) === JSON.stringify(enBody)) {
+    throw new Error("Nothing was translated — the translation file does not match this article's text.");
+  }
   if (missing.length > 0) {
     // Refuse a half-translated page — list what the map is missing so it can be added.
     throw new Error(`Hindi missing for ${missing.length} block(s):\n- ` + missing.map((m) => m.slice(0, 80)).join("\n- "));
   }
 
   await payload.update({
-    collection: "articles",
+    collection,
     id: doc.id,
     locale: "hi",
     draft: true,
-    data: { title: input.hi.title, ...(input.hi.description ? { description: input.hi.description } : {}), body, _status: "draft" },
+    data: {
+      title: input.hi.title,
+      ...(input.hi.description ? { description: input.hi.description } : {}),
+      ...(input.hi.fields ?? {}), // e.g. category + cover caption on a news write-up
+      body,
+      _status: "draft",
+    },
   });
-  return { id: doc.id, missing };
+  return { id: doc.id, collection, missing };
+}
+
+// ── Hindi for short text boxes (subjects, categories, Atlas entries) ─────────
+// Added 5 Nov 2026 so "every English item has its Hindi" can be done in one
+// go from a reviewed file (drafts/hindi-fields.json). Each item names its
+// collection, its slug and the Hindi text for each box, e.g.
+//   { collection: "atlas-entries", slug: "...", fields: { title: "…", hook: "…" } }
+// Only the Hindi language is written; English is never touched. Atlas entries
+// keep drafts, so their Hindi is saved into the draft (the owner publishes).
+export type HindiFieldsItem = {
+  collection: "subjects" | "categories" | "atlas-entries";
+  slug: string;
+  fields: Record<string, string>;
+};
+export async function setHindiFields(items: HindiFieldsItem[]): Promise<{ saved: string[] }> {
+  const payload = await getPayload({ config: configPromise });
+  const allowed = ["subjects", "categories", "atlas-entries"];
+  const saved: string[] = [];
+  for (const item of items) {
+    if (!allowed.includes(item.collection)) throw new Error(`"${item.collection}" is not allowed here.`);
+    // Refuse a "Hindi" text with no Hindi letters in it — catches English
+    // pasted by mistake (the 5 Nov Revolt bug, in another form).
+    for (const [box, text] of Object.entries(item.fields)) {
+      if (!/[ऀ-ॿ]/.test(text)) throw new Error(`${item.slug} → ${box}: no Hindi letters in "${text.slice(0, 40)}".`);
+    }
+    const hasDrafts = item.collection === "atlas-entries";
+    const doc = (await payload.find({ collection: item.collection, where: { slug: { equals: item.slug } }, limit: 1, depth: 0, ...(hasDrafts ? { draft: true } : {}) })).docs[0];
+    if (!doc) throw new Error(`No ${item.collection} item with slug "${item.slug}".`);
+    await payload.update({ collection: item.collection, id: doc.id, locale: "hi", data: item.fields, ...(hasDrafts ? { draft: true } : {}) });
+    saved.push(`${item.collection}/${item.slug}`);
+  }
+  return { saved };
 }
 
 // ── Adding images to an EXISTING article ─────────────────────────────────────

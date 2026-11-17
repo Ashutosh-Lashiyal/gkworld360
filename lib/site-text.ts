@@ -205,7 +205,9 @@ export const SITE_TEXT: Record<Lang, SiteText> = {
       menu: "मेन्यू",
     },
     subjectsMenu: {
-      summary: (s, n) => `${s} विषय · ${n} लेख · हिन्दी और अंग्रेज़ी`,
+      // 5 Nov 2026: "अंग्रेजी" without the dot under ज — the new NCERT book's
+      // spelling, chosen by the owner (docs/HINDI_GLOSSARY.md).
+      summary: (s, n) => `${s} विषय · ${n} लेख · हिन्दी और अंग्रेजी`,
       all: "सभी विषय →",
       count: (n) => `${n} लेख`,
       soon: "जल्द आ रहा है",

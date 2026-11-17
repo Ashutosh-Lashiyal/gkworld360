@@ -1,5 +1,6 @@
-// scripts/add-hindi.mjs — adds a Hindi version to an EXISTING English article,
-// from a translation file, as a draft. Needs the dev server running.
+// scripts/add-hindi.mjs — adds a Hindi version to an EXISTING English article
+// (or, since 5 Nov 2026, a news write-up — put "collection": "news" in the
+// file), from a translation file, as a draft. Needs the dev server running.
 //   node scripts/add-hindi.mjs drafts/revolt-of-1857.hi.json [--production]
 import { readFileSync } from "node:fs";
 const [, , file, ...flags] = process.argv;
@@ -15,4 +16,5 @@ const res = await fetch(`http://localhost:${production ? 3001 : 3000}/api/ingest
 const out = await res.json();
 console.log(`Database host: ${out.host}`);
 if (!out.ok) { console.error(`Failed: ${out.error}`); process.exit(1); }
-console.log(`Hindi added as a draft on article id ${out.id} — review: http://localhost:${production ? 3001 : 3000}/admin/collections/articles/${out.id}?locale=hi`);
+// out.collection is "articles" or "news" — used to build the right /admin link
+console.log(`Hindi added as a draft on ${out.collection} id ${out.id} — review: http://localhost:${production ? 3001 : 3000}/admin/collections/${out.collection}/${out.id}?locale=hi`);

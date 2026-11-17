@@ -1,0 +1,15 @@
+{
+  "_note": "Run SECOND. The bold name \"बहादुर शाह ज़फ़र द्वितीय\" also sits inside 3 longer sentences, so it only becomes unique (fix-text needs that) after the first file has fixed those sentences.",
+  "articles": [
+    {
+      "slug": "revolt-of-1857",
+      "locale": "hi",
+      "fixes": [
+        {
+          "find": "बहादुर शाह ज़फ़र द्वितीय",
+          "replace": "बहादुर शाह जफ़र द्वितीय"
+        }
+      ]
+    }
+  ]
+}

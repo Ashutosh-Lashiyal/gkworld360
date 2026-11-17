@@ -16,17 +16,36 @@
 
 ---
 
-# 🟢 START HERE — status as of 3 Nov 2026
+# 🟢 START HERE — status as of 17 Nov 2026
 
-**In one breath (3 Nov 2026):** branch `feature/redesign` holds the whole redesign (phases 1–5,
-30–31 Oct) and the **whole site in Hindi** (phases 1–4, 2–3 Nov: header/footer, list pages,
-subject/category pages, Hindi headlines + /hi/pulse + /hi/news), plus **Gyaani suggestions on
-every page with a real "Quiz me" quiz card** (3 Nov). All built and checked on **dev**; **none of it
-is on the Vercel site yet** (that still runs `main`). Before deploying: production needs the
-Headlines `language` column first (`npm run dev:prod` once) — see TODO.md. Owner's next reviews:
-the full redesign, then ONE Hindi wording check. Future revenue plan:
-`docs/GKWORLD360_PAID_FEATURES_PLAN.md` (planning only). The laptop disk is ~98% full — free space
-before big builds. Compute: 1.74 CU-hrs on 3 Nov (month resets on the 1st; healthy pace ≈ 0.8/day).
+**▶ WHERE WE LEFT OFF (17 Nov 2026) — read this first, then TODO.md's "▶ RESUME HERE" block.**
+1. **Nothing since 3 Nov is committed.** The Hindi tools (`scripts/check-hindi.mjs`,
+   `scripts/add-hindi-fields.mjs`, the `lib/ingest.ts` fix + `hindi-fields` action), `docs/HINDI_GLOSSARY.md`,
+   the spelling-fix files in `drafts/`, `lib/site-text.ts` and the docs live only on the laptop, on
+   `feature/redesign`. First job next session: the owner commits + pushes (commands in TODO.md).
+2. **Hindi spellings: done on dev, NOT on production.** Owner approved all 24 (5 Nov); applied on dev
+   5 Nov. Waiting: owner checks dev → then the same files with `--production` (owner's go).
+3. **Quiz plan (11 Nov):** https://claude.ai/artifact/2bhPGRo1J8ZPonb9FKL8Ui — Insights on India's FORMAT,
+   never their questions. Owner said 5 a day is too few → proposed ~25/day (10 current affairs to review,
+   10 from the checked question bank, 5 Atlas) + Sunday revision 50. Explained freemium (free quizzes →
+   paid test series/coaching). **Waiting for owner's "yes" to update the plan page** with that + a
+   "how we earn" section; 4 decisions still open (audience, PIB as source, questions/day, start date).
+4. **Globe has no dots on the Vercel site** — not a bug: dots = PUBLISHED Atlas cards; production has 0.
+   Owner reviews the 12 Atlas drafts on dev → publish → copy to production.
+5. **Owner is still testing the Vercel site** and will send more "works on dev, not on the Vercel site"
+   cases. Hindi headlines are fine: the same 2-hourly cron fetches both languages (1,422 Hindi on 11 Nov).
+6. Housekeeping: an EMPTY Claude Doc "GKWorld360 Quiz Plan" (artifact PwrPzsNM6SYdUkSiySYuA7) was left by a
+   blocked write on 11 Nov — owner can delete it. The dev server is stopped: `npm run dev` to start.
+
+**In one breath (5 Nov 2026):** the redesign (phases 1–5), the **whole site in Hindi** (phases 1–4)
+and **Gyaani suggestions + "Quiz me"** are **ON THE VERCEL SITE** (`feature/redesign` merged into
+`main` and pushed 5 Nov). Fixes go on dev on `feature/redesign`, then merge + push again.
+**Hindi = English rule (5 Nov):** everything is published in both languages;
+`node scripts/check-hindi.mjs [--production]` lists the gaps (dev: none; production: the Smart Border
+news write-up + History subject). **Hindi spellings:** every name/term has a source in
+`docs/HINDI_GLOSSARY.md` (newest NCERT wins letter for letter, incl. no nukta; official word + common
+word in brackets every time). Future revenue plan: `docs/GKWORLD360_PAID_FEATURES_PLAN.md`. Laptop disk:
+8 GB free (5 Nov). Compute: target ≤ 30 CU-hrs/month — check it (not looked at since the 5 Nov deploy).
 
 **Three environment names (owner's rule, 18 Sep):** **dev** = the laptop (`localhost:3000`, Neon
 `dev` branch) · **Vercel site** = `gkworld360.vercel.app` (Neon `production` branch, indexing OFF)

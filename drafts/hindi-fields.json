@@ -1,0 +1,13 @@
+{
+  "_note": "Hindi for subjects / categories / Atlas entries. The History line is the one the owner approved on 2 Nov (lib/subjects.ts → SUBJECT_DESCRIPTIONS_HI), copied into the CMS. Run: node scripts/add-hindi-fields.mjs drafts/hindi-fields.json [--production]",
+  "items": [
+    {
+      "collection": "subjects",
+      "slug": "history",
+      "fields": {
+        "name": "इतिहास",
+        "description": "भारत और विश्व का इतिहास: प्राचीन सभ्यताएँ, मध्यकालीन साम्राज्य, स्वतंत्रता संग्राम और आधुनिक इतिहास, प्रतियोगी परीक्षाओं और सामान्य ज्ञान के लिए।"
+      }
+    }
+  ]
+}

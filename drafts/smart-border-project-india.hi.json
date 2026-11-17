@@ -1,0 +1,41 @@
+{
+  "collection": "news",
+  "slug": "smart-border-project-india",
+  "hi": {
+    "title": "स्मार्ट बॉर्डर परियोजना",
+    "description": "स्मार्ट बॉर्डर परियोजना भारत सरकार की एक पहल है, जिसका उद्देश्य ड्रोन, रडार प्रणाली, एआई-आधारित निगरानी, थर्मल कैमरे और स्मार्ट मॉनिटरिंग ढाँचे जैसी उन्नत तकनीकों से सीमा सुरक्षा का आधुनिकीकरण करना है। इस परियोजना का लक्ष्य भारत की अंतरराष्ट्रीय सीमाओं की सुरक्षा को मज़बूत करना, सीमा सुरक्षा बल (बीएसएफ) की परिचालन क्षमता बढ़ाना और विभिन्न सुरक्षा एजेंसियों के बीच समन्वय बेहतर करना है। यह तकनीक-आधारित सीमा प्रबंधन के ज़रिए अवैध घुसपैठ, सीमा-पार तस्करी, साइबर ख़तरों, हाइब्रिड युद्ध और ड्रोन से जुड़ी गतिविधियों जैसे नए ख़तरों से निपटने पर भी ध्यान देती है।",
+    "fields": {
+      "category": "आंतरिक सुरक्षा",
+      "coverImageCaption": "उन्नत कमांड और कंट्रोल केंद्र स्मार्ट बॉर्डर परियोजना में अहम भूमिका निभाएँगे — ये सीमा सुरक्षा बलों को रियल-टाइम निगरानी और त्वरित कार्रवाई की क्षमता देंगे।"
+    },
+    "map": {
+      "India Moves Towards a Smart Border System": "भारत स्मार्ट बॉर्डर प्रणाली की ओर",
+      "On 22 May 2026, Union Home Minister Shri Amit Shah announced the government's plan to develop India's international borders into Smart Borders. The announcement was made during the Border Security Force (BSF) Investiture Ceremony and the Rustamji Memorial Lecture held in New Delhi, where he attended as the Chief Guest.": "22 मई 2026 को केंद्रीय गृह मंत्री श्री अमित शाह ने भारत की अंतरराष्ट्रीय सीमाओं को स्मार्ट बॉर्डर के रूप में विकसित करने की सरकार की योजना की घोषणा की। यह घोषणा नई दिल्ली में आयोजित सीमा सुरक्षा बल (बीएसएफ) के अलंकरण समारोह और रुस्तमजी स्मृति व्याख्यान के दौरान की गई, जिसमें वे मुख्य अतिथि के रूप में शामिल हुए।",
+      "What is the Smart Border Project?": "स्मार्ट बॉर्डर परियोजना क्या है?",
+      "The Smart Border Project aims to modernize border management by introducing advanced surveillance and monitoring technologies. The initiative proposes the use of drones, radar systems, high-resolution cameras, sensors, and other modern equipment to improve border vigilance and strengthen national security.": "स्मार्ट बॉर्डर परियोजना का उद्देश्य उन्नत निगरानी और मॉनिटरिंग तकनीकों के माध्यम से सीमा प्रबंधन का आधुनिकीकरण करना है। इस पहल में सीमा पर चौकसी बढ़ाने और राष्ट्रीय सुरक्षा को मज़बूत करने के लिए ड्रोन, रडार प्रणाली, उच्च-रिज़ॉल्यूशन कैमरे, सेंसर और अन्य आधुनिक उपकरणों के उपयोग का प्रस्ताव है।",
+      "These technologies are expected to assist security personnel in detecting illegal activities more efficiently and enable faster response along sensitive border regions.": "इन तकनीकों से सुरक्षाकर्मियों को अवैध गतिविधियों का अधिक कुशलता से पता लगाने में मदद मिलने और संवेदनशील सीमावर्ती क्षेत्रों में तेज़ी से कार्रवाई संभव होने की उम्मीद है।",
+      "Steps to Enhance Border Security": "सीमा सुरक्षा बढ़ाने के कदम",
+      "The Ministry of Home Affairs will provide technological support for implementing this initiative. The objective is to establish a highly secure and technology-driven border protection network along the India-Bangladesh and India-Pakistan borders, which are primarily guarded by the Border Security Force (BSF). The government aims to achieve significant progress in this modernization effort within the next year.": "इस पहल को लागू करने के लिए गृह मंत्रालय तकनीकी सहायता प्रदान करेगा। इसका उद्देश्य भारत-बांग्लादेश और भारत-पाकिस्तान सीमाओं पर, जिनकी सुरक्षा मुख्य रूप से सीमा सुरक्षा बल (बीएसएफ) करता है, एक अत्यधिक सुरक्षित और तकनीक-आधारित सीमा सुरक्षा नेटवर्क स्थापित करना है। सरकार का लक्ष्य अगले एक वर्ष के भीतर इस आधुनिकीकरण में उल्लेखनीय प्रगति करना है।",
+      "Major Challenges Faced by the Border Security Force (BSF)": "सीमा सुरक्षा बल (बीएसएफ) के सामने प्रमुख चुनौतियाँ",
+      "Challenge": "चुनौती",
+      "Description": "विवरण",
+      "Illegal infiltration": "अवैध घुसपैठ",
+      "Unauthorized entry across international borders.": "अंतरराष्ट्रीय सीमाओं के पार अनधिकृत प्रवेश।",
+      "Drug trafficking": "मादक पदार्थों की तस्करी",
+      "Smuggling of narcotic substances into the country.": "देश में नशीले पदार्थों की तस्करी।",
+      "Cattle smuggling": "मवेशियों की तस्करी",
+      "Illegal transportation of livestock across borders.": "सीमाओं के पार पशुओं का अवैध परिवहन।",
+      "Counterfeit currency": "नकली मुद्रा",
+      "Circulation of fake Indian currency.": "नकली भारतीय मुद्रा का प्रचलन।",
+      "Organized crime": "संगठित अपराध",
+      "Activities carried out by criminal networks operating across borders.": "सीमाओं के पार सक्रिय आपराधिक नेटवर्कों द्वारा की जाने वाली गतिविधियाँ।",
+      "Illegal arms smuggling": "अवैध हथियारों की तस्करी",
+      "Movement of weapons and ammunition through border routes.": "सीमावर्ती रास्तों से हथियारों और गोला-बारूद की आवाजाही।",
+      "Drone-based smuggling": "ड्रोन से तस्करी",
+      "Use of drones for transporting drugs, weapons and other illegal items.": "नशीले पदार्थों, हथियारों और अन्य अवैध वस्तुओं को पहुँचाने के लिए ड्रोन का उपयोग।",
+      "Need for Better Coordination": "बेहतर समन्वय की आवश्यकता",
+      "Border protection cannot be achieved by the BSF alone. Effective security requires cooperation among state governments, police forces, Central Armed Police Forces (CAPFs), other defence organizations, the Narcotics Control Bureau (NCB), and intelligence agencies.": "सीमाओं की सुरक्षा अकेले बीएसएफ के बस की बात नहीं है। प्रभावी सुरक्षा के लिए राज्य सरकारों, पुलिस बलों, केंद्रीय सशस्त्र पुलिस बलों (सीएपीएफ), अन्य रक्षा संगठनों, नारकोटिक्स नियंत्रण ब्यूरो (एनसीबी) और आसूचना (ख़ुफ़िया) एजेंसियों के बीच सहयोग आवश्यक है।",
+      "In addition, India must continuously upgrade its security framework to tackle emerging threats such as cyberattacks, hybrid warfare, and the increasing use of drones for illegal cross-border activities.": "इसके अलावा, साइबर हमलों, हाइब्रिड युद्ध और अवैध सीमा-पार गतिविधियों के लिए ड्रोन के बढ़ते उपयोग जैसे नए ख़तरों से निपटने के लिए भारत को अपने सुरक्षा ढाँचे को लगातार उन्नत करते रहना होगा।"
+    }
+  }
+}

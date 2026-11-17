@@ -94,6 +94,37 @@ category page. Modern India has "आधुनिक भारत" on both dev an
 the ingest action `category-hindi` (dev by default; production only with the owner's go, via
 `npm run dev:prod` and `"production": true`).
 
+**Both languages before publishing, for everything (owner, 5 Nov 2026: "make Hindi and English
+similar").** Nothing is published until its Hindi is ready too: articles, news write-ups, Atlas
+entries, categories and subjects. The Hindi pages only show what has Hindi, so a missing
+translation quietly disappears from the Hindi site rather than showing an error.
+- **Check:** `node scripts/check-hindi.mjs` (dev) or `--production` (the Vercel site). Read-only,
+  no server needed. It lists every item whose Hindi is empty, identical to the English, or has no
+  Hindi letters, and reads the newest version of drafts too.
+- **Add:** articles and news write-ups → a translation file + `node scripts/add-hindi.mjs`
+  (news: `"collection": "news"` in the file). Subjects, categories and Atlas boxes →
+  `drafts/hindi-fields.json` + `node scripts/add-hindi-fields.mjs`. Both save drafts / Hindi only
+  and refuse text with no Hindi letters.
+- **Where Hindi terms come from — the source ladder (owner, 5 Nov 2026).** Names and technical
+  terms (not ordinary sentences) must come from a source, tried in this order:
+  1. **NCERT Hindi textbooks** (Class 6–12) — the newest edition first. Covers History, Geography,
+     Polity, Economics, Physics, Chemistry, Biology, Maths. E.g. वास्को-डी-गामा (new Class 8 book).
+  2. **CSTT** — the Commission for Scientific and Technical Terminology (वैज्ञानिक तथा तकनीकी
+     शब्दावली आयोग), the government's standard Hindi terms for every subject, computers included.
+  3. **The organisation's own Hindi website / PIB Hindi** — names of bodies, schemes, ministries
+     (सीमा सुरक्षा बल from bsf.gov.in). The main source for news write-ups.
+  4. **Common usage in major Hindi newspapers** — only when 1–3 have nothing; marked "no official
+     source" for the owner to decide.
+  Every term goes into `docs/HINDI_GLOSSARY.md` with its source (book · chapter · page, or site).
+- **Official word + common word in brackets, EVERY time (owner, 5 Nov 2026).** When the official
+  term is very different from what readers actually say, write the official term with the common
+  word in brackets — **at every appearance, not only the first**: "प्रचालन तंत्र (ऑपरेटिंग सिस्टम)".
+  Words that are already everyday Hindi stay as they are (कंप्यूटर, इंटरनेट, सॉफ़्टवेयर).
+- The owner reviews new Hindi side by side before production.
+- **Bug fixed 5 Nov:** `add-hindi` used to save the ENGLISH body as the "Hindi" version without
+  warning (it never looked inside the body's `root`). That is how the Hindi Revolt of 1857 showed
+  English text. Fixed in `lib/ingest.ts`, with a second check that refuses "nothing translated".
+
 ---
 
 ## 5. The writing template — rules every article follows
@@ -344,5 +375,6 @@ check — every find should now report "found 0 times".
 | 29 Oct | Atlas cards: one hook per card, every hook fact in the article, file = master copy | Cards tease the article; one source of truth for corrections |
 | 2 Nov | **Never English and Hindi mixed on one page.** A Hindi page shows only what exists in Hindi | Owner's rule for the whole Hindi site |
 | 3 Nov | A new category gets its Hindi name together with its English one | The Hindi site hides categories without a Hindi name |
+| 5 Nov | Everything is published in BOTH languages; `scripts/check-hindi.mjs` lists the gaps | Owner: "make Hindi and English similar". Found the same day: the Hindi Revolt of 1857 had English text (an `add-hindi` bug, now fixed) |
 | 3 Nov | Gyaani's "Quiz me" makes questions ONLY from published article text (`lib/quiz.ts`) | So every published article's accuracy now also decides the quiz's accuracy — one more reason the review step matters |
 | 3 Nov | Future: teachers may write public articles as drafts; the owner reviews and publishes (`docs/GKWORLD360_PAID_FEATURES_PLAN.md` §3.6) | Same draft → review → Publish flow as this pipeline; copyright and NCERT checks apply to them too |

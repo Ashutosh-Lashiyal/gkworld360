@@ -14,6 +14,62 @@
 
 ## 🔴 Now
 
+- [ ] **▶ RESUME HERE (written 17 Nov 2026, end of session) — in this order:**
+      1. [ ] **Save the work (owner types these; nothing since 3 Nov is committed):**
+             `git status` → `git add -A` → `git commit -m "Hindi: spelling check (NCERT glossary), check/add tools, news Hindi"`
+             → `git push origin feature/redesign`. (Only to the backup branch — the Vercel site doesn't change.)
+      2. [ ] Owner checks the Hindi spelling fixes on dev (`npm run dev`, then /hi/history/modern-india/revolt-of-1857
+             and the Dutch / English / Portuguese articles) → "OK" → Claude runs the same files with `--production`.
+      3. [ ] Quiz plan: owner says "yes" → Claude updates the plan page (25/day, sources, how we earn) →
+             owner answers the 4 decisions on it.
+      4. [ ] Owner reviews the 12 Atlas drafts in /admin on dev → publish → copy to production (fixes the globe dots).
+      5. [ ] Owner sends the other "works on dev, not on the Vercel site" cases.
+      6. [ ] Check Neon compute (not looked at since the 5 Nov deploy).
+- [ ] **THE NEW SITE IS ON THE VERCEL SITE (5 Nov 2026) — owner is testing it.** `feature/redesign`
+      merged into `main` (fast-forward) and pushed; also backed up as `origin/feature/redesign`.
+      Before the push: production got the headlines `language` column (`npm run dev:prod`, no
+      prompts) and articles 3, 4, 5 were published. Loop: owner reports issues (page · device ·
+      mode · what happened · expected) → fixes on dev on `feature/redesign` → merge + push again.
+      Known content gaps, NOT bugs: the Atlas is empty on production (12 entries are still drafts on
+      dev, owner review pending) so Today's practice has no quiz / place; the first Hindi headlines
+      arrive with the next sync after the column went in.
+- [ ] **Quiz plan (11 Nov, owner: "make quizzes similar to insightsonindia.com")** — owner reviewing:
+      https://claude.ai/artifact/2bhPGRo1J8ZPonb9FKL8Ui. Their FORMAT only (daily current affairs, subject
+      quizzes, "how many statements are correct?"), never their questions (copyright + our "checked" promise).
+      4 decisions asked: audience, PIB as daily source, questions/day, start date (suggested: after Vercel fixes).
+      11 Nov follow-up — owner: "5 a day is too few; where do the questions come from; how do these sites earn?"
+      Answered in chat: sources = our NCERT-checked articles (question bank, reviewed once, reused) + PIB
+      releases + facts from our headlines (checked against an official source) + official sites + Atlas;
+      proposed ~25/day (10 current affairs reviewed daily ~15 min, 10 from the bank, 5 Atlas) + Sunday 50;
+      review stays human (one-click review screen, AI cross-check, later a paid reviewer). Money = freemium:
+      free daily quizzes → paid test series / coaching (Insights sells a 60-test Prelims series; ClearIAS
+      ₹4,999, PMF IAS ₹9,999). **Waiting: owner's "yes" to put this into the plan page.**
+- [ ] **Globe has no dots on the Vercel site (owner, 11 Nov)** — not a bug: dots = PUBLISHED Atlas cards
+      (lib/atlas.ts); production has 0, dev previews the 12 drafts. Fix = owner reviews the 12 drafts → publish →
+      copy to production (`create-atlas-entries --production`, owner's go). Same cause: Today's practice empty.
+- [ ] **Hindi = English everywhere (owner, 5 Nov: "make Hindi and English similar").**
+      Rule + tools in docs/GKWORLD360_CONTENT_PIPELINE.md §4: `node scripts/check-hindi.mjs
+      [--production]` lists every gap. 5 Nov status — dev and production both miss only:
+      - [ ] News write-up "Smart Border Project" — owner approved (5 Nov, with the NCB/आसूचना fixes);
+        Hindi saved as a draft on dev (news id 1) → owner checks → production + publish.
+      - [x] History subject Hindi name + description (the 2 Nov approved line) — saved on dev 5 Nov;
+        production with the news batch.
+      - [x] Hindi Revolt of 1857 — was English text in the Hindi version (add-hindi bug); fixed and
+        published on dev + production 5 Nov.
+      - The 12 Atlas drafts already have Hindi (written 29 Oct).
+      - [ ] **Hindi spelling check (5 Nov)** — every name/term checked against NCERT Hindi + official
+        sites → `docs/HINDI_GLOSSARY.md` (78 rows, each with its source). **Owner approved all 24
+        changes + NCERT's 1857 name on 5 Nov** (artifact BM84mfdWuPyXh1t6bbkd5s). **Done on dev 5 Nov:**
+        4 articles via `drafts/hindi-spelling-fixes-2026-11-05.json` then `-part2.json` (fix-text),
+        11 Atlas cards via `drafts/hindi-spelling-atlas-2026-11-05.json` (add-hindi-fields), the news
+        file, and the one visible interface "अंग्रेज़ी" (lib/site-text.ts; the other 5 hits are
+        comments). English Revolt now says NCERT calls it the "Great Rebellion of 1857".
+        Next: owner checks dev → production (same files with `--production`; the Atlas file is
+        dev-only until the Atlas is published) → commit + push. Then: the 22 ⏳ terms in NCERT
+        Class 7 हमारे अतीत II / Class 12 history.
+      - [ ] Commit: lib/ingest.ts fix + news support + `hindi-fields` action, scripts/check-hindi.mjs,
+        scripts/add-hindi-fields.mjs, the drafts files (incl. the 3 spelling-fix files), lib/site-text.ts, docs.
+
 - [ ] **REDESIGN — owner chose the look (30 Oct): Playful + Cinematic mix, all pages, Light / Dark /
       Reading mode.** Preview: https://claude.ai/artifact/Dr36N1feThc8PfUFJ9J4HH ("Now we are talking…
       the site looks great"). Owner loves the quiz card — grow it into a real quiz section later.
@@ -260,7 +316,7 @@
           "Refreshed every 30 minutes" (it's every 2 hours); Hindi homepage posters showed an
           "English · हिन्दी" tag (now English homepage only); the Hindi homepage's Current
           affairs card looked at only the newest write-up.
-        - [ ] **BEFORE the Vercel site gets Phase 4 (deploy step, owner's go needed):** the
+        - [x] **DONE 5 Nov (owner's go):** column added on production, then deployed. Was: **BEFORE the Vercel site gets Phase 4 (deploy step, owner's go needed):** the
           production database must get the new `language` column FIRST — run `npm run dev:prod`
           once with the new code (Payload adds the column), check the host says sweet-tree, stop
           it, THEN push. If the code goes live without the column, every headline save fails
@@ -333,7 +389,7 @@
         English is live). In the production CMS the published version has no Hindi at all, and the
         latest draft has the Hindi TITLE only — the body falls back to English. The full translation
         still exists: `drafts/revolt-of-1857.hi.json` (44 blocks).
-        - [ ] **Owner:** OK to re-run `node scripts/add-hindi.mjs drafts/revolt-of-1857.hi.json
+        - [x] **DONE 5 Nov** (dev + production, published; the script had a bug that saved English as Hindi — fixed). Was: **Owner:** OK to re-run `node scripts/add-hindi.mjs drafts/revolt-of-1857.hi.json
           --production`, then publish? (Saves as a draft first.)
 - [x] **Atlas fixes from the owner's review (29 Oct) — DONE:** (1) a plain mouse-wheel scroll over
       the globe no longer zooms (it trapped page scrolling) — only pinch (phone or trackpad) and
@@ -387,7 +443,7 @@
       **Plan:** a tiny URL that only calls `revalidatePath` inline (<1 s, fits the 30 s limit),
       called by cron-job.org a few minutes after each sync. **Test that the homepage's `age` resets
       before calling it done.** Correct PROJECT_CONTEXT.md / SERVICES.md in the same change. *(9 Oct)*
-- [ ] **Republish #3, #4, #5 on the Vercel site** — STILL 404 on 29 Oct (Portuguese, Dutch, English); their
+- [x] **DONE 5 Nov — published on production, all three open on the Vercel site.** Was: **Republish #3, #4, #5 on the Vercel site** — STILL 404 on 29 Oct (Portuguese, Dutch, English); their
       drafts now carry the NCERT fixes, so publishing them is safe. Turned back into drafts by `write-prompts`
       (tool since fixed); `node scripts/publish-article.mjs 3 4 5 --production` or Publish in /admin. *(18 Sep)*
 - [ ] **Brainstorm: accounts → highlights → quiz** — design conversation first (who logs in,
